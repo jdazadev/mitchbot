@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { authService } from '../services/auth.service';
+import { ref } from 'vue';
 import { brainService } from '../services/brain.service';
-
-const currentUser = authService.getUser();
-const isDevAdmin = computed(() => currentUser?.role === 'devadmin');
 
 const tabs = [
   { id: 'extract', label: 'Extraer texto', icon: 'description' },
@@ -143,14 +139,10 @@ function clearResult() {
   <div class="flex flex-col gap-6">
     <div>
       <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Pruebas</h1>
-      <p class="text-sm text-slate-500 mt-1">Herramientas internas solo para devadmin</p>
+      <p class="text-sm text-slate-500 mt-1">Herramientas internas de diagnóstico</p>
     </div>
 
-    <div v-if="!isDevAdmin" class="p-4 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
-      No tienes permisos para acceder a este modulo.
-    </div>
-
-    <div v-else class="flex flex-col gap-6">
+    <div class="flex flex-col gap-6">
       <div class="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 overflow-x-auto">
         <button
           v-for="tab in tabs" :key="tab.id"
@@ -193,10 +185,10 @@ function clearResult() {
               type="file"
               accept=".pdf,.txt,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif,.tiff,.tif,.bmp"
               class="hidden"
-              id="devadmin-extract-file"
+              id="dev-extract-file"
               @change="handleFileChange"
             />
-            <label for="devadmin-extract-file" class="inline-flex mt-3 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
+            <label for="dev-extract-file" class="inline-flex mt-3 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
               Seleccionar archivo
             </label>
             <div v-if="selectedFile" class="mt-3 text-xs text-slate-600">
@@ -269,10 +261,10 @@ function clearResult() {
               type="file"
               accept=".pdf"
               class="hidden"
-              id="devadmin-pdf-preview-file"
+              id="dev-pdf-preview-file"
               @change="handleFileChange"
             />
-            <label for="devadmin-pdf-preview-file" class="inline-flex mt-3 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
+            <label for="dev-pdf-preview-file" class="inline-flex mt-3 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
               Seleccionar PDF
             </label>
             <div v-if="selectedFile" class="mt-3 text-xs text-slate-600">

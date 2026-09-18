@@ -7,7 +7,7 @@
  * 4. WebSocket load test    (100 conexiones concurrentes)
  *
  * Algunos benchmarks degradan de forma controlada si no hay modelos de IA
- * disponibles (Ollama/embeddings); el reporte lo indica.
+ * disponibles (OpenRouter/embeddings); el reporte lo indica.
  *
  * Ejecutar: pnpm tsx src/scripts/benchmark.ts
  */

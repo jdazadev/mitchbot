@@ -5,6 +5,95 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v3.1.0 — 2026-09-18
+
+> 🧪 **Suite de pruebas end-to-end con Playwright: entorno aislado, autenticación reutilizable y proveedor de IA determinista (stub)**
+
+---
+
+### ✨ Nuevas funcionalidades
+- **Suite e2e (Playwright)**: cubre autenticación, onboarding, dashboard, mensajería, contactos, base de conocimiento (RAG), usuarios, configuración/agentes, perfil, chat público y tiempo real (streaming + confirmación/cancelación de herramientas).
+- **Autenticación reutilizable**: *setup project* que hace login una sola vez y persiste `storageState` para el resto de las pruebas; los specs públicos corren sin sesión.
+- **Entorno e2e aislado**: backend en el puerto 3100, frontend en 5174, base de datos MongoDB `mitchbot_e2e` y puertos dedicados, sin interferir con el entorno de desarrollo (3000/5173).
+- **Stub local de IA compatible con la API de OpenAI** (`tests/stub/openai-stub.mjs`): respuesta de texto determinista, streaming SSE, tool calls (`create_appointment`) y embeddings deterministas (768 dims). Se activa vía `OPENROUTER_BASE_URL`.
+- **Seed e2e dedicado** (`apps/backend/src/scripts/seed-e2e.ts`): usuario, proyecto, agente y proveedores de prueba idempotentes y no destructivos; además limpia los contadores de rate limiting WebSocket entre corridas.
+- **Chequeo de prerrequisitos**: la suite falla con un mensaje claro si faltan los servicios Docker o los servidores.
+- **Prueba de guardia** (`provider-guard.spec.ts`): verifica que el backend apunta al stub y no genera tráfico al proveedor real.
+- **Scripts npm**: `test:e2e`, `test:e2e:ui`, `test:e2e:headed`, `test:e2e:ci`, `test:e2e:report`, `stub:e2e`, `seed:e2e`.
+
+### 🔄 Cambios
+- `fetchOpenRouterModels` usa `OPENROUTER_BASE_URL` (permite apuntar al stub en pruebas); por defecto sigue usando el endpoint real.
+- `GET /ai-models/agent/models` y `GET /ai-models/remote/openrouter` ya no exigen `projectId` (el proveedor es global), habilitando la selección de modelo en el onboarding.
+- Rutas `contacts` y `agents` aplican `authenticate` (faltaba tras el modelo multi-proyecto) y el servicio de contactos del frontend envía `Authorization` + `X-Project-Id`.
+
+### 📚 Documentación
+- `tests/e2e/README.md` con prerrequisitos, comandos y estructura de la suite.
+- `AGENTS.md` documenta la sección de pruebas e2e.
+
+---
+
+## v3.0.0 — 2026-09-18
+
+> 🔒 **Proveedor único OpenRouter: credenciales fuera de la base de datos y eliminación del rol `devadmin`**
+
+---
+
+### ⚠️ Breaking changes
+- **Proveedor único OpenRouter**: el sistema usa exclusivamente OpenRouter para LLM, embeddings y OCR. Se eliminan las integraciones de **Ollama**, **Google Gemini** y **Mistral** del enrutador de IA y de las cadenas de fallback. Cualquier intento de usar otro proveedor se rechaza con un error explícito.
+- **Credenciales fuera de la base de datos**: las API keys provienen exclusivamente de variables de entorno. `provider_configs` deja de almacenar `apiKey` (migración incluida). Ninguna respuesta de API devuelve credenciales.
+- **Se elimina el rol `devadmin`**: los roles válidos pasan a ser `admin`, `support` y `assistant`. Los usuarios existentes con rol `devadmin` se normalizan a `assistant`/`Inactive` durante la migración.
+- **Endpoints eliminados**: `/ai-models/ollama/models`, `/ai-models/remote/gemini`, `/ai-models/remote/openrouter/embeddings`, `/ai-models/providers/configs*`, `/ai-models/providers/config` y `/ai-models/providers/test*`. El CRUD de `ai_models` restringido a `devadmin` también se elimina. Se conservan `/ai-models/remote/openrouter` y `/ai-models/agent/models`.
+- **Se elimina la vista de proveedores** (`DevAdminModels.vue`) y su ruta `/devadmin/models`.
+
+### ✨ Nuevas funcionalidades
+- **Variables de entorno del proveedor**: `OPENROUTER_API_KEY`, `OPENROUTER_BASE_URL`, `OPENROUTER_EMBEDDING_MODEL` y `OPENROUTER_OCR_MODEL` (con valores por defecto razonables).
+- **Herramientas internas aisladas**: el módulo de pruebas se sirve en la ruta `/dev/tests` (solo accesible por URL, autenticada, sin entrada en el menú lateral). Los endpoints asociados pasan a `/api/brain/dev/extract` y `/api/brain/dev/pdf-to-images`.
+
+### 🔄 Cambios
+- `llm-provider.service.ts` queda reducido a la rama de OpenRouter para chat y embeddings; `ai.service.resolveModelConfig` resuelve el modelo por agente y toma la credencial del entorno.
+- `ocr.service.ts` se simplifica a OpenRouter como único proveedor, conservando el fallback legacy `pdf-parse`.
+- `reranker.service.ts` re-rankea con embeddings de OpenRouter (configurable con `rag.reranker_model`), desactivable con `rag.use_reranker=false` y con degradación a heurística/similarity-only.
+- Los embeddings usan un modelo por defecto de OpenRouter, sobreescribible desde configuración.
+- El arranque del backend ya no comprueba la conexión con Ollama.
+- Nueva migración `scripts/migrate-openrouter.ts`: elimina `apiKey` de `provider_configs` y normaliza/desactiva usuarios `devadmin`.
+- El `seed` de modelos locales de Ollama se elimina; los modelos se listan dinámicamente desde OpenRouter.
+- `AGENTS.md` y `apps/backend/.env.example` documentan el proveedor único y las variables de entorno.
+
+---
+
+## v2.0.0 — 2026-09-18
+
+> 🏢 **Modelo multi-proyecto: pertenencia usuario↔proyecto, resolución de contexto por request y aislamiento total**
+
+---
+
+### ⚠️ Breaking changes
+- **Los usuarios pertenecen a proyectos**: cada usuario tiene `projectIds` (lista de proyectos) y `activeProjectId` (proyecto activo). Un usuario solo accede a sus proyectos.
+- **Resolución de proyecto por request**: el middleware de autenticación resuelve el proyecto desde el header `X-Project-Id` (validando pertenencia) o, en su defecto, desde el `activeProjectId` del usuario. **Desaparece el proyecto global único.**
+- **Se elimina el caché local `mitchbot_project_setup` como fuente de verdad** del onboarding: el guard consulta al servidor (`GET /project/check`) según los proyectos del usuario.
+
+### ✨ Nuevas funcionalidades
+- **Multi-proyecto por usuario**: cualquier usuario autenticado puede crear proyectos; el creador queda como miembro y el proyecto pasa a ser su activo (`POST /api/project`).
+- **Selector de proyecto en la barra superior** (`Topbar.vue`) con listado de proyectos del usuario y opción de crear uno nuevo; al cambiar, se reasigna el socket y se recargan las vistas.
+- **Endpoints nuevos**: `GET /api/project/list` (proyectos del usuario) y `PUT /api/project/active` (cambio de proyecto activo persistido).
+- **Asignación de proyectos por administradores**: `POST/PUT /api/users` aceptan `projectIds`; UI de selección múltiple en `Users.vue`.
+- **Agente por proyecto**: `agents.projectId` y `getActiveAgent(projectId)`; el bot usa el agente del proyecto de la conversación.
+- **Aislamiento de contactos**: `contacts.projectId` (nuevo), filtrado por proyecto en listado, detalle, edición, archivado y restauración, y en la auto-creación de contactos.
+- **Sesiones de tiempo real por proyecto**: el socket se autentica con el proyecto activo (o el indicado al conectar), entra en room `project:<id>` y valida pertenencia al unirse a conversaciones.
+- **Script de migración** `scripts/migrate-multi-project.ts`: asigna el proyecto actual a usuarios existentes, fija su `activeProjectId` y vincula los agentes existentes a su proyecto.
+
+### 🔄 Cambios
+- `auth.middleware.ts` adjunta el `projectId` resuelto y responde **403** ante un header de proyecto ajeno.
+- `project.service.ts`: se elimina la restricción de proyecto único activo; `getActiveProject(user)` pasa a ser por usuario y se añade `getUserProjects()`.
+- Los eventos de tiempo real `chat:new_conversation` y `admin:notification` se emiten **solo al proyecto** (`emitToProject`), no globalmente.
+- `socket.service.ts` (frontend) envía el proyecto en el handshake y expone `reconnect(projectId)`; se corrige la lectura del token (`mitchbot_token`).
+- `Profile.vue` muestra los proyectos del usuario y el activo.
+
+### 🧪 Tests
+- Nuevo test de integración `tests/integration/multi-project-isolation.test.ts`: resolución por header/activo, denegación de proyecto ajeno (403) y aislamiento de proyectos por usuario.
+
+---
+
 ## v1.17.1 — 2026-09-18
 
 > 🐛 **Fix: resolución de módulos del frontend (artefactos compilados obsoletos)**

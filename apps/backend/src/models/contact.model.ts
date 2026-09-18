@@ -3,6 +3,7 @@ import { getDatabase } from '../config/database';
 
 export interface Contact {
   _id?: ObjectId;
+  projectId?: ObjectId;
   name: string;
   email?: string;
   phone: string;

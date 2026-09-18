@@ -48,31 +48,23 @@ export interface Project {
 }
 
 class ProjectService {
-  private setupKey = 'mitchbot_project_setup';
-
-  /** ¿Ya tiene proyecto configurado? (cache local) */
-  hasLocalProject(): boolean {
-    return localStorage.getItem(this.setupKey) === 'true';
-  }
-
-  /** Marcar que ya tiene proyecto */
-  setLocalProject(value: boolean) {
-    if (value) {
-      localStorage.setItem(this.setupKey, 'true');
-    } else {
-      localStorage.removeItem(this.setupKey);
-    }
-  }
-
-  /** Verificar en el servidor si existe un proyecto */
+  /** Verificar en el servidor si el usuario tiene proyectos */
   async checkProject(): Promise<boolean> {
     const res = await fetch(`${API_BASE}/project/check`, {
       headers: authService.getHeaders(),
     });
     if (!res.ok) return false;
     const data = await res.json();
-    this.setLocalProject(data.hasProject);
     return data.hasProject;
+  }
+
+  /** Listar los proyectos del usuario */
+  async listProjects(): Promise<Project[]> {
+    const res = await fetch(`${API_BASE}/project/list`, {
+      headers: authService.getHeaders(),
+    });
+    if (!res.ok) return [];
+    return res.json();
   }
 
   /** Obtener proyecto activo */
@@ -82,6 +74,19 @@ class ProjectService {
     });
     if (!res.ok) return null;
     return res.json();
+  }
+
+  /** Cambiar el proyecto activo */
+  async setActiveProject(projectId: string): Promise<Project> {
+    const res = await fetch(`${API_BASE}/project/active`, {
+      method: 'PUT',
+      headers: authService.getHeaders(),
+      body: JSON.stringify({ projectId }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Error al cambiar de proyecto');
+    authService.setActiveProjectId(projectId);
+    return result;
   }
 
   /** Crear proyecto con agente */
@@ -98,7 +103,9 @@ class ProjectService {
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.error || 'Error al crear proyecto');
-    this.setLocalProject(true);
+    if (result.project?._id) {
+      authService.setActiveProjectId(result.project._id);
+    }
     return result;
   }
 
@@ -112,11 +119,6 @@ class ProjectService {
     const result = await res.json();
     if (!res.ok) throw new Error(result.error || 'Error al actualizar proyecto');
     return result;
-  }
-
-  /** Limpiar cache local */
-  clearLocal() {
-    localStorage.removeItem(this.setupKey);
   }
 }
 

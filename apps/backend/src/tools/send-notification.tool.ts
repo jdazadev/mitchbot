@@ -1,4 +1,4 @@
-import { emitToAll } from '../websocket/socket';
+import { emitToProject } from '../websocket/socket';
 import { logger } from '../utils/logger';
 import { Tool } from './types';
 
@@ -30,7 +30,7 @@ export const sendNotificationTool: Tool = {
     const level = ['info', 'warning', 'urgent'].includes(params?.level) ? params.level : 'info';
 
     try {
-      emitToAll('admin:notification', {
+      emitToProject(context.projectId, 'admin:notification', {
         message,
         level,
         conversationId: context.conversationId,

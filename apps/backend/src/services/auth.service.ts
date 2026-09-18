@@ -32,7 +32,7 @@ export const authService = {
       name: data.name,
       email: data.email.toLowerCase(),
       password: hashedPassword,
-      role: role as 'admin' | 'support' | 'assistant' | 'devadmin',
+      role: role as 'admin' | 'support' | 'assistant',
       status: 'Active',
       createdAt: new Date(),
       updatedAt: new Date(),

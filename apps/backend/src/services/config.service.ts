@@ -6,7 +6,7 @@ const DEFAULTS: Record<string, any> = {
   messages: { welcome: '¡Hola! ¿En qué puedo ayudarte?', goodbye: '¡Gracias por tu consulta! Hasta pronto.' },
   personality: {},
   options: { autoCreateContact: true },
-  'devadmin.pdf_preview_quality': 'medium',
+  'rag.pdf_preview_quality': 'medium',
   // Negocio (usado por las herramientas del agente)
   'business.hours': {
     monday: '09:00-18:00',
@@ -27,19 +27,15 @@ const DEFAULTS: Record<string, any> = {
   'rag.pdf_extract_timeout_ms': 90000,
   'rag.pdf_extract_max_base64_chars': 0,
   'rag.pdf_extract_return_limit_chars': 0,
-  // Pipeline OCR unificado (todos los PDFs)
-  'rag.ocr_provider': 'ollama',
-  'rag.ocr_ollama_model': 'qwen2.5-vl',
-  'rag.ocr_mistral_model': 'mistral-ocr-latest',
+  // Pipeline OCR unificado (todos los PDFs) — proveedor único OpenRouter
   'rag.ocr_openrouter_model': 'google/gemini-2.0-flash-001',
   'rag.ocr_scale': 2,
   'rag.ocr_max_pages': 0,
   'rag.ocr_batch_size': 4,
   'rag.ocr_timeout_ms': 60000,
-  // Re-ranking de resultados RAG
+  // Re-ranking de resultados RAG (embeddings de OpenRouter)
   'rag.use_reranker': true,
-  'rag.reranker_provider': 'ollama',
-  'rag.reranker_model': 'nomic-embed-text',
+  'rag.reranker_model': 'openai/text-embedding-3-small',
   'rag.reranker_top_k': 10,
   'rag.reranker_final_k': 3,
   // Configuración de colección Qdrant (HNSW / optimizers)

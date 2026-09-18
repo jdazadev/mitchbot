@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v1.17.1
+**Versión actual del proyecto:** v3.1.0
 
 ---
 
@@ -41,9 +41,9 @@ mitchbot_v2/
 | **Backend** | Express 4, Socket.io, Multer, Zod v4, JWT |
 | **Frontend** | Vue 3 (Composition API + `<script setup>`), Vite, Tailwind CSS 3, Pinia, Vue Router 4, Radix Vue, Lucide Icons |
 | **Base de datos** | MongoDB 6 (principal), Redis (caché), Qdrant (vectorial) |
-| **IA / LLM** | LangChain.js v1.x (`@langchain/core`, `@langchain/ollama`, `@langchain/openai`, `@langchain/google-genai`, `@langchain/qdrant`, `@langchain/textsplitters`) |
-| **Proveedores IA** | Ollama (local), OpenRouter (multi-modelo), Google Gemini |
-| **Embeddings** | Ollama (`nomic-embed-text`), OpenRouter |
+| **IA / LLM** | LangChain.js v1.x (`@langchain/core`, `@langchain/openai`, `@langchain/qdrant`, `@langchain/textsplitters`) |
+| **Proveedores IA** | OpenRouter (único proveedor: LLM, embeddings y OCR) |
+| **Embeddings** | OpenRouter (`openai/text-embedding-3-small` por defecto) |
 | **Mensajería** | NATS (event bus), Socket.io (tiempo real) |
 | **Auth** | JWT (jsonwebtoken), bcryptjs (12 rounds) |
 | **Infraestructura** | Docker Compose, pnpm workspaces |
@@ -57,7 +57,7 @@ mitchbot_v2/
 mongodb:    → puerto 27017  # Base de datos principal
 redis:      → puerto 6379   # Caché y sesiones
 qdrant:     → puerto 6333   # Base de datos vectorial (RAG)
-ollama:     → puerto 11434  # Servidor de modelos LLM locales
+ollama:     → puerto 11434  # Servidor de modelos LLM locales (ya NO es dependencia del backend)
 open-webui: → puerto 3200   # Interfaz web para Ollama (debug)
 nats:       → puerto 4222   # Message broker (futuro social gateway)
 ```
@@ -92,7 +92,7 @@ apps/backend/src/
 │   ├── chat.service.ts             # Lógica de chat + auto-respuesta bot
 │   ├── rag.service.ts              # Motor RAG (embeddings + búsqueda vectorial)
 │   ├── agent.service.ts            # Gestión de agentes IA
-│   ├── ai-model.service.ts         # Gestión de modelos y proveedores
+│   ├── ai-model.service.ts         # Resolución de modelos y config de proveedor (OpenRouter)
 │   ├── contact.service.ts          # Lógica de contactos
 │   ├── project.service.ts          # Lógica de proyectos
 │   ├── project-context.service.ts  # Contexto activo del proyecto
@@ -123,8 +123,7 @@ apps/frontend/src/
 │   ├── Messaging.vue               # Centro de mensajería en tiempo real
 │   ├── Contacts.vue                # Gestión de contactos
 │   ├── Brain.vue                   # Base de conocimiento RAG
-│   ├── DevAdminModels.vue          # Configuracion DevAdmin de modelos y proveedores
-│   ├── DevAdminTests.vue           # Modulo de pruebas DevAdmin
+│   ├── DevTests.vue                # Herramientas internas de prueba (ruta /dev/tests)
 │   ├── Agents.vue                  # Configuración de agentes IA
 │   ├── Settings.vue                # Configuración global (proveedores, canales, etc.)
 │   ├── Users.vue                   # Gestión de usuarios del sistema
@@ -189,17 +188,17 @@ apps/frontend/src/
 ### 3.2. Pipeline OCR unificado (`services/ocr.service.ts`)
 
 - **Todos los PDFs** se convierten a imágenes (`pdf-to-img`, escala 2) y pasan por OCR.
-- Proveedores soportados: `ollama` (Qwen2.5-VL), `mistral` (Mistral OCR) y `openrouter` (modelos de visión).
-- Cadena de fallback: **Ollama → Mistral → OpenRouter → pdf-parse (legacy)**.
-- Salida estructurada: `{ text, pages, method, confidence }`. `method` ∈ `ocr` | `ocr_vision` | `pdf-parse`.
-- Configuración vía `configService`: `rag.ocr_provider`, `rag.ocr_ollama_model`, `rag.ocr_mistral_model`, `rag.ocr_openrouter_model`, `rag.ocr_scale`, `rag.ocr_max_pages`, `rag.ocr_batch_size`, `rag.ocr_timeout_ms`.
+- Proveedor único: `openrouter` (modelos de visión).
+- Cadena de fallback: **OpenRouter → pdf-parse (legacy)**.
+- Salida estructurada: `{ text, pages, method, confidence }`. `method` ∈ `ocr_vision` | `pdf-parse`.
+- Configuración vía `configService`: `rag.ocr_openrouter_model`, `rag.ocr_scale`, `rag.ocr_max_pages`, `rag.ocr_batch_size`, `rag.ocr_timeout_ms`.
 - Estadísticas por fuente: `extractionTimeMs`, `extractionConfidence`, `pagesProcessed`, `ocrProvider`, `ocrModel`.
-- Configurable desde **DevAdmin → Providers → pestaña OCR** (guardado en `provider_configs`, tipo `ocr`).
+- La credencial se toma de `OPENROUTER_API_KEY` (entorno); el modelo por defecto es `OPENROUTER_OCR_MODEL`.
 
 ### 3.3. Re-ranking (`services/reranker.service.ts`)
 
-- Re-ranking local con embeddings de Ollama (`rag.reranker_model`, por defecto `nomic-embed-text`).
-- Si el modelo no está disponible, usa una heurística (keyword + bigramas con prefijos) y, ante error, degrada a similarity-only.
+- Re-ranking con embeddings de OpenRouter (`rag.reranker_model`, por defecto `openai/text-embedding-3-small`).
+- Si no hay credencial o el modelo falla, usa una heurística (keyword + bigramas con prefijos) y, ante error, degrada a similarity-only.
 - Desactivable con `rag.use_reranker = false`.
 - Endpoint Qdrant configurado con HNSW `m:16`, `ef_construct:100`, `ef:64`, `on_disk` e índices `language`/`document_id`.
 
@@ -209,9 +208,10 @@ apps/frontend/src/
 - Rollback de vectores parciales si una fuente falla.
 - Script: `pnpm --filter @mitchbot/backend tsx src/scripts/reindex-rag.ts`.
 
-### 3.1. Modulo DevAdmin — Pruebas
+### 3.1. Herramientas internas — Pruebas
 
-- Solo visible para rol **devadmin**.
+- Expuestas en la ruta aislada **`/dev/tests`**, accesible solo escribiendo la URL y sin entrada en el menú lateral.
+- Requieren autenticación (no dependen del rol `devadmin`).
 - Subitem **Extraer texto** para probar modelos tipo file con archivos.
 - No indexa ni guarda en base de conocimiento (solo extraccion).
 
@@ -228,24 +228,21 @@ apps/frontend/src/
 
 #### 4.1. Proveedores de Embeddings
 
-- Opciones disponibles: **Ollama** y **OpenRouter**.
-- Para Ollama: consulta la API local (`/api/tags`) para listar modelos.
-- Para OpenRouter: consulta la API remota y filtra por modelos de embedding.
-- El modelo de embedding seleccionado se guarda en la BD y se usa globalmente en el módulo RAG.
+- Proveedor único: **OpenRouter**.
+- El modelo por defecto se define en `OPENROUTER_EMBEDDING_MODEL` y puede sobreescribirse desde configuración (`provider_configs`, tipo `embedding`).
+- La credencial proviene de `OPENROUTER_API_KEY` (entorno).
 
 #### 4.2. Proveedores LLM
 
-- Opciones disponibles: **Ollama**, **OpenRouter** y **Gemini**.
-- Para Ollama: consulta la API local (`/api/tags`).
-- Para OpenRouter: consulta `GET /api/v1/models`.
-- Para Gemini: consulta `generativelanguage.googleapis.com/v1/models`.
-- Las API keys se gestionan desde la BD (no en variables de entorno).
-- Solo 1 proveedor activo por tipo (LLM o Embedding) a la vez.
+- Proveedor único: **OpenRouter**.
+- Los modelos se listan dinámicamente con `GET /api/v1/models`.
+- La API key proviene de `OPENROUTER_API_KEY` (entorno), **nunca de la base de datos**.
+- Solo 1 proveedor activo (OpenRouter) por tipo.
 
 #### 4.3. Agentes / Modelo de IA
 
-- Se consultan los proveedores configurados y se listan los modelos disponibles dinámicamente.
-- Al seleccionar modelo, se abre un **modal con buscador y filtros** mostrando información relevante (nombre, tamaño, contexto, pricing).
+- Se listan dinámicamente los modelos disponibles de OpenRouter.
+- Al seleccionar modelo, se abre un **modal con buscador y filtros** mostrando información relevante (nombre, contexto, pricing).
 - El modelo seleccionado se guarda en la BD y se usa para las respuestas del chatbot.
 
 ### 4.5. Agent Tool Use (Function Calling)
@@ -254,16 +251,14 @@ Ver sección **9. Sistema de Herramientas (Tool Use)** más abajo.
 
 ### 4.6. Proveedores OCR
 
-- Opciones disponibles: **Ollama**, **Mistral** y **OpenRouter** (tipo de proveedor `ocr`).
-- Se configura desde DevAdmin con selector de proveedor, modelo y parámetros (`scale`, `maxPages`, `batchSize`, `timeout`).
-- Botón de test: `POST /api/ai-models/providers/test-ocr`.
-- Solo 1 proveedor OCR activo a la vez.
+- Proveedor único: **OpenRouter** (modelos de visión, tipo de proveedor `ocr`).
+- Modelo y parámetros (`scale`, `maxPages`, `batchSize`, `timeout`) se configuran vía `configService` (`rag.ocr_*`).
+- La credencial proviene de `OPENROUTER_API_KEY` (entorno).
 
 ### 5. Módulo Usuarios del Sistema
 
 - CRUD completo: crear, editar, buscar, filtrar, ordenar y paginar usuarios.
-- Roles disponibles: **devadmin**, **admin**, **support** y **assistant**.
-- **`devadmin` es interno** y no se crea ni se asigna via API.
+- Roles disponibles: **admin**, **support** y **assistant**.
 - El usuario tiene un espacio para editar sus datos y configuraciones (vista Profile).
 - El primer usuario registrado se convierte automáticamente en **admin**.
 
@@ -276,8 +271,8 @@ Ver sección **9. Sistema de Herramientas (Tool Use)** más abajo.
 ### 7. Seguridad
 
 - Autenticación vía JWT en cada request protegido.
-- Middleware de autorización por roles (`devadmin`, `admin`, `support`, `assistant`).
-- API keys de proveedores almacenadas en la BD (enmascaradas al consultar).
+- Middleware de autorización por roles (`admin`, `support`, `assistant`).
+- API keys de proveedores **no** se almacenan en la BD: provienen de variables de entorno.
 - Variables de entorno validadas con Zod al arrancar el servidor.
 
 ### 9. Sistema de Herramientas (Tool Use)
@@ -286,7 +281,7 @@ El agente puede ejecutar acciones ("tools") además de responder.
 
 - **Registro** (`src/tools/`): cada herramienta implementa `Tool` con `name`, `description`, `parameters` (JSON Schema), `execute(params, context)` y `requiresConfirmation`.
 - **Ejecutor** (`services/tool.service.ts`): esquemas OpenAI-compatible, detección de tool calls en texto libre (`{"tool","parameters"}`) y ejecución normalizada.
-- **Integración LLM** (`ai.service.generateResponseStreamWithTools`): tool calling nativo (`bindTools`) para **OpenRouter** y **Gemini**; para **Ollama** se inyecta la descripción de herramientas en el system prompt y se detecta el JSON de invocación.
+- **Integración LLM** (`ai.service.generateResponseStreamWithTools`): tool calling nativo (`bindTools`) para **OpenRouter**.
 - **Flujo de chat** (`chat.service.handleToolCalls`): detecta tool calls → si requiere confirmación guarda en `tool_executions` y emite un mensaje `confirmation_request` → al confirmar ejecuta y genera la respuesta final con el resultado.
 - **Confirmaciones** vía WebSocket `tool:confirm` (`confirm` / `cancel` / `modify`) y evento `tool:confirmed`. Interfaz en **Messaging** y **TestChat**.
 
@@ -295,6 +290,19 @@ Herramientas incluidas (zero-config): `create_appointment`, `create_order`, `get
 Config del negocio usada por las tools: `business.hours`, `business.services`, `business.timezone`, `business.slot_minutes`, `business.currency`.
 
 Tipos de mensaje nuevos: `sender: 'tool'`, `contentType: 'tool_call' | 'tool_result' | 'confirmation_request'` y campo `toolData`.
+
+### 10. Modelo Multi-Proyecto
+
+Cada usuario pertenece a uno o más proyectos y tiene un proyecto activo.
+
+- **Pertenencia**: `users.projectIds: ObjectId[]` y `users.activeProjectId: ObjectId`.
+- **Resolución por request** (`middleware/auth.middleware.ts`): usa el header `X-Project-Id` (valida pertenencia; **403** si es ajeno) o, en su defecto, el `activeProjectId` del usuario. El `projectId` resuelto se adjunta a `req.projectId`.
+- **Frontend**: `authService.getHeaders()` envía `X-Project-Id` con el proyecto activo; `Topbar.vue` permite cambiar de proyecto (`PUT /api/project/active`) y crear uno nuevo; al cambiar, se reconecta el socket.
+- **Onboarding**: `GET /api/project/check` responde según los proyectos del usuario (no de la existencia global). El guard del router consulta al servidor; ya no usa `localStorage` como fuente de verdad.
+- **Creación de proyecto**: cualquier usuario autenticado puede crear (`POST /api/project`); el creador queda como miembro y su proyecto pasa a activo.
+- **Agente por proyecto**: `agents.projectId` + `agentService.getActiveAgent(projectId)`. La conversación determina el proyecto y con él el agente.
+- **Aislamiento**: conversaciones, contactos, fuentes RAG, agentes y configuración de proveedores se filtran por `projectId`. Los eventos de socket se emiten por room `project:<id>` (`emitToProject`).
+- **Migración**: `pnpm --filter @mitchbot/backend tsx src/scripts/migrate-multi-project.ts` asigna el proyecto actual a usuarios/agentes existentes.
 
 ---
 
@@ -320,15 +328,13 @@ Tipos de mensaje nuevos: `sender: 'tool'`, `contentType: 'tool_call' | 'tool_res
          ▼
 ┌──────────────────────────────┐
 │  llm-provider.service        │  EL ENRUTADOR
-│  (Factory / Router)          │  Instancia el modelo según config BD:
-│                              │   • Ollama  → ChatOllama
+│  (Factory / Router)          │  Proveedor único: OpenRouter
 │                              │   • OpenRouter → ChatOpenAI (baseURL custom)
-│                              │   • Gemini → ChatGoogleGenerativeAI
 └──────────────────────────────┘
 ```
 
 - **Capa de Abstracción**: El chatbot no sabe qué modelo está usando. Solo envía una lista de mensajes a una función intermediaria.
-- **El Enrutador** (`llm-provider.service.ts`): Recibe la petición y la configuración del usuario (Ollama, OpenRouter o Gemini) y devuelve el `BaseChatModel` instanciado.
+- **El Enrutador** (`llm-provider.service.ts`): Recibe la petición (proveedor fijo OpenRouter) y devuelve el `BaseChatModel` instanciado; rechaza cualquier otro proveedor.
 - **Manejo de Errores**: Si el modelo falla, el chatbot envía un mensaje de error claro en el chat y registra el error en el historial. Timeout general de **60s** para evitar LLMs "zombie".
 - **Streaming**: Las respuestas se transmiten token por token usando `generateResponseStream` con `.stream()`.
 - **RAG integrado**: Antes de generar la respuesta, se busca contexto relevante en la base de conocimiento.
@@ -369,9 +375,9 @@ Usuario abre la app
 | **Conversations** | `GET /`, `GET /:id`, `GET /:id/messages`, `POST /:id/messages`, `PATCH /:id/mode`, `PATCH /:id/status` | Mensajería |
 | **Brain** | `GET /sources`, `POST /upload`, `POST /text`, `DELETE /sources/:id`, `POST /search` | Base de conocimiento RAG |
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
-| **AI Models** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id`, `GET /providers/*`, `POST /providers/test-ocr`, `GET /ollama/models`, `GET /remote/*`, `GET /agent/models` | Modelos y proveedores (incluye test OCR) |
+| **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
 | **Config** | `GET /`, `PUT /` | Configuración global |
-| **Project** | `GET /`, `GET /check`, `POST /`, `PUT /:id` | Gestión de proyecto |
+| **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /` | Gestión de proyectos (multi-proyecto por usuario) |
 | **Appointments** | `GET /`, `GET /:id`, `PATCH /:id/status` | Citas agendadas por el agente |
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
 | **Dashboard** | `GET /stats`, `GET /volume`, `GET /channels`, `GET /activity` | Analytics |
@@ -385,13 +391,13 @@ Usuario abre la app
 
 | Colección | Campos Clave | Notas |
 |:----------|:-------------|:------|
-| `users` | name, email, password (hash), role, status, avatar | Roles: devadmin, admin, support, assistant |
-| `contacts` | name, phone, email, platform, status, tags, metadata | Soft delete (archivar) |
+| `users` | name, email, password (hash), role, status, avatar, projectIds, activeProjectId | Roles: admin, support, assistant. Pertenencia multi-proyecto |
+| `contacts` | projectId, name, phone, email, platform, status, tags, metadata | Aislado por proyecto. Soft delete (archivar) |
 | `conversations` | contactId, platform, status, mode, clientInfo, unreadCount | Modos: auto_pilot, human_takeover |
 | `messages` | conversationId, sender, content, contentType, isBot, toolData | Sender: contact, ai_agent, human_agent, tool. contentType: text, tool_call, tool_result, confirmation_request |
-| `agents` | name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
-| `ai_models` | name, value, provider, category, isActive | Seed automático al inicio |
-| `provider_configs` | type (llm/embedding/file/image/audio/ocr), provider, apiKey, selectedModel, isActive | API keys enmascaradas al consultar |
+| `agents` | projectId, name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
+| `ai_models` | name, value, provider, category, isActive | Catálogo de modelos (los disponibles se listan dinámicamente desde OpenRouter) |
+| `provider_configs` | type (llm/embedding/file/image/audio/ocr), provider, selectedModel, isActive | Sin credenciales: la API key proviene del entorno |
 | `projects` | name, agentId, config (channels, messages, options) | Solo 1 proyecto activo |
 | `knowledge_sources` | name, type, size, status, vectorCount, filePath, extractionMethod, ocrProvider, extractionTimeMs | Status: Queued, Processing, Indexed, Failed |
 | `appointments` | date, time, service, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
@@ -407,8 +413,9 @@ Usuario abre la app
 ### 🔒 Seguridad WebSocket (v1.16.0)
 
 Todas las conexiones WebSocket requieren autenticación JWT:
-- **Dashboard**: Token JWT enviado en `socket.handshake.auth.token`
+- **Dashboard**: Token JWT enviado en `socket.handshake.auth.token` y proyecto en `socket.handshake.auth.projectId` (validando pertenencia)
 - **Chat Público (`test-chat`)**: Slug del proyecto enviado en `socket.handshake.query.slug`
+- **Aislamiento por proyecto**: cada socket autenticado entra en la room `project:<id>`; `join:room` valida que la conversación pertenezca a su proyecto
 - **Rate Limiting**: 30 mensajes/min y 10 joins/min por usuario (Redis)
 - **CORS**: Restringido a `FRONTEND_URL` en producción
 
@@ -454,6 +461,29 @@ cd apps/backend && pnpm seed
 
 ---
 
+## Pruebas End-to-End (e2e)
+
+Suite de Playwright en `tests/` que valida los flujos críticos contra un entorno aislado. **Requiere los servicios Docker** (`docker compose up -d`); Playwright arranca automáticamente el stub de IA (4010), el backend (3100) y el frontend (5174), y usa la base de datos `mitchbot_e2e`.
+
+```bash
+pnpm test:e2e            # suite completa
+pnpm test:e2e messaging  # un módulo (filtra por nombre de archivo/título)
+pnpm test:e2e:ui         # modo UI interactivo
+pnpm test:e2e:headed     # navegador visible
+pnpm test:e2e:ci         # corrida tipo CI (headless, workers=1, retries)
+pnpm test:e2e:report     # ver el reporte HTML
+
+pnpm stub:e2e            # levanta solo el stub de IA (puerto 4010)
+pnpm seed:e2e            # siembra usuario/proyecto/agente/proveedores e2e
+```
+
+- **Estructura**: `tests/stub/openai-stub.mjs` (stub OpenAI-compatible) y `tests/e2e/` (setup de auth, fixtures, helpers y specs por módulo). Ver `tests/e2e/README.md`.
+- **Autenticación reutilizable**: el project `setup` hace login una vez y persiste `storageState` (`tests/e2e/.auth/user.json`, ignorado por git). Los specs públicos (login, onboarding, chat público) corren sin sesión.
+- **Determinismo del proveedor**: el backend apunta a `OPENROUTER_BASE_URL` = stub local, con `OPENROUTER_API_KEY` de prueba. El stub devuelve respuestas fijas, streaming SSE, tool calls (`create_appointment`) y embeddings deterministas. Las pruebas **no** invocan al proveedor real (`provider-guard.spec.ts` lo verifica).
+- **Datos de prueba**: usuario `e2e@mitchbot.test` / `e2e12345`, proyecto `e2e-project`, agente `E2E Agent` (modelo `stub-model`). Cada prueba genera datos únicos y puede correr en paralelo.
+
+---
+
 ## Variables de Entorno (Backend)
 
 ```env
@@ -466,9 +496,16 @@ OLLAMA_URL=http://localhost:11434
 NATS_URL=nats://localhost:4222
 JWT_SECRET=<tu-secreto>
 FRONTEND_URL=http://localhost:5173
+# Proveedor único de IA (OpenRouter)
+OPENROUTER_API_KEY=<tu-api-key>
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_EMBEDDING_MODEL=openai/text-embedding-3-small
+OPENROUTER_OCR_MODEL=google/gemini-2.0-flash-001
 ```
 
-> ⚠️ Las API keys de los proveedores (OpenRouter, Gemini) se gestionan desde la BD, **no** desde variables de entorno.
+> ⚠️ La API key de OpenRouter proviene **exclusivamente de variables de entorno** (`OPENROUTER_API_KEY`); nunca se almacena en la base de datos. Ver `apps/backend/.env.example`.
+
+> ⚠️ El archivo `.env` real está excluido de control de versiones; solo se versiona `.env.example` con valores vacíos/placeholder.
 
 ---
 
@@ -477,7 +514,7 @@ FRONTEND_URL=http://localhost:5173
 ### Fase Actual — MVP Demo-Ready ✅
 - [x] Chat web en tiempo real con streaming
 - [x] Motor RAG (PDF, TXT, CSV)
-- [x] Multi-proveedor LLM (Ollama, OpenRouter, Gemini)
+- [x] Proveedor único OpenRouter (LLM, embeddings y OCR)
 - [x] Dashboard con métricas
 - [x] Gestión de contactos, usuarios y agentes
 - [x] Onboarding / Setup de proyecto
@@ -497,4 +534,4 @@ FRONTEND_URL=http://localhost:5173
 - [ ] Exportación de conversaciones
 - [ ] Integración con CRM externos
 - [ ] Notificaciones push
-- [ ] Tests automatizados (unit + e2e)
+- [ ] Tests automatizados unitarios (la suite e2e ya está implementada)

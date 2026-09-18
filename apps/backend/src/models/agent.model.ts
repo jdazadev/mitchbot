@@ -17,6 +17,7 @@ export interface Agent {
   name: string;
   description?: string;
   avatar?: string;
+  projectId?: ObjectId;  // Proyecto al que pertenece el agente
   modelId: ObjectId;     // Referencia a la colección ai_models
   modelValue?: string;   // Cache del value para uso rápido (e.g. 'llama3.2:3b')
   personality: AgentPersonality;

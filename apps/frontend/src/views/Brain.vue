@@ -5,7 +5,6 @@ import {
   type KnowledgeSource,
   type BrainStats,
 } from "../services/brain.service";
-import { settingsService } from "../services/settings.service";
 
 const isLoading = ref(true);
 const error = ref<string | null>(null);
@@ -277,27 +276,11 @@ async function handleSubmit() {
 
 async function resolveRagStatus() {
   try {
-    const embConfig = await settingsService.getActiveProvider('embedding');
-    if (!embConfig?.selectedModel) {
-      ragAvailable.value = false;
-      ragAlert.value = 'RAG no configurado: selecciona un modelo de embeddings en DevAdmin.';
-      return;
-    }
-    const [fileConfig, imageConfig] = await Promise.all([
-      settingsService.getActiveProvider('file'),
-      settingsService.getActiveProvider('image'),
-    ]);
-    if (!fileConfig?.selectedModel && !imageConfig?.selectedModel) {
-      fileAlert.value = 'Subida sin modelo file/image: la extraccion multimodal puede fallar.';
-    } else if (!fileConfig?.selectedModel) {
-      fileAlert.value = 'Subida sin modelo file: se intentara usar el modelo image.';
-    } else if (!imageConfig?.selectedModel) {
-      fileAlert.value = 'Subida sin modelo image: se usara el modelo file.';
-    } else {
-      fileAlert.value = null;
-    }
+    // Con el proveedor único (OpenRouter) las credenciales y el modelo de
+    // embeddings provienen del entorno, por lo que RAG siempre está disponible.
     ragAvailable.value = true;
     ragAlert.value = null;
+    fileAlert.value = null;
   } catch (err: any) {
     ragAvailable.value = false;
     ragAlert.value = 'No se pudo validar la configuración de embeddings.';
@@ -357,20 +340,14 @@ function startPolling() {
       </button>
     </div>
 
-    <div v-if="ragAlert" class="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-[18px]">warning</span>
-        {{ ragAlert }}
-      </div>
-      <a href="/devadmin/models" class="text-xs font-bold text-amber-700 underline">Ir a DevAdmin</a>
+    <div v-if="ragAlert" class="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700 flex items-center gap-3">
+      <span class="material-symbols-outlined text-[18px]">warning</span>
+      {{ ragAlert }}
     </div>
 
-    <div v-if="fileAlert" class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-600 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-[18px]">info</span>
-        {{ fileAlert }}
-      </div>
-      <a href="/devadmin/models" class="text-xs font-bold text-slate-600 underline">Ir a DevAdmin</a>
+    <div v-if="fileAlert" class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-600 flex items-center gap-3">
+      <span class="material-symbols-outlined text-[18px]">info</span>
+      {{ fileAlert }}
     </div>
 
     <!-- Stats Grid -->

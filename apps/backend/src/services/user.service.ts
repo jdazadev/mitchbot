@@ -68,13 +68,23 @@ export const userService = {
     return user;
   },
 
-  async create(data: { name: string; email: string; password: string; role: 'admin' | 'support' | 'assistant' }) {
+  async create(data: {
+    name: string;
+    email: string;
+    password: string;
+    role: 'admin' | 'support' | 'assistant';
+    projectIds?: string[];
+  }) {
     const usersColl = getUsersCollection();
 
     const exists = await usersColl.findOne({ email: data.email.toLowerCase() });
     if (exists) throw new Error('El email ya está registrado');
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
+
+    const projectIds = (data.projectIds || [])
+      .filter(id => ObjectId.isValid(id))
+      .map(id => new ObjectId(id));
 
     const newUser: User = {
       _id: new ObjectId(),
@@ -83,6 +93,8 @@ export const userService = {
       password: hashedPassword,
       role: data.role,
       status: 'Active',
+      projectIds,
+      activeProjectId: projectIds[0],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -92,13 +104,17 @@ export const userService = {
     return userWithoutPassword;
   },
 
-  async update(id: string, data: Partial<Pick<User, 'name' | 'email' | 'role' | 'status' | 'avatar'>>) {
+  async update(
+    id: string,
+    data: Partial<Omit<User, 'projectIds' | 'activeProjectId'>> & {
+      projectIds?: string[] | ObjectId[];
+      activeProjectId?: ObjectId | string;
+    }
+  ) {
     if (!ObjectId.isValid(id)) throw new Error('Invalid ID');
     const usersColl = getUsersCollection();
 
-    if (data.role === 'devadmin') {
-      throw new Error('No se puede asignar el rol devadmin por API');
-    }
+    const updateData: any = { ...data };
 
     // Si se actualiza el email, verificar que no exista
     if (data.email) {
@@ -107,12 +123,43 @@ export const userService = {
         _id: { $ne: new ObjectId(id) } 
       });
       if (exists) throw new Error('El email ya está en uso por otro usuario');
-      data.email = data.email.toLowerCase();
+      updateData.email = data.email.toLowerCase();
+    }
+
+    if (data.projectIds) {
+      const projectIds = data.projectIds
+        .map(pid => (pid instanceof ObjectId ? pid : new ObjectId(pid as string)))
+        .filter(pid => ObjectId.isValid(pid));
+      updateData.projectIds = projectIds;
+
+      const current = await usersColl.findOne({ _id: new ObjectId(id) });
+      const activeId = current?.activeProjectId?.toString();
+      if (!activeId || !projectIds.some(pid => pid.toString() === activeId)) {
+        updateData.activeProjectId = projectIds[0];
+      }
     }
 
     const result = await usersColl.findOneAndUpdate(
       { _id: new ObjectId(id) },
-      { $set: { ...data, updatedAt: new Date() } },
+      { $set: { ...updateData, updatedAt: new Date() } },
+      { returnDocument: 'after', projection: { password: 0 } }
+    );
+    return result;
+  },
+
+  /** Establece el proyecto activo de un usuario (validando pertenencia) */
+  async setActiveProject(id: string, projectId: string) {
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(projectId)) throw new Error('Invalid ID');
+    const usersColl = getUsersCollection();
+    const user = await usersColl.findOne({ _id: new ObjectId(id) });
+    if (!user) throw new Error('Usuario no encontrado');
+
+    const isMember = (user.projectIds || []).some(pid => pid.toString() === projectId);
+    if (!isMember) throw new Error('El usuario no pertenece a ese proyecto');
+
+    const result = await usersColl.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: { activeProjectId: new ObjectId(projectId), updatedAt: new Date() } },
       { returnDocument: 'after', projection: { password: 0 } }
     );
     return result;

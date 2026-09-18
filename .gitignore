@@ -11,6 +11,14 @@ dist/
 build/
 *.tsbuildinfo
 
+# ================================
+# Playwright (e2e)
+# ================================
+test-results/
+playwright-report/
+blob-report/
+tests/e2e/.auth/
+
 # Frontend: nunca emitir/rastrear artefactos compilados junto a los fuentes
 apps/frontend/src/**/*.js
 apps/frontend/src/**/*.js.map

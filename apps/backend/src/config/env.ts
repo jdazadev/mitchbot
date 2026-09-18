@@ -9,7 +9,12 @@ const envSchema = z.object({
   MONGODB_URI: z.string().url(),
   REDIS_URL: z.string().url(),
   QDRANT_URL: z.string().url(),
-  OLLAMA_URL: z.string().url(),
+
+  // Proveedor único de IA (OpenRouter)
+  OPENROUTER_API_KEY: z.string().optional(),
+  OPENROUTER_BASE_URL: z.string().url().default('https://openrouter.ai/api/v1'),
+  OPENROUTER_EMBEDDING_MODEL: z.string().default('openai/text-embedding-3-small'),
+  OPENROUTER_OCR_MODEL: z.string().default('google/gemini-2.0-flash-001'),
 
   // Auth
   JWT_SECRET: z.string().default('mitchbot-secret-change-in-production'),

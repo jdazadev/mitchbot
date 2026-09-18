@@ -359,7 +359,7 @@ export const ragService = {
   async convertPdfToImages(options: { filePath: string; maxPages?: number; projectId?: string }) {
     let scale = 4;
     if (options.projectId) {
-      const quality = (await configService.get('devadmin.pdf_preview_quality')) || 'medium';
+      const quality = (await configService.get('rag.pdf_preview_quality')) || 'medium';
       scale = quality === 'high' ? 6 : quality === 'low' ? 3 : 4;
     }
     return convertPdfToImages({ filePath: options.filePath, maxPages: options.maxPages, scale });

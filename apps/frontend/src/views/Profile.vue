@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { authService, type User } from '../services/auth.service';
+import { projectService, type Project } from '../services/project.service';
 
 const currentUser = ref<User | null>(null);
+const projects = ref<Project[]>([]);
 const profileForm = ref({ name: '', email: '', currentPassword: '', newPassword: '', confirmPassword: '' });
 const profileLoading = ref(false);
 const profileSuccess = ref('');
@@ -22,6 +24,11 @@ onMounted(async () => {
       profileForm.value.name = currentUser.value.name;
       profileForm.value.email = currentUser.value.email;
     }
+  }
+  try {
+    projects.value = await projectService.listProjects();
+  } catch {
+    projects.value = [];
   }
 });
 
@@ -79,6 +86,27 @@ async function handleUpdateProfile() {
             <p class="text-sm text-slate-500">{{ currentUser?.email || '' }}</p>
             <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-blue-50 text-blue-700 border border-blue-100">
               {{ currentUser?.role || '' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="mb-6 pb-6 border-b border-slate-100 dark:border-slate-700">
+          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">folder_open</span>
+            Mis Proyectos ({{ projects.length }})
+          </h2>
+          <div v-if="projects.length === 0" class="text-sm text-slate-400">Sin proyectos asignados</div>
+          <div v-else class="flex flex-wrap gap-2">
+            <span
+              v-for="p in projects"
+              :key="p._id"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium"
+            >
+              <span
+                class="material-symbols-outlined text-[14px]"
+                :class="p._id === currentUser?.activeProjectId ? 'text-blue-600' : 'text-slate-400'"
+              >folder</span>
+              {{ p.name }}
             </span>
           </div>
         </div>

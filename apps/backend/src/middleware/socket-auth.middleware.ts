@@ -46,18 +46,33 @@ export const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) =
     if (user.status === 'Inactive') {
       return next(new Error('Cuenta desactivada'));
     }
-    
-    // 6. Obtener proyecto activo
-    const project = await projectService.getActiveProject();
-    
+
+    // 6. Resolver el proyecto del socket: el indicado al conectar (validando
+    //    pertenencia) o el proyecto activo del usuario
+    const memberProjectIds = (user.projectIds || []).map(id => id.toString());
+    const requestedProjectId = (
+      socket.handshake.auth?.projectId ||
+      socket.handshake.query?.projectId
+    ) as string | undefined;
+
+    if (requestedProjectId && !memberProjectIds.includes(requestedProjectId)) {
+      return next(new Error('No tienes acceso a este proyecto'));
+    }
+
+    const resolvedProjectId =
+      requestedProjectId ||
+      (user.activeProjectId && memberProjectIds.includes(user.activeProjectId.toString())
+        ? user.activeProjectId.toString()
+        : memberProjectIds[0]);
+
     // 7. Adjuntar datos al socket
     socket.data.user = user;
     socket.data.userId = decoded.userId;
-    socket.data.projectId = project?._id?.toString();
+    socket.data.projectId = resolvedProjectId;
     socket.data.role = user.role;
-    
-    logger.info(`[WS] Socket autenticado: ${socket.id}, user: ${decoded.userId}, role: ${user.role}`);
-    
+
+    logger.info(`[WS] Socket autenticado: ${socket.id}, user: ${decoded.userId}, role: ${user.role}, project: ${resolvedProjectId || 'none'}`);
+
     next();
   } catch (error: any) {
     logger.error(`[WS] Auth error: ${error.message}`, { socketId: socket.id });

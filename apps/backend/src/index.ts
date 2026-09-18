@@ -6,12 +6,10 @@ import { connectDatabase } from './config/database';
 import { connectRedis } from './config/redis';
 import { connectQdrant } from './config/qdrant';
 import { connectNats } from './config/nats';
-import { checkOllama } from './config/ollama';
 import { initSocket } from './websocket/socket';
 import apiRoutes from './routes';
 import { errorHandler } from './middleware/error.middleware';
 import { logger } from './utils/logger';
-import { aiModelService } from './services/ai-model.service';
 import { projectContextService } from './services/project-context.service';
 import './queues/rag-upload.worker';
 import { createReindexWorker } from './queues/rag-reindex.worker';
@@ -25,12 +23,11 @@ const httpServer = createServer(app);
         console.log('\n--- 🔌 Initializing Backend Infrastructure ---');
         
         // Parallel or sequential initialization based on criticality
-        const [mongo, redis, qdrant, nats, ollama] = await Promise.allSettled([
+        const [mongo, redis, qdrant, nats] = await Promise.allSettled([
             connectDatabase().then(() => true).catch(() => false),
             connectRedis().then(() => true).catch(() => false),
             connectQdrant().then(() => true).catch(() => false),
-            connectNats().then((res) => res).catch(() => false),
-            checkOllama().then((res) => res).catch(() => false)
+            connectNats().then((res) => res).catch(() => false)
         ]);
         
         console.log('\n--- 📊 Infrastructure Status Report ---');
@@ -38,18 +35,16 @@ const httpServer = createServer(app);
             MongoDB: (mongo.status === 'fulfilled' && mongo.value) ? '✅ Connected' : '❌ Failed',
             Redis: (redis.status === 'fulfilled' && redis.value) ? '✅ Connected' : '❌ Failed',
             Qdrant: (qdrant.status === 'fulfilled' && qdrant.value) ? '✅ Connected' : '❌ Failed',
-            Ollama: (ollama.status === 'fulfilled' && ollama.value) ? '✅ Connected' : '❌ Failed',
             NATS: (nats.status === 'fulfilled' && nats.value) ? '✅ Connected' : '❌ Failed',
         });
         console.log('---------------------------------------\n');
 
-        // Seed AI models if MongoDB connected
+        // Seed project context if MongoDB connected
         if (mongo.status === 'fulfilled' && mongo.value) {
           try {
-            await aiModelService.seedDefaults();
             await projectContextService.ensureProjectContext();
           } catch (e) {
-            console.warn('⚠️ Could not seed AI models:', e);
+            console.warn('⚠️ Could not initialize project context:', e);
           }
         }
 

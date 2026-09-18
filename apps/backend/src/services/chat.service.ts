@@ -10,7 +10,7 @@ import { aiModelService } from './ai-model.service';
 import { toolService, ParsedToolCall } from './tool.service';
 import { toolExecutionService } from './tool-execution.service';
 import { buildSystemPrompt, getDefaultPersonality } from './prompt-builder.service';
-import { getIO, emitToRoom } from '../websocket/socket';
+import { emitToRoom, emitToProject } from '../websocket/socket';
 import { ToolContext } from '../tools/types';
 import { logger } from '../utils/logger';
 
@@ -156,7 +156,7 @@ export const chatService = {
     );
 
     try {
-      getIO().emit('chat:new_conversation', conversation);
+      emitToProject(conversation.projectId?.toString(), 'chat:new_conversation', conversation);
     } catch (e) {
       logger.warn('Socket emit new_conversation failed', e);
     }
@@ -220,13 +220,13 @@ export const chatService = {
     }
 
     if (sender === 'contact') {
-      const agent = await agentService.getActiveAgent();
+      const conv = await conversationsColl.findOne({ _id: new ObjectId(conversationId) });
+      const agent = await agentService.getActiveAgent(conv?.projectId?.toString());
       if (agent && this.isGoodbyeMessage(content, agent.config?.goodbyeKeywords || [])) {
         await this.handleAutoGoodbye(conversationId, agent);
         return newMessage;
       }
 
-      const conv = await conversationsColl.findOne({ _id: new ObjectId(conversationId) });
       logger.info(`[Chat] Sender=contact, conv mode=${conv?.mode}, will trigger bot: ${conv?.mode === 'auto_pilot'}`);
       if (conv?.mode === 'auto_pilot') {
         logger.info(`[Chat] >>> Triggering generateBotResponse for ${conversationId}`);
@@ -260,13 +260,17 @@ export const chatService = {
       }
     }
 
-    const existingContact = await contactsColl.findOne({
+    const existingQuery: any = {
       $or: [
         { phone: conversation.clientInfo.identifier },
         { email: conversation.clientInfo.identifier },
         { 'metadata.identifier': conversation.clientInfo.identifier },
       ].filter(Boolean),
-    });
+    };
+    if (conversation.projectId) {
+      existingQuery.projectId = conversation.projectId;
+    }
+    const existingContact = await contactsColl.findOne(existingQuery);
 
     let contactId: ObjectId;
 
@@ -275,6 +279,7 @@ export const chatService = {
       logger.info(`Contact already exists: ${contactId}, linking to conversation`);
     } else {
       const newContact: Contact = {
+        projectId: conversation.projectId,
         name: conversation.clientInfo.name || 'Cliente Nuevo',
         phone: conversation.clientInfo.phone || conversation.clientInfo.identifier,
         email: conversation.clientInfo.email,
@@ -343,7 +348,7 @@ export const chatService = {
         throw new Error('No hay proyecto asociado a la conversación');
       }
 
-      const agent = await agentService.getActiveAgent();
+      const agent = await agentService.getActiveAgent(projectId);
       if (!agent) {
         throw new Error('No hay agente activo configurado. Ve a Settings > Agente IA.');
       }
@@ -787,7 +792,7 @@ export const chatService = {
     if (!conversation) throw new Error('Conversación no encontrada');
 
     const projectId = execution.projectId?.toString() || conversation.projectId?.toString() || '';
-    const agent = await agentService.getActiveAgent();
+    const agent = await agentService.getActiveAgent(projectId);
 
     if (args.action === 'cancel') {
       await toolExecutionService.setStatus(execution._id!, 'cancelled', undefined, args.userId);

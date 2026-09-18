@@ -4,8 +4,12 @@ import { aiModelService } from './ai-model.service';
 import { getDefaultPersonality } from './prompt-builder.service';
 
 export const agentService = {
-  async findAll() {
-    return getAgentsCollection().find().sort({ createdAt: -1 }).toArray();
+  async findAll(projectId?: string) {
+    const query: any = {};
+    if (projectId && ObjectId.isValid(projectId)) {
+      query.projectId = new ObjectId(projectId);
+    }
+    return getAgentsCollection().find(query).sort({ createdAt: -1 }).toArray();
   },
 
   async findById(id: string) {
@@ -36,16 +40,14 @@ export const agentService = {
         modelId = aiModel._id!;
       }
     }
-    // Si ni modelValue ni model, usar fallback
-    else if (!modelValue && !modelId) {
-      modelValue = 'llama3.2:3b';
-    }
+    // Si ni modelValue ni model, se deja sin modelo: ai.service pedirá seleccionar uno
 
     const newAgent: Agent = {
       _id: new ObjectId(),
       name: data.name,
       description: data.description,
       avatar: data.avatar,
+      projectId: data.projectId ? new ObjectId(data.projectId as any) : undefined,
       modelId: modelId || new ObjectId(), // placeholder si no se encuentra
       modelValue: modelValue,
       personality: {
@@ -118,8 +120,12 @@ export const agentService = {
     return result.deletedCount === 1;
   },
 
-  /** Obtiene el agente activo (el principal para el bot) */
-  async getActiveAgent() {
-    return getAgentsCollection().findOne({ status: 'active' });
+  /** Obtiene el agente activo del proyecto indicado */
+  async getActiveAgent(projectId?: string) {
+    const query: any = { status: 'active' };
+    if (projectId && ObjectId.isValid(projectId)) {
+      query.projectId = new ObjectId(projectId);
+    }
+    return getAgentsCollection().findOne(query);
   },
 };

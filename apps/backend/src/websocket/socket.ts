@@ -61,6 +61,11 @@ export const initSocket = (httpServer: HttpServer) => {
   io.on('connection', (socket: Socket) => {
     logger.info(`[WS] Socket connected: ${socket.id}, isPublic: ${socket.data.isPublic || false}`);
 
+    // Unir el socket a la room de su proyecto para eventos scoped por proyecto
+    if (socket.data.projectId) {
+      socket.join(projectRoom(socket.data.projectId));
+    }
+
     // Evento: Unirse a una room (conversación)
     socket.on('join:room', async (roomId: string) => {
       try {
@@ -203,6 +208,23 @@ export const getIO = () => {
     throw new Error('Socket.io not initialized');
   }
   return io;
+};
+
+/** Room lógica asociada a un proyecto */
+export const projectRoom = (projectId: string) => `project:${projectId}`;
+
+/**
+ * Emitir un evento a todos los sockets conectados a un proyecto.
+ * Evita que clientes de otros proyectos reciban el evento.
+ */
+export const emitToProject = (projectId: string | undefined, event: string, data: any) => {
+  if (!projectId) return;
+  try {
+    const io = getIO();
+    io.to(projectRoom(projectId)).emit(event, data);
+  } catch (error: any) {
+    logger.error(`[WS] Error emitting to project ${projectId}: ${error.message}`);
+  }
 };
 
 /**

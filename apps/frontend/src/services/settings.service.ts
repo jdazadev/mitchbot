@@ -4,17 +4,6 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 // =================== TYPES ===================
 
-export interface AIModel {
-  _id: string;
-  name: string;
-  value: string;
-  provider: string;
-  description?: string;
-  category?: string;
-  isActive: boolean;
-  isLocal?: boolean;
-}
-
 export interface AgentPersonality {
   role: 'assistant' | 'teacher' | 'seller' | 'support' | 'customer_service';
   traits: string[];
@@ -54,36 +43,11 @@ export interface ConfigData {
   options: { autoCreateContact: boolean };
 }
 
-/** Modelo de Ollama */
-export interface OllamaModelInfo {
-  name: string;
-  model: string;
-  size: number;
-  digest: string;
-  details?: {
-    format?: string;
-    family?: string;
-    parameter_size?: string;
-    quantization_level?: string;
-  };
-  modified_at?: string;
-}
-
-/** Modelo remoto (de OpenRouter o Gemini API) */
-export interface RemoteModelInfo {
-  id: string;
-  name: string;
-  description?: string;
-  contextLength?: number;
-  pricing?: { prompt: string; completion: string };
-}
-
-/** Configuración de proveedor guardada */
+/** Configuración de proveedor guardada (sin credenciales) */
 export interface ProviderConfig {
   _id?: string;
   type: 'llm' | 'embedding' | 'file' | 'image' | 'audio' | 'ocr';
   provider: string;
-  apiKey?: string; // Masked
   baseUrl?: string;
   selectedModel?: string;
   selectedModelName?: string;
@@ -162,73 +126,7 @@ class SettingsService {
     return data;
   }
 
-  // =================== AI MODELS ===================
-
-  async getAIModels(): Promise<AIModel[]> {
-    const res = await fetch(`${API_BASE}/ai-models`, {
-      headers: authService.getHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al obtener modelos IA');
-    return data;
-  }
-
-  // =================== OLLAMA MODELS ===================
-
-  async getOllamaModels(): Promise<OllamaModelInfo[]> {
-    const res = await fetch(`${API_BASE}/ai-models/ollama/models`, {
-      headers: authService.getHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al obtener modelos de Ollama');
-    return data;
-  }
-
-  // =================== REMOTE MODELS ===================
-
-  async getOpenRouterModels(apiKey?: string): Promise<RemoteModelInfo[]> {
-    const url = new URL(`${API_BASE}/ai-models/remote/openrouter`);
-    if (apiKey) url.searchParams.set('apiKey', apiKey);
-    const res = await fetch(url.toString(), {
-      headers: authService.getHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al obtener modelos OpenRouter');
-    return data;
-  }
-
-  async getOpenRouterEmbeddings(apiKey?: string): Promise<RemoteModelInfo[]> {
-    const url = new URL(`${API_BASE}/ai-models/remote/openrouter/embeddings`);
-    if (apiKey) url.searchParams.set('apiKey', apiKey);
-    const res = await fetch(url.toString(), {
-      headers: authService.getHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al obtener embeddings OpenRouter');
-    return data;
-  }
-
-  async getGeminiModels(apiKey?: string): Promise<RemoteModelInfo[]> {
-    const url = new URL(`${API_BASE}/ai-models/remote/gemini`);
-    if (apiKey) url.searchParams.set('apiKey', apiKey);
-    const res = await fetch(url.toString(), {
-      headers: authService.getHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al obtener modelos Gemini');
-    return data;
-  }
-
   // =================== PROVIDER CONFIGS ===================
-
-  async getProviderConfigs(): Promise<ProviderConfig[]> {
-    const res = await fetch(`${API_BASE}/ai-models/providers/configs`, {
-      headers: authService.getHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al obtener configuraciones');
-    return data;
-  }
 
   async getActiveProvider(type: 'llm' | 'embedding' | 'file' | 'image' | 'audio' | 'ocr'): Promise<ProviderConfig | null> {
     const res = await fetch(`${API_BASE}/ai-models/providers/active/${type}`, {
@@ -236,62 +134,6 @@ class SettingsService {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al obtener proveedor activo');
-    return data;
-  }
-
-  async saveProviderConfig(data: {
-    type: 'llm' | 'embedding' | 'file' | 'image' | 'audio' | 'ocr';
-    provider: string;
-    apiKey?: string;
-    baseUrl?: string;
-    selectedModel?: string;
-    selectedModelName?: string;
-  }): Promise<ProviderConfig> {
-    const res = await fetch(`${API_BASE}/ai-models/providers/config`, {
-      method: 'POST',
-      headers: authService.getHeaders(),
-      body: JSON.stringify(data),
-    });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || 'Error al guardar configuración');
-    return result;
-  }
-
-  async deleteProviderConfig(type: 'llm' | 'embedding' | 'file' | 'image' | 'audio' | 'ocr', provider: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/ai-models/providers/config/${type}/${provider}`, {
-      method: 'DELETE',
-      headers: authService.getHeaders(),
-    });
-    if (!res.ok && res.status !== 204) {
-      const data = await res.json();
-      throw new Error(data.error || 'Error al eliminar');
-    }
-  }
-
-  async testLLMConnection(provider: string, apiKey?: string, model?: string): Promise<{ success: boolean; message?: string; error?: string }> {
-    const res = await fetch(`${API_BASE}/ai-models/providers/test`, {
-      method: 'POST',
-      headers: authService.getHeaders(),
-      body: JSON.stringify({ provider, apiKey, model }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al probar conexión');
-    return data;
-  }
-
-  async testOcrConnection(params: {
-    provider?: string;
-    apiKey?: string;
-    model?: string;
-    baseUrl?: string;
-  }): Promise<{ success: boolean; message?: string; error?: string }> {
-    const res = await fetch(`${API_BASE}/ai-models/providers/test-ocr`, {
-      method: 'POST',
-      headers: authService.getHeaders(),
-      body: JSON.stringify(params),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al probar conexión OCR');
     return data;
   }
 

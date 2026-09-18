@@ -1,6 +1,6 @@
-import { OllamaEmbeddings } from '@langchain/ollama';
-import env from '../config/env';
 import { configService } from './config.service';
+import { llmProviderService } from './llm-provider.service';
+import env from '../config/env';
 import { logger } from '../utils/logger';
 
 /**
@@ -9,11 +9,11 @@ import { logger } from '../utils/logger';
  * Estrategia:
  * 1. Si el re-ranker está deshabilitado (`rag.use_reranker = false`) o hay pocos
  *    documentos, se devuelven tal cual (similarity-only).
- * 2. Se intenta un re-ranking local con embeddings de Ollama (bi-encoder, modelo
- *    configurable). Es rápido y no requiere servicios externos.
- * 3. Si el modelo local no está disponible, se usa una heurística de solapamiento
- *    de términos (keyword/bigramas).
- * 4. Ante cualquier error, degrada a similarity-only (no bloquea el chat).
+ * 2. Se intenta un re-ranking con embeddings de OpenRouter (bi-encoder, modelo
+ *    configurable vía `rag.reranker_model`).
+ * 3. Ante cualquier error o si no hay credencial, degrada a una heurística de
+ *    solapamiento de términos (keyword/bigramas) y, si esta falla, a
+ *    similarity-only (no bloquea el chat).
  */
 
 export interface RankableDocument {
@@ -101,35 +101,15 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
-const RERANK_TIMEOUT_MS = 2500;
-const modelAvailability = new Map<string, { available: boolean; checkedAt: number }>();
+const RERANK_TIMEOUT_MS = 5000;
 
-/** Comprueba (con caché) si un modelo existe en Ollama para no esperar timeouts */
-async function isOllamaModelAvailable(model: string): Promise<boolean> {
-  const cached = modelAvailability.get(model);
-  if (cached && Date.now() - cached.checkedAt < 60_000) return cached.available;
-
-  try {
-    const res = await withTimeout(fetch(`${env.OLLAMA_URL}/api/tags`), 1500);
-    if (!res.ok) throw new Error(`status ${res.status}`);
-    const data = await res.json() as { models?: any[] };
-    const names = (data.models || []).map(m => m.name || m.model || '');
-    const available = names.some(n => n === model || n.startsWith(`${model}:`) || n.startsWith(model));
-    modelAvailability.set(model, { available, checkedAt: Date.now() });
-    return available;
-  } catch {
-    modelAvailability.set(model, { available: false, checkedAt: Date.now() });
-    return false;
-  }
-}
-
-/** Re-ranking local usando embeddings de Ollama */
+/** Re-ranking con embeddings de OpenRouter */
 async function embeddingRerank(
   query: string,
   documents: RankableDocument[],
   model: string,
 ): Promise<RankableDocument[]> {
-  const embeddings = new OllamaEmbeddings({ model, baseUrl: env.OLLAMA_URL });
+  const embeddings = llmProviderService.createEmbeddings({ provider: 'openrouter', model });
   const inputs = [query, ...documents.map(d => d.pageContent || '')];
   const [queryVector, ...documentVectors] = await withTimeout(embeddings.embedDocuments(inputs), RERANK_TIMEOUT_MS);
 
@@ -171,20 +151,19 @@ export const rerankerService = {
     }
 
     try {
-      const provider = await configService.get('rag.reranker_provider');
-      const model = await configService.get('rag.reranker_model');
+      const model = (await configService.get('rag.reranker_model')) || env.OPENROUTER_EMBEDDING_MODEL;
 
-      if (provider === 'ollama' && model && await isOllamaModelAvailable(model)) {
+      if (env.OPENROUTER_API_KEY) {
         const reranked = await embeddingRerank(query, documents, model);
-        logger.info(`[Reranker] ${documents.length} docs re-rankeados con embeddings (${model})`);
+        logger.info(`[Reranker] ${documents.length} docs re-rankeados con embeddings de OpenRouter (${model})`);
         return reranked.slice(0, finalK);
       }
 
       const reranked = heuristicRerank(query, documents);
-      logger.info(`[Reranker] ${documents.length} docs re-rankeados con heurística`);
+      logger.info(`[Reranker] ${documents.length} docs re-rankeados con heurística (sin credencial de OpenRouter)`);
       return reranked.slice(0, finalK);
     } catch (error: any) {
-      logger.warn(`[Reranker] Fallback a similarity-only: ${error?.message || error}`);
+      logger.warn(`[Reranker] Fallback a heurística: ${error?.message || error}`);
       try {
         return heuristicRerank(query, documents).slice(0, finalK);
       } catch {

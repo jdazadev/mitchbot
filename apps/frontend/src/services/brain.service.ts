@@ -104,7 +104,7 @@ export const brainService = {
     const token = authService.getToken();
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch(`${API_URL}/brain/devadmin/extract`, {
+    const res = await fetch(`${API_URL}/brain/dev/extract`, {
       method: 'POST',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -121,7 +121,7 @@ export const brainService = {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('maxPages', String(maxPages));
-    const res = await fetch(`${API_URL}/brain/devadmin/pdf-to-images`, {
+    const res = await fetch(`${API_URL}/brain/dev/pdf-to-images`, {
       method: 'POST',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

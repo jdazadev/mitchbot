@@ -11,6 +11,7 @@ interface FindAllOptions {
   sortOrder?: 'asc' | 'desc';
   tags?: string[];
   includeArchived?: boolean;
+  projectId?: string;
 }
 
 export const contactService = {
@@ -25,10 +26,15 @@ export const contactService = {
       sortOrder = 'desc',
       tags,
       includeArchived = false,
+      projectId,
     } = options;
 
     const contactsColl = getContactsCollection();
     const query: any = {};
+
+    if (projectId && ObjectId.isValid(projectId)) {
+      query.projectId = new ObjectId(projectId);
+    }
 
     // Por defecto, excluir contactos archivados
     if (!includeArchived && status !== 'Archived') {
@@ -86,9 +92,11 @@ export const contactService = {
     };
   },
 
-  async findById(id: string) {
+  async findById(id: string, projectId?: string) {
     if (!ObjectId.isValid(id)) throw new Error('Invalid ID');
-    const contact = await getContactsCollection().findOne({ _id: new ObjectId(id) });
+    const query: any = { _id: new ObjectId(id) };
+    if (projectId && ObjectId.isValid(projectId)) query.projectId = new ObjectId(projectId);
+    const contact = await getContactsCollection().findOne(query);
     return contact;
   },
 
@@ -118,15 +126,18 @@ export const contactService = {
     return { ...newContact, _id: result.insertedId };
   },
 
-  async update(id: string, updateData: Partial<Contact>) {
+  async update(id: string, updateData: Partial<Contact>, projectId?: string) {
     if (!ObjectId.isValid(id)) throw new Error('Invalid ID');
     const contactsColl = getContactsCollection();
     
     // No permitir sobrescribir _id, createdAt
     const { _id, createdAt, ...safeUpdateData } = updateData as any;
-    
+
+    const query: any = { _id: new ObjectId(id) };
+    if (projectId && ObjectId.isValid(projectId)) query.projectId = new ObjectId(projectId);
+
     const result = await contactsColl.findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      query,
       { $set: { ...safeUpdateData, updatedAt: new Date() } },
       { returnDocument: 'after' }
     );
@@ -136,11 +147,13 @@ export const contactService = {
   /**
    * Archivar contacto (soft delete). No se elimina, solo cambia el status a "Archived".
    */
-  async archive(id: string) {
+  async archive(id: string, projectId?: string) {
     if (!ObjectId.isValid(id)) throw new Error('Invalid ID');
     const contactsColl = getContactsCollection();
+    const query: any = { _id: new ObjectId(id) };
+    if (projectId && ObjectId.isValid(projectId)) query.projectId = new ObjectId(projectId);
     const result = await contactsColl.findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      query,
       { $set: { status: 'Archived' as const, updatedAt: new Date() } },
       { returnDocument: 'after' }
     );
@@ -150,11 +163,13 @@ export const contactService = {
   /**
    * Restaurar contacto archivado.
    */
-  async restore(id: string) {
+  async restore(id: string, projectId?: string) {
     if (!ObjectId.isValid(id)) throw new Error('Invalid ID');
     const contactsColl = getContactsCollection();
+    const query: any = { _id: new ObjectId(id) };
+    if (projectId && ObjectId.isValid(projectId)) query.projectId = new ObjectId(projectId);
     const result = await contactsColl.findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      query,
       { $set: { status: 'Active' as const, updatedAt: new Date() } },
       { returnDocument: 'after' }
     );

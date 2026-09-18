@@ -51,14 +51,9 @@ const router = createRouter({
       component: () => import('../views/Settings.vue'),
     },
     {
-      path: '/devadmin/models',
-      name: 'devadmin-models',
-      component: () => import('../views/DevAdminModels.vue'),
-    },
-    {
-      path: '/devadmin/tests',
-      name: 'devadmin-tests',
-      component: () => import('../views/DevAdminTests.vue'),
+      path: '/dev/tests',
+      name: 'dev-tests',
+      component: () => import('../views/DevTests.vue'),
     },
     {
       path: '/profile',
@@ -90,7 +85,6 @@ router.beforeEach(async (to, _from, next) => {
   // 2. Verificar autenticación
   if (!authService.isAuthenticated()) {
     authService.clearSession()
-    projectService.clearLocal()
     return next({ name: 'login' })
   }
 
@@ -99,26 +93,16 @@ router.beforeEach(async (to, _from, next) => {
     return next()
   }
 
-  // 4. Verificar si tiene proyecto configurado
-  // Primero revisar cache local, si no hay, preguntar al servidor
-  let hasProject = projectService.hasLocalProject()
-  if (!hasProject) {
-    try {
-      hasProject = await projectService.checkProject()
-    } catch {
-      hasProject = false
-    }
+  // 4. Verificar si el usuario tiene proyectos (fuente de verdad: el servidor)
+  let hasProject = false
+  try {
+    hasProject = await projectService.checkProject()
+  } catch {
+    hasProject = false
   }
 
   if (!hasProject) {
-    return next({ name: 'setup' })
-  }
-
-  const user = authService.getUser();
-  if (to.name === 'devadmin-models' || to.name === 'devadmin-tests') {
-    if (!user || user.role !== 'devadmin') {
-      return next({ name: 'dashboard' })
-    }
+    return next({ name: 'setup' });
   }
 
   next()

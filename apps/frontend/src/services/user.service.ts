@@ -6,9 +6,11 @@ export interface SystemUser {
   _id: string;
   name: string;
   email: string;
-  role: 'devadmin' | 'admin' | 'support' | 'assistant';
+  role: 'admin' | 'support' | 'assistant';
   avatar?: string;
   status: 'Active' | 'Inactive';
+  projectIds?: string[];
+  activeProjectId?: string;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -66,6 +68,7 @@ class UserService {
     email: string;
     password: string;
     role: 'admin' | 'support' | 'assistant';
+    projectIds?: string[];
   }): Promise<SystemUser> {
     const res = await fetch(`${API_BASE}/users`, {
       method: 'POST',
@@ -83,6 +86,7 @@ class UserService {
     email?: string;
     role?: 'admin' | 'support' | 'assistant';
     status?: 'Active' | 'Inactive';
+    projectIds?: string[];
   }): Promise<SystemUser> {
     const res = await fetch(`${API_BASE}/users/${id}`, {
       method: 'PUT',

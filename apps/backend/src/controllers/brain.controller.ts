@@ -259,7 +259,7 @@ export const deleteSource = async (req: Request, res: Response, next: NextFuncti
 };
 
 /**
- * Extraer texto de un archivo sin indexar (DevAdmin).
+ * Extraer texto de un archivo sin indexar (herramienta interna).
  */
 export const extractTextOnly = async (req: Request, res: Response, next: NextFunction) => {
   const filePath = req.file?.path;
@@ -300,7 +300,7 @@ export const extractTextOnly = async (req: Request, res: Response, next: NextFun
 };
 
 /**
- * Convertir PDF a imagenes (DevAdmin).
+ * Convertir PDF a imagenes (herramienta interna).
  */
 export const convertPdfToImages = async (req: Request, res: Response, next: NextFunction) => {
   const filePath = req.file?.path;

@@ -8,10 +8,21 @@ const baseUrl = SOCKET_URL.replace('/api', '');
 // Get auth token from localStorage
 const getAuthToken = () => {
   try {
-    const session = localStorage.getItem('mitchbot_session');
-    if (session) {
-      const parsed = JSON.parse(session);
-      return parsed.token || null;
+    return localStorage.getItem('mitchbot_token');
+  } catch {
+    return null;
+  }
+};
+
+// Get active project id from localStorage
+const getActiveProjectId = () => {
+  try {
+    const stored = localStorage.getItem('mitchbot_active_project');
+    if (stored) return stored;
+    const user = localStorage.getItem('mitchbot_user');
+    if (user) {
+      const parsed = JSON.parse(user);
+      return parsed.activeProjectId || null;
     }
   } catch {
     return null;
@@ -22,18 +33,20 @@ const getAuthToken = () => {
 export const socketService = {
   socket: null as Socket | null,
 
-  connect(options?: { isPublic?: boolean; slug?: string }) {
+  connect(options?: { isPublic?: boolean; slug?: string; projectId?: string }) {
     if (this.socket?.connected) return;
 
     const token = getAuthToken();
     const isPublic = options?.isPublic || false;
     const slug = options?.slug;
+    const projectId = options?.projectId || getActiveProjectId();
 
     this.socket = io(baseUrl, {
       transports: ['websocket'],
       autoConnect: true,
       auth: {
         token: token || undefined,
+        projectId: projectId || undefined,
       },
       query: {
         isPublic: isPublic ? 'true' : undefined,
@@ -59,6 +72,12 @@ export const socketService = {
       this.socket.disconnect();
       this.socket = null;
     }
+  },
+
+  /** Reconectar el socket a otro proyecto (sale de las salas previas) */
+  reconnect(projectId: string) {
+    this.disconnect();
+    this.connect({ projectId });
   },
 
   joinRoom(roomId: string) {

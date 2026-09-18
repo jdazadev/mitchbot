@@ -1,9 +1,9 @@
 import { HumanMessage, SystemMessage, BaseMessage } from '@langchain/core/messages';
 import { llmProviderService, LLMProviderConfig } from './llm-provider.service';
 import { agentService } from './agent.service';
-import { aiModelService } from './ai-model.service';
 import { toolService, ParsedToolCall } from './tool.service';
 import { logger } from '../utils/logger';
+import env from '../config/env';
 
 export interface ToolResultSummary {
   name: string;
@@ -57,10 +57,6 @@ export const aiService = {
     const config = await this.resolveModelConfig(projectId);
     logger.info(`[AI] Invoking: provider=${config.provider}, model=${config.model}`);
 
-    if (config.provider === 'ollama') {
-      await this.validateOllamaModel(config.model);
-    }
-
     const chatModel = llmProviderService.createChatModel(config);
 
     const fullSystemPrompt = context
@@ -112,10 +108,6 @@ export const aiService = {
     const config = await this.resolveModelConfig(projectId);
     logger.info(`[AI Streaming] Invoking: provider=${config.provider}, model=${config.model}`);
 
-    if (config.provider === 'ollama') {
-      await this.validateOllamaModel(config.model);
-    }
-
     const chatModel = llmProviderService.createChatModel(config);
 
     const fullSystemPrompt = context
@@ -159,10 +151,8 @@ export const aiService = {
    * Flujo:
    *  1. Si `toolResults` viene, genera la respuesta final (streaming) usando los
    *     resultados ya ejecutados.
-   *  2. Si hay tools y el proveedor soporta tool calling nativo (openrouter/gemini),
-   *     hace streaming con `bindTools` y devuelve los tool_calls detectados.
-   *  3. Si el proveedor no soporta tools nativo (ollama), inyecta la descripción de
-   *     herramientas en el system prompt y detecta el JSON de invocación.
+   *  2. Si hay tools, hace streaming con `bindTools` (tool calling nativo de
+   *     OpenRouter) y devuelve los tool_calls detectados.
    */
   async generateResponseStreamWithTools(params: {
     systemPrompt: string;
@@ -175,22 +165,13 @@ export const aiService = {
   }): Promise<GenerationWithToolsResult> {
     const config = await this.resolveModelConfig(params.projectId);
     logger.info(`[AI Tools] Invoking: provider=${config.provider}, model=${config.model}, tools=${params.toolsEnabled !== false}`);
-    if (config.provider === 'ollama') {
-      await this.validateOllamaModel(config.model);
-    }
 
     const chatModel: any = llmProviderService.createChatModel(config);
-    const supportsNative = config.provider === 'openrouter' || config.provider === 'gemini';
     const detectingTools = params.toolsEnabled !== false && !params.toolResults?.length;
-    const nativeTools = detectingTools && supportsNative;
 
-    let fullSystemPrompt = params.context
+    const fullSystemPrompt = params.context
       ? `${params.systemPrompt}\n\nContexto relevante:\n${params.context}`
       : params.systemPrompt;
-
-    if (detectingTools && !nativeTools) {
-      fullSystemPrompt += `\n\n${toolService.instructionsText()}`;
-    }
 
     const messages: BaseMessage[] = [
       new SystemMessage(fullSystemPrompt),
@@ -210,20 +191,7 @@ export const aiService = {
 
     const startTime = Date.now();
     try {
-      // Proveedor sin tools nativo en fase de detección: una sola invocación sin streaming
-      if (detectingTools && !nativeTools) {
-        const response = await chatModel.invoke(messages);
-        const content = normalizeChunkContent(response?.content).trim();
-        const parsed = toolService.parseToolCallFromText(content);
-        if (parsed) {
-          logger.info(`[AI Tools] Tool call detectado (heurístico): ${parsed.name}`);
-          return { text: '', toolCalls: [parsed], provider: config.provider, model: config.model, native: false };
-        }
-        if (content) params.onChunk?.(content);
-        return { text: content, toolCalls: [], provider: config.provider, model: config.model, native: false };
-      }
-
-      const boundModel = nativeTools ? chatModel.bindTools(toolService.schemas()) : chatModel;
+      const boundModel = detectingTools ? chatModel.bindTools(toolService.schemas()) : chatModel;
       const stream = await boundModel.stream(messages);
 
       let fullContent = '';
@@ -269,57 +237,38 @@ export const aiService = {
       }
 
       logger.info(`[AI Tools] Respuesta OK (${fullContent.length} chars) en ${Date.now() - startTime}ms`);
-      return { text: fullContent, toolCalls: [], provider: config.provider, model: config.model, native: nativeTools };
+      return { text: fullContent, toolCalls: [], provider: config.provider, model: config.model, native: true };
     } catch (error: any) {
       logger.error(`[AI Tools] Error from ${config.provider}/${config.model}:`, error?.message || error);
       throw new Error(`Error del proveedor ${config.provider} (${config.model}): ${error.message}`);
     }
   },
 
-  async resolveModelConfig(projectId?: string): Promise<LLMProviderConfig> {
-    const providerConfig = await aiModelService.getActiveProviderConfig('llm', projectId);
-    if (!providerConfig) {
-      throw new Error('No hay proveedor LLM configurado. Ve a Settings > Proveedor LLM para configurar uno.');
-    }
-
+  async resolveModelConfig(_projectId?: string): Promise<LLMProviderConfig> {
     const agent = await agentService.getActiveAgent();
     if (!agent) {
       throw new Error('No hay agente activo. Ve a Settings > Agente IA para configurar uno.');
     }
 
-    const provider = providerConfig.provider as LLMProviderConfig['provider'];
-    const model = agent.modelValue || providerConfig.selectedModel || '';
+    const model = agent.modelValue || '';
 
     if (!model) {
       throw new Error(`No hay modelo seleccionado para el agente "${agent.name}". Ve a Settings > Agente IA y selecciona un modelo.`);
     }
 
-    logger.info(`[AI] Resolved: provider=${provider}, model=${model}, hasApiKey=${!!providerConfig.apiKey}`);
+    if (!env.OPENROUTER_API_KEY) {
+      throw new Error('Falta la credencial del proveedor: define OPENROUTER_API_KEY en el entorno.');
+    }
+
+    logger.info(`[AI] Resolved: provider=openrouter, model=${model}`);
 
     return {
-      provider,
+      provider: 'openrouter',
       model,
-      apiKey: providerConfig.apiKey,
-      baseUrl: providerConfig.baseUrl,
+      apiKey: env.OPENROUTER_API_KEY,
+      baseUrl: env.OPENROUTER_BASE_URL,
       temperature: agent.config?.temperature ?? 0.7,
       maxTokens: agent.config?.maxTokens ?? 300,
     };
-  },
-
-  async validateOllamaModel(model: string): Promise<void> {
-    try {
-      const models = await llmProviderService.fetchOllamaModels();
-      const names = models.map(m => m.name || m.model);
-
-      if (names.length === 0) {
-        throw new Error(`Ollama no tiene modelos descargados. Ejecuta: ollama pull ${model}`);
-      }
-      if (!names.includes(model)) {
-        throw new Error(`Modelo "${model}" no encontrado en Ollama. Disponibles: ${names.join(', ')}. Descárgalo con: ollama pull ${model}`);
-      }
-    } catch (error: any) {
-      if (error.message.includes('Ollama') || error.message.includes('Modelo')) throw error;
-      throw new Error(`No se pudo conectar a Ollama. ¿Está corriendo?`);
-    }
   },
 };

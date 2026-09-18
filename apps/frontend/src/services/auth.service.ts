@@ -4,9 +4,11 @@ export interface User {
   _id: string;
   name: string;
   email: string;
-  role: 'devadmin' | 'admin' | 'support' | 'assistant';
+  role: 'admin' | 'support' | 'assistant';
   avatar?: string;
   status: string;
+  projectIds?: string[];
+  activeProjectId?: string;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -20,10 +22,28 @@ export interface LoginResponse {
 class AuthService {
   private tokenKey = 'mitchbot_token';
   private userKey = 'mitchbot_user';
+  private activeProjectKey = 'mitchbot_active_project';
 
   /** Obtener token almacenado */
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
+  }
+
+  /** Obtener el id del proyecto activo */
+  getActiveProjectId(): string | null {
+    const stored = localStorage.getItem(this.activeProjectKey);
+    if (stored) return stored;
+    const user = this.getUser();
+    return user?.activeProjectId || null;
+  }
+
+  /** Establecer el id del proyecto activo */
+  setActiveProjectId(projectId: string | null) {
+    if (projectId) {
+      localStorage.setItem(this.activeProjectKey, projectId);
+    } else {
+      localStorage.removeItem(this.activeProjectKey);
+    }
   }
 
   /** Obtener usuario almacenado */
@@ -55,20 +75,26 @@ class AuthService {
   private saveSession(data: LoginResponse) {
     localStorage.setItem(this.tokenKey, data.token);
     localStorage.setItem(this.userKey, JSON.stringify(data.user));
+    if (data.user?.activeProjectId) {
+      this.setActiveProjectId(data.user.activeProjectId);
+    }
   }
 
   /** Limpiar sesión */
   clearSession() {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
+    localStorage.removeItem(this.activeProjectKey);
   }
 
-  /** Headers con Authorization */
+  /** Headers con Authorization y proyecto activo */
   getHeaders(): HeadersInit {
     const token = this.getToken();
+    const projectId = this.getActiveProjectId();
     return {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(projectId ? { 'X-Project-Id': projectId } : {}),
     };
   }
 
@@ -109,8 +135,6 @@ class AuthService {
       // Ignorar errores de red en logout
     }
     this.clearSession();
-    // Limpiar también el cache del proyecto
-    localStorage.removeItem('mitchbot_project_setup');
   }
 
   /** Obtener perfil actualizado desde el servidor */
@@ -121,6 +145,7 @@ class AuthService {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al obtener perfil');
     localStorage.setItem(this.userKey, JSON.stringify(data));
+    if (data.activeProjectId) this.setActiveProjectId(data.activeProjectId);
     return data;
   }
 

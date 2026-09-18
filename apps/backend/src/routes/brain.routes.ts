@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { uploadSource, writeTextSource, searchKnowledge, listSources, getStats, deleteSource, getSourceLogs, getSourceStatus, getSourceExtractedText, extractTextOnly, convertPdfToImages } from '../controllers/brain.controller';
 import { upload } from '../middleware/upload.middleware';
-import { authenticate, authorize } from '../middleware/auth.middleware';
+import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -15,7 +15,7 @@ router.delete('/sources/:id', authenticate, deleteSource);                      
 router.get('/stats', authenticate, getStats);                                       // Estadísticas
 router.get('/search', authenticate, searchKnowledge);                               // Buscar en knowledge base
 
-router.post('/devadmin/extract', authenticate, authorize('devadmin'), upload.single('file'), extractTextOnly); // Extraer texto sin indexar
-router.post('/devadmin/pdf-to-images', authenticate, authorize('devadmin'), upload.single('file'), convertPdfToImages); // Convertir PDF a imagenes
+router.post('/dev/extract', authenticate, upload.single('file'), extractTextOnly); // Extraer texto sin indexar (herramienta interna)
+router.post('/dev/pdf-to-images', authenticate, upload.single('file'), convertPdfToImages); // Convertir PDF a imagenes (herramienta interna)
 
 export default router;

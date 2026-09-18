@@ -6,8 +6,8 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get('/', authorize('devadmin', 'admin', 'support', 'assistant'), listOrders);
-router.get('/:id', authorize('devadmin', 'admin', 'support', 'assistant'), getOrder);
-router.patch('/:id/status', authorize('devadmin', 'admin', 'support'), updateOrderStatus);
+router.get('/', authorize('admin', 'support', 'assistant'), listOrders);
+router.get('/:id', authorize('admin', 'support', 'assistant'), getOrder);
+router.patch('/:id/status', authorize('admin', 'support'), updateOrderStatus);
 
 export default router;

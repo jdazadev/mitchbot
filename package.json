@@ -1,12 +1,20 @@
 {
   "name": "mitchbot-v2",
-  "version": "1.17.1",
+  "version": "3.1.0",
   "private": true,
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "dev:frontend": "pnpm --filter @mitchbot/frontend dev",
     "dev:backend": "pnpm --filter @mitchbot/backend dev",
-    "build": "pnpm -r build"
+    "build": "pnpm -r build",
+    "stub:e2e": "node tests/stub/openai-stub.mjs",
+    "seed:e2e": "pnpm --filter @mitchbot/backend seed:e2e",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:module": "playwright test",
+    "test:e2e:ci": "playwright test --reporter=list",
+    "test:e2e:report": "playwright show-report"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

@@ -2,19 +2,18 @@ import { pdf as pdfToImg } from 'pdf-to-img';
 import { logger } from '../utils/logger';
 import env from '../config/env';
 import { configService } from './config.service';
-import { aiModelService } from './ai-model.service';
 import { appendSourceLog } from './rag-job.service';
 
 /**
  * OCR Service
  *
  * Encapsula toda la lógica de extracción de texto por OCR/visión.
- * Cadena de proveedores: Ollama (Qwen2.5-VL) → Mistral OCR → OpenRouter → pdf-parse (legacy).
+ * Proveedor único: OpenRouter (modelos de visión). Fallback legacy: pdf-parse.
  *
  * Todos los PDFs se convierten a imágenes (pdf-to-img) y pasan por el pipeline OCR.
  */
 
-export type OcrProvider = 'ollama' | 'mistral' | 'openrouter';
+export type OcrProvider = 'openrouter';
 
 export type OcrMethod = 'ocr' | 'ocr_vision' | 'llm_vision' | 'pdf-parse' | 'parser';
 
@@ -47,19 +46,7 @@ export interface OcrResult {
   pagesProcessed: number;
 }
 
-const PROVIDER_CHAIN: OcrProvider[] = ['ollama', 'mistral', 'openrouter'];
-
-const DEFAULT_MODELS: Record<OcrProvider, string> = {
-  ollama: 'qwen2.5-vl',
-  mistral: 'mistral-ocr-latest',
-  openrouter: 'google/gemini-2.0-flash-001',
-};
-
-const DEFAULT_BASE_URLS: Record<OcrProvider, string> = {
-  ollama: env.OLLAMA_URL,
-  mistral: 'https://api.mistral.ai/v1',
-  openrouter: 'https://openrouter.ai/api/v1',
-};
+const DEFAULT_OCR_MODEL = env.OPENROUTER_OCR_MODEL;
 
 const OCR_PROMPT = `Eres un motor de OCR. Extrae TODO el texto visible en la imagen (en español o inglés) y devuélvelo ÚNICAMENTE en Markdown.
 
@@ -73,10 +60,9 @@ Reglas estrictas:
 
 interface ResolvedOcrConfig {
   provider: OcrProvider;
-  chain: OcrProvider[];
-  models: Record<OcrProvider, string>;
-  apiKeys: Record<OcrProvider, string | undefined>;
-  baseUrls: Record<OcrProvider, string>;
+  model: string;
+  apiKey: string | undefined;
+  baseUrl: string;
   scale: number;
   maxPages: number;
   batchSize: number;
@@ -84,7 +70,7 @@ interface ResolvedOcrConfig {
 }
 
 function isOcrProvider(value: any): value is OcrProvider {
-  return PROVIDER_CHAIN.includes(value);
+  return value === 'openrouter';
 }
 
 function normalizeNonNegative(value: any, fallback: number) {
@@ -111,34 +97,8 @@ async function log(sourceId: string | undefined, entry: { level: 'info' | 'warn'
   await appendSourceLog(sourceId, entry);
 }
 
-async function lookupFallbackApiKey(provider: OcrProvider, projectId?: string): Promise<string | undefined> {
-  if (provider === 'ollama') return undefined;
-  const types: Array<'llm' | 'embedding' | 'file' | 'image' | 'ocr'> = ['ocr', 'llm', 'embedding', 'file', 'image'];
-  for (const type of types) {
-    try {
-      const config = await aiModelService.getProviderConfig(type, provider, projectId);
-      if (config?.apiKey) return config.apiKey;
-    } catch {
-      // ignore lookup errors
-    }
-  }
-  return undefined;
-}
-
-async function resolveOcrConfig(projectId?: string, overrideProvider?: OcrProvider): Promise<ResolvedOcrConfig> {
-  const [
-    providerCfg,
-    ollamaModelCfg,
-    mistralModelCfg,
-    openrouterModelCfg,
-    scaleCfg,
-    maxPagesCfg,
-    batchCfg,
-    timeoutCfg,
-  ] = await Promise.all([
-    configService.get('rag.ocr_provider'),
-    configService.get('rag.ocr_ollama_model'),
-    configService.get('rag.ocr_mistral_model'),
+async function resolveOcrConfig(): Promise<ResolvedOcrConfig> {
+  const [openrouterModelCfg, scaleCfg, maxPagesCfg, batchCfg, timeoutCfg] = await Promise.all([
     configService.get('rag.ocr_openrouter_model'),
     configService.get('rag.ocr_scale'),
     configService.get('rag.ocr_max_pages'),
@@ -146,48 +106,15 @@ async function resolveOcrConfig(projectId?: string, overrideProvider?: OcrProvid
     configService.get('rag.ocr_timeout_ms'),
   ]);
 
-  const activeConfig = await aiModelService.getActiveOcrConfig(projectId).catch(() => null);
-
-  const provider: OcrProvider =
-    overrideProvider
-    || (isOcrProvider(providerCfg) ? providerCfg : undefined)
-    || (isOcrProvider(activeConfig?.provider) ? activeConfig?.provider as OcrProvider : undefined)
-    || 'ollama';
-
-  const models: Record<OcrProvider, string> = { ...DEFAULT_MODELS };
-  if (typeof ollamaModelCfg === 'string' && ollamaModelCfg.trim()) models.ollama = ollamaModelCfg.trim();
-  if (typeof mistralModelCfg === 'string' && mistralModelCfg.trim()) models.mistral = mistralModelCfg.trim();
-  if (typeof openrouterModelCfg === 'string' && openrouterModelCfg.trim()) models.openrouter = openrouterModelCfg.trim();
-  if (activeConfig?.model && isOcrProvider(activeConfig.provider)) {
-    models[activeConfig.provider as OcrProvider] = activeConfig.model;
-  }
-
-  const apiKeys: Record<OcrProvider, string | undefined> = {
-    ollama: undefined,
-    mistral: undefined,
-    openrouter: undefined,
-  };
-  const baseUrls: Record<OcrProvider, string> = { ...DEFAULT_BASE_URLS };
-
-  if (activeConfig && isOcrProvider(activeConfig.provider)) {
-    if (activeConfig.apiKey) apiKeys[activeConfig.provider as OcrProvider] = activeConfig.apiKey;
-    if (activeConfig.baseUrl) baseUrls[activeConfig.provider as OcrProvider] = activeConfig.baseUrl;
-  }
-
-  for (const p of PROVIDER_CHAIN) {
-    if (!apiKeys[p]) {
-      apiKeys[p] = await lookupFallbackApiKey(p, projectId);
-    }
-  }
-
-  const chain: OcrProvider[] = [provider, ...PROVIDER_CHAIN.filter(p => p !== provider)];
+  const model = (typeof openrouterModelCfg === 'string' && openrouterModelCfg.trim())
+    ? openrouterModelCfg.trim()
+    : DEFAULT_OCR_MODEL;
 
   return {
-    provider,
-    chain,
-    models,
-    apiKeys,
-    baseUrls,
+    provider: 'openrouter',
+    model,
+    apiKey: env.OPENROUTER_API_KEY,
+    baseUrl: env.OPENROUTER_BASE_URL,
     scale: resolveScale(scaleCfg),
     maxPages: normalizeNonNegative(maxPagesCfg, 0),
     batchSize: normalizeNonNegative(batchCfg, 4),
@@ -210,39 +137,7 @@ async function requestJson(url: string, init: RequestInit, timeoutMs: number): P
   }
 }
 
-function buildOllamaRequest(url: string, model: string, base64: string): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      stream: false,
-      options: { temperature: 0 },
-      messages: [
-        { role: 'user', content: OCR_PROMPT, images: [base64] },
-      ],
-    }),
-  };
-}
-
-function buildMistralRequest(url: string, apiKey: string, model: string, base64: string): RequestInit {
-  return {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      document: {
-        type: 'image_url',
-        image_url: `data:image/png;base64,${base64}`,
-      },
-    }),
-  };
-}
-
-function buildOpenRouterRequest(url: string, apiKey: string, model: string, base64: string): RequestInit {
+function buildOpenRouterRequest(apiKey: string, model: string, base64: string): RequestInit {
   return {
     method: 'POST',
     headers: {
@@ -268,37 +163,15 @@ function buildOpenRouterRequest(url: string, apiKey: string, model: string, base
   };
 }
 
-/** Ejecuta OCR de una imagen PNG con el proveedor indicado */
-async function ocrImageWithProvider(
-  provider: OcrProvider,
-  buffer: Buffer,
-  config: ResolvedOcrConfig,
-): Promise<string> {
-  const model = config.models[provider];
+/** Ejecuta OCR de una imagen PNG con OpenRouter */
+async function ocrImageWithProvider(buffer: Buffer, config: ResolvedOcrConfig): Promise<string> {
+  if (!config.apiKey) {
+    throw new Error('Falta la credencial del proveedor: define OPENROUTER_API_KEY para el OCR.');
+  }
+
   const base64 = buffer.toString('base64');
-  const timeout = config.timeoutMs;
-
-  if (provider === 'ollama') {
-    const base = (config.baseUrls.ollama || env.OLLAMA_URL).replace(/\/$/, '');
-    const data = await requestJson(`${base}/api/chat`, buildOllamaRequest(base, model, base64), timeout);
-    return normalizeExtractedText(data?.message?.content || '');
-  }
-
-  if (provider === 'mistral') {
-    const apiKey = config.apiKeys.mistral;
-    if (!apiKey) throw new Error('API Key de Mistral requerida para OCR');
-    const base = (config.baseUrls.mistral || DEFAULT_BASE_URLS.mistral).replace(/\/$/, '');
-    const data = await requestJson(`${base}/ocr`, buildMistralRequest(base, apiKey, model, base64), timeout);
-    const pages = Array.isArray(data?.pages) ? data.pages : [];
-    const text = pages.map((p: any) => p?.markdown || '').join('\n\n');
-    return normalizeExtractedText(text);
-  }
-
-  // openrouter
-  const apiKey = config.apiKeys.openrouter;
-  if (!apiKey) throw new Error('API Key de OpenRouter requerida para OCR');
-  const base = (config.baseUrls.openrouter || DEFAULT_BASE_URLS.openrouter).replace(/\/$/, '');
-  const data = await requestJson(`${base}/chat/completions`, buildOpenRouterRequest(base, apiKey, model, base64), timeout);
+  const base = config.baseUrl.replace(/\/$/, '');
+  const data = await requestJson(`${base}/chat/completions`, buildOpenRouterRequest(config.apiKey, config.model, base64), config.timeoutMs);
   const content = data?.choices?.[0]?.message?.content;
   const text = Array.isArray(content) ? content.map((c: any) => c?.text || '').join('') : (content || '');
   return normalizeExtractedText(text);
@@ -318,9 +191,8 @@ async function renderPdfPages(input: string | Buffer, scale: number, maxPages: n
   return pages;
 }
 
-/** Procesa todas las páginas con un proveedor (batching + allSettled para tolerar fallos puntuales) */
+/** Procesa todas las páginas (batching + allSettled para tolerar fallos puntuales) */
 async function runProvider(
-  provider: OcrProvider,
   pages: { page: number; buffer: Buffer }[],
   config: ResolvedOcrConfig,
 ): Promise<string[]> {
@@ -330,7 +202,7 @@ async function runProvider(
   for (let i = 0; i < pages.length; i += batchSize) {
     const batch = pages.slice(i, i + batchSize);
     const settled = await Promise.allSettled(
-      batch.map(({ buffer }) => ocrImageWithProvider(provider, buffer, config)),
+      batch.map(({ buffer }) => ocrImageWithProvider(buffer, config)),
     );
     settled.forEach((entry, idx) => {
       if (entry.status === 'fulfilled') {
@@ -405,7 +277,7 @@ async function extractPdfLegacy(input: string | Buffer, startedAt: number): Prom
 /** Extrae texto de un PDF convirtiéndolo a imágenes y aplicando OCR (con fallback legacy) */
 export async function extractPdf(input: string | Buffer, options: OcrOptions = {}): Promise<OcrResult> {
   const startedAt = Date.now();
-  const config = await resolveOcrConfig(options.projectId, options.provider);
+  const config = await resolveOcrConfig();
 
   const scale = options.scale ? resolveScale(options.scale) : config.scale;
   const maxPages = options.maxPages !== undefined ? normalizeNonNegative(options.maxPages, config.maxPages) : config.maxPages;
@@ -417,7 +289,7 @@ export async function extractPdf(input: string | Buffer, options: OcrOptions = {
   await log(options.sourceId, {
     level: 'info',
     stage: 'extracting',
-    message: `OCR config: provider=${effectiveConfig.provider} scale=${scale} maxPaginas=${maxPages} batch=${batchSize} timeoutMs=${timeoutMs}`,
+    message: `OCR config: provider=openrouter model=${effectiveConfig.model} scale=${scale} maxPaginas=${maxPages} batch=${batchSize} timeoutMs=${timeoutMs}`,
   });
 
   let pages: { page: number; buffer: Buffer }[] = [];
@@ -434,93 +306,84 @@ export async function extractPdf(input: string | Buffer, options: OcrOptions = {
     return extractPdfLegacy(input, startedAt);
   }
 
-  for (const provider of effectiveConfig.chain) {
-    const providerStartedAt = Date.now();
-    try {
-      const texts = await runProvider(provider, pages, effectiveConfig);
-      const nonEmpty = texts.filter(t => t && t.trim());
-      if (nonEmpty.length === 0) {
-        await log(options.sourceId, {
-          level: 'warn',
-          stage: 'extracting',
-          message: `OCR ${provider} no extrajo texto, probando siguiente proveedor`,
-        });
-        continue;
-      }
-
-      const method: OcrMethod = provider === 'mistral' ? 'ocr' : 'ocr_vision';
-      const result = buildResult({
-        texts,
-        totalPages: pages.length,
-        method,
-        provider,
-        model: effectiveConfig.models[provider],
-        startedAt,
-      });
-
-      await log(options.sourceId, {
-        level: 'info',
-        stage: 'extracting',
-        message: `OCR completado con ${provider} (${effectiveConfig.models[provider]}) — ${nonEmpty.length}/${pages.length} páginas, ${result.text.length} chars, ${result.extractionTimeMs}ms`,
-      });
-      logger.info(`[OCR] PDF extracted via ${provider}/${effectiveConfig.models[provider]}: ${nonEmpty.length} pages, ${result.text.length} chars, ${Date.now() - providerStartedAt}ms`);
-      return result;
-    } catch (error: any) {
-      logger.warn(`[OCR] ${provider} falló: ${error?.message || error}`);
-      await log(options.sourceId, {
-        level: 'warn',
-        stage: 'extracting',
-        message: `OCR ${provider} falló: ${error?.message || error}`,
-      });
+  const providerStartedAt = Date.now();
+  try {
+    const texts = await runProvider(pages, effectiveConfig);
+    const nonEmpty = texts.filter(t => t && t.trim());
+    if (nonEmpty.length === 0) {
+      await log(options.sourceId, { level: 'warn', stage: 'extracting', message: 'OCR OpenRouter no extrajo texto, usando pdf-parse (legacy)' });
+      return extractPdfLegacy(input, startedAt);
     }
-  }
 
-  await log(options.sourceId, { level: 'warn', stage: 'extracting', message: 'Cadena OCR agotada, usando pdf-parse (legacy)' });
-  return extractPdfLegacy(input, startedAt);
+    const result = buildResult({
+      texts,
+      totalPages: pages.length,
+      method: 'ocr_vision',
+      provider: 'openrouter',
+      model: effectiveConfig.model,
+      startedAt,
+    });
+
+    await log(options.sourceId, {
+      level: 'info',
+      stage: 'extracting',
+      message: `OCR completado con openrouter (${effectiveConfig.model}) — ${nonEmpty.length}/${pages.length} páginas, ${result.text.length} chars, ${result.extractionTimeMs}ms`,
+    });
+    logger.info(`[OCR] PDF extracted via openrouter/${effectiveConfig.model}: ${nonEmpty.length} pages, ${result.text.length} chars, ${Date.now() - providerStartedAt}ms`);
+    return result;
+  } catch (error: any) {
+    logger.warn(`[OCR] openrouter falló: ${error?.message || error}`);
+    await log(options.sourceId, { level: 'warn', stage: 'extracting', message: `OCR openrouter falló: ${error?.message || error}` });
+    await log(options.sourceId, { level: 'warn', stage: 'extracting', message: 'Cadena OCR agotada, usando pdf-parse (legacy)' });
+    return extractPdfLegacy(input, startedAt);
+  }
 }
 
 /** Extrae texto de una imagen aplicando OCR */
 export async function extractImage(
   buffer: Buffer,
-  fileType: string,
+  _fileType: string,
   options: OcrOptions = {},
 ): Promise<OcrResult> {
   const startedAt = Date.now();
-  const config = await resolveOcrConfig(options.projectId, options.provider);
+  const config = await resolveOcrConfig();
   const effectiveConfig: ResolvedOcrConfig = {
     ...config,
     timeoutMs: options.timeoutMs !== undefined ? normalizeNonNegative(options.timeoutMs, config.timeoutMs) : config.timeoutMs,
   };
 
-  for (const provider of effectiveConfig.chain) {
-    try {
-      const raw = await ocrImageWithProvider(provider, buffer, effectiveConfig);
-      const text = normalizeExtractedText(raw);
-      if (!text) {
-        continue;
-      }
-      const method: OcrMethod = provider === 'mistral' ? 'ocr' : 'ocr_vision';
-      const result = buildResult({ texts: [text], totalPages: 1, method, provider, model: effectiveConfig.models[provider], startedAt });
-      await log(options.sourceId, {
-        level: 'info',
-        stage: 'extracting',
-        message: `OCR imagen completado con ${provider} (${effectiveConfig.models[provider]}) — ${result.text.length} chars, ${result.extractionTimeMs}ms`,
-      });
-      return result;
-    } catch (error: any) {
-      logger.warn(`[OCR] Imagen ${provider} falló: ${error?.message || error}`);
-      await log(options.sourceId, { level: 'warn', stage: 'extracting', message: `OCR imagen ${provider} falló: ${error?.message || error}` });
+  try {
+    const raw = await ocrImageWithProvider(buffer, effectiveConfig);
+    const text = normalizeExtractedText(raw);
+    if (!text) {
+      return {
+        text: '',
+        pages: [],
+        method: 'ocr_vision',
+        confidence: 0,
+        extractionTimeMs: Date.now() - startedAt,
+        pagesProcessed: 1,
+      };
     }
+    const result = buildResult({ texts: [text], totalPages: 1, method: 'ocr_vision', provider: 'openrouter', model: effectiveConfig.model, startedAt });
+    await log(options.sourceId, {
+      level: 'info',
+      stage: 'extracting',
+      message: `OCR imagen completado con openrouter (${effectiveConfig.model}) — ${result.text.length} chars, ${result.extractionTimeMs}ms`,
+    });
+    return result;
+  } catch (error: any) {
+    logger.warn(`[OCR] Imagen openrouter falló: ${error?.message || error}`);
+    await log(options.sourceId, { level: 'warn', stage: 'extracting', message: `OCR imagen openrouter falló: ${error?.message || error}` });
+    return {
+      text: '',
+      pages: [],
+      method: 'ocr_vision',
+      confidence: 0,
+      extractionTimeMs: Date.now() - startedAt,
+      pagesProcessed: 1,
+    };
   }
-
-  return {
-    text: '',
-    pages: [],
-    method: 'ocr_vision',
-    confidence: 0,
-    extractionTimeMs: Date.now() - startedAt,
-    pagesProcessed: 1,
-  };
 }
 
 /**
@@ -553,67 +416,8 @@ export async function extractDocument(
   };
 }
 
-/** Verifica la conexión de un proveedor OCR sin procesar documentos reales */
-async function testProviderConnection(
-  provider: OcrProvider,
-  apiKey: string | undefined,
-  baseUrl: string | undefined,
-  model: string | undefined,
-): Promise<{ success: boolean; message?: string; error?: string }> {
-  const resolvedModel = model || DEFAULT_MODELS[provider];
-  try {
-    if (provider === 'ollama') {
-      const base = (baseUrl || env.OLLAMA_URL).replace(/\/$/, '');
-      const data = await requestJson(`${base}/api/tags`, { method: 'GET' }, 8000);
-      const models: any[] = data?.models || [];
-      const names = models.map(m => m.name || m.model || '');
-      const found = names.some(n => n === resolvedModel || n.startsWith(`${resolvedModel}:`) || n.startsWith(resolvedModel));
-      return {
-        success: true,
-        message: found
-          ? `Ollama conectado. Modelo "${resolvedModel}" disponible.`
-          : `Ollama conectado, pero el modelo "${resolvedModel}" no está descargado (${models.length} modelos disponibles).`,
-      };
-    }
-
-    if (provider === 'mistral') {
-      if (!apiKey) return { success: false, error: 'API Key de Mistral requerida' };
-      const base = (baseUrl || DEFAULT_BASE_URLS.mistral).replace(/\/$/, '');
-      await requestJson(`${base}/models`, { method: 'GET', headers: { Authorization: `Bearer ${apiKey}` } }, 10000);
-      return { success: true, message: `Mistral conectado. Modelo OCR: ${resolvedModel}` };
-    }
-
-    if (!apiKey) return { success: false, error: 'API Key de OpenRouter requerida' };
-    await requestJson('https://openrouter.ai/api/v1/models', {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${apiKey}` },
-    }, 10000);
-    return { success: true, message: `OpenRouter conectado. Modelo OCR: ${resolvedModel}` };
-  } catch (error: any) {
-    return { success: false, error: error?.message || String(error) };
-  }
-}
-
 export const ocrService = {
   extractDocument,
   extractPdf,
   extractImage,
-
-  /** Prueba la conexión con el proveedor OCR configurado (o uno explícito). */
-  async testConnection(params?: { provider?: string; apiKey?: string; baseUrl?: string; model?: string; projectId?: string }) {
-    let provider = isOcrProvider(params?.provider) ? params!.provider as OcrProvider : undefined;
-    let apiKey = params?.apiKey;
-    let baseUrl = params?.baseUrl;
-    let model = params?.model;
-
-    if (!provider || !model || (!apiKey && provider !== 'ollama')) {
-      const config = await resolveOcrConfig(params?.projectId);
-      provider = provider || config.provider;
-      model = model || config.models[provider];
-      apiKey = apiKey || config.apiKeys[provider];
-      baseUrl = baseUrl || config.baseUrls[provider];
-    }
-
-    return testProviderConnection(provider, apiKey, baseUrl, model);
-  },
 };

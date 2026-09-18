@@ -34,13 +34,11 @@ const createUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   role: z.enum(['admin', 'support', 'assistant']),
+  projectIds: z.array(z.string()).optional(),
 });
 
 export const createUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (req.body?.role === 'devadmin') {
-      return res.status(403).json({ error: 'No se puede crear un devadmin por API' });
-    }
     const data = createUserSchema.parse(req.body);
     const user = await userService.create(data);
     res.status(201).json(user);
@@ -58,13 +56,11 @@ const updateUserSchema = z.object({
   role: z.enum(['admin', 'support', 'assistant']).optional(),
   status: z.enum(['Active', 'Inactive']).optional(),
   avatar: z.string().optional().nullable(),
+  projectIds: z.array(z.string()).optional(),
 });
 
 export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (req.body?.role === 'devadmin') {
-      return res.status(403).json({ error: 'No se puede asignar el rol devadmin por API' });
-    }
     const data = updateUserSchema.parse(req.body);
     // Convert null avatar to undefined for the service
     const cleanData = { ...data, avatar: data.avatar ?? undefined };

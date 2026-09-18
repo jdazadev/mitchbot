@@ -1,3 +1,5 @@
+import { authService } from './auth.service';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export interface Contact {
@@ -55,13 +57,13 @@ export const contactService = {
     if (filters.tags && filters.tags.length > 0) url.searchParams.append('tags', filters.tags.join(','));
     if (filters.includeArchived) url.searchParams.append('includeArchived', 'true');
 
-    const res = await fetch(url.toString());
+    const res = await fetch(url.toString(), { headers: authService.getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch contacts');
     return res.json();
   },
 
   async getContact(id: string): Promise<Contact> {
-    const res = await fetch(`${API_URL}/contacts/${id}`);
+    const res = await fetch(`${API_URL}/contacts/${id}`, { headers: authService.getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch contact');
     return res.json();
   },
@@ -71,7 +73,7 @@ export const contactService = {
   async updateContact(id: string, data: Partial<Contact>): Promise<Contact> {
     const res = await fetch(`${API_URL}/contacts/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authService.getHeaders(),
       body: JSON.stringify(data)
     });
     if (!res.ok) throw new Error('Failed to update contact');
@@ -82,6 +84,7 @@ export const contactService = {
   async archiveContact(id: string): Promise<{ message: string; contact: Contact }> {
     const res = await fetch(`${API_URL}/contacts/${id}/archive`, {
       method: 'PUT',
+      headers: authService.getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to archive contact');
     return res.json();
@@ -91,6 +94,7 @@ export const contactService = {
   async restoreContact(id: string): Promise<{ message: string; contact: Contact }> {
     const res = await fetch(`${API_URL}/contacts/${id}/restore`, {
       method: 'PUT',
+      headers: authService.getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to restore contact');
     return res.json();

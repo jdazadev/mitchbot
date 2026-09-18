@@ -4,6 +4,9 @@ import { z } from 'zod';
 
 export const listContacts = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.q as string || '';
@@ -15,7 +18,7 @@ export const listContacts = async (req: Request, res: Response, next: NextFuncti
     const includeArchived = req.query.includeArchived === 'true';
 
     const contacts = await contactService.findAll({ 
-      page, limit, search, platform, status, sortBy, sortOrder, tags, includeArchived
+      page, limit, search, platform, status, sortBy, sortOrder, tags, includeArchived, projectId
     });
 
     res.json(contacts);
@@ -26,7 +29,10 @@ export const listContacts = async (req: Request, res: Response, next: NextFuncti
 
 export const getContact = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const contact = await contactService.findById(req.params.id);
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+
+    const contact = await contactService.findById(req.params.id, projectId);
     if (!contact) {
       return res.status(404).json({ error: 'Contact not found' });
     }
@@ -59,8 +65,11 @@ const updateContactSchema = z.object({
 
 export const updateContact = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+
     const data = updateContactSchema.parse(req.body);
-    const updated = await contactService.update(req.params.id, data as any);
+    const updated = await contactService.update(req.params.id, data as any, projectId);
     if (!updated) {
       return res.status(404).json({ error: 'Contact not found' });
     }
@@ -75,7 +84,10 @@ export const updateContact = async (req: Request, res: Response, next: NextFunct
  */
 export const archiveContact = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const archived = await contactService.archive(req.params.id);
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+
+    const archived = await contactService.archive(req.params.id, projectId);
     if (!archived) {
       return res.status(404).json({ error: 'Contact not found' });
     }
@@ -90,7 +102,10 @@ export const archiveContact = async (req: Request, res: Response, next: NextFunc
  */
 export const restoreContact = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const restored = await contactService.restore(req.params.id);
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+
+    const restored = await contactService.restore(req.params.id, projectId);
     if (!restored) {
       return res.status(404).json({ error: 'Contact not found' });
     }

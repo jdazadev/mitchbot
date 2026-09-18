@@ -19,8 +19,8 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req: any, file: Express.Multer.File, cb: any) => {
-  const isDevExtract = req.path?.includes('/devadmin/extract');
-  const isDevPdfPreview = req.path?.includes('/devadmin/pdf-to-images');
+  const isDevExtract = req.path?.includes('/dev/extract');
+  const isDevPdfPreview = req.path?.includes('/dev/pdf-to-images');
   const baseTypes = [
     'application/pdf',
     'text/plain',

@@ -1,79 +1,116 @@
 import { defineConfig, devices } from '@playwright/test';
+import { E2E } from './tests/e2e/helpers/config';
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-/**
- * See https://playwright.dev/docs/test-configuration.
+ * Configuración Playwright — suite e2e de MitchBot v2.
+ *
+ * Prerrequisitos (ver tests/e2e/README.md):
+ *   - Servicios Docker: MongoDB, Redis, Qdrant (`docker compose up -d`).
+ *   - Playwright no necesita que backend/frontend estén levantados: los arranca
+ *     en puertos dedicados (3100 / 5174) y un stub de IA en 4010.
  */
 export default defineConfig({
-  testDir: './tests',
-  /* Run tests in files in parallel */
+  testDir: './tests/e2e',
+  /* Ejecuta los archivos de prueba en paralelo. */
   fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  /* Falla si queda un test.only en el código. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
+  /* Reintentos sólo en CI. */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
+  /* Workers: 1 en CI para estabilidad; por defecto en local. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  use: {
-    /* Base URL to use in actions like `await page.goto('')`. */
-    // baseURL: 'http://localhost:3000',
+  /* Reporte legible (HTML) + lista en consola. */
+  reporter: process.env.CI
+    ? [['list'], ['html', { open: 'never' }]]
+    : [['list'], ['html', { open: 'never' }]],
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+  /* Chequeo de prerrequisitos + seed de datos e2e antes de la suite. */
+  globalSetup: './tests/e2e/global-setup.ts',
+
+  /* Tiempo máximo por prueba (streaming/websocket incluido). */
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
+
+  use: {
+    baseURL: E2E.frontendUrl,
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
 
-  /* Configure projects for major browsers */
   projects: [
+    /* 1. Autenticación reutilizable: genera storageState. */
     {
-      name: 'chromium',
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
 
+    /* 2. Suite autenticada (Chromium por defecto). */
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      name: 'chromium',
+      dependencies: ['setup'],
+      testIgnore: [/auth\.setup\.ts/, /auth\.spec\.ts/, /onboarding\.spec\.ts/, /public-chat\.spec\.ts/],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: E2E.storageState,
+      },
     },
 
+    /* 3. Suite sin sesión: login, registro y chat público. */
     {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      name: 'chromium-public',
+      dependencies: ['setup'],
+      testMatch: [/auth\.spec\.ts/, /onboarding\.spec\.ts/, /public-chat\.spec\.ts/],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: { cookies: [], origins: [] },
+      },
     },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  /* Servidores del entorno e2e (puertos dedicados). */
+  webServer: [
+    {
+      command: 'node tests/stub/openai-stub.mjs',
+      url: `${E2E.stubUrl}/healthz`,
+      reuseExistingServer: true,
+      timeout: 30_000,
+      env: {
+        STUB_PORT: String(E2E.ports.stub),
+        STUB_MODEL: E2E.stub.model,
+        STUB_EMBED_MODEL: E2E.stub.embedModel,
+        STUB_REPLY: E2E.stub.reply,
+      },
+    },
+    {
+      command: 'pnpm --filter @mitchbot/backend dev',
+      url: `${E2E.backendUrl}/health`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: {
+        ...process.env,
+        PORT: String(E2E.ports.backend),
+        NODE_ENV: 'development',
+        MONGODB_URI: E2E.mongoUri,
+        REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
+        QDRANT_URL: process.env.QDRANT_URL || 'http://localhost:6333',
+        OLLAMA_URL: process.env.OLLAMA_URL || 'http://localhost:11434',
+        OPENROUTER_API_KEY: E2E.stub.apiKey,
+        OPENROUTER_BASE_URL: `${E2E.stubUrl}/v1`,
+        OPENROUTER_EMBEDDING_MODEL: E2E.stub.embedModel,
+        FRONTEND_URL: E2E.frontendUrl,
+      },
+    },
+    {
+      command: `pnpm --filter @mitchbot/frontend exec vite --port ${E2E.ports.frontend} --strictPort`,
+      url: E2E.frontendUrl,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: {
+        ...process.env,
+        VITE_API_URL: `${E2E.backendUrl}/api`,
+      },
+    },
+  ],
 });

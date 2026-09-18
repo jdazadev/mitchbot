@@ -12,9 +12,26 @@ export const projectService = {
     return count > 0;
   },
 
-  /** Obtiene el proyecto activo (el primero) */
-  async getActiveProject() {
-    return getProjectsCollection().findOne({ status: 'active' });
+  /** Obtiene los proyectos a los que pertenece un usuario */
+  async getUserProjects(projectIds: (ObjectId | string)[] = []): Promise<Project[]> {
+    const ids = projectIds
+      .map(id => id.toString())
+      .filter(id => ObjectId.isValid(id))
+      .map(id => new ObjectId(id));
+    if (ids.length === 0) return [];
+    return getProjectsCollection()
+      .find({ _id: { $in: ids } })
+      .sort({ createdAt: 1 })
+      .toArray();
+  },
+
+  /**
+   * Obtiene el proyecto activo de un usuario.
+   * Sin usuario (o sin `activeProjectId`) no hay contexto global de proyecto.
+   */
+  async getActiveProject(user?: { activeProjectId?: ObjectId | string } | null) {
+    if (!user?.activeProjectId) return null;
+    return this.findById(user.activeProjectId.toString());
   },
 
   /** Obtiene un proyecto por ID */
@@ -25,7 +42,7 @@ export const projectService = {
 
   /**
    * Crea un proyecto y automáticamente crea el agente asociado.
-   * Solo se permite un proyecto activo.
+   * No hay restricción de proyecto único: cada usuario puede tener varios.
    */
   async create(data: {
     name: string;
@@ -49,19 +66,16 @@ export const projectService = {
   }) {
     const projectsColl = getProjectsCollection();
 
-    // Verificar que no exista otro proyecto activo
-    const existing = await projectsColl.findOne({ status: 'active' });
-    if (existing) {
-      throw new Error('Ya existe un proyecto activo. Solo se permite un proyecto.');
-    }
+    const projectId = new ObjectId();
 
-    // 1. Crear el agente primero
+    // 1. Crear el agente primero, vinculado al proyecto
     const agent = await agentService.create({
       name: data.agent.name,
       description: data.agent.description || '',
       model: data.agent.model,
       personality: data.agent.personality,
       status: 'active',
+      projectId,
       createdBy: new ObjectId(data.createdBy),
       config: {
         temperature: data.agent.temperature ?? 0.7,
@@ -82,7 +96,7 @@ export const projectService = {
     const slug = await this.ensureUniqueSlug(baseSlug);
 
     const newProject: Project = {
-      _id: new ObjectId(),
+      _id: projectId,
       name: data.name,
       slug,
       description: data.description || '',

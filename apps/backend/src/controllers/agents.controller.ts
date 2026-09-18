@@ -4,7 +4,8 @@ import { z } from 'zod';
 
 export const listAgents = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const agents = await agentService.findAll();
+    const projectId = (req as any).projectId as string | undefined;
+    const agents = await agentService.findAll(projectId);
     res.json(agents);
   } catch (error) {
     next(error);
@@ -58,7 +59,8 @@ const createAgentSchema = z.object({
 export const createAgent = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = createAgentSchema.parse(req.body);
-    const agent = await agentService.create(data as any);
+    const projectId = (req as any).projectId as string | undefined;
+    const agent = await agentService.create({ ...data, projectId } as any);
     res.status(201).json(agent);
   } catch (error) {
     next(error);

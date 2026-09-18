@@ -221,7 +221,7 @@ export const updateStatus = async (req: Request, res: Response, next: NextFuncti
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Conversation not found' });
     if (status === 'closed') {
-      const agent = await agentService.getActiveAgent();
+      const agent = await agentService.getActiveAgent(projectId);
       if (agent?.config?.enableGoodbyeMessage) {
         await chatService.handleAutoGoodbye(req.params.id, agent);
       }

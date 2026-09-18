@@ -8,20 +8,13 @@ const currentUser = ref<User | null>(null);
 const showUserMenu = ref(false);
 
 const navItems = computed(() => {
-  const base = [
+  return [
     { name: 'Dashboard', icon: 'dashboard', href: '/' },
     { name: 'Conversations', icon: 'chat', href: '/messaging', badge: '12' },
     { name: 'Contacts', icon: 'groups', href: '/contacts' },
     { name: 'Brain & RAG', icon: 'psychology', href: '/brain' },
     { name: 'Users', icon: 'manage_accounts', href: '/users' },
   ];
-
-  if (currentUser.value?.role === 'devadmin') {
-    base.push({ name: 'Proveedores', icon: 'admin_panel_settings', href: '/devadmin/models' });
-    base.push({ name: 'Pruebas', icon: 'science', href: '/devadmin/tests' });
-  }
-
-  return base;
 });
 
 onMounted(() => {

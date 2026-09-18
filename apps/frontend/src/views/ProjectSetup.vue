@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { projectService } from '../services/project.service';
+import { authService } from '../services/auth.service';
 import { settingsService, type AgentModelGroup } from '../services/settings.service';
 
 const router = useRouter();
@@ -145,6 +146,8 @@ async function handleSubmit() {
         options: configForm.value.options,
       },
     });
+    // Sincronizar el usuario (projectIds/activeProjectId) tras crear el proyecto
+    try { await authService.getProfile(); } catch { /* noop */ }
     router.push('/');
   } catch (err: any) {
     error.value = err.message;

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { userService, type SystemUser } from '../services/user.service';
+import { projectService, type Project } from '../services/project.service';
 
 const users = ref<SystemUser[]>([]);
 const totalUsers = ref(0);
@@ -8,14 +9,15 @@ const currentPage = ref(1);
 const totalPages = ref(1);
 const pageLoading = ref(true);
 const searchQuery = ref('');
+const projects = ref<Project[]>([]);
 
 const roles = ['admin', 'support', 'assistant'] as const;
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const editingUser = ref<SystemUser | null>(null);
-const createForm = ref({ name: '', email: '', password: '', role: 'support' as 'admin' | 'support' | 'assistant' });
-const editForm = ref<{ name: string; email: string; role: string; status: string }>({ name: '', email: '', role: '', status: '' });
+const createForm = ref({ name: '', email: '', password: '', role: 'support' as 'admin' | 'support' | 'assistant', projectIds: [] as string[] });
+const editForm = ref<{ name: string; email: string; role: string; status: string; projectIds: string[] }>({ name: '', email: '', role: '', status: '', projectIds: [] });
 const formLoading = ref(false);
 const formError = ref('');
 const formSuccess = ref('');
@@ -39,9 +41,28 @@ async function loadUsers(page = 1) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   loadUsers();
+  try {
+    projects.value = await projectService.listProjects();
+  } catch {
+    projects.value = [];
+  }
 });
+
+function toggleCreateProject(id: string) {
+  const list = createForm.value.projectIds;
+  const idx = list.indexOf(id);
+  if (idx >= 0) list.splice(idx, 1);
+  else list.push(id);
+}
+
+function toggleEditProject(id: string) {
+  const list = editForm.value.projectIds;
+  const idx = list.indexOf(id);
+  if (idx >= 0) list.splice(idx, 1);
+  else list.push(id);
+}
 
 function handleSearch() {
   loadUsers(1);
@@ -49,7 +70,13 @@ function handleSearch() {
 
 function openEditModal(user: SystemUser) {
   editingUser.value = user;
-  editForm.value = { name: user.name, email: user.email, role: user.role, status: user.status };
+  editForm.value = {
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    status: user.status,
+    projectIds: (user.projectIds || []).map((id: any) => id.toString()),
+  };
   showEditModal.value = true;
   formError.value = '';
 }
@@ -60,7 +87,7 @@ async function handleCreate() {
   try {
     await userService.create(createForm.value);
     showCreateModal.value = false;
-    createForm.value = { name: '', email: '', password: '', role: 'support' };
+    createForm.value = { name: '', email: '', password: '', role: 'support', projectIds: [] };
     formSuccess.value = 'Usuario creado correctamente';
     setTimeout(() => { formSuccess.value = ''; }, 3000);
     await loadUsers(currentPage.value);
@@ -90,7 +117,6 @@ async function handleUpdate() {
 
 function getRoleBadgeClass(role: string) {
   switch (role) {
-    case 'devadmin': return 'bg-amber-50 text-amber-700 border-amber-100';
     case 'admin': return 'bg-red-50 text-red-700 border-red-100';
     case 'support': return 'bg-blue-50 text-blue-700 border-blue-100';
     case 'assistant': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
@@ -190,7 +216,7 @@ function formatDate(dateStr: string) {
             </td>
             <td class="px-6 py-4">
               <span :class="['px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border', getRoleBadgeClass(user.role)]">
-                {{ user.role === 'devadmin' ? 'devadmin (interno)' : user.role }}
+                {{ user.role }}
               </span>
             </td>
             <td class="px-6 py-4">
@@ -257,6 +283,16 @@ function formatDate(dateStr: string) {
               <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
             </select>
           </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Proyectos</label>
+            <div v-if="projects.length === 0" class="text-xs text-slate-400">No hay proyectos disponibles</div>
+            <div v-else class="flex flex-col gap-1.5 max-h-32 overflow-y-auto border border-slate-200 rounded-lg p-2">
+              <label v-for="p in projects" :key="p._id" class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input type="checkbox" :checked="createForm.projectIds.includes(p._id)" @change="toggleCreateProject(p._id)" class="h-4 w-4 accent-blue-600" />
+                {{ p.name }}
+              </label>
+            </div>
+          </div>
         </div>
         <div class="flex justify-end gap-3 mt-6">
           <button @click="showCreateModal = false" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg">Cancelar</button>
@@ -300,6 +336,16 @@ function formatDate(dateStr: string) {
               <option value="Active">Activo</option>
               <option value="Inactive">Inactivo</option>
             </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Proyectos</label>
+            <div v-if="projects.length === 0" class="text-xs text-slate-400">No hay proyectos disponibles</div>
+            <div v-else class="flex flex-col gap-1.5 max-h-32 overflow-y-auto border border-slate-200 rounded-lg p-2">
+              <label v-for="p in projects" :key="p._id" class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input type="checkbox" :checked="editForm.projectIds.includes(p._id)" @change="toggleEditProject(p._id)" class="h-4 w-4 accent-blue-600" />
+                {{ p.name }}
+              </label>
+            </div>
           </div>
         </div>
         <div class="flex justify-end gap-3 mt-6">
