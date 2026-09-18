@@ -1,0 +1,134 @@
+import { io, Socket } from 'socket.io-client';
+import type { ChatMessage } from './messaging.service';
+
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Adjust if API_URL includes /api and socket is on root
+const baseUrl = SOCKET_URL.replace('/api', '');
+
+// Get auth token from localStorage
+const getAuthToken = () => {
+  try {
+    const session = localStorage.getItem('mitchbot_session');
+    if (session) {
+      const parsed = JSON.parse(session);
+      return parsed.token || null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
+export const socketService = {
+  socket: null as Socket | null,
+
+  connect(options?: { isPublic?: boolean; slug?: string }) {
+    if (this.socket?.connected) return;
+
+    const token = getAuthToken();
+    const isPublic = options?.isPublic || false;
+    const slug = options?.slug;
+
+    this.socket = io(baseUrl, {
+      transports: ['websocket'],
+      autoConnect: true,
+      auth: {
+        token: token || undefined,
+      },
+      query: {
+        isPublic: isPublic ? 'true' : undefined,
+        slug: slug || undefined,
+      },
+    });
+
+    this.socket.on('connect', () => {
+      console.log('Socket connected:', this.socket?.id);
+    });
+
+    this.socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+    });
+
+    this.socket.on('error', (error: any) => {
+      console.error('Socket error:', error);
+    });
+  },
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  },
+
+  joinRoom(roomId: string) {
+    if (!this.socket) this.connect();
+    this.socket?.emit('join:room', roomId);
+  },
+
+  onMessage(callback: (message: ChatMessage) => void) {
+    if (!this.socket) this.connect();
+    this.socket?.on('chat:message', callback);
+  },
+
+  offMessage(callback?: (message: ChatMessage) => void) {
+    if (this.socket) {
+      this.socket.off('chat:message', callback);
+    }
+  },
+
+  onMessageChunk(callback: (data: { messageId: string, conversationId: string, content: string, isDone: boolean }) => void) {
+    if (!this.socket) this.connect();
+    this.socket?.on('chat:message_chunk', callback);
+  },
+
+  offMessageChunk(callback?: (data: any) => void) {
+    if (this.socket) {
+      this.socket.off('chat:message_chunk', callback);
+    }
+  },
+
+  onMessageUpdated(callback: (data: { messageId: string; status: string; params?: any; content?: string }) => void) {
+    if (!this.socket) this.connect();
+    this.socket?.on('chat:message_updated', callback);
+  },
+
+  offMessageUpdated(callback?: (data: any) => void) {
+    if (this.socket) {
+      this.socket.off('chat:message_updated', callback);
+    }
+  },
+
+  onToolConfirmed(callback: (data: { executionId: string; status: string }) => void) {
+    if (!this.socket) this.connect();
+    this.socket?.on('tool:confirmed', callback);
+  },
+
+  offToolConfirmed(callback?: (data: any) => void) {
+    if (this.socket) {
+      this.socket.off('tool:confirmed', callback);
+    }
+  },
+
+  /** Confirma, cancela o modifica una ejecución de herramienta */
+  confirmTool(payload: {
+    conversationId: string;
+    executionId: string;
+    action: 'confirm' | 'cancel' | 'modify';
+    params?: Record<string, any>;
+  }) {
+    if (!this.socket) this.connect();
+    this.socket?.emit('tool:confirm', payload);
+  },
+
+  onNotification(callback: (data: any) => void) {
+    if (!this.socket) this.connect();
+    this.socket?.on('admin:notification', callback);
+  },
+
+  offNotification(callback?: (data: any) => void) {
+    if (this.socket) {
+      this.socket.off('admin:notification', callback);
+    }
+  }
+};

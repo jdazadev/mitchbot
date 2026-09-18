@@ -1,0 +1,89 @@
+version: "3.8"
+
+services:
+  # Base de datos NoSQL
+  mongodb:
+    image: mongo:latest
+    container_name: mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - backend-network
+
+  # Caché y colas rápidas
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - backend-network
+
+  # Base de datos vectorial (para IA/RAG)
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - backend-network
+
+  # LLM Runner (Modelos de lenguaje local)
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      # Importante: Persistencia para no descargar los modelos cada vez
+      - ollama_data:/root/.ollama
+    networks:
+      - backend-network
+
+  # Interfaz Web para Ollama
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      - "3200:8080" # Accedes a la UI en http://localhost:3200
+    environment:
+      # Conecta directamente con el contenedor de Ollama usando la red interna
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - open-webui_data:/app/backend/data
+    networks:
+      - backend-network
+    depends_on:
+      - ollama # Asegura que Ollama inicie antes que la interfaz
+
+  # Sistema de mensajería (Event Bus)
+  nats:
+    image: nats:alpine
+    container_name: nats
+    restart: unless-stopped
+    ports:
+      - "4222:4222" # Puerto cliente
+      - "8222:8222" # Panel de monitoreo HTTP
+    networks:
+      - backend-network
+
+# Volúmenes para persistencia de datos
+volumes:
+  mongo_data:
+  qdrant_data:
+  ollama_data:
+  open-webui_data: # Nuevo volumen para persistir chats y configuraciones de la UI
+
+# Red compartida
+networks:
+  backend-network:
+    driver: bridge

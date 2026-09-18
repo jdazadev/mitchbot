@@ -1,0 +1,50 @@
+import { emitToAll } from '../websocket/socket';
+import { logger } from '../utils/logger';
+import { Tool } from './types';
+
+/** Notifica al equipo/admin mediante WebSocket */
+export const sendNotificationTool: Tool = {
+  name: 'send_notification',
+  description: 'Envía una notificación al equipo del negocio (por ejemplo un pedido especial o una urgencia).',
+  parameters: {
+    type: 'object',
+    properties: {
+      message: {
+        type: 'string',
+        description: 'Contenido de la notificación.',
+      },
+      level: {
+        type: 'string',
+        description: 'Nivel de la notificación.',
+        enum: ['info', 'warning', 'urgent'],
+      },
+    },
+    required: ['message'],
+  },
+  async execute(params, context) {
+    const message = String(params?.message || '').trim();
+    if (!message) {
+      return { success: false, message: 'No se especificó el contenido de la notificación.', error: 'missing_message' };
+    }
+
+    const level = ['info', 'warning', 'urgent'].includes(params?.level) ? params.level : 'info';
+
+    try {
+      emitToAll('admin:notification', {
+        message,
+        level,
+        conversationId: context.conversationId,
+        projectId: context.projectId,
+        createdAt: new Date(),
+      });
+    } catch (error: any) {
+      logger.warn(`[Tool] No se pudo emitir la notificación: ${error?.message || error}`);
+    }
+
+    return {
+      success: true,
+      message: `Notificación enviada al equipo (${level}).`,
+      data: { level },
+    };
+  },
+};

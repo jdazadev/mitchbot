@@ -1,0 +1,949 @@
+# Changelog — MitchBot v2
+
+Todas las actualizaciones notables del proyecto están documentadas aquí.  
+Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado semántico.
+
+---
+
+## v1.17.0 — 2026-09-17
+
+> 🤖 **Agent Tool Use, OCR unificado y RAG multilingüe**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend — Agent Tool Use (Function Calling)
+- **Sistema de herramientas** (`src/tools/`) con 8 herramientas zero-config: `create_appointment`, `create_order`, `get_product_info`, `get_business_hours`, `get_service_availability`, `transfer_to_human`, `send_notification`, `get_faq_answer`.
+- **Ejecutor** (`services/tool.service.ts`): esquemas OpenAI-compatible, detección de tool calls en texto libre y ejecución normalizada.
+- **Tool calling nativo** (`bindTools`) para OpenRouter y Gemini; para Ollama se inyectan las herramientas en el system prompt y se detecta el JSON de invocación.
+- **Flujo de confirmación**: colección `tool_executions`, mensajes `confirmation_request`/`tool_result` (`sender: 'tool'`), evento WebSocket `tool:confirm` (`confirm`/`cancel`/`modify`) y regeneración de la respuesta final con el resultado.
+- **Nuevas colecciones** `appointments` y `orders` con servicios y endpoints REST (`/api/appointments`, `/api/orders`).
+
+#### Backend — Pipeline OCR unificado
+- **`services/ocr.service.ts`** convierte **todos** los PDFs a imágenes (`pdf-to-img`, escala 2) y aplica OCR.
+- Proveedores: **Ollama (Qwen2.5-VL) → Mistral OCR → OpenRouter → pdf-parse** (fallback legacy).
+- Salida estructurada `{ text, pages, method, confidence }` con batching de páginas (batch 4) y timeouts.
+- Estadísticas por fuente: `extractionTimeMs`, `extractionConfidence`, `pagesProcessed`, `ocrProvider`, `ocrModel`.
+- Nuevo tipo de proveedor **`ocr`** y endpoint `POST /api/ai-models/providers/test-ocr`.
+
+#### Backend — RAG multilingüe
+- **Chunking semántico** (`utils/chunking.ts`): encabezados Markdown, tablas atómicas, prefijo `Document | Section`, 800/100 tokens, `page_number` y detección de idioma (`en`/`es`/`mixed`).
+- **Re-ranking** (`services/reranker.service.ts`): top 10 → top 3 con embeddings locales de Ollama y fallback heurístico (falla rápido si el modelo no está disponible).
+- **Qdrant tuning**: HNSW `m:16`, `ef_construct:100`, `ef:64`, `on_disk` e índices de payload `language`/`document_id`.
+- **Reindexado en background** con cola BullMQ `rag-reindex`, progreso por fuente y rollback de vectores parciales.
+
+#### Frontend
+- **UI de confirmación de herramientas** en **Messaging** y **TestChat** (botones Confirmar / Cancelar / Modificar).
+- **Renderizado de mensajes de herramienta** (`tool_result`, `confirmation_request`) con estado y tarjetas.
+- **Nueva pestaña OCR** en DevAdmin → Proveedores (proveedor, modelo, parámetros y test de conexión).
+
+### 🔄 Cambios
+- **Extracción de archivos**: los PDFs ya no usan texto embebido; pasan siempre por OCR. `extractTextOnly` (DevAdmin) usa el mismo pipeline.
+- **Búsqueda RAG**: recupera top 10 y re-rankea a top 3 (configurable vía `rag.use_reranker`).
+- **Mensajes**: `sender` ahora incluye `tool`; `contentType` incluye `tool_call`, `tool_result` y `confirmation_request`; nuevo campo `toolData`.
+
+### 🛠️ Migración
+- **No requiere migración de datos.** Las colecciones nuevas se crean on-demand.
+- Para aplicar el nuevo chunking a fuentes existentes: `pnpm --filter @mitchbot/backend tsx src/scripts/reindex-rag.ts`.
+- OCR local recomendado: `ollama pull qwen2.5-vl`; re-ranking local: `ollama pull nomic-embed-text`.
+- Config OCR: `rag.ocr_*`. Config del negocio para las tools: `business.hours`, `business.services`, `business.timezone`, `business.slot_minutes`, `business.currency`.
+
+### ⚠️ Breaking changes
+- Ninguno. Si no hay herramientas ni modelos configurados, el chat sigue funcionando igual (degradación graceful).
+
+---
+
+## v1.16.1 — 2026-09-17
+
+> 🐛 **Fix: carga de variables de entorno en scripts**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Ruta de `.env` corregida en scripts** — Los scripts `seed`, `cleanup-project`, `purge-qdrant` y `reindex-rag` cargaban `apps/backend/.env` con un path relativo que fallaba al ejecutarse desde `apps/backend` (resolvía a `apps/backend/apps/backend/.env`), dejando `dotenv` con los valores por defecto. Ahora resuelven el `.env` relativo al propio archivo vía `__dirname`, por lo que funcionan desde cualquier directorio de trabajo.
+
+---
+
+## v1.16.0 — 2026-06-13
+
+> 🔒 **WebSocket Security Hardening**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **Autenticación JWT para Socket.io** — Todas las conexiones WebSocket requieren token JWT válido.
+- **Autorización de Rooms** — Los usuarios solo pueden unirse a conversaciones de su proyecto asignado.
+- **Rate Limiting** — Límite de 30 mensajes/minuto y 10 joins/minuto por usuario (usando Redis).
+- **CORS Restrictivo** — En producción, solo orígenes permitidos en `FRONTEND_URL`. Desarrollo mantiene `*`.
+- **Middleware de seguridad** — Nuevo `socket-auth.middleware.ts` con validación completa.
+
+#### Frontend
+- **Socket con autenticación** — El `socketService` envía automáticamente el token JWT en el handshake.
+- **Soporte para chat público** — El `TestChat` envía el slug del proyecto en la conexión pública.
+- **Manejo de errores** — Los componentes `Messaging` y `TestChat` manejan errores de WebSocket.
+
+### 🛡️ Seguridad
+- **Protección contra acceso no autorizado** — Conexiones sin token son rechazadas inmediatamente.
+- **Validación de proyecto** — Los usuarios no pueden acceder a conversaciones de otros proyectos.
+- **Rate limiting por IP** — Prevención de abuso vía Redis.
+
+### 📝 Documentación
+- **AGENTS.md actualizado** — Documentación de la arquitectura de seguridad WebSocket.
+
+---
+
+## v1.15.0 — 2026-04-08
+
+> 🧪 **Extraccion PDF completa por imagenes**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **Config global de extraccion PDF** — Nuevos parametros para controlar escala, limites, batch y timeouts con soporte de 0 = sin limites.
+- **Extraccion por pagina configurable** — PDFs se procesan por imagen con batch configurable y logs de conteo.
+- **Salida completa** — Se elimina el recorte fijo de 50k y se respeta el limite configurable (o sin limite).
+
+#### Frontend
+- **Parametros PDF en DevAdmin** — Controles de extraccion agregados en Proveedores > Image para aplicar a DevAdmin y RAG.
+
+---
+
+## v1.14.2 — 2026-04-08
+
+> 🧪 **DevAdmin: PDF a imagenes con preview**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **DevAdmin PDF preview** — Nuevo endpoint para convertir PDFs a imagenes y devolverlas en base64.
+- **Calidad configurada** — Se ajusta la escala de conversion segun un ajuste DevAdmin independiente.
+
+#### Frontend
+- **Pestaña PDF a imagenes** — Se agrega tab en Pruebas para subir PDF y mostrar preview por pagina.
+- **Selector de calidad** — Se agrega un selector simple de calidad en Proveedores > Image (config independiente).
+
+### 🐛 Fixes & Optimizations
+
+#### Frontend
+- **Config separada** — La configuracion de calidad se separa del proveedor y tiene guardado propio.
+
+### 🐛 Fixes & Optimizations
+
+#### Frontend
+- **Servicio Brain DevAdmin** — Se sincroniza el servicio para incluir la conversion PDF a imagenes.
+
+---
+
+## v1.14.1 — 2026-04-08
+
+### 🐛 Fixes & Optimizations
+
+#### Frontend
+- **Servicio Brain DevAdmin** — Se sincroniza el servicio para incluir la conversion PDF a imagenes.
+
+---
+
+## v1.14.0 — 2026-04-08
+
+> 🧠 **RAG: Extraccion por imagenes en PDFs**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **PDF → imagenes** — Los PDFs ahora se convierten a PNG y se extraen con el modelo image (temperatura 0).
+- **CSV via modelo file** — El CSV se formatea via modelo tipo file antes del chunking.
+- **Vision provider fijo** — Se evita el formato Gemini cuando el proveedor es otro, mejorando la compatibilidad con OpenRouter/Ollama.
+- **Validacion de modelo image** — Se corta temprano si el modelo no parece soportar vision y se registra el motivo.
+- **Mejor cobertura** — Mayor escala al renderizar PDF, mayor maxTokens y solicitud de detalle alto.
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Extraccion consistente** — Se unifica la ruta de extraccion para PDFs con modelo image por pagina.
+
+---
+
+## v1.13.2 — 2026-04-01
+
+> 🧠 **RAG: Document inputs dinamicos**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **Inputs dinamicos** — PDFs se envian como `input_file` y imagenes como `input_image` (con fallback), segun modelo.
+- **Imagenes en ingesta** — La cola RAG acepta imagenes y las procesa como fuente.
+
+#### Frontend
+- **Subida de imagenes** — El modulo Brain permite subir imagenes y muestra tipo IMAGE.
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Trazabilidad de extraccion** — Se registra el metodo de extraccion (parser, raw, csv, llm_file, llm_vision) por fuente.
+
+---
+
+## v1.13.0 — 2026-04-01
+
+> 🧠 **RAG: Extraccion multimodal para PDFs e imagenes**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **Extraccion vision** — PDFs escaneados e imagenes se procesan con modelo multimodal (OpenRouter) antes del embedding.
+- **Imagenes en ingesta** — La cola RAG acepta imagenes y las procesa como fuente.
+
+#### Frontend
+- **Subida de imagenes** — El modulo Brain permite subir imagenes y muestra tipo IMAGE.
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Trazabilidad de extraccion** — Se registra el metodo de extraccion (parser, raw, csv, llm_file, llm_vision) por fuente.
+
+---
+
+## v1.12.0 — 2026-03-25
+
+> 🧪 **DevAdmin: Modulo de pruebas y extraccion sin indexar**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **Extraccion directa** — Nuevo endpoint DevAdmin para extraer texto sin guardar ni indexar en Qdrant.
+- **Soporte de imagenes** — El extractor acepta archivos de imagen en el flujo de pruebas.
+
+#### Frontend
+- **Modulo Pruebas** — Nueva vista DevAdmin con subitem “Extraer texto” estilo chat para validar modelos file.
+
+---
+
+## v1.11.3 — 2026-03-21
+
+> 🧹 **RAG: Eliminacion garantizada en Qdrant**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Delete hard** — Eliminar fuente ahora falla si Qdrant no borra, evitando inconsistencias.
+- **Log de borrado** — Se registra confirmacion de eliminacion en Qdrant.
+
+#### Frontend
+- **Delete UX** — Mensajes claros al eliminar fuente.
+
+---
+
+## v1.11.2 — 2026-03-21
+
+> 🧠 **RAG: Texto extraido y prompt estricto**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **LLM estricto** — Se obliga a devolver Markdown o NO_TEXT_FOUND para evitar alucinaciones.
+
+#### Frontend
+- **Texto extraido** — Boton ahora consulta endpoint y maneja errores en UI.
+
+---
+
+## v1.11.1 — 2026-03-21
+
+> 🧠 **RAG: Extraccion Markdown via LLM**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **OCR removido** — La extraccion vuelve a ser solo LLM y se guarda Markdown extraido.
+
+#### Frontend
+- **Ver texto extraido** — Nueva accion para ver el Markdown extraido por documento.
+
+---
+
+## v1.11.0 — 2026-03-21
+
+> 🧠 **RAG: OCR local para PDFs escaneados**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **OCR local** — Si el parser y el modelo file no extraen texto, se usa OCR local para PDFs imagen.
+- **Logs de OCR** — Se agrega log de inicio y fin de OCR en la fuente.
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Deteccion PDF** — Se detecta si el PDF es imagen o texto antes de ejecutar OCR.
+
+## v1.10.3 — 2026-03-21
+
+> 🐛 **RAG: Worker estable + progreso real**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Worker** — Ajustes de lock y uso de sourceId en el worker para actualizar progreso y logs.
+
+#### Frontend
+- **Logs vivos** — Polling refresca logs cuando estan abiertos.
+
+---
+
+## v1.10.2 — 2026-03-21
+
+> 🐛 **RAG: Colecciones por modelo de embeddings**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Coleccion por modelo** — Se separa la coleccion Qdrant por modelo de embeddings activo para evitar error de dimensiones.
+
+---
+
+## v1.10.1 — 2026-03-21
+
+> 🐛 **RAG: Cola BullMQ estable**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **BullMQ Redis** — Se usa configuracion dedicada compatible con BullMQ para evitar jobs atascados.
+
+---
+
+## v1.10.0 — 2026-03-21
+
+> ⚙️ **RAG: Subida en background con progreso y logs**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **Cola BullMQ** — Subida de archivos ahora se procesa en background con Redis.
+- **Estados y progreso** — `status`, `stage`, `progress`, timestamps y logs por fuente.
+- **Endpoints** — Nuevos endpoints para estado y logs por fuente.
+
+#### Frontend
+- **UX de progreso** — Barra de avance, etapa actual y logs inline por fuente.
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **BullMQ** — Redis config ahora setea `maxRetriesPerRequest: null` para evitar error de worker.
+
+## v1.9.4 — 2026-03-21
+
+> 🐛 **RAG: Mejor uso de base64 en PDF**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Extractor file** — Siempre envia PDF en base64 al modelo tipo file (con data URI) y evita perder texto extraido por parser.
+
+---
+
+## v1.9.3 — 2026-03-21
+
+> 🧹 **RAG: Rollback en uploads fallidos**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Rollback automatico** — Si falla la subida o el procesamiento, se eliminan los vectores en Qdrant y el documento en Mongo.
+
+---
+
+## v1.9.2 — 2026-03-21
+
+> 🐛 **RAG: Mejor extraccion para PDFs sin texto**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Extractor file** — Si un PDF no tiene texto seleccionable, se envia base64 truncado al modelo tipo file para intentar extraer contenido.
+
+---
+
+## v1.9.1 — 2026-03-21
+
+> 🧩 **RAG: Bloqueo de uploads sin modelo file**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Frontend
+- **Subida de archivos** — Se deshabilita el flujo de archivos cuando no hay proveedor tipo file activo y se muestra aviso con link a DevAdmin.
+
+---
+
+## v1.9.0 — 2026-03-21
+
+> 🧠 **RAG: Extraccion LLM + payload con indices dinamicos**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **Extractor LLM tipo file** — PDF y CSV ahora pasan por el modelo tipo `file` antes del chunking; TXT se procesa directo.
+- **Payload enriquecido** — Se agregan `document_id`, `chunk_id`, `text`, `category`, `tags`, `author`, `access_level`, `created_at` y metadatos de proyecto en Qdrant.
+- **Indices dinamicos** — Config `rag.qdrant_payload_indexes` en `app_config` para crear indices de payload en Qdrant.
+- **Reindex actualizado** — El script de reindexado preserva y reinyecta metadata completa.
+
+---
+
+## v1.8.1 — 2026-03-20
+
+> 🧹 **UX: Simplificación de pestaña LLM**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Frontend
+- **DevAdmin LLM** — Se elimina la sección “Modelo IA del agente” para evitar duplicidad con el selector de proveedor/modelo.
+- **Estado vacío** — Se oculta el badge de activo cuando no hay proveedor/modelo configurado y se muestra aviso para seleccionar proveedor.
+
+---
+
+## v1.8.0 — 2026-03-20
+
+> 🧩 **UX: Flujo unificado de proveedores y modelos**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Frontend
+- **Formato unificado** — Todos los tipos de proveedor ahora siguen el mismo flujo: seleccionar proveedor → abrir modal → filtrar modelo.
+- **Modal de modelos** — Selección de modelos con buscador para Ollama, OpenRouter y Gemini en LLM, Embeddings, File, Image y Audio.
+
+---
+
+## v1.7.0 — 2026-03-19
+
+> 🛡️ **Refactor: Modo DevAdmin y Proveedores Avanzados**
+
+---
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **Rol `devadmin`** — Nuevo rol interno de superadmin para gestionar proveedores/modelos. No se puede crear ni asignar via API.
+- **Proveedores extendidos** — `provider_configs` ahora soporta tipos `file`, `image` y `audio` ademas de `llm` y `embedding`.
+- **Seguridad en rutas** — Las rutas de `ai-models` y proveedores quedan restringidas a `devadmin`.
+
+#### Frontend
+- **Vista DevAdmin** — Nueva pantalla para administrar proveedores y modelos por tipo (LLM, Embedding, File, Image, Audio).
+- **Settings simplificado** — Se removieron pestañas de proveedores; la personalizacion del bot permanece.
+- **UI de usuarios** — Visualizacion de rol `devadmin` como interno.
+- **Modelo IA** — Seleccion del modelo del agente movida a DevAdmin.
+- **RAG** — Mensaje de configuracion apunta a DevAdmin cuando falta embeddings.
+
+---
+
+## v1.6.5 — 2026-03-18
+
+> 🧹 **Herramientas: Limpieza y reindex de RAG**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Backend
+- **Scripts de mantenimiento** — Se agregan scripts para purgar Qdrant, reindexar RAG y limpiar un proyecto activo.
+- **Reindex controlado** — Reindex del proyecto activo borrando su colección y reconstruyendo vectores.
+- **Limpieza total** — Script para limpiar datos del proyecto activo y su colección en Qdrant.
+
+---
+
+## v1.6.0 — 2026-03-17
+
+> 🧠 **Feature: Sistema de Personalidad Dinámica para el Chatbot**
+
+---
+
+### 💥 Breaking Changes
+
+- **`systemPrompt` reemplazado por `personality`**: El campo `systemPrompt` (string libre) fue reemplazado por un objeto estructurado `personality` en el modelo de Agente. Los agentes existentes necesitan recrearse o actualizar su documento en la BD.
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **`prompt-builder.service.ts`** — Nuevo servicio que genera dinámicamente el system prompt a partir de la configuración de personalidad del agente.
+- **Modelo `AgentPersonality`** — Objeto tipado con: `role`, `traits` (máx. 3), `emojiUsage`, `language`, `responseLength`, `ragBehavior`, `fallbackMessage`, `additionalInstructions`.
+- **`getDefaultPersonality()`** — Función que provee valores por defecto para nuevos agentes.
+- **`agent.model.ts`** — Schema actualizado: `systemPrompt: string` → `personality: AgentPersonality`.
+- **`chat.service.ts`** — Usa `buildSystemPrompt(personality)` en vez de pasar el string directamente.
+- **`agent.service.ts`** — Create/update manejan el objeto `personality` con merge de defaults.
+- **`agents.controller.ts`** — Schemas Zod actualizados con validación del objeto `personality`.
+- **`project.service.ts` / `project.controller.ts`** — Aceptan `personality` en la creación de proyectos.
+
+#### Frontend
+- **`settings.service.ts`** — Interfaz `AgentPersonality` y `AgentData` actualizados.
+- **`Settings.vue` / Tab Agente IA rediseñado** — Interfaz visual con:
+  - Selector de **Rol** (Asistente, Profesor, Vendedor, Soporte, Atención al Cliente)
+  - Selector de **Rasgos** (chips con máximo 3 seleccionables)
+  - Selector de **Emojis** (Bajo, Medio, Alto)
+  - Selector de **Idioma** (Español, Inglés, Portugués, Auto-detectar)
+  - Selector de **Longitud de respuesta** (Corta, Media, Detallada)
+  - Selector de **Comportamiento RAG** (Solo documentos, Híbrido, General)
+  - Slider de **Creatividad/Temperatura** con etiquetas y advertencia
+  - Área de **Instrucciones adicionales** (texto libre opcional)
+- **`ProjectSetup.vue`** — Onboarding actualizado con selector de Rol visual (en vez de textarea de system prompt).
+- **`Agents.vue`** — Eliminadas referencias a `systemPrompt` en modales de crear/editar.
+
+### 🗑️ Eliminado
+- Campo `systemPrompt` del modelo Agent y de todas las interfaces frontend.
+- Personality `systemPrompt` del config service default.
+
+---
+
+## v1.5.13 — 2026-03-16
+
+> 📝 **Documentación: Reescritura completa de AGENTS.md**
+
+---
+
+### 📝 Documentación
+
+- **AGENTS.md reescrito desde cero**: Se actualizó el archivo de guía del proyecto para reflejar con precisión el estado actual de la arquitectura.
+  - Estructura detallada del monorepo con árbol de archivos del backend y frontend.
+  - Stack tecnológico actualizado con todas las dependencias reales (`@langchain/core` v1.x, Zod v4, Radix Vue, Lucide Icons, etc.).
+  - Servicios Docker documentados con puertos y propósito.
+  - Lógica de negocio completa de los 7 módulos (Mensajería, Contactos, Cerebro/RAG, Configuración, Usuarios, Login, Seguridad).
+  - Arquitectura del chatbot con diagrama ASCII del flujo: `chat.service → ai.service → llm-provider.service`.
+  - Flujo de autenticación y onboarding con diagrama de decisión.
+  - Tabla completa de API endpoints (11 módulos).
+  - Modelos de datos MongoDB (11 colecciones con campos clave).
+  - Eventos WebSocket documentados (7 eventos).
+  - Comandos de desarrollo y variables de entorno.
+  - Roadmap actualizado con checkboxes de estado.
+
+---
+
+## v1.5.12 — 2026-03-13
+
+> 🧪 **Test chat sin sidebar**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+- **Test Chat**: el layout sin sidebar aplica tambien en el bundle JS del router.
+
+---
+
+## v1.5.0 — 2026-03-11
+
+---
+
+## v1.4.1 — 2026-03-11
+
+#### Streaming de Respuestas (WebSockets)
+- **Generación en Tiempo Real**: Se reemplazó la espera bloqueante por una emisión continua de tokens (`generateResponseStream` usando `.stream()`).
+- **Typing Indicator Instantáneo**: Ahora, cuando el bot comienza a pensar, se emite un mensaje vacío ("...") de inmediato antes incluso de que RAG cargue, dándole al cliente la sensación de respuesta instantánea.
+- **Frontend Streaming UI**: Tanto el simulador del cliente (`TestChat.vue`) como el panel de administración (`Messaging.vue`) actualizan el contenido de los mensajes letra por letra al recibir el evento `chat:message_chunk`.
+- **Renderizado Markdown Básico**: Los chats ahora procesan negritas e itálicas que la IA produce naturalmente en tiempo real.
+
+### 🐛 Fixes & Optimizations
+
+- **Fail-fast en OpenRouter**: Se deshabilitaron los reintentos automáticos e infinitos (`maxRetries: 0`) en la librería `@langchain/openai`. Esto impedía que los modelos gratuitos (saturados) o con errores (429) se quedaran bloqueados por minutos, devolviendo una respuesta de timeout predecible en su lugar.
+- **Limitación de RAG (Context Truncation)**: Se acotó el historial de base de conocimientos inyectado a los 2 documentos más relevantes y truncados a un máximo de 1000 caracteres. Esto reduce drásticamente el Time-To-First-Token (TTFT) para consultas de IA.
+- **Timeouts preventivos en Vector Store**: Se añadió un `timeout` seguro de 5 segundos en `rag.service.ts` a la hora de consultar `QdrantVectorStore`. Si los embeddings fallan o tardan de más, el bot continuará y responderá para nunca dejar al usuario esperando colgado.
+
+
+
+## v1.4.0 — 2026-03-11
+
+> 🧠 **Feature/Fix: Capa de Abstracción AI, Enrutador e Integración nativa de OpenRouter**
+
+---
+
+### 💥 Breaking Changes
+
+- **AI Model Instantiation**: El servicio `@langchain/openai` requería un formato específico (`configuration: { apiKey, baseURL }`) para inicializar el cliente de OpenRouter, el cual era ignorado en el formato anterior (causando "Missing credentials" silenciados en la invocación).
+- **Abstracción del Chatbot (`ai.service.ts`)**: El Chatbot ya no sabe internamente qué tipo de IA está usando. Simplemente envía `SystemPrompt + Context + Mensajes` y espera la respuesta en cadena.
+- **El Enrutador (`llm-provider.service.ts`)**: Concentra todo el desacoplamiento de modelos, inicializando dinámicamente clientes de Ollama, OpenRouter o Gemini según base de datos y retornando una abstracción `BaseChatModel`.
+
+### ✨ New Features
+
+- **Manejo Sensato de Errores de LLMs**: Ahora, cuando falla un proveedor externo o interno, el bot envía al chat un mensaje de sistema claro y fácil de entender (ej: "Error de OpenRouter: Missing Credentials. Revisa Settings") para el usuario en vez de quedarse callado sin responder la petición inicial por web-socket. Se introdujo también un timeout general de 60s preventivo para LLMs que se queden en estado "zombie".
+
+---
+## v1.3.0 — 2026-03-10
+
+> 🔄 **Refactor: Proveedores `local` → `ollama` + Modal de selección de modelos**
+
+---
+
+### 💥 Breaking Changes
+
+- **Proveedor "local" renombrado a "ollama"**: Todas las referencias a `local` como proveedor ahora usan `ollama`. La configuración existente debe actualizarse.
+
+### ✨ Nuevas funcionalidades
+
+#### Backend
+- **`GET /api/ai-models/ollama/models`**: Nuevo endpoint que lista modelos directamente desde la API de Ollama (`/api/tags`)
+- **Validación de modelos Ollama**: Antes de invocar un modelo, se verifica que exista en Ollama. Si no, se envía un error descriptivo al chat.
+- **`testOllamaConnection()`**: Nuevo método que verifica conectividad con Ollama y reporta cantidad de modelos
+- **Timeout de 60s**: Las invocaciones al LLM ahora tienen timeout para evitar cuelgues infinitos
+- **Error messages en chat**: Si el bot falla al responder, envía un mensaje de error visible en la conversación
+
+#### Frontend
+- **Modal de selección de modelos**: En la pestaña "Agente IA", los modelos se seleccionan mediante un modal con buscador y filtros
+- **Vista previa de Ollama**: En "Proveedor LLM", al seleccionar Ollama se muestran los modelos disponibles con tamaño y parámetros
+- **Proveedor Embeddings**: Ahora lista modelos de Ollama en vez de archivos .gguf
+
+### 🗑️ Eliminado
+- Lectura de archivos `.gguf` (carpetas `assets/llm/` y `assets/embedding/`) — ya no se usan
+- Endpoints `GET /local/llm` y `GET /local/embeddings` reemplazados por `GET /ollama/models`
+- Interfaz `LocalAssetInfo` eliminada del frontend y backend
+
+---
+
+## v1.2.1 — 2026-03-10
+
+> 🐛 **Bugfixes: Test conexión, flujo local, OpenRouter y auto-respuesta del bot**
+
+---
+
+### 🐛 Fixes
+
+#### Test de Conexión
+- **Test local** ahora verifica que Ollama esté corriendo (`/api/tags`) en vez de intentar invocar un modelo
+- **Test result** muestra un mensaje descriptivo (ej: "Ollama conectado. 3 modelo(s) disponibles")
+- **Test online** envía un mensaje corto al modelo para verificar la API key
+
+#### Proveedor Local (Ollama)
+- **Ya no requiere tener archivos .gguf** para guardar proveedor local — solo activar "Local" es suficiente
+- **Archivos .gguf son opcionales** — se muestra info explicando que los modelos se cargan desde Ollama
+- **Modelos del agente** ahora consulta `GET /api/tags` de Ollama para listar modelos descargados + archivos .gguf locales
+
+#### Proveedor OpenRouter
+- **Los modelos aparecen correctamente** en el selector del agente después de guardar la API key
+- **Resultados limitados a 200 modelos** para evitar responses enormes
+- **Buscador de modelos** — se agrega campo de búsqueda cuando hay más de 10 modelos para filtrar rápidamente
+
+#### Agente — Guardado de Modelo
+- **`modelValue` ahora se acepta** en los schemas Zod de create y update agent (antes se descartaba)
+- **Agent service actualizado** para guardar `modelValue` directamente sin requerir lookup en `ai_models` collection
+- **Soporte para modelos remotos** — IDs como `openai/gpt-4` o `gemini-2.0-flash` se guardan directamente
+
+#### Chat — Auto-respuesta del Bot
+- **Bot ahora usa el system prompt del agente activo** en vez de un prompt hardcodeado en inglés
+- **Fallback a prompt por defecto** si el agente no tiene system prompt configurado
+- **RAG graceful degradation** — si la búsqueda RAG falla (ej: colección no existe), el bot continua sin contexto en vez de crashear
+- **`agentService` importado estáticamente** en chat.service.ts para resolver error TS2307
+
+---
+
+## v1.2.0 — 2026-03-10
+
+> 🔄 **Refactorización del flujo de proveedores: LLM + Embeddings separados, APIs dinámicas**
+
+---
+
+### 🔄 Refactored (Breaking Changes)
+
+#### Flujo de Proveedores Rediseñado
+
+- **Proveedores separados por tipo** — Ahora hay configuraciones independientes para LLM y Embeddings
+  - **LLM**: `local` | `openrouter` | `gemini`
+  - **Embedding**: `local` | `openrouter`
+- **Solo 1 proveedor activo por tipo** — Al seleccionar un proveedor, se desactivan los demás del mismo tipo
+- **Eliminados proveedores OpenAI y Claude** como opciones directas (accesibles vía OpenRouter)
+- **Eliminado `@langchain/anthropic`** — Ya no es dependencia directa
+- **Eliminadas variables de entorno de API keys** — `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY` ya no están en `env.ts` (se gestionan desde la BD)
+
+#### Modelo `ProviderConfig` Actualizado
+
+- Nuevo campo `type: 'llm' | 'embedding'` — Identifica el tipo de proveedor
+- Nuevo campo `selectedModel` — Modelo seleccionado (para local y embeddings)
+- Nuevo campo `selectedModelName` — Nombre legible del modelo
+
+### ✨ New
+
+#### Lectura de Assets Mejorada
+
+- **Carpetas + .gguf** — Ahora `readLocalAssets()` detecta tanto carpetas como archivos `.gguf`
+- Ambas rutas: `src/assets/llm/` y `src/assets/embedding/`
+
+#### APIs Remotas Dinámicas
+
+- **`GET /api/ai-models/remote/openrouter`** — Consulta la API de OpenRouter (`GET /api/v1/models`) para listar modelos LLM en tiempo real
+- **`GET /api/ai-models/remote/openrouter/embeddings`** — Consulta OpenRouter filtrando por "embedd" para modelos de embedding
+- **`GET /api/ai-models/remote/gemini`** — Consulta `generativelanguage.googleapis.com/v1/models` para listar modelos Gemini
+
+#### Endpoint de Modelos para Agente
+
+- **`GET /api/ai-models/agent/models`** — Consulta el proveedor LLM activo y devuelve los modelos disponibles
+  - Si local: devuelve el modelo seleccionado al configurar
+  - Si openrouter/gemini: consulta la API remota con la API key guardada
+
+#### Provider Config por Tipo
+
+- **`GET /api/ai-models/providers/active/:type`** — Obtiene el proveedor activo para `llm` o `embedding`
+- **`GET /api/ai-models/providers/configs/:type`** — Lista configs por tipo
+- **`DELETE /api/ai-models/providers/config/:type/:provider`** — Elimina config por tipo+proveedor
+
+#### Frontend — Pestañas Separadas
+
+- **Pestaña "Proveedor LLM"** — Selector visual de proveedor (local/openrouter/gemini)
+  - Local: muestra carpetas y archivos .gguf para selección inmediata del modelo
+  - OpenRouter/Gemini: input de API Key (modelo se selecciona en el agente)
+  - Test de conexión integrado
+- **Pestaña "Proveedor Embeddings"** — Selector (local/openrouter)
+  - Local: muestra archivos .gguf para selección inmediata
+  - OpenRouter: API Key + botón "Cargar Modelos" + selector de modelo embedding
+- **Pestaña "Agente IA"** — Modelo se carga dinámicamente desde `getModelsForAgent()`
+  - Si no hay proveedor, muestra aviso amigable
+  - Usa `<optgroup>` para agrupar por proveedor
+
+#### RAG Service — Embeddings Dinámicos
+
+- Ya no crea embeddings estáticos al inicio — resuelve la config del proveedor de embeddings activo en cada operación
+- Función `resolveEmbeddingsConfig()` busca el proveedor de embedding activo en BD
+
+---
+
+## v1.1.0 — 2026-02-28
+
+> 🔧 **Refactorización de librerías deprecadas + Soporte multi-proveedor LLM**
+
+---
+
+### 🔄 Refactored (Breaking Changes)
+
+#### Migración de LangChain (eliminación de imports deprecados)
+
+- **`ChatOllama`** — Migrado de `@langchain/community/chat_models/ollama` → `@langchain/ollama`
+- **`OllamaEmbeddings`** — Migrado de `@langchain/community/embeddings/ollama` → `@langchain/ollama`
+- **`QdrantVectorStore`** — Migrado de `@langchain/community/vectorstores/qdrant` → `@langchain/qdrant`
+- **`RecursiveCharacterTextSplitter`** — Migrado de `langchain/text_splitter` → `@langchain/textsplitters`
+- **`@langchain/core`** — Actualizado de `v0.3.x` → `v1.1.x` para compatibilidad con los nuevos paquetes
+- **`@langchain/community`** — Eliminado completamente como dependencia directa
+- **`langchain` (base)** — Ya no es necesario, se eliminó del proyecto
+- **`@types/bcryptjs`** y **`@types/uuid`** — Eliminados (los paquetes ya incluyen sus propios tipos)
+
+#### Compatibilidad Zod v4
+
+- **`validation.middleware.ts`** — Reemplazado `AnyZodObject` (eliminado en Zod v4) por `z.ZodType<any>`
+- **`error.middleware.ts`** — Actualizado `.errors` → `.issues` para compatibilidad con Zod v4
+
+### ✨ New
+
+#### Carpeta Assets (LLM + Embeddings)
+
+- **`src/assets/llm/`** — Carpeta para almacenar modelos LLM locales (.gguf, .bin, .safetensors, .pt, .onnx)
+- **`src/assets/embedding/`** — Carpeta para almacenar modelos de embeddings locales
+- **`.gitignore`** — Configurado para ignorar archivos de modelo pero mantener `.gitkeep`
+- **Endpoint `GET /api/ai-models/local/llm`** — Lee y lista los archivos de modelo en `assets/llm/`
+- **Endpoint `GET /api/ai-models/local/embeddings`** — Lee y lista los archivos de embedding en `assets/embedding/`
+
+#### Servicio Multi-Proveedor LLM (`llm-provider.service.ts`)
+
+- **Nuevo servicio central** — Crea instancias de `ChatModel` dinámicamente según el proveedor configurado
+- **Proveedores soportados:**
+  - 🦙 **Ollama** (Local) — Sin API key, usa URL del servidor Ollama
+  - 🤖 **OpenAI** — GPT-4o, GPT-4o Mini, GPT-4 Turbo
+  - ✨ **Google Gemini** — Gemini 2.0 Flash, Gemini 1.5 Pro, Gemini 1.5 Flash
+  - 🧠 **Anthropic Claude** — Claude Sonnet 4, Claude 3.5 Haiku, Claude 3 Opus
+  - 🔀 **OpenRouter** — Acceso a cientos de modelos via una sola API
+- **Paquetes NPM instalados:**
+  - `@langchain/ollama` — ChatOllama + OllamaEmbeddings modernos
+  - `@langchain/qdrant` — QdrantVectorStore moderno
+  - `@langchain/textsplitters` — RecursiveCharacterTextSplitter moderno
+  - `@langchain/openai` — ChatOpenAI (OpenAI + OpenRouter)
+  - `@langchain/google-genai` — ChatGoogleGenerativeAI (Gemini)
+  - `@langchain/anthropic` — ChatAnthropic (Claude)
+
+#### API de Proveedores (Backend)
+
+- **`GET /api/ai-models/providers/list`** — Lista proveedores disponibles con estado de configuración
+- **`GET /api/ai-models/providers/configs`** — Obtiene configs guardadas (API keys enmascaradas)
+- **`POST /api/ai-models/providers/config`** — Guarda API key de un proveedor
+- **`DELETE /api/ai-models/providers/config/:provider`** — Elimina API key de un proveedor
+- **`POST /api/ai-models/providers/test`** — Prueba la conexión con un proveedor
+- **Modelo `ProviderConfig`** — Nueva colección MongoDB `provider_configs` para almacenar API keys por proveedor
+
+#### Resolución Dinámica de Modelo (`ai.service.ts`)
+
+- **Refactorizado completamente** — Ya no tiene modelo hardcodeado
+- **`resolveModelConfig()`** — Busca el agente activo, obtiene su modelo y proveedor, y crea el ChatModel correcto dinámicamente
+- **Fallback inteligente** — Si no encuentra configuración, usa Ollama con `llama3.2:3b`
+
+#### Frontend — Pestaña Proveedores
+
+- **Nueva pestaña** "Proveedores" en `Settings.vue` — Gestión completa de API keys
+  - Input de API key con toggle mostrar/ocultar
+  - Botón "Guardar" para persistir la key
+  - Botón "Test" para probar la conexión
+  - Botón "Eliminar" para quitar la key
+  - Indicadores de estado: "Configurado", "Local"
+  - Listado de modelos disponibles por proveedor
+- **Selector de modelo agrupado** — En `Settings.vue`, `Agents.vue` y `ProjectSetup.vue`, los modelos ahora se muestran agrupados por proveedor con optgroups
+- **Agents.vue** — Vista completamente funcional con create, edit, delete, y badges de proveedor
+- **settings.service.ts** — Nuevos tipos y métodos para: `getProviders()`, `getProviderConfigs()`, `saveProviderConfig()`, `deleteProviderConfig()`, `testProviderConnection()`, `getLocalModels()`, `getLocalEmbeddings()`
+
+#### Configuración
+
+- **`config/env.ts`** — Nuevas variables de entorno opcionales: `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`
+
+---
+
+## v1.0.1 — 2026-02-28
+
+### ✨ New
+
+- **`.gitignore` configurado** — Archivo `.gitignore` completo para el monorepo, cubriendo `node_modules`, builds, archivos `.env`, IDEs, archivos del SO, uploads de usuario, y archivos temporales.
+
+---
+
+## v1.0.0 — 2026-02-28
+
+> 🚀 **Release inicial del MVP completo** — Backend + Frontend + Infraestructura Docker
+
+---
+
+### ✨ New
+
+#### Infraestructura & Monorepo
+
+- **Monorepo con pnpm Workspaces** — Estructura organizada con `apps/backend`, `apps/frontend` y `packages/shared`, gestionada con pnpm workspaces.
+- **Docker Compose para servicios** — Orquestación de MongoDB, Redis, Qdrant, Ollama y NATS con un solo comando (`docker-compose up`). Incluye persistencia de volúmenes para datos y modelos.
+- **Variables de entorno validadas con Zod** — Configuración centralizada en `config/env.ts` con validación estricta de todas las variables de entorno al iniciar el servidor.
+
+#### Backend — API REST (Express + TypeScript)
+
+- **Servidor Express con TypeScript** — Backend completo sobre Express 4 con TypeScript estricto, estructura modular en capas (controllers → services → models).
+- **Sistema de autenticación JWT** — Registro, login y verificación de token con expiración de 24 horas. El primer usuario registrado se convierte automáticamente en admin. Passwords hasheados con bcrypt (12 rounds).
+- **Middleware de autenticación y autorización** — `authenticate` valida JWT en cada request protegido. `authorize('admin', 'support')` permite control de acceso por roles.
+- **Gestión de usuarios** — CRUD completo de usuarios con roles (`admin`, `support`, `assistant`), estados (`Active`, `Inactive`), búsqueda, paginación, ordenamiento, y cambio de contraseña. Nunca se expone el hash de password en respuestas.
+- **Gestión de contactos** — CRUD completo con búsqueda por nombre/email/teléfono, filtros por plataforma, estado y tags, paginación, ordenamiento, soft delete (archivar/restaurar), y creación automática de contactos al responder el primer mensaje.
+- **Sistema de conversaciones en tiempo real** — Conversaciones multi-plataforma (WhatsApp, Instagram, Web) con modos `auto_pilot` y `human_takeover`, estados (active, closed, pending_human), conteo de mensajes no leídos, y datos temporales del cliente (`clientInfo`) antes de crear el contacto.
+- **Chat Service con lógica de negocio** — Envío de mensajes por `contact`, `ai_agent` y `human_agent`. Creación automática del contacto cuando un agente humano responde por primera vez. Generación automática de respuestas del bot en modo auto_pilot usando RAG + IA.
+- **Motor RAG (Retrieval-Augmented Generation)** — Procesamiento de archivos PDF, TXT y CSV. Text splitting con `RecursiveCharacterTextSplitter` (1000 chars, 200 overlap). Embeddings con `nomic-embed-text` vía Ollama. Indexación vectorial en Qdrant con `QdrantVectorStore`. Búsqueda semántica por similaridad. También acepta texto escrito manualmente como fuente de conocimiento.
+- **Servicio de IA con Ollama** — Integración con `ChatOllama` de LangChain para generar respuestas y analizar sentimiento. Soporte para system prompts personalizables y contexto RAG inyectado automáticamente.
+- **Gestión de modelos IA** — CRUD de modelos IA con seed automático al inicio (Llama 3.2, Qwen 2.5 Coder, CodeLlama). Filtro por modelos activos/inactivos. Prevención de duplicados por `value`.
+- **Gestión de agentes** — CRUD de agentes IA con referencia a modelos, system prompts, mensajes de bienvenida/despedida, configuración de temperatura y max tokens, habilitación por canal, y estado activo/inactivo.
+- **Sistema de proyectos** — Creación de proyecto con agente asociado automáticamente. Solo se permite un proyecto activo. Configuración de canales, mensajes y opciones del bot.
+- **Configuración dinámica** — Sistema key-value en MongoDB para configuraciones globales (canales, mensajes, personalidad, opciones). Merge con valores por defecto si no existen en la BD. Soporte para upsert individual y masivo (`setAll`).
+- **Dashboard Analytics** — Estadísticas de conversaciones (total, activas, cerradas, tasa de respuesta), volumen por período, distribución por canal, y actividad reciente.
+- **WebSocket (Socket.io)** — Comunicación en tiempo real para mensajes de chat y notificaciones de nuevas conversaciones. Soporte para rooms por conversación (`join:room`).
+- **Upload de archivos** — Middleware Multer para subida de archivos con almacenamiento en `uploads/`.
+- **Middleware de validación y errores** — Validación de requests y manejo global de errores con responses estandarizadas.
+- **Script de seed** — Script `pnpm seed` que limpia toda la base de datos y crea un usuario admin demo (`admin@mitchbot.io` / `admin123`).
+
+#### Frontend — Dashboard (Vue 3 + TypeScript + Tailwind CSS)
+
+- **App Vue 3 con Composition API** — Frontend con `<script setup>` y TypeScript en todo el código. Build con Vite. Routing con Vue Router.
+- **Layout System** — `DashboardLayout` con `Sidebar` colapsable y `Topbar`. Vistas sin layout para Login y ProjectSetup.
+- **Pantalla de Login** — Autenticación con JWT, almacenamiento de sesión en localStorage, redirección automática si ya está autenticado.
+- **Project Setup (Onboarding)** — Flujo de configuración inicial del proyecto y agente IA. Si no existe un proyecto, el usuario es redirigido al setup antes de acceder al dashboard.
+- **Dashboard principal** — Vista con métricas de conversaciones, gráficos de volumen y distribución por canal, y actividad reciente.
+- **Messaging (Centro de mensajes)** — Vista completa de mensajería en tiempo real con lista de conversaciones, panel de chat, envío de mensajes como agente humano, y conexión WebSocket para actualizaciones en vivo.
+- **Contactos** — Gestión completa de contactos con búsqueda, filtros, paginación, y acciones de editar/archivar/restaurar.
+- **Brain (Base de conocimiento)** — Interfaz para subir documentos (PDF, TXT, CSV) y texto manual a la base de conocimiento RAG. Lista de fuentes indexadas con estado (Processing, Indexed, Failed).
+- **Agents** — Gestión de agentes IA con selección de modelo, configuración de prompts, temperatura y tokens, y canales habilitados. Los modelos se cargan dinámicamente desde el backend.
+- **Settings** — Configuración global del proyecto: canales habilitados, mensajes de bienvenida/despedida, y opciones. Datos cargados y guardados desde/hacia la base de datos.
+- **Profile** — Vista de perfil del usuario autenticado (separada de Settings) con edición de nombre, email y contraseña.
+- **Users** — Gestión de usuarios del sistema con CRUD completo conectado al backend: crear, editar, cambiar roles, activar/desactivar usuarios.
+- **Test Chat** — Vista de pruebas para simular conversaciones y probar la respuesta del bot.
+- **Services Layer** — Capa de servicios en el frontend (`auth`, `brain`, `contact`, `dashboard`, `messaging`, `project`, `settings`, `socket`, `user`) que abstrae todas las llamadas HTTP y WebSocket al backend.
+- **Navigation Guard** — Protección de rutas: verificación de autenticación, verificación de proyecto configurado, y redirección automática según el estado del usuario.
+
+#### API Endpoints
+
+| Módulo | Endpoints | Descripción |
+|:-------|:----------|:------------|
+| **Auth** | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `PUT /api/auth/profile`, `PUT /api/auth/password` | Autenticación y perfil |
+| **Users** | `GET /api/users`, `POST /api/users`, `PUT /api/users/:id`, `DELETE /api/users/:id` | Gestión de usuarios |
+| **Contacts** | `GET /api/contacts`, `GET /api/contacts/:id`, `PUT /api/contacts/:id`, `PATCH /api/contacts/:id/archive`, `PATCH /api/contacts/:id/restore` | Gestión de contactos |
+| **Conversations** | `GET /api/conversations`, `GET /api/conversations/:id`, `GET /api/conversations/:id/messages`, `POST /api/conversations/:id/messages`, `PATCH /api/conversations/:id/mode`, `PATCH /api/conversations/:id/status` | Mensajería |
+| **Brain** | `GET /api/brain/sources`, `POST /api/brain/upload`, `POST /api/brain/text`, `DELETE /api/brain/sources/:id`, `POST /api/brain/search` | Base de conocimiento RAG |
+| **Agents** | `GET /api/agents`, `POST /api/agents`, `PUT /api/agents/:id`, `DELETE /api/agents/:id` | Agentes IA |
+| **AI Models** | `GET /api/ai-models`, `POST /api/ai-models`, `PUT /api/ai-models/:id`, `DELETE /api/ai-models/:id` | Modelos de IA |
+| **Config** | `GET /api/config`, `PUT /api/config` | Configuración global |
+| **Project** | `GET /api/project`, `GET /api/project/check`, `POST /api/project`, `PUT /api/project/:id` | Gestión de proyecto |
+| **Dashboard** | `GET /api/dashboard/stats`, `GET /api/dashboard/volume`, `GET /api/dashboard/channels`, `GET /api/dashboard/activity` | Analytics |
+
+#### Modelos de Datos (MongoDB)
+
+| Colección | Campos Clave |
+|:----------|:-------------|
+| `users` | name, email, password (hash), role, status, avatar |
+| `contacts` | name, phone, email, platform, status, tags, metadata |
+| `conversations` | contactId, platform, status, mode, clientInfo, unreadCount |
+| `messages` | conversationId, sender, content, contentType, isBot |
+| `agents` | name, modelId, systemPrompt, config |
+| `ai_models` | name, value, provider, category, isActive |
+| `projects` | name, agentId, config (channels, messages, options) |
+| `knowledge_sources` | name, type, size, status, vectorCount, filePath |
+| `config` | key, value (key-value store dinámico) |
+| `activities` | type, description, createdAt |
+
+#### Stack Tecnológico
+
+| Capa | Tecnologías |
+|:-----|:------------|
+| **Runtime** | TypeScript, tsx (desarrollo) |
+| **Backend** | Express 4, Socket.io, Multer, Zod |
+| **Frontend** | Vue 3, Vite, Tailwind CSS 3, Pinia, Vue Router 4 |
+| **Base de datos** | MongoDB 6 (principal), Redis (cache), Qdrant (vectorial) |
+| **IA** | Ollama, LangChain.js, nomic-embed-text (embeddings) |
+| **Mensajería** | NATS (event bus), Socket.io (tiempo real) |
+| **Auth** | JWT (jsonwebtoken), bcryptjs |
+| **Infraestructura** | Docker Compose, pnpm workspaces |
+
+---

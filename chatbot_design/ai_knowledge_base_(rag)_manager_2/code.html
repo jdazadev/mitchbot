@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Knowledge Base (RAG) Manager</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#2448eb",
+                "background-light": "#f9fafb",
+                "background-dark": "#0f1829",
+              },
+              fontFamily: {
+                "display": ["Space Grotesk"]
+              },
+              borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d0d4e7;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-[#0e101b] dark:text-white">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-[#e7e9f3] dark:border-slate-800 px-6 lg:px-20 py-3">
+<div class="max-w-[1440px] mx-auto flex items-center justify-between gap-8">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-xl">hub</span>
+</div>
+<h2 class="text-lg font-bold tracking-tight">RAG Manager</h2>
+</div>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-bold text-primary border-b-2 border-primary pb-1" href="#">Knowledge Base</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Channels</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Settings</a>
+</div>
+</div>
+<div class="flex flex-1 max-w-md mx-8">
+<div class="relative w-full group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#4d5b99]">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="w-full bg-[#e7e9f3] dark:bg-slate-800 border-none rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-[#4d5b99]" placeholder="Search indexed knowledge (Cmd + K)"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>New Project</span>
+</button>
+<div class="size-10 rounded-full border-2 border-primary/20 p-0.5">
+<img alt="User Profile" class="w-full h-full rounded-full" data-alt="Avatar of a male user with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFeFJuyKIQyxFpA1kyAPSWl-XckbPAGVtJ6KQIyURoSQL1RkWP87H9rTQVCGytZJXnIoH9KVRR5LLzAsfBhyhhKGODhGYMgySu9rew4ohCQ5laLyaobMCHuUPdgCtEPPCglnX-bRth_ClKUgsanRb86NaPX13Og643uUyp-qxgjxQMe83y_j40E6ZKngCijsmXLLfwwrhVfgetfWjmUddsaJzicy4HhZBzaUyMEulYhdfVgvvBL2HmnrR1f6k5l_yWRr8mFbU82cc"/>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-[1440px] mx-auto px-6 lg:px-20 py-8">
+<!-- Page Heading & Stats -->
+<div class="mb-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div>
+<h1 class="text-4xl font-black tracking-tight mb-2">Knowledge Base: Customer Support Bot</h1>
+<p class="text-[#4d5b99] dark:text-slate-400">Manage and synchronize your data sources for optimized RAG retrieval.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-[#d0d4e7] dark:border-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-sm">sync</span>
+                        Sync All
+                    </button>
+<button class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
+<span class="material-symbols-outlined text-sm">upload_file</span>
+                        Upload Source
+                    </button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-white dark:bg-slate-900 border border-[#d0d4e7] dark:border-slate-800 rounded-xl p-6 shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<p class="text-sm font-medium text-[#4d5b99]">Total Vectors</p>
+<span class="text-xs font-bold px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">+12.4%</span>
+</div>
+<p class="text-3xl font-bold">124,502</p>
+<p class="text-xs text-[#4d5b99] mt-2">Embedded across 42 documents</p>
+</div>
+<div class="bg-white dark:bg-slate-900 border border-[#d0d4e7] dark:border-slate-800 rounded-xl p-6 shadow-sm">
+<p class="text-sm font-medium text-[#4d5b99] mb-2">Last Sync</p>
+<p class="text-3xl font-bold">2 mins ago</p>
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden">
+<div class="bg-primary h-full w-full opacity-20"></div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 border border-[#d0d4e7] dark:border-slate-800 rounded-xl p-6 shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<p class="text-sm font-medium text-[#4d5b99]">Storage Capacity</p>
+<span class="text-xs font-bold text-amber-600">85% Used</span>
+</div>
+<p class="text-3xl font-bold">1.2 GB</p>
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden">
+<div class="bg-amber-500 h-full w-[85%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Workspace -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Panel: Source Management -->
+<div class="lg:col-span-5 space-y-6">
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-[#d0d4e7] dark:border-slate-800 overflow-hidden">
+<div class="p-4 border-b border-[#e7e9f3] dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+<h3 class="font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-lg text-primary">database</span>
+                            Data Sources
+                        </h3>
+<div class="flex gap-1">
+<button class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+</button>
+<button class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500">
+<span class="material-symbols-outlined text-lg">settings</span>
+</button>
+</div>
+</div>
+<div class="p-4 space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar">
+<!-- Source Card: Active Indexing -->
+<div class="group relative p-4 rounded-lg border border-primary/20 bg-primary/5 dark:bg-primary/10 transition-all">
+<div class="flex items-start justify-between mb-3">
+<div class="flex gap-3">
+<div class="size-10 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center border border-primary/20 shadow-sm">
+<span class="material-symbols-outlined text-primary">picture_as_pdf</span>
+</div>
+<div>
+<h4 class="text-sm font-bold truncate max-w-[180px]">Enterprise_Policy_v4.pdf</h4>
+<p class="text-xs text-slate-500 font-medium">12.4 MB • 42 pages</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-mono bg-primary/20 text-primary px-2 py-0.5 rounded">8.2k vectors</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between text-[10px] font-bold text-primary">
+<span>INDEXING...</span>
+<span>65%</span>
+</div>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[65%]"></div>
+</div>
+</div>
+</div>
+<!-- Source Card: Synced -->
+<div class="p-4 rounded-lg border border-[#e7e9f3] dark:border-slate-800 hover:border-primary/30 transition-all bg-white dark:bg-slate-900">
+<div class="flex items-start justify-between">
+<div class="flex gap-3">
+<div class="size-10 bg-slate-50 dark:bg-slate-800 rounded-lg flex items-center justify-center border border-[#e7e9f3] dark:border-slate-700">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">language</span>
+</div>
+<div>
+<h4 class="text-sm font-bold">support.acme.com/faq</h4>
+<p class="text-xs text-slate-500 font-medium">Auto-sync daily</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-1 text-emerald-600">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="text-[10px] font-bold">SYNCED</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<div class="mt-3 flex items-center gap-3">
+<span class="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">1.5k vectors</span>
+<span class="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">Last: Today 10:42 AM</span>
+</div>
+</div>
+<!-- Source Card: Error -->
+<div class="p-4 rounded-lg border border-rose-100 dark:border-rose-900/30 bg-rose-50/30 dark:bg-rose-900/10">
+<div class="flex items-start justify-between">
+<div class="flex gap-3">
+<div class="size-10 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center border border-rose-200 dark:border-rose-900/50">
+<span class="material-symbols-outlined text-rose-500">description</span>
+</div>
+<div>
+<h4 class="text-sm font-bold">API_Changelog_Old.docx</h4>
+<p class="text-xs text-rose-600 font-bold">Access Denied</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-rose-600 hover:bg-rose-100 p-1 rounded">
+<span class="material-symbols-outlined text-lg">refresh</span>
+</button>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Source Card: Neutral/Disabled -->
+<div class="p-4 rounded-lg border border-[#e7e9f3] dark:border-slate-800 bg-white dark:bg-slate-900 opacity-60">
+<div class="flex items-start justify-between">
+<div class="flex gap-3">
+<div class="size-10 bg-slate-50 dark:bg-slate-800 rounded-lg flex items-center justify-center border border-[#e7e9f3] dark:border-slate-700">
+<span class="material-symbols-outlined text-slate-600">article</span>
+</div>
+<div>
+<h4 class="text-sm font-bold">Internal_Notes_Private.txt</h4>
+<p class="text-xs text-slate-500 font-medium">8.4 KB • Disabled</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800/30 border-t border-[#e7e9f3] dark:border-slate-800">
+<button class="w-full py-3 border-2 border-dashed border-[#d0d4e7] dark:border-slate-700 rounded-xl text-sm font-bold text-[#4d5b99] hover:bg-white hover:border-primary transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">add_link</span>
+                            Connect Custom Connector
+                        </button>
+</div>
+</div>
+</div>
+<!-- Right Panel: Intelligence Visualization -->
+<div class="lg:col-span-7 space-y-6">
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-[#d0d4e7] dark:border-slate-800 flex flex-col h-full min-h-[600px]">
+<div class="flex border-b border-[#e7e9f3] dark:border-slate-800 px-6 gap-8">
+<a class="flex items-center justify-center border-b-[3px] border-b-primary text-primary py-4 gap-2" href="#">
+<span class="material-symbols-outlined text-lg">data_exploration</span>
+<span class="text-sm font-bold tracking-tight">Intelligence Visualization</span>
+</a>
+<a class="flex items-center justify-center border-b-[3px] border-b-transparent text-[#4d5b99] py-4 gap-2 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-lg">reorder</span>
+<span class="text-sm font-bold tracking-tight">Vector Chunks</span>
+</a>
+</div>
+<div class="flex-1 p-6 flex flex-col">
+<!-- Abstract Knowledge Graph Mockup -->
+<div class="flex-1 relative rounded-xl bg-slate-50 dark:bg-slate-950 border border-[#e7e9f3] dark:border-slate-800 overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 opacity-20 dark:opacity-30" style="background-image: radial-gradient(#2448eb 1px, transparent 1px); background-size: 24px 24px;"></div>
+<!-- Graph Visualization SVG Mockup -->
+<div class="relative z-10 w-full h-full p-12">
+<svg class="w-full h-full drop-shadow-2xl" viewbox="0 0 800 400">
+<!-- Connection Lines -->
+<line stroke="#2448eb" stroke-dasharray="4" stroke-width="2" x1="200" x2="400" y1="100" y2="200"></line>
+<line stroke="#2448eb" stroke-width="2" x1="600" x2="400" y1="100" y2="200"></line>
+<line stroke="#2448eb" stroke-width="1" x1="400" x2="400" y1="200" y2="350"></line>
+<line stroke="#2448eb" stroke-dasharray="2" stroke-width="1" x1="150" x2="400" y1="280" y2="200"></line>
+<!-- Nodes -->
+<circle cx="400" cy="200" fill="#2448eb" r="14"></circle>
+<circle cx="200" cy="100" fill="#2448eb" fill-opacity="0.6" r="10"></circle>
+<circle cx="600" cy="100" fill="#2448eb" fill-opacity="0.6" r="10"></circle>
+<circle cx="400" cy="350" fill="#2448eb" fill-opacity="0.4" r="8"></circle>
+<circle cx="150" cy="280" fill="#2448eb" fill-opacity="0.4" r="8"></circle>
+<!-- Labels -->
+<text class="dark:fill-blue-400" fill="#2448eb" font-family="Space Grotesk" font-size="14" font-weight="bold" x="420" y="205">Core Engine</text>
+<text class="dark:fill-slate-400" fill="#4d5b99" font-family="Space Grotesk" font-size="12" x="110" y="105">Policy Document</text>
+<text class="dark:fill-slate-400" fill="#4d5b99" font-family="Space Grotesk" font-size="12" x="620" y="105">Web FAQ</text>
+</svg>
+</div>
+<!-- Legend/Controls -->
+<div class="absolute bottom-4 right-4 flex flex-col gap-2">
+<button class="size-8 bg-white dark:bg-slate-800 rounded-lg shadow-md flex items-center justify-center hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-sm">zoom_in</span>
+</button>
+<button class="size-8 bg-white dark:bg-slate-800 rounded-lg shadow-md flex items-center justify-center hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-sm">zoom_out</span>
+</button>
+<button class="size-8 bg-white dark:bg-slate-800 rounded-lg shadow-md flex items-center justify-center hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-sm">filter_center_focus</span>
+</button>
+</div>
+<div class="absolute top-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur p-3 rounded-lg border border-[#e7e9f3] dark:border-slate-800 shadow-sm">
+<p class="text-[10px] font-bold text-primary mb-1 tracking-widest uppercase">Query Preview</p>
+<p class="text-xs font-medium italic">"How do I reset my password if the email link is expired?"</p>
+<div class="mt-2 flex items-center gap-2">
+<div class="h-1 w-12 bg-primary rounded-full"></div>
+<span class="text-[10px] font-bold">Top Match (Score: 0.94)</span>
+</div>
+</div>
+</div>
+<!-- Data Insights Bar -->
+<div class="mt-6 grid grid-cols-2 gap-4">
+<div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-[#e7e9f3] dark:border-slate-800">
+<h5 class="text-xs font-bold text-[#4d5b99] mb-1">Embedding Model</h5>
+<div class="flex items-center justify-between">
+<span class="text-sm font-bold">text-embedding-3-large</span>
+<span class="text-[10px] font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">3072 dim</span>
+</div>
+</div>
+<div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-[#e7e9f3] dark:border-slate-800">
+<h5 class="text-xs font-bold text-[#4d5b99] mb-1">Top Similarity Score</h5>
+<div class="flex items-center justify-between">
+<span class="text-sm font-bold">Cosine Similarity</span>
+<span class="text-sm font-bold text-emerald-600">Avg 0.88</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Quick Actions -->
+<div class="fixed bottom-8 right-8 flex flex-col gap-3">
+<button class="size-12 bg-white dark:bg-slate-800 rounded-full shadow-xl flex items-center justify-center border border-[#e7e9f3] dark:border-slate-700 hover:scale-110 transition-transform group">
+<span class="material-symbols-outlined text-slate-600 group-hover:text-primary">help_outline</span>
+</button>
+<button class="size-12 bg-primary text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition-transform shadow-primary/40">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+</div>
+</body></html>

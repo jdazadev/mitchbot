@@ -1,0 +1,102 @@
+# ================================
+# Dependencies
+# ================================
+node_modules/
+.pnpm-store/
+
+# ================================
+# Build Output
+# ================================
+dist/
+build/
+*.tsbuildinfo
+
+# ================================
+# Environment Variables
+# ================================
+.env
+.env.local
+.env.*.local
+
+# ================================
+# IDE & Editor
+# ================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ================================
+# Logs
+# ================================
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ================================
+# OS Files
+# ================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# ================================
+# Uploads (user-generated content)
+# ================================
+apps/backend/uploads/*
+!apps/backend/uploads/.gitkeep
+
+# ================================
+# LLM & Embedding Assets (model files)
+# ================================
+apps/backend/src/assets/llm/*
+!apps/backend/src/assets/llm/.gitkeep
+apps/backend/src/assets/embedding/*
+!apps/backend/src/assets/embedding/.gitkeep
+
+# ================================
+# Docker (volumes & runtime)
+# ================================
+docker-compose.override.yml
+
+# ================================
+# Testing & Coverage
+# ================================
+coverage/
+.nyc_output/
+
+# ================================
+# Misc
+# ================================
+*.tgz
+.cache/
+.temp/
+.tmp/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# ================================
+# AI Tooling (local, includes large binaries)
+# ================================
+.agent/
+.agents/
+.opencode/
+.codex/
+
+# ================================
+# OCR / Model binaries
+# ================================
+*.traineddata

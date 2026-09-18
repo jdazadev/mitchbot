@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Messaging Center (Tailwind Styled)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#2563EB", 
+              "primary-dark": "#1d4ed8",
+            },
+            fontFamily: {
+              "sans": ["Inter", "sans-serif"],
+            },
+          },
+        },
+      }
+    </script>
+<style>::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }.line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-800 font-sans overflow-hidden h-screen flex">
+<nav class="w-20 flex-none bg-slate-50 border-r border-slate-200 flex flex-col items-center py-6 z-20">
+<div class="mb-8">
+<div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md">
+<span class="material-symbols-outlined text-[24px]">chat_bubble</span>
+</div>
+</div>
+<div class="flex flex-col gap-6 w-full items-center">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white border border-transparent hover:border-slate-200 transition-all group">
+<span class="material-symbols-outlined">dashboard</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm border border-slate-200">
+<span class="material-symbols-outlined">forum</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white border border-transparent hover:border-slate-200 transition-all group">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white border border-transparent hover:border-slate-200 transition-all group">
+<span class="material-symbols-outlined">folder</span>
+</button>
+</div>
+<div class="mt-auto flex flex-col gap-6 w-full items-center">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white border border-transparent hover:border-slate-200 transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-cover bg-center border border-slate-200" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBafVdRB8mQmuqhZBJ9NngX4CiD-YHRXwjsYwOr4AWmoBxnRw3wW0cPhrTV4GDY4dpyFRB3FI6rTbHZt6sr4z0tZ8kakhZ4l7QDeomcNNvkBjdP9Cn32D-xKLfLUvUWRaAWQNXGi66EwrA8RZUSgrra-0UtmLJolqNe6Y9Ue0rZ-BAv49F4TaGydaUBV9RbyrKngmU8sStKchdNiB_22UF1J-op2_6bBYVkq56f7cacto9wo8cVWMEM5aJpNNFTuG4FovApANlxBTA');"></div>
+</div>
+</nav>
+<aside class="w-80 flex-none bg-white border-r border-slate-200 flex flex-col">
+<div class="p-4 border-b border-slate-100">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold tracking-tight text-slate-900">Inbox</h2>
+<div class="flex items-center gap-2">
+<button class="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+<div class="relative mb-3 group">
+<span class="absolute left-3 top-2.5 text-slate-400">
+<span class="material-symbols-outlined text-[18px]">search</span>
+</span>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400" placeholder="Search chats..." type="text"/>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+<button class="px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-medium whitespace-nowrap">All</button>
+<button class="px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> WhatsApp
+            </button>
+<button class="px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Instagram
+            </button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto">
+<div class="group flex items-start gap-3 p-4 bg-blue-50/50 border-l-4 border-blue-600 cursor-pointer">
+<div class="relative flex-none">
+<div class="w-10 h-10 rounded-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAU0ho1W250B1qYSDP9cwNZ0rvw_snDl9fzlcH76bHPNcQ-4wBdL_IXXP5h4KS528d04iOVHQDJCveKqn6beysuqmEL7d5Vi86vS2BcuK2np5Sg_iIHmpR2tdLWtMWdhYx4x9PjyQu6RnmF2zCiEcqHLvDbBJMYZBkVaUA41l1LZuc9QeaPNM4ZWqcAY9qtPMOAnOSrW4VQhOcfCUGrMGpV1h5jDIqVTf8AIytuaD0i1h8O__HK85umBOHXbFn4h_2JCqXOTlLddAE');"></div>
+<div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 border border-slate-100">
+<span class="material-symbols-outlined text-[12px] text-green-600 bg-green-100 rounded-full p-0.5">call</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h3 class="text-sm font-bold text-slate-900 line-clamp-1">Sarah Jenkins</h3>
+<span class="text-[11px] text-slate-500 whitespace-nowrap">10:42 AM</span>
+</div>
+<p class="text-xs text-slate-600 line-clamp-1 font-medium">Where is my order #2991?</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 uppercase tracking-wide">Bot Active</span>
+</div>
+</div>
+</div>
+<div class="group flex items-start gap-3 p-4 hover:bg-slate-50 border-l-4 border-transparent cursor-pointer transition-colors border-b border-slate-50">
+<div class="relative flex-none">
+<div class="w-10 h-10 rounded-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCN1Js1vT0lq_XK7MDjBTrv8iwIYcQYT9jodcABGkkjs6fCTpFyWQuLyQO2TL1gOUUCWrkgNa8YmahIdD6HaONAsV7oZjgHb-hFXl5S6fR-TlJoE5LeQH3xvACIkSsDOQdxAjylMRagOM6i0IOvsmfs-H5r5qjvz-BKeKjMSv0nIcotO251ncNn6b_bNxViG8vcg4fA7OEOXCod-MPP5RQxzXXuypYemZaqOKrSmsmqeNIvhp6US5FNHPfw-0d39cG5AIa2b1Y1zGg');"></div>
+<div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 border border-slate-100">
+<span class="material-symbols-outlined text-[12px] text-purple-600 bg-purple-100 rounded-full p-0.5">photo_camera</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h3 class="text-sm font-semibold text-slate-900 line-clamp-1">Mike Ross</h3>
+<span class="text-[11px] text-slate-400 whitespace-nowrap">Yesterday</span>
+</div>
+<p class="text-xs text-slate-500 line-clamp-1">Thanks for the help! I'll check...</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200">CLOSED</span>
+</div>
+</div>
+</div>
+<div class="group flex items-start gap-3 p-4 hover:bg-slate-50 border-l-4 border-transparent cursor-pointer transition-colors border-b border-slate-50">
+<div class="relative flex-none">
+<div class="w-10 h-10 rounded-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC3TcpShIaTOAG_7KdrdShBw_IzdGkllHiAaMw9jc7uxj1-KmjxEgbvVtNU1-U1HcCXqQskO-Y7Ubxl-cRQPHffc_5_5m-46U8dW4qvL_i-CXgflwXD27XaTVDewHcy7XMG474PLudEa0_GFhxBNQKLVzc7bcGl0zh2S_ErkpmHKRmFbrvtFMwG9CNmdYWpvtGvslSmxLd4-9yR0mtWEaXRCeLUV3vw2SHabYaUdHmz6s1cTHy24rgs3ElWUnYjPdASb75lo9N0lCM');"></div>
+<div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 border border-slate-100">
+<span class="material-symbols-outlined text-[12px] text-green-600 bg-green-100 rounded-full p-0.5">call</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h3 class="text-sm font-semibold text-slate-900 line-clamp-1">Jessica Pearson</h3>
+<span class="text-[11px] text-slate-400 whitespace-nowrap">2d ago</span>
+</div>
+<p class="text-xs text-slate-500 line-clamp-1">Is this available in size M?</p>
+</div>
+</div>
+<div class="group flex items-start gap-3 p-4 hover:bg-slate-50 border-l-4 border-transparent cursor-pointer transition-colors border-b border-slate-50">
+<div class="relative flex-none">
+<div class="w-10 h-10 rounded-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAJITQfD3NKpTtdnIi4VLNu23BJEyoUVvA75hI88aVvfmeZzcGBAqBI6N240GE6W0HAJ3to167Fu1NUu1VvGIyIAmcrBTPKufGqD_MNP0ijHushMfcmIbqh27xa3WCSOyMwxdlxkr1lqFIp7p3pup97-U4JgjVZJy-3xIvlAL55RSTT9GvTzvkKzvvJ6HtvWfs7N-F1dN7lxVh9sm1eJE0FQJhfInGFDHgRxO0z9c_b-BCY-PinvyoeE5mqUiiw5xWOJdkERsZBCKs');"></div>
+<div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 border border-slate-100">
+<span class="material-symbols-outlined text-[12px] text-purple-600 bg-purple-100 rounded-full p-0.5">photo_camera</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h3 class="text-sm font-semibold text-slate-900 line-clamp-1">Harvey Specter</h3>
+<span class="text-[11px] text-slate-400 whitespace-nowrap">3d ago</span>
+</div>
+<p class="text-xs text-slate-500 line-clamp-1">Please cancel my subscription.</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">HUMAN NEEDED</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-[500px] bg-white relative">
+<header class="h-16 flex-none border-b border-slate-200 flex items-center justify-between px-6 bg-white z-10 sticky top-0">
+<div class="flex items-center gap-3">
+<div class="flex flex-col">
+<h1 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    Sarah Jenkins
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+</h1>
+<div class="flex items-center gap-1.5 text-xs text-slate-500">
+<span class="material-symbols-outlined text-[14px] text-green-600">call</span>
+<span>WhatsApp • +1 (555) 012-3456</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100">
+<span class="material-symbols-outlined text-blue-600 text-[18px]">smart_toy</span>
+<span class="text-xs font-bold text-blue-700 uppercase tracking-wider">Auto-Pilot On</span>
+</div>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 scroll-smooth bg-slate-50/50">
+<div class="flex justify-center">
+<span class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-medium text-slate-500">Today, Oct 24</span>
+</div>
+<div class="flex justify-center">
+<div class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white shadow-sm">
+<span class="material-symbols-outlined text-slate-400 text-[16px]">info</span>
+<p class="text-xs text-slate-500">Conversation started from WhatsApp Business API</p>
+</div>
+</div>
+<div class="flex gap-4 max-w-[80%]">
+<div class="w-8 h-8 flex-none rounded-full bg-cover bg-center mt-auto" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB4ZMVeTjktQLKayJybijFoMRFs_N7eO2GRszpdU6Y_cyrKWqep_Qd9FBCvBw0yMZ4b4cPQxmDFeA945lVdBOCsTby7ea1ULCZuqvpNlNczF8GS9qbf0RIVzvGXsknQr0k6fObt6dpDjZcFugPv3JliSKclT7jW1R292bVb4eMwfa8YxrdxScZ9Y4pKknXYtbvzTgb0wXREuapmbxAvUgmUpPfVmAfAOM-HBNjw6-1caCWvrNkXKudRwuzbUCEu9QPh6Ql8Exvg7dw');"></div>
+<div class="flex flex-col gap-1 items-start">
+<div class="bg-blue-600 rounded-2xl rounded-bl-none px-5 py-3 shadow-sm">
+<p class="text-sm text-white leading-relaxed">Hi, I've been waiting for my package. Where is my order #2991?</p>
+</div>
+<div class="flex items-center gap-2 pl-1">
+<span class="text-xs font-semibold text-slate-600">Sarah Jenkins</span>
+<span class="text-[10px] text-slate-400">10:42 AM</span>
+</div>
+</div>
+</div>
+<div class="flex flex-row-reverse gap-4 max-w-[80%] ml-auto">
+<div class="w-8 h-8 flex-none rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 mt-auto">
+<span class="material-symbols-outlined text-slate-500 text-[18px]">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1 items-end">
+<div class="bg-slate-100 rounded-2xl rounded-br-none px-5 py-3 shadow-sm relative group border border-slate-200">
+<p class="text-sm text-slate-800 leading-relaxed">
+                        Hello Sarah! Let me check the status of order <span class="font-mono bg-white px-1 rounded text-slate-700 border border-slate-200">#2991</span> for you. One moment please.
+                    </p>
+<div class="absolute -bottom-3 left-0">
+<span class="bg-white text-[10px] text-green-700 border border-green-200 px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]">bolt</span> 98%
+                        </span>
+</div>
+</div>
+<div class="flex items-center gap-2 flex-row-reverse pr-1">
+<span class="text-xs font-semibold text-blue-600">AI Agent</span>
+<span class="text-[10px] text-slate-400">10:42 AM</span>
+</div>
+</div>
+</div>
+<div class="flex flex-row-reverse gap-4 max-w-[80%] ml-auto mt-2">
+<div class="w-8 h-8 flex-none rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 mt-auto">
+<span class="material-symbols-outlined text-slate-500 text-[18px]">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1 items-end">
+<div class="bg-slate-100 rounded-2xl rounded-br-none px-5 py-3 shadow-sm border border-slate-200">
+<p class="text-sm text-slate-800 leading-relaxed">
+                       Good news! Your order is out for delivery today. It should arrive by 6 PM. Would you like the tracking link?
+                    </p>
+</div>
+<div class="flex items-center gap-2 flex-row-reverse pr-1">
+<span class="text-xs font-semibold text-blue-600">AI Agent</span>
+<span class="text-[10px] text-slate-400">10:43 AM</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-6 bg-white border-t border-slate-200 flex-none">
+<div class="flex gap-2 mb-3 overflow-x-auto pb-1 no-scrollbar">
+<button class="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-600 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-blue-600">auto_awesome</span> Suggest tracking link
+            </button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-600 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-slate-400">history</span> View recent orders
+            </button>
+</div>
+<div class="relative bg-white rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all shadow-sm p-2">
+<textarea class="w-full bg-transparent border-none focus:ring-0 resize-none h-14 text-sm text-slate-800 placeholder:text-slate-400 p-2" placeholder="Type a message..."></textarea>
+<div class="flex justify-between items-center mt-1 px-1 pb-1">
+<div class="flex gap-1 text-slate-400">
+<button class="p-1.5 hover:bg-slate-100 rounded transition-colors"><span class="material-symbols-outlined text-[20px]">sentiment_satisfied</span></button>
+<button class="p-1.5 hover:bg-slate-100 rounded transition-colors"><span class="material-symbols-outlined text-[20px]">attach_file</span></button>
+<button class="p-1.5 hover:bg-slate-100 rounded transition-colors"><span class="material-symbols-outlined text-[20px]">image</span></button>
+</div>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors flex items-center gap-1.5 uppercase">
+<span class="material-symbols-outlined text-[16px]">person</span>
+                        Take Over
+                    </button>
+<button class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 uppercase">
+<span class="material-symbols-outlined text-[16px]">smart_toy</span>
+                        Send as Bot
+                    </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<aside class="w-[340px] flex-none bg-slate-50 border-l border-slate-200 flex flex-col overflow-y-auto">
+<div class="p-6 border-b border-slate-200 flex flex-col items-center relative overflow-hidden bg-white">
+<div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(#2563EB 1px, transparent 1px); background-size: 20px 20px;"></div>
+<div class="relative z-10 w-20 h-20 rounded-full p-1 border border-slate-200 mb-3 bg-white shadow-sm">
+<div class="w-full h-full rounded-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDYTFL32HMDIaC6lsLaOJ6KfZ-oOYvcRZ9M3-QM2YJnubRJ8Oc98i7Q6dP80ZutdASYrJUh0jZ2fH8OCmTwJ5FoSH7YXb1gemb2i2uRGd3o8xj4Z0-XAKsHp_QBg3Chx631IjebamqfdJFRMAtzdLFRbuBLVP1RnnHcx_IBPfrSNQtX9HioU9aIf6w0X8-A_lgU082xcewjDc6R7So9QSbiWkYNDW7YTKnN2Z1zP28MxFwGMnScK1LuOVnsjNdYJBYTQ6KZf0aKaJI');"></div>
+<div class="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow-sm border border-slate-100">
+<div class="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[12px]">call</span>
+</div>
+</div>
+</div>
+<h2 class="text-lg font-bold text-slate-900 relative z-10">Sarah Jenkins</h2>
+<p class="text-sm text-slate-500 relative z-10 mb-3">@sarah.j • Miami, FL</p>
+<div class="flex gap-2 relative z-10">
+<span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wide border border-amber-200">VIP Customer</span>
+<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wide border border-slate-200">3 Orders</span>
+</div>
+</div>
+<div class="p-5 border-b border-slate-200">
+<h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">psychology</span> AI Insights
+        </h3>
+<div class="bg-white rounded-lg p-4 border border-slate-200 mb-3 shadow-sm">
+<div class="flex justify-between items-center mb-2">
+<span class="text-xs font-medium text-slate-600">Sentiment</span>
+<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">Positive</span>
+</div>
+<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
+<div class="h-full bg-red-300 w-[10%]"></div>
+<div class="h-full bg-yellow-300 w-[20%]"></div>
+<div class="h-full bg-green-500 w-[70%]"></div>
+</div>
+</div>
+<div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+<div class="flex justify-between items-center mb-3">
+<span class="text-xs font-medium text-slate-600">Detected Intent</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-blue-50 border border-blue-100 text-blue-700 text-[10px] font-bold rounded">ORDER_STATUS</span>
+<span class="px-2 py-1 bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold rounded">SHIPPING</span>
+</div>
+</div>
+</div>
+<div class="p-5 flex-1">
+<h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">database</span> Details
+        </h3>
+<div class="grid grid-cols-1 gap-2">
+<div class="flex items-center gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-sm">
+<div class="w-8 h-8 rounded-md bg-slate-50 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined text-[18px]">mail</span>
+</div>
+<div class="flex flex-col overflow-hidden">
+<span class="text-[10px] text-slate-400 font-medium uppercase">Email</span>
+<span class="text-sm text-slate-800 truncate font-medium">sarah.jenkins@example.com</span>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-sm">
+<div class="w-8 h-8 rounded-md bg-slate-50 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined text-[18px]">smartphone</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-400 font-medium uppercase">Phone</span>
+<span class="text-sm text-slate-800 font-medium">+1 (555) 012-3456</span>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-sm">
+<div class="w-8 h-8 rounded-md bg-slate-50 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined text-[18px]">shopping_bag</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-400 font-medium uppercase">Last Order</span>
+<span class="text-sm text-slate-800 font-medium">#2991 • $124.00</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-auto p-5 border-t border-slate-200 bg-white">
+<button class="w-full py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-colors flex items-center justify-center gap-2 uppercase tracking-wide">
+<span class="material-symbols-outlined text-[16px]">block</span> Block User
+        </button>
+</div>
+</aside>
+
+</body></html>
