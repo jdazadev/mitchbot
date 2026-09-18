@@ -5,7 +5,6 @@ import env from './config/env';
 import { connectDatabase } from './config/database';
 import { connectRedis } from './config/redis';
 import { connectQdrant } from './config/qdrant';
-import { connectNats } from './config/nats';
 import { initSocket } from './websocket/socket';
 import apiRoutes from './routes';
 import { errorHandler } from './middleware/error.middleware';
@@ -23,11 +22,10 @@ const httpServer = createServer(app);
         console.log('\n--- 🔌 Initializing Backend Infrastructure ---');
         
         // Parallel or sequential initialization based on criticality
-        const [mongo, redis, qdrant, nats] = await Promise.allSettled([
+        const [mongo, redis, qdrant] = await Promise.allSettled([
             connectDatabase().then(() => true).catch(() => false),
             connectRedis().then(() => true).catch(() => false),
-            connectQdrant().then(() => true).catch(() => false),
-            connectNats().then((res) => res).catch(() => false)
+            connectQdrant().then(() => true).catch(() => false)
         ]);
         
         console.log('\n--- 📊 Infrastructure Status Report ---');
@@ -35,7 +33,6 @@ const httpServer = createServer(app);
             MongoDB: (mongo.status === 'fulfilled' && mongo.value) ? '✅ Connected' : '❌ Failed',
             Redis: (redis.status === 'fulfilled' && redis.value) ? '✅ Connected' : '❌ Failed',
             Qdrant: (qdrant.status === 'fulfilled' && qdrant.value) ? '✅ Connected' : '❌ Failed',
-            NATS: (nats.status === 'fulfilled' && nats.value) ? '✅ Connected' : '❌ Failed',
         });
         console.log('---------------------------------------\n');
 

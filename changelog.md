@@ -5,6 +5,36 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v3.2.0 — 2026-09-18
+
+> 🧹 **Pulido de `docker-compose`: solo los servicios en uso, MongoDB anclado, healthchecks y Redis durable (AOF)**
+
+---
+
+### 🔄 Cambios
+- **`docker-compose.yml` reducido a los servicios en uso**: se quitan `ollama`, `open-webui` y `nats`, junto con los volúmenes `ollama_data` y `open-webui_data`, y la clave `version` (obsoleta en Compose v2). Quedan `mongodb`, `redis` y `qdrant`.
+- **MongoDB anclado a `mongo:8`** (antes `mongo:latest`). Se mantiene el major 8 porque MongoDB no soporta downgrade: un volumen creado por 8.x no puede abrirse con 6.x.
+- **Healthchecks** en `mongodb` (`mongosh` ping), `redis` (`redis-cli ping`) y `qdrant` (probe TCP por bash, ya que la imagen no incluye `curl`/`wget`).
+- **Redis listo para producción**: persistencia AOF (`--appendonly yes`), volumen `redis_data:/data` y `--maxmemory-policy noeviction` (requisito de BullMQ).
+
+### 🗑️ Eliminado
+- **Código muerto de NATS**: `apps/backend/src/config/nats.ts`, su import y llamada en el bootstrap (`src/index.ts`), la fila NATS del reporte de infraestructura y `NATS_URL` de `src/config/env.ts`, `.env` y `.env.example`.
+- **Dependencia npm `nats`** (además marcada como deprecated por el proveedor).
+- **Residuos de Ollama**: `OLLAMA_URL` de `apps/backend/.env` y `playwright.config.ts`.
+
+### 📚 Documentación
+- `AGENTS.md` actualizado (servicios Docker, stack, variables de entorno y comandos) y versión del proyecto a **v3.2.0**.
+
+### 🧰 Limpieza operativa (una sola vez)
+```bash
+docker compose down
+docker rm nats                                                   # contenedor huérfano (si existía)
+docker volume rm mitchbot_v2_ollama_data mitchbot_v2_open-webui_data
+docker compose up -d --remove-orphans
+```
+
+---
+
 ## v3.1.0 — 2026-09-18
 
 > 🧪 **Suite de pruebas end-to-end con Playwright: entorno aislado, autenticación reutilizable y proveedor de IA determinista (stub)**

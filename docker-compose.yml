@@ -1,25 +1,38 @@
-version: "3.8"
-
 services:
   # Base de datos NoSQL
   mongodb:
-    image: mongo:latest
+    image: mongo:8
     container_name: mongo
     restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks:
       - backend-network
 
-  # Caché y colas rápidas
+  # Caché y colas (BullMQ)
   redis:
     image: redis:alpine
     container_name: redis
     restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     networks:
       - backend-network
 
@@ -32,56 +45,21 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
-    networks:
-      - backend-network
-
-  # LLM Runner (Modelos de lenguaje local)
-  ollama:
-    image: ollama/ollama
-    container_name: ollama
-    restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      # Importante: Persistencia para no descargar los modelos cada vez
-      - ollama_data:/root/.ollama
-    networks:
-      - backend-network
-
-  # Interfaz Web para Ollama
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:main
-    container_name: open-webui
-    restart: unless-stopped
-    ports:
-      - "3200:8080" # Accedes a la UI en http://localhost:3200
-    environment:
-      # Conecta directamente con el contenedor de Ollama usando la red interna
-      - OLLAMA_BASE_URL=http://ollama:11434
-    volumes:
-      - open-webui_data:/app/backend/data
-    networks:
-      - backend-network
-    depends_on:
-      - ollama # Asegura que Ollama inicie antes que la interfaz
-
-  # Sistema de mensajería (Event Bus)
-  nats:
-    image: nats:alpine
-    container_name: nats
-    restart: unless-stopped
-    ports:
-      - "4222:4222" # Puerto cliente
-      - "8222:8222" # Panel de monitoreo HTTP
+    healthcheck:
+      # La imagen no incluye curl/wget: se usa el TCP de bash para verificar el puerto
+      test: ["CMD", "bash", "-c", ":> /dev/tcp/127.0.0.1/6333"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - backend-network
 
 # Volúmenes para persistencia de datos
 volumes:
   mongo_data:
+  redis_data:
   qdrant_data:
-  ollama_data:
-  open-webui_data: # Nuevo volumen para persistir chats y configuraciones de la UI
 
 # Red compartida
 networks:

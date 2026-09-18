@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v3.1.0
+**Versión actual del proyecto:** v3.2.0
 
 ---
 
@@ -27,7 +27,7 @@ mitchbot_v2/
 │   └── frontend/         # Dashboard SPA (Vue 3 + TypeScript + Tailwind)
 ├── packages/
 │   └── shared/           # Tipos y utilidades compartidas
-├── docker-compose.yml    # Servicios: MongoDB, Redis, Qdrant, Ollama, NATS
+├── docker-compose.yml    # Servicios: MongoDB, Redis, Qdrant
 ├── pnpm-workspace.yaml   # Configuración del monorepo pnpm
 ├── AGENTS.md             # Este archivo
 └── changelog.md          # Historial de cambios detallado
@@ -40,11 +40,11 @@ mitchbot_v2/
 | **Runtime** | Node.js, TypeScript, tsx (desarrollo) |
 | **Backend** | Express 4, Socket.io, Multer, Zod v4, JWT |
 | **Frontend** | Vue 3 (Composition API + `<script setup>`), Vite, Tailwind CSS 3, Pinia, Vue Router 4, Radix Vue, Lucide Icons |
-| **Base de datos** | MongoDB 6 (principal), Redis (caché), Qdrant (vectorial) |
+| **Base de datos** | MongoDB 8 (principal), Redis (caché y colas BullMQ), Qdrant (vectorial) |
 | **IA / LLM** | LangChain.js v1.x (`@langchain/core`, `@langchain/openai`, `@langchain/qdrant`, `@langchain/textsplitters`) |
 | **Proveedores IA** | OpenRouter (único proveedor: LLM, embeddings y OCR) |
 | **Embeddings** | OpenRouter (`openai/text-embedding-3-small` por defecto) |
-| **Mensajería** | NATS (event bus), Socket.io (tiempo real) |
+| **Mensajería** | Socket.io (tiempo real) |
 | **Auth** | JWT (jsonwebtoken), bcryptjs (12 rounds) |
 | **Infraestructura** | Docker Compose, pnpm workspaces |
 
@@ -54,13 +54,12 @@ mitchbot_v2/
 
 ```yaml
 # docker-compose.yml
-mongodb:    → puerto 27017  # Base de datos principal
-redis:      → puerto 6379   # Caché y sesiones
+mongodb:    → puerto 27017  # Base de datos principal (mongo:8)
+redis:      → puerto 6379   # Caché y colas BullMQ (AOF)
 qdrant:     → puerto 6333   # Base de datos vectorial (RAG)
-ollama:     → puerto 11434  # Servidor de modelos LLM locales (ya NO es dependencia del backend)
-open-webui: → puerto 3200   # Interfaz web para Ollama (debug)
-nats:       → puerto 4222   # Message broker (futuro social gateway)
 ```
+
+> Nativo: los 3 servicios tienen `healthcheck`. `ollama`, `open-webui` y `nats` se eliminaron (sin uso tras el refactor a OpenRouter). Se reintroducirá un message broker cuando llegue la fase de Integración Social.
 
 ---
 
@@ -442,7 +441,7 @@ Todas las conexiones WebSocket requieren autenticación JWT:
 ## Comandos de Desarrollo
 
 ```bash
-# Levantar servicios Docker (MongoDB, Redis, Qdrant, Ollama, NATS)
+# Levantar servicios Docker (MongoDB, Redis, Qdrant)
 docker-compose up -d
 
 # Instalar dependencias
@@ -492,8 +491,6 @@ NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/mitchbot
 REDIS_URL=redis://localhost:6379
 QDRANT_URL=http://localhost:6333
-OLLAMA_URL=http://localhost:11434
-NATS_URL=nats://localhost:4222
 JWT_SECRET=<tu-secreto>
 FRONTEND_URL=http://localhost:5173
 # Proveedor único de IA (OpenRouter)
@@ -521,7 +518,7 @@ OPENROUTER_OCR_MODEL=google/gemini-3.8-flash
 - [x] Capa de abstracción IA + Enrutador
 
 ### Fase Siguiente — Integración Social 🔜
-- [ ] WhatsApp Business API (webhooks + NATS)
+- [ ] WhatsApp Business API (webhooks + message broker)
 - [ ] Instagram Messaging API
 - [ ] Normalización de mensajes cross-platform
 - [ ] Rate limiting por plataforma

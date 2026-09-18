@@ -95,7 +95,6 @@ export default defineConfig({
         MONGODB_URI: E2E.mongoUri,
         REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
         QDRANT_URL: process.env.QDRANT_URL || 'http://localhost:6333',
-        OLLAMA_URL: process.env.OLLAMA_URL || 'http://localhost:11434',
         OPENROUTER_API_KEY: E2E.stub.apiKey,
         OPENROUTER_BASE_URL: `${E2E.stubUrl}/v1`,
         OPENROUTER_EMBEDDING_MODEL: E2E.stub.embedModel,

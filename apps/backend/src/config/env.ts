@@ -22,9 +22,6 @@ const envSchema = z.object({
   // Frontend
   FRONTEND_URL: z.string().optional().default('http://localhost:5173'),
 
-  // Messaging
-  NATS_URL: z.string().optional(),
-
   // Social Gateway (Meta)
   WHATSAPP_TOKEN: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
