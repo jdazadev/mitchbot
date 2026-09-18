@@ -5,6 +5,24 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v1.17.1 — 2026-09-18
+
+> 🐛 **Fix: resolución de módulos del frontend (artefactos compilados obsoletos)**
+
+---
+
+### 🐛 Fixes & Optimizations
+
+#### Frontend
+- **Eliminados 56 artefactos compilados obsoletos** (`.js`, `.vue.js` y `.js.map`) dentro de `apps/frontend/src/` que eclipsaban a los fuentes `.ts`/`.vue` en la resolución de Vite (prioridad `.js` sobre `.ts` en imports sin extensión). Esto provocaba `TypeError: socketService.onMessageUpdated is not a function` en `/messaging` y el spinner "Cargando conversaciones..." permanente.
+- **Carga resiliente de la bandeja** (`Messaging.vue`): la carga de conversaciones se ejecuta antes e independientemente de la inicialización del socket; los errores de socket se registran sin bloquear los datos ni dejar `isLoadingChats` en `true`.
+- **Prevención de recurrencia**: `noEmit: true` en `apps/frontend/tsconfig.json` para que la comprobación de tipos no emita `.js` junto a los fuentes, y reglas en `.gitignore` para no rastrear artefactos `.js`/`.js.map` dentro de `apps/frontend/src/`.
+
+### ⚠️ Breaking changes
+- Ninguno.
+
+---
+
 ## v1.17.0 — 2026-09-17
 
 > 🤖 **Agent Tool Use, OCR unificado y RAG multilingüe**

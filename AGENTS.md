@@ -8,10 +8,11 @@
 
 - Cada vez que termines unos cambios, actualiza el `changelog.md` (usa la fecha actual) y este archivo `AGENTS.md`.
 - También actualiza la versión dependiendo del tipo de cambio (semver).
+- **Al terminar de implementar un cambio de OpenSpec, realiza el commit correspondiente** (sin esperar a que se lo pidan).
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v1.17.0
+**Versión actual del proyecto:** v1.17.1
 
 ---
 

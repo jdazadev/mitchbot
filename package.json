@@ -1,6 +1,6 @@
 {
   "name": "mitchbot-v2",
-  "version": "1.17.0",
+  "version": "1.17.1",
   "private": true,
   "scripts": {
     "dev": "pnpm -r --parallel dev",

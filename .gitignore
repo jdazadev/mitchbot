@@ -11,6 +11,11 @@ dist/
 build/
 *.tsbuildinfo
 
+# Frontend: nunca emitir/rastrear artefactos compilados junto a los fuentes
+apps/frontend/src/**/*.js
+apps/frontend/src/**/*.js.map
+apps/frontend/src/**/*.vue.js
+
 # ================================
 # Environment Variables
 # ================================

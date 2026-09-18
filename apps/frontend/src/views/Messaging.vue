@@ -290,19 +290,25 @@ function onNotification(data: any) {
 }
 
 onMounted(() => {
-  socketService.connect();
-  socketService.onMessage(onNewMessage);
-  socketService.onMessageChunk(onMessageChunk);
-  socketService.onMessageUpdated(onMessageUpdated);
-
-  // Escuchar nuevas conversaciones
-  if (socketService.socket) {
-    socketService.socket.on('chat:new_conversation', onNewConversation);
-    socketService.socket.on('error', onSocketError);
-    socketService.socket.on('admin:notification', onNotification);
-  }
-  
+  // Cargar las conversaciones primero: no debe depender del socket
   fetchChats();
+
+  // Inicializar servicios auxiliares de forma aislada
+  try {
+    socketService.connect();
+    socketService.onMessage(onNewMessage);
+    socketService.onMessageChunk(onMessageChunk);
+    socketService.onMessageUpdated(onMessageUpdated);
+
+    // Escuchar nuevas conversaciones
+    if (socketService.socket) {
+      socketService.socket.on('chat:new_conversation', onNewConversation);
+      socketService.socket.on('error', onSocketError);
+      socketService.socket.on('admin:notification', onNotification);
+    }
+  } catch (error) {
+    console.error("Failed to initialize socket service", error);
+  }
 });
 
 onUnmounted(() => {
