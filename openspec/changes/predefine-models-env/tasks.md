@@ -40,4 +40,4 @@
 
 - [x] 7.1 Ejecutar `pnpm --filter @mitchbot/backend build`, `pnpm --filter @mitchbot/backend test` y `pnpm --filter @mitchbot/frontend build` y confirmar que pasan sin errores.
 - [x] 7.2 Ejecutar `openspec validate predefine-models-env --strict` y confirmar que el change es válido.
-- [ ] 7.3 Realizar el commit del cambio implementado.
+- [x] 7.3 Realizar el commit del cambio implementado.
