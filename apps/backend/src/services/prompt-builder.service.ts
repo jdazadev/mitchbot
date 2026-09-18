@@ -104,7 +104,7 @@ export function buildSystemPrompt(personality: AgentPersonality, context?: Promp
 
   // 7. Mensajes automáticos
   if (context?.enableWelcomeGreeting) {
-    sections.push('Saluda al iniciar la conversación o si se retoma luego de 6 horas.');
+    sections.push('Saluda únicamente al inicio de la conversación o cuando se retome tras una pausa larga; el resto del tiempo continúa la conversación sin reiniciar el saludo.');
   }
   if (context?.enableGoodbyeMessage) {
     const keywords = context.goodbyeKeywords?.filter(k => k.trim()).join(', ');

@@ -3,6 +3,7 @@ import { chatService } from '../services/chat.service';
 import { agentService } from '../services/agent.service';
 import { getConversationsCollection } from '../models/conversation.model';
 import { getMessagesCollection } from '../models/message.model';
+import { emitToRoom } from '../websocket/socket';
 import { ObjectId } from 'mongodb';
 
 /**
@@ -202,6 +203,11 @@ export const updateMode = async (req: Request, res: Response, next: NextFunction
         { $set: { mode, updatedAt: new Date() } }
     );
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Conversation not found' });
+    try {
+      emitToRoom(req.params.id, 'chat:status', { mode });
+    } catch (e) {
+      // La propagación en vivo no debe romper la respuesta HTTP
+    }
     res.json({ message: `Mode updated to ${mode}` });
   } catch (error) {
     next(error);

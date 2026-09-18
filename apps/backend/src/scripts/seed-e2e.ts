@@ -152,7 +152,7 @@ async function seedE2E() {
           enableWelcomeGreeting: false,
           enableGoodbyeMessage: false,
           enableFallbackAdvisor: false,
-          goodbyeKeywords: ['adios', 'hasta luego', 'gracias', 'bye'],
+          goodbyeKeywords: ['adios', 'hasta luego', 'bye'],
           enableWhatsApp: true,
           enableInstagram: true,
           enableWeb: true,
@@ -165,7 +165,25 @@ async function seedE2E() {
     } else {
       await agents.updateOne(
         { _id: agent._id },
-        { $set: { modelValue: E2E_AGENT.modelValue, status: 'active', updatedAt: now } }
+        {
+          $set: {
+            modelValue: E2E_AGENT.modelValue,
+            status: 'active',
+            config: {
+              temperature: 0.7,
+              maxTokens: 300,
+              enableWelcomeGreeting: false,
+              enableGoodbyeMessage: false,
+              enableFallbackAdvisor: false,
+              goodbyeKeywords: ['adios', 'hasta luego', 'bye'],
+              enableWhatsApp: true,
+              enableInstagram: true,
+              enableWeb: true,
+              autoCreateContact: true,
+            },
+            updatedAt: now,
+          },
+        }
       );
     }
 

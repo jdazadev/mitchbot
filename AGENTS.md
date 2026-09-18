@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v3.4.0
+**Versión actual del proyecto:** v3.5.0
 
 ---
 
@@ -149,7 +149,9 @@ apps/frontend/src/
   - Mostrar el error como mensaje visible en el chat.
   - Registrar el error en el log/historial de mensajería.
 - Existe la opción de ver el historial completo de mensajería desde el módulo.
-- **Modos de operación**: `auto_pilot` (bot responde automáticamente) y `human_takeover` (agente humano toma control).
+- **Modos de operación**: `auto_pilot` (bot responde automáticamente) y `human_takeover` (agente humano toma control). El cambio de modo/estado se propaga en vivo por WebSocket (`chat:status`) y el dashboard y la vista del cliente lo reflejan sin recargar.
+- **Memoria de conversación**: el LLM recibe el historial reciente (últimos 20 mensajes) al generar una respuesta (directa o tras ejecutar herramientas). Los turnos del cliente y del agente humano se representan como `HumanMessage` (el humano con prefijo `[Agente humano]`) y los del bot como `AIMessage`; se excluyen los mensajes internos de herramientas (`tool_call`, `tool_result`, `confirmation_request`) y los placeholders vacíos. Si la pausa respecto al mensaje anterior supera las 6 horas, se inserta un marcador en el historial para que el bot re-salude.
+- **Saludo y despedida naturales**: no se anteponen textos enlatados; el saludo/despedida los decide el LLM a partir del historial. Sin historial de por medio el bot saluda al inicio; en una reanudación tras pausa larga re-saluda. "Gracias" y variantes ya **no** cierran la conversación. Al detectar una despedida real, el bot responde con naturalidad y, tras generarla, la conversación se marca como `closed` (se emite `chat:status`) — sin mensaje enlatado ni corte previo.
 - **Streaming de respuestas**: Las respuestas del bot se transmiten token por token en tiempo real vía WebSockets.
 - **Renderizado Markdown**: Los mensajes del bot soportan negritas e itálicas en tiempo real.
 
@@ -282,8 +284,9 @@ El agente puede ejecutar acciones ("tools") además de responder.
 - **Registro** (`src/tools/`): cada herramienta implementa `Tool` con `name`, `description`, `parameters` (JSON Schema), `execute(params, context)` y `requiresConfirmation`.
 - **Ejecutor** (`services/tool.service.ts`): esquemas OpenAI-compatible, detección de tool calls en texto libre (`{"tool","parameters"}`) y ejecución normalizada.
 - **Integración LLM** (`ai.service.generateResponseStreamWithTools`): tool calling nativo (`bindTools`) para **OpenRouter**.
-- **Flujo de chat** (`chat.service.handleToolCalls`): detecta tool calls → si requiere confirmación guarda en `tool_executions` y emite un mensaje `confirmation_request` → al confirmar ejecuta y genera la respuesta final con el resultado.
+- **Flujo de chat** (`chat.service.handleToolCalls`): detecta tool calls → si requiere confirmación guarda en `tool_executions` y emite un mensaje `confirmation_request` → al confirmar ejecuta y genera la respuesta final con el resultado. La respuesta final recibe el historial de la conversación (los `tool_call`/`tool_result` quedan excluidos del prompt).
 - **Confirmaciones** vía WebSocket `tool:confirm` (`confirm` / `cancel` / `modify`) y evento `tool:confirmed`. Interfaz en **Messaging** y **TestChat**.
+- **Visibilidad por audiencia**: el dashboard (**Messaging**) muestra todas las tarjetas de herramientas; la vista del cliente (**TestChat**) oculta `tool_call`/`tool_result` y solo conserva `confirmation_request` con sus acciones. Ante el fallo de una herramienta el cliente recibe un mensaje genérico, nunca el detalle técnico.
 
 Herramientas incluidas (zero-config): `create_appointment`, `create_order`, `get_product_info`, `get_business_hours`, `get_service_availability`, `transfer_to_human`, `send_notification`, `get_faq_answer`.
 
@@ -430,7 +433,7 @@ Todas las conexiones WebSocket requieren autenticación JWT:
 | `chat:message_chunk` | Server → Client | Token de streaming (respuesta parcial) |
 | `chat:send` | Client → Server | Enviar mensaje desde el dashboard |
 | `chat:typing` | Bidireccional | Indicador de "escribiendo..." |
-| `chat:status` | Server → Client | Cambio de estado de conversación |
+| `chat:status` | Server → Client | Cambio de modo/estado de la conversación (lo consumen Messaging y TestChat sin recargar) |
 | `chat:new_conversation` | Server → Client | Nueva conversación iniciada |
 | `chat:message_updated` | Server → Client | Mensaje actualizado (estado de confirmación de tool) |
 | `tool:confirm` | Client → Server | Confirmar / cancelar / modificar una ejecución de herramienta |

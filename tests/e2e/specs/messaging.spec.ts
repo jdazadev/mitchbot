@@ -38,6 +38,11 @@ test.describe('Mensajería', () => {
     await page.getByRole('button', { name: /Enviar/ }).click();
     await expect(page.getByText(reply).first()).toBeVisible({ timeout: 20_000 });
 
+    // El envío dispara un refetch que re-selecciona la conversación más reciente;
+    // con pruebas en paralelo conviene reabrir la nuestra antes de verificar.
+    await page.waitForTimeout(800);
+    await page.getByText(clientName).first().click();
+
     // Al responder se crea el contacto automáticamente.
     await expect(page.getByText('Contacto Creado').first()).toBeVisible({ timeout: 20_000 });
 

@@ -29,12 +29,14 @@ onMounted(() => {
   socketService.onMessage(onNewMessage);
   socketService.onMessageChunk(onMessageChunk);
   socketService.onMessageUpdated(onMessageUpdated);
+  socketService.onConversationStatus(onConversationStatus);
 });
 
 onUnmounted(() => {
   socketService.offMessage(onNewMessage);
   socketService.offMessageChunk(onMessageChunk);
   socketService.offMessageUpdated(onMessageUpdated);
+  socketService.offConversationStatus(onConversationStatus);
 });
 
 function renderMarkdown(content: string) {
@@ -135,11 +137,16 @@ function onMessageChunk(data: { messageId: string, conversationId: string, conte
   }
 }
 
-function isToolMessage(msg: ChatMessage) {
-  return msg.sender === 'tool'
-    || msg.contentType === 'confirmation_request'
-    || msg.contentType === 'tool_result'
-    || msg.contentType === 'tool_call';
+/**
+ * Mensajes internos de herramientas que NO deben mostrarse al cliente final.
+ * Las solicitudes de confirmación sí se muestran (el cliente debe confirmar).
+ */
+function isHiddenToolMessage(msg: ChatMessage) {
+  return msg.contentType === 'tool_call' || msg.contentType === 'tool_result';
+}
+
+function isConfirmationRequest(msg: ChatMessage) {
+  return msg.contentType === 'confirmation_request';
 }
 
 function confirmTool(msg: ChatMessage, action: 'confirm' | 'cancel') {
@@ -177,6 +184,13 @@ function onMessageUpdated(data: { messageId: string; status: string; params?: an
     if (data.params) existing.toolData.params = data.params;
   }
   if (data.content) existing.content = data.content;
+}
+
+/** Mantiene al día el modo/estado de la conversación activa del cliente */
+function onConversationStatus(data: { mode?: string; status?: string }) {
+  if (!activeConversation.value) return;
+  if (data.mode) (activeConversation.value as any).mode = data.mode;
+  if (data.status) (activeConversation.value as any).status = data.status;
 }
 
 function resetConversation() {
@@ -298,7 +312,8 @@ function scrollToBottom() {
           Escribe un mensaje para iniciar una conversación como cliente
         </div>
         <template v-for="msg in messages" :key="msg._id">
-          <div v-if="isToolMessage(msg)" class="w-full flex justify-center">
+          <template v-if="!isHiddenToolMessage(msg)">
+          <div v-if="isConfirmationRequest(msg)" class="w-full flex justify-center">
             <div
               class="max-w-[520px] w-full rounded-xl border p-3 shadow-sm text-sm"
               :class="msg.contentType === 'confirmation_request'
@@ -350,6 +365,7 @@ function scrollToBottom() {
             </div>
             <div v-else v-html="renderMarkdown(msg.content)"></div>
           </div>
+          </template>
         </template>
       </div>
 

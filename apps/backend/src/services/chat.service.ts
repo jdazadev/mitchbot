@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { HumanMessage, AIMessage, SystemMessage, BaseMessage } from '@langchain/core/messages';
 import { getConversationsCollection, Conversation } from '../models/conversation.model';
 import { getMessagesCollection, Message } from '../models/message.model';
 import { getContactsCollection, Contact } from '../models/contact.model';
@@ -20,10 +21,59 @@ export const chatService = {
     if (!normalized) return false;
     const safeKeywords = keywords.length > 0 ? keywords : [
       'adios', 'adiós', 'hasta luego', 'hasta pronto', 'nos vemos',
-      'chao', 'ciao', 'bye', 'goodbye', 'gracias', 'muchas gracias',
-      'ok gracias', 'listo gracias', 'vale gracias', 'ok, gracias',
+      'chao', 'ciao', 'bye', 'goodbye',
     ];
     return safeKeywords.some(keyword => normalized.includes(keyword.toLowerCase()));
+  },
+
+  /** Ventana de historial enviada al LLM */
+  HISTORY_WINDOW: 20,
+  /** Umbral de pausa larga para marcar el reinicio de la conversación */
+  LONG_PAUSE_MS: 6 * 60 * 60 * 1000,
+
+  /**
+   * Construye el historial reciente de la conversación para el LLM.
+   * - Últimos 20 mensajes elegibles.
+   * - `contact`/`human_agent` → HumanMessage (el humano con prefijo), `ai_agent` → AIMessage.
+   * - Excluye mensajes internos de herramientas y placeholders vacíos.
+   * - Excluye el mensaje actual del cliente (se pasa aparte) e inserta un marcador
+   *   cuando la pausa respecto al mensaje anterior supera las 6 horas.
+   */
+  async buildConversationHistory(conversationId: string, currentUserMessage?: string): Promise<BaseMessage[]> {
+    const messages = await this.getMessages(conversationId);
+    const EXCLUDED_CONTENT_TYPES = new Set(['tool_call', 'tool_result', 'confirmation_request']);
+
+    const eligible = messages.filter(m => {
+      if (m.sender === 'tool') return false;
+      if (EXCLUDED_CONTENT_TYPES.has(m.contentType)) return false;
+      if (!m.content || !m.content.trim()) return false;
+      return true;
+    });
+
+    const windowed = eligible.slice(-this.HISTORY_WINDOW);
+
+    let resumed = false;
+    const last = windowed[windowed.length - 1];
+    if (last && last.sender === 'contact' && (currentUserMessage === undefined || last.content === currentUserMessage)) {
+      const currentAt = new Date(last.createdAt).getTime();
+      const prev = windowed[windowed.length - 2];
+      if (prev && currentAt - new Date(prev.createdAt).getTime() > this.LONG_PAUSE_MS) {
+        resumed = true;
+      }
+      windowed.pop();
+    }
+
+    const history: BaseMessage[] = windowed.map(m => {
+      if (m.sender === 'ai_agent') return new AIMessage(m.content);
+      if (m.sender === 'human_agent') return new HumanMessage(`[Agente humano] ${m.content}`);
+      return new HumanMessage(m.content);
+    });
+
+    if (resumed) {
+      history.push(new SystemMessage('--- El cliente retoma la conversación tras una pausa ---'));
+    }
+
+    return history;
   },
 
   async handleAutoGoodbye(conversationId: string, agent: any) {
@@ -40,60 +90,18 @@ export const chatService = {
     }
   },
 
-  async shouldSendWelcome(conversationId: string) {
-    const conversation = await getConversationsCollection().findOne({ _id: new ObjectId(conversationId) });
-    if (!conversation) return false;
-
-    const now = Date.now();
-    const lastWelcome = conversation.lastWelcomeAt?.getTime() || 0;
-    const lastContactMsg = conversation.lastMessageAt?.getTime() || 0;
-    const lastBotMsg = conversation.lastBotMessageAt?.getTime() || 0;
-
-    const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
-    const isNew = !conversation.lastWelcomeAt;
-    const resumedAfterGap = now - Math.max(lastContactMsg, lastBotMsg, lastWelcome) >= SIX_HOURS_MS;
-
-    return isNew || resumedAfterGap;
-  },
-
-  hasGreeting(text: string) {
-    const normalized = text.trim().toLowerCase();
-    if (!normalized) return false;
-    const greetings = [
-      'hola',
-      'buenas',
-      'buen día',
-      'buen dia',
-      'buenos dias',
-      'buenos días',
-      'buenas tardes',
-      'buenas noches',
-      'hey',
-      'que tal',
-      'qué tal',
-    ];
-    return greetings.some(greeting => normalized.includes(greeting));
-  },
-
-  hasQuestionIntent(text: string) {
-    const normalized = text.trim().toLowerCase();
-    if (!normalized) return false;
-    if (normalized.includes('?') || normalized.includes('¿')) return true;
-    const intentKeywords = [
-      'como',
-      'cómo',
-      'que',
-      'qué',
-      'cual',
-      'cuál',
-      'cuanto',
-      'cuánto',
-      'quiero',
-      'necesito',
-      'puedes',
-      'ayuda',
-    ];
-    return intentKeywords.some(keyword => normalized.includes(keyword));
+  /** Marca la conversación como cerrada y notifica a las interfaces conectadas */
+  async markConversationClosed(conversationId: string) {
+    try {
+      const conversation = await getConversationsCollection().findOne({ _id: new ObjectId(conversationId) });
+      await getConversationsCollection().updateOne(
+        { _id: new ObjectId(conversationId) },
+        { $set: { status: 'closed', updatedAt: new Date() } }
+      );
+      emitToRoom(conversationId, 'chat:status', { mode: conversation?.mode, status: 'closed' });
+    } catch (e) {
+      logger.warn('[Chat] Could not close conversation', e);
+    }
   },
 
   async createConversationFromClient(data: {
@@ -222,15 +230,12 @@ export const chatService = {
     if (sender === 'contact') {
       const conv = await conversationsColl.findOne({ _id: new ObjectId(conversationId) });
       const agent = await agentService.getActiveAgent(conv?.projectId?.toString());
-      if (agent && this.isGoodbyeMessage(content, agent.config?.goodbyeKeywords || [])) {
-        await this.handleAutoGoodbye(conversationId, agent);
-        return newMessage;
-      }
+      const closeAfter = !!agent && this.isGoodbyeMessage(content, agent.config?.goodbyeKeywords || []);
 
       logger.info(`[Chat] Sender=contact, conv mode=${conv?.mode}, will trigger bot: ${conv?.mode === 'auto_pilot'}`);
       if (conv?.mode === 'auto_pilot') {
         logger.info(`[Chat] >>> Triggering generateBotResponse for ${conversationId}`);
-        chatService.generateBotResponse(conversationId, content).catch(err => 
+        chatService.generateBotResponse(conversationId, content, { closeAfter }).catch(err => 
           logger.error('[Chat] Bot response CATCH:', err?.message || err)
         );
       }
@@ -311,7 +316,7 @@ export const chatService = {
     );
   },
 
-  async generateBotResponse(conversationId: string, userMessage: string) {
+  async generateBotResponse(conversationId: string, userMessage: string, options?: { closeAfter?: boolean }) {
     logger.info(`[Bot] ===== START generateBotResponse =====`);
     logger.info(`[Bot] Conversation: ${conversationId}`);
     logger.info(`[Bot] User message: "${userMessage.substring(0, 100)}"`);
@@ -364,6 +369,8 @@ export const chatService = {
       });
 
       logger.info(`[Bot] Agent: "${agent.name}", model: "${agent.modelValue || 'sin modelo'}"`);
+
+      const history = await this.buildConversationHistory(conversationId, userMessage);
 
       let contextText = '';
       try {
@@ -420,11 +427,12 @@ export const chatService = {
         onChunk,
         projectId,
         toolsEnabled: true,
+        history,
       });
 
       // Si el LLM decidió invocar una herramienta, seguimos el flujo de tools
       if (toolRun.toolCalls.length > 0) {
-        await chatService.handleToolCalls({
+        const toolOutcome = await chatService.handleToolCalls({
           conversationId,
           projectId,
           conversation: conversation as Conversation,
@@ -435,6 +443,9 @@ export const chatService = {
           placeholderMsgId,
           emittedText: accumulatedResponse,
         });
+        if (options?.closeAfter && !toolOutcome?.awaitingConfirmation) {
+          await this.markConversationClosed(conversationId);
+        }
         logger.info(`[Bot] ===== END generateBotResponse (tool flow) =====`);
         return;
       }
@@ -443,35 +454,8 @@ export const chatService = {
 
       const responseTextFinal = responseText?.trim() || '';
 
-      const shouldWelcome = agent.config?.enableWelcomeGreeting
-        ? await this.shouldSendWelcome(conversationId)
-        : false;
-
       // 3. Finalize message update
       let content = typeof responseTextFinal === 'string' ? responseTextFinal : String(responseTextFinal);
-
-      if (shouldWelcome) {
-        const hasGreeting = this.hasGreeting(userMessage);
-        const hasQuestion = this.hasQuestionIntent(userMessage);
-
-        if (hasGreeting && !hasQuestion) {
-          const welcomeText = '¡Hola! ¿En qué puedo ayudarte?';
-          if (content) {
-            content = `${welcomeText}\n\n${content}`;
-          } else {
-            content = welcomeText;
-          }
-        } else if (hasGreeting && hasQuestion) {
-          if (content) {
-            content = `¡Hola! ${content}`;
-          }
-        }
-
-        await getConversationsCollection().updateOne(
-          { _id: new ObjectId(conversationId) },
-          { $set: { lastWelcomeAt: new Date(), updatedAt: new Date() } }
-        );
-      }
 
       if (!content) {
         await messagesColl.deleteOne({ _id: placeholderMsgId });
@@ -509,6 +493,11 @@ export const chatService = {
       } catch (e) {}
 
       logger.info(`[Bot] ✅ Stream Response OK (${content.length} chars)`);
+
+      if (options?.closeAfter) {
+        await this.markConversationClosed(conversationId);
+      }
+
       logger.info(`[Bot] ===== END generateBotResponse (success) =====`);
     } catch (error: any) {
       logger.error(`[Bot] ❌ ERROR: ${error?.message || error}`);
@@ -599,7 +588,7 @@ export const chatService = {
     toolCalls: ParsedToolCall[];
     placeholderMsgId: ObjectId;
     emittedText?: string;
-  }) {
+  }): Promise<{ awaitingConfirmation: boolean }> {
     const context = this.buildToolContext(args.conversation, args.projectId, args.userMessage, args.agent);
     const confirmationCall = args.toolCalls.find(call => toolService.requiresConfirmation(call.name));
 
@@ -638,7 +627,7 @@ export const chatService = {
       await toolExecutionService.setMessageId(execution._id!, confirmationMsg._id!);
 
       logger.info(`[Bot] Confirmación solicitada: ${confirmationCall.name} (execution=${execution._id})`);
-      return;
+      return { awaitingConfirmation: true };
     }
 
     const results: { name: string; success: boolean; message: string }[] = [];
@@ -670,6 +659,8 @@ export const chatService = {
       placeholderMsgId: args.placeholderMsgId,
       results,
     });
+
+    return { awaitingConfirmation: false };
   },
 
   /** Genera (streaming) la respuesta final del bot usando los resultados de herramientas */
@@ -701,6 +692,7 @@ export const chatService = {
 
     let finalText = '';
     try {
+      const history = await this.buildConversationHistory(args.conversationId, args.userMessage);
       const run = await aiService.generateResponseStreamWithTools({
         systemPrompt: args.systemPrompt,
         userMessage: args.userMessage || 'Continúa con la acción confirmada.',
@@ -709,6 +701,7 @@ export const chatService = {
         projectId: args.projectId,
         toolsEnabled: false,
         toolResults: args.results,
+        history,
       });
       finalText = (run.text || accumulated).trim();
     } catch (error: any) {

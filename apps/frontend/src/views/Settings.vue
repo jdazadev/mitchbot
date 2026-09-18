@@ -55,7 +55,7 @@ const agentForm = ref({
   enableFallbackAdvisor: false,
   goodbyeKeywords: [
     'adios', 'adiós', 'hasta luego', 'hasta pronto', 'nos vemos',
-    'chao', 'ciao', 'bye', 'goodbye', 'gracias', 'muchas gracias',
+    'chao', 'ciao', 'bye', 'goodbye',
   ] as string[],
   personality: {
     role: 'assistant' as AgentPersonality['role'],

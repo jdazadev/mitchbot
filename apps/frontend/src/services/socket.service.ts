@@ -129,6 +129,18 @@ export const socketService = {
     }
   },
 
+  /** Escucha cambios de modo/estado de la conversación (chat:status) */
+  onConversationStatus(callback: (data: { mode?: string; status?: string; tag?: string; tagColor?: string }) => void) {
+    if (!this.socket) this.connect();
+    this.socket?.on('chat:status', callback);
+  },
+
+  offConversationStatus(callback?: (data: any) => void) {
+    if (this.socket) {
+      this.socket.off('chat:status', callback);
+    }
+  },
+
   /** Confirma, cancela o modifica una ejecución de herramienta */
   confirmTool(payload: {
     conversationId: string;

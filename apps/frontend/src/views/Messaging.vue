@@ -257,6 +257,26 @@ function onMessageUpdated(data: { messageId: string; status: string; params?: an
   if (data.content) existing.content = data.content;
 }
 
+/**
+ * Refleja en vivo los cambios de modo/estado de la conversación (p. ej. la
+ * transferencia a un asesor humano) sin recargar la lista.
+ */
+function onConversationStatus(data: { mode?: string; status?: string; tag?: string; tagColor?: string }) {
+  const target = selectedChat.value;
+  if (!target) return;
+
+  const applyTo = (chat: ChatConversation) => {
+    if (data.mode) chat.mode = data.mode as ChatConversation['mode'];
+    if (data.status) chat.status = data.status as ChatConversation['status'];
+    if (data.tag !== undefined) chat.tag = data.tag;
+    if (data.tagColor !== undefined) chat.tagColor = data.tagColor;
+  };
+
+  applyTo(target);
+  const item = chats.value.find((c) => c._id === target._id);
+  if (item && item !== target) applyTo(item);
+}
+
 function onNewConversation(conv: ChatConversation) {
   // Nueva conversación creada por un cliente
   const mapped = {
@@ -299,6 +319,7 @@ onMounted(() => {
     socketService.onMessage(onNewMessage);
     socketService.onMessageChunk(onMessageChunk);
     socketService.onMessageUpdated(onMessageUpdated);
+    socketService.onConversationStatus(onConversationStatus);
 
     // Escuchar nuevas conversaciones
     if (socketService.socket) {
@@ -315,6 +336,7 @@ onUnmounted(() => {
   socketService.offMessage(onNewMessage);
   socketService.offMessageChunk(onMessageChunk);
   socketService.offMessageUpdated(onMessageUpdated);
+  socketService.offConversationStatus(onConversationStatus);
   if (socketService.socket) {
     socketService.socket.off('chat:new_conversation', onNewConversation);
     socketService.socket.off('error', onSocketError);
@@ -515,6 +537,18 @@ onUnmounted(() => {
               <span
                 class="text-xs font-bold text-blue-700 uppercase tracking-wider"
                 >Auto-Pilot On</span
+              >
+            </div>
+            <div
+              v-else
+              class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200"
+            >
+              <span class="material-symbols-outlined text-amber-600 text-[18px]"
+                >support_agent</span
+              >
+              <span
+                class="text-xs font-bold text-amber-700 uppercase tracking-wider"
+                >Human Takeover</span
               >
             </div>
             <button

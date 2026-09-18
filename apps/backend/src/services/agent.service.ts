@@ -64,8 +64,7 @@ export const agentService = {
         enableFallbackAdvisor: false,
         goodbyeKeywords: [
           'adios', 'adiós', 'hasta luego', 'hasta pronto', 'nos vemos',
-          'chao', 'ciao', 'bye', 'goodbye', 'gracias', 'muchas gracias',
-          'ok gracias', 'listo gracias', 'vale gracias', 'ok, gracias',
+          'chao', 'ciao', 'bye', 'goodbye',
         ],
         enableWhatsApp: true,
         enableInstagram: false,

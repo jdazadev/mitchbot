@@ -5,6 +5,35 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v3.5.0 — 2026-09-18
+
+> 🧠 **El chatbot ahora recuerda la conversación, saluda y se despide con naturalidad, y el estado de la conversación se refleja en vivo**
+
+---
+
+### ✨ Añadido
+- **Memoria de conversación**: la generación de respuestas (directas y tras ejecutar herramientas) recibe el historial reciente (últimos 20 mensajes) como turnos de usuario/asistente. Se excluyen los mensajes internos de herramientas (`tool_call`, `tool_result`, `confirmation_request`) y los placeholders vacíos; el agente humano se representa con el prefijo `[Agente humano]`.
+- **Re-saludo tras pausa larga**: si el hueco respecto al mensaje anterior supera las 6 horas, se inserta un marcador en el historial para que el bot retome con un saludo.
+- **Propagación en vivo de `chat:status`**: `Messaging.vue` y `TestChat.vue` consumen el evento y actualizan modo/estado/tag sin recargar; `PUT /api/conversations/:id/mode` ahora también emite `chat:status`.
+- **Badge "Human Takeover"** en el dashboard cuando la conversación está en control humano.
+
+### 🔄 Cambios
+- **Saludo natural**: se elimina el texto enlatado de bienvenida y su maquinaria (`shouldSendWelcome`, `hasGreeting`, `hasQuestionIntent`, `lastWelcomeAt`); el system prompt indica saludar solo al inicio o tras una pausa larga.
+- **Despedida no destructiva**: al detectar una despedida, el bot responde con naturalidad y, después de generarla, la conversación se marca como `closed` (sin mensaje enlatado ni corte previo); si la generación falla, no se cierra.
+- **"Gracias" y variantes ya no cierran la conversación**: se retiran de las keywords de despedida (defaults del backend, setup, configuración y seed e2e).
+- **Visibilidad por audiencia**: en la vista del cliente (`TestChat.vue`) ya no se renderizan las tarjetas `tool_call`/`tool_result`; las `confirmation_request` conservan sus acciones. El dashboard sigue mostrándolas.
+
+### 🧪 Pruebas
+- Nuevo spec `chat-memory-and-flow.spec.ts`: memoria del historial, "gracias" no cierra y transferencia reflejada en vivo.
+- Stub de IA ampliado: disparador de memoria (`RECUERDA`) y de transferencia (`TRANSFERIR`); seed e2e idempotente para el `config` del agente.
+- Escenario en `public-chat.spec.ts`: el cliente ve la confirmación pero no la tarjeta interna de la herramienta.
+- Suite e2e completa en verde (24/24).
+
+### 📚 Documentación
+- `AGENTS.md` (secciones 1 y 9 y tabla de eventos WebSocket) actualizado. Versión del proyecto a **v3.5.0**.
+
+---
+
 ## v3.4.0 — 2026-09-18
 
 > 🧠 **Los modelos de IA pasan a ser configuración de despliegue: se resuelven desde variables de entorno y desaparece la selección de modelo en la interfaz**

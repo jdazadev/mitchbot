@@ -53,7 +53,7 @@ export const aiService = {
   /**
    * FUNCIÓN INTERMEDIARIA: genera una respuesta (Non-streaming)
    */
-  async generateResponse(systemPrompt: string, userMessage: string, context: string = '', projectId?: string): Promise<string> {
+  async generateResponse(systemPrompt: string, userMessage: string, context: string = '', projectId?: string, history: BaseMessage[] = []): Promise<string> {
     const config = await this.resolveModelConfig(projectId);
     logger.info(`[AI] Invoking: provider=${config.provider}, model=${config.model}`);
 
@@ -65,6 +65,7 @@ export const aiService = {
 
     const messages: BaseMessage[] = [
       new SystemMessage(fullSystemPrompt),
+      ...history,
       new HumanMessage(userMessage),
     ];
 
@@ -103,7 +104,8 @@ export const aiService = {
     userMessage: string, 
     context: string = '',
     onChunk: (chunk: string) => void,
-    projectId?: string
+    projectId?: string,
+    history: BaseMessage[] = []
   ): Promise<string> {
     const config = await this.resolveModelConfig(projectId);
     logger.info(`[AI Streaming] Invoking: provider=${config.provider}, model=${config.model}`);
@@ -116,6 +118,7 @@ export const aiService = {
 
     const messages: BaseMessage[] = [
       new SystemMessage(fullSystemPrompt),
+      ...history,
       new HumanMessage(userMessage),
     ];
 
@@ -162,6 +165,7 @@ export const aiService = {
     projectId?: string;
     toolsEnabled?: boolean;
     toolResults?: ToolResultSummary[];
+    history?: BaseMessage[];
   }): Promise<GenerationWithToolsResult> {
     const config = await this.resolveModelConfig(params.projectId);
     logger.info(`[AI Tools] Invoking: provider=${config.provider}, model=${config.model}, tools=${params.toolsEnabled !== false}`);
@@ -175,6 +179,7 @@ export const aiService = {
 
     const messages: BaseMessage[] = [
       new SystemMessage(fullSystemPrompt),
+      ...(params.history ?? []),
       new HumanMessage(params.userMessage),
     ];
 

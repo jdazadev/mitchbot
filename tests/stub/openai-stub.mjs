@@ -22,6 +22,7 @@ const STUB_MODEL = process.env.STUB_MODEL || 'stub-model';
 const STUB_EMBED_MODEL = process.env.STUB_EMBED_MODEL || 'stub-embed';
 const STUB_REPLY = process.env.STUB_REPLY || 'Respuesta determinista de prueba E2E.';
 const TOOL_TRIGGER = /AGENDAR_CITA|agendar cita|crear cita/i;
+const TRANSFER_TRIGGER = /TRANSFERIR|transferir a (un )?(humano|asesor)/i;
 // Alineado con `rag.qdrant_vector_size` por defecto del backend (768).
 const EMBED_DIM = Number(process.env.STUB_EMBED_DIM || 768);
 
@@ -104,6 +105,19 @@ function buildToolArgs() {
   return { date, time: '10:00', service: 'Consulta E2E' };
 }
 
+/** Determina la herramienta a invocar según el mensaje del cliente. */
+function pickTool(userText, tools) {
+  if (!Array.isArray(tools) || tools.length === 0) return null;
+  if (TOOL_TRIGGER.test(userText)) return 'create_appointment';
+  if (TRANSFER_TRIGGER.test(userText)) return 'transfer_to_human';
+  return null;
+}
+
+function toolArguments(name) {
+  if (name === 'transfer_to_human') return { reason: 'Prueba E2E' };
+  return buildToolArgs();
+}
+
 function sseStart(res, extraHeaders = {}) {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -131,16 +145,27 @@ async function handleChatCompletions(req, res, body) {
   const model = body.model || STUB_MODEL;
   const wantsStream = body.stream === true;
   const userText = lastUserMessage(body.messages);
-  const useTool = TOOL_TRIGGER.test(userText) && Array.isArray(body.tools) && body.tools.length > 0;
+  const toolName = pickTool(userText, body.tools);
+  const useTool = !!toolName;
   // Eco determinista y único: si el mensaje incluye [[echo:TOKEN]] la respuesta
   // contiene ese TOKEN, permitiendo correlacionar streaming por prueba.
   const echoMatch = userText.match(/\[\[echo:([^\]]+)\]\]/);
-  const reply = echoMatch ? `ECO ${echoMatch[1]} respuesta determinista de prueba E2E.` : STUB_REPLY;
+  // Memoria: si el cliente pide recordar un token que apareció en un turno
+  // anterior, la respuesta confirma si el historial llegó al modelo.
+  const memoryMatch = userText.match(/RECUERDA\s+([\w-]+)/i);
+  let reply = echoMatch ? `ECO ${echoMatch[1]} respuesta determinista de prueba E2E.` : STUB_REPLY;
+  if (memoryMatch) {
+    const token = memoryMatch[1];
+    const earlier = (body.messages || [])
+      .slice(0, -1)
+      .some((m) => (m?.role === 'user' || m?.role === 'human') && textOf(m.content).includes(token));
+    reply = earlier ? `MEMORIA_OK ${token}` : `MEMORIA_FALLO ${token}`;
+  }
 
-  log({ kind: 'chat.completions', model, stream: wantsStream, tool: useTool });
+  log({ kind: 'chat.completions', model, stream: wantsStream, tool: useTool, toolName });
 
   if (useTool) {
-    const args = buildToolArgs();
+    const args = toolArguments(toolName);
     const callId = `call_stub_${Date.now()}`;
     if (!wantsStream) {
       return sendJson(res, 200, {
@@ -158,7 +183,7 @@ async function handleChatCompletions(req, res, body) {
                 {
                   id: callId,
                   type: 'function',
-                  function: { name: 'create_appointment', arguments: JSON.stringify(args) },
+                  function: { name: toolName, arguments: JSON.stringify(args) },
                 },
               ],
             },
@@ -184,7 +209,7 @@ async function handleChatCompletions(req, res, body) {
                 index: 0,
                 id: callId,
                 type: 'function',
-                function: { name: 'create_appointment', arguments: JSON.stringify(args) },
+                function: { name: toolName, arguments: JSON.stringify(args) },
               },
             ],
           },
