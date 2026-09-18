@@ -33,4 +33,4 @@
 - [x] 5.2 Ejecutar `docker compose down`, eliminar el contenedor huérfano (`docker rm nats`), borrar los volúmenes `ollama_data`/`open-webui_data` y levantar con `docker compose up -d --remove-orphans`; verificar con `docker compose ps` que solo hay 3 servicios y todos `healthy`.
 - [x] 5.3 Ejecutar `pnpm test:e2e` y confirmar que la suite pasa contra los servicios reales.
 - [x] 5.4 Ejecutar `openspec validate "pulir-docker-compose" --strict` y confirmar que el change es válido.
-- [ ] 5.5 Realizar el commit del change siguiendo la convención del repo (AGENTS.md).
+- [x] 5.5 Realizar el commit del change siguiendo la convención del repo (AGENTS.md).
