@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { settingsService, type AgentData, type AgentModelGroup } from '../services/settings.service';
+import { settingsService, type AgentData } from '../services/settings.service';
 
 const agents = ref<AgentData[]>([]);
-const agentModelGroups = ref<AgentModelGroup[]>([]);
 const pageLoading = ref(true);
 
 const showCreateModal = ref(false);
@@ -15,27 +14,14 @@ const editLoading = ref(false);
 const createForm = ref({
   name: '',
   description: '',
-  modelValue: '',
 });
 
 const editForm = ref<any>({});
-const modelSearchQuery = ref('');
-
-function filteredModels(models: { id: string; name: string; description?: string }[]) {
-  if (!modelSearchQuery.value.trim()) return models;
-  const q = modelSearchQuery.value.toLowerCase();
-  return models.filter(m => m.id.toLowerCase().includes(q) || m.name.toLowerCase().includes(q));
-}
 
 onMounted(async () => {
   pageLoading.value = true;
   try {
-    const [agentList, modelGroups] = await Promise.all([
-      settingsService.getAgents(),
-      settingsService.getModelsForAgent().catch(() => []),
-    ]);
-    agents.value = agentList;
-    agentModelGroups.value = modelGroups;
+    agents.value = await settingsService.getAgents();
   } catch (err) {
     console.error('Error loading agents:', err);
   } finally {
@@ -45,15 +31,8 @@ onMounted(async () => {
 
 function openEditModal(agent: any) {
   editingAgent.value = agent;
-  editForm.value = {
-    ...agent,
-    modelValue: agent.modelValue || '',
-  };
+  editForm.value = { ...agent };
   showEditModal.value = true;
-}
-
-function getModelDisplay(agent: any) {
-  return agent.modelValue || 'Sin modelo';
 }
 
 async function handleCreateAgent() {
@@ -69,14 +48,13 @@ async function handleCreateAgent() {
       body: JSON.stringify({
         name: createForm.value.name,
         description: createForm.value.description,
-        model: createForm.value.modelValue,
       }),
     });
     if (res.ok) {
       const newAgent = await res.json();
       agents.value.unshift(newAgent);
       showCreateModal.value = false;
-      createForm.value = { name: '', description: '', modelValue: '' };
+      createForm.value = { name: '', description: '' };
     }
   } catch (err) {
     console.error('Error creating agent:', err);
@@ -92,7 +70,6 @@ async function handleUpdateAgent() {
     await settingsService.updateAgent(editingAgent.value._id, {
       name: editForm.value.name,
       description: editForm.value.description,
-      modelValue: editForm.value.modelValue,
     } as any);
 
     const idx = agents.value.findIndex(a => a._id === editingAgent.value._id);
@@ -169,10 +146,6 @@ async function handleDeleteAgent(agent: any) {
           </div>
         </div>
         <p class="text-xs text-slate-500 mb-4">{{ ag.description }}</p>
-        <div class="flex items-center gap-2 text-xs text-slate-400">
-          <span class="material-symbols-outlined text-[14px]">psychology</span>
-          <span class="font-mono">{{ getModelDisplay(ag) }}</span>
-        </div>
       </div>
 
       <div
@@ -201,24 +174,6 @@ async function handleDeleteAgent(agent: any) {
             <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Descripción</label>
             <textarea v-model="createForm.description" placeholder="¿Qué hace?" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"></textarea>
           </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Modelo IA</label>
-            <div v-if="agentModelGroups.length === 0" class="p-3 bg-amber-50 text-amber-700 text-xs rounded-lg">
-              Configura un proveedor LLM en Settings primero.
-            </div>
-            <template v-else>
-              <input v-model="modelSearchQuery" type="text" placeholder="🔎 Buscar modelo..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 mb-2" />
-              <select v-model="createForm.modelValue" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                <option value="" disabled>Selecciona un modelo</option>
-                <template v-for="group in agentModelGroups" :key="group.provider">
-                  <optgroup :label="group.providerName">
-                    <option v-for="m in filteredModels(group.models)" :key="m.id" :value="m.id">{{ m.name }}</option>
-                  </optgroup>
-                </template>
-              </select>
-            </template>
-          </div>
-          </div>
         </div>
         <div class="flex justify-end gap-3 mt-6">
           <button @click="showCreateModal = false" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg">Cancelar</button>
@@ -244,22 +199,6 @@ async function handleDeleteAgent(agent: any) {
           <div>
             <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Descripción</label>
             <textarea v-model="editForm.description" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"></textarea>
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Modelo IA</label>
-            <template v-if="agentModelGroups.length > 0">
-              <input v-model="modelSearchQuery" type="text" placeholder="🔎 Buscar modelo..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 mb-2" />
-              <select v-model="editForm.modelValue" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                <option value="" disabled>Selecciona un modelo</option>
-                <template v-for="group in agentModelGroups" :key="group.provider">
-                  <optgroup :label="group.providerName">
-                    <option v-for="m in filteredModels(group.models)" :key="m.id" :value="m.id">{{ m.name }}</option>
-                  </optgroup>
-                </template>
-              </select>
-            </template>
-            <div v-else class="p-3 bg-amber-50 text-amber-700 text-xs rounded-lg">Configura un proveedor LLM primero.</div>
-          </div>
           </div>
         </div>
         <div class="flex justify-end gap-3 mt-6">

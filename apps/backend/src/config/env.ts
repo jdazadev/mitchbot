@@ -13,8 +13,14 @@ const envSchema = z.object({
   // Proveedor único de IA (OpenRouter)
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_BASE_URL: z.string().url().default('https://openrouter.ai/api/v1'),
+  // Modelo de chat: requerido sin valor por defecto (validado en runtime, como OPENROUTER_API_KEY).
+  OPENROUTER_LLM_MODEL: z.string().optional(),
   OPENROUTER_EMBEDDING_MODEL: z.string().default('openai/text-embedding-3-small'),
   OPENROUTER_OCR_MODEL: z.string().default('google/gemini-3.8-flash'),
+  // Modelo opcional para convertir archivos (CSV) a Markdown vía LLM.
+  OPENROUTER_FILE_MODEL: z.string().optional(),
+  // Modelo opcional para re-ranking; si no se define, se usa el modelo de embeddings.
+  OPENROUTER_RERANKER_MODEL: z.string().optional(),
 
   // Auth
   JWT_SECRET: z.string().default('mitchbot-secret-change-in-production'),

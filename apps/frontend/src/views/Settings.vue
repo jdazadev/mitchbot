@@ -5,6 +5,7 @@ import {
   settingsService,
   type AgentData,
   type AgentPersonality,
+  type ProviderConfig,
 } from '../services/settings.service';
 import { projectService, type Project } from '../services/project.service';
 
@@ -47,7 +48,6 @@ const agent = ref<AgentData | null>(null);
 const agentForm = ref({
   name: '',
   description: '',
-  modelValue: '',
   temperature: 0.5,
   maxTokens: 300,
   enableWelcomeGreeting: false,
@@ -177,15 +177,27 @@ const channels = ref([
 // ===================== OPTIONS =====================
 const optionsForm = ref({ autoCreateContact: true });
 
+// ===================== MODELOS (SOLO LECTURA) =====================
+const resolvedModels = ref<{ llm: ProviderConfig | null; embedding: ProviderConfig | null; ocr: ProviderConfig | null }>({
+  llm: null,
+  embedding: null,
+  ocr: null,
+});
+
 // ===================== LOAD DATA =====================
 onMounted(async () => {
   loading.value = true;
   try {
     syncTabFromRoute();
-    const [projectData, agents] = await Promise.all([
+    const [projectData, agents, llmProvider, embeddingProvider, ocrProvider] = await Promise.all([
       projectService.getProject(),
       settingsService.getAgents(),
+      settingsService.getActiveProvider('llm').catch(() => null),
+      settingsService.getActiveProvider('embedding').catch(() => null),
+      settingsService.getActiveProvider('ocr').catch(() => null),
     ]);
+
+    resolvedModels.value = { llm: llmProvider, embedding: embeddingProvider, ocr: ocrProvider };
 
     // Project
     if (projectData) {
@@ -269,7 +281,6 @@ async function handleSaveAgent() {
     await settingsService.updateAgent(agent.value._id, {
       name: agentForm.value.name,
       description: agentForm.value.description,
-      modelValue: agentForm.value.modelValue,
       personality: agentForm.value.personality,
       config: {
         temperature: agentForm.value.temperature,
@@ -294,7 +305,6 @@ function applyAgent(data: AgentData) {
   agentForm.value = {
     name: data.name || '',
     description: data.description || '',
-    modelValue: data.modelValue || '',
     temperature: data.config?.temperature ?? 0.5,
     maxTokens: data.config?.maxTokens ?? 300,
     enableWelcomeGreeting: data.config?.enableWelcomeGreeting ?? false,
@@ -460,6 +470,29 @@ async function handleSaveOptions() {
               <div>
                 <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Descripción</label>
                 <textarea v-model="agentForm.description" placeholder="¿Qué hace este agente?" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card: Modelos de IA (solo lectura) -->
+          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
+            <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px]">memory</span>
+              Modelos de IA
+            </h2>
+            <p class="text-xs text-slate-400 mb-5">Definidos por el entorno del servidor. No son editables desde la interfaz.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Chat</span>
+                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.llm?.selectedModel || 'No configurado' }}</span>
+              </div>
+              <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Embeddings</span>
+                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.embedding?.selectedModel || 'No configurado' }}</span>
+              </div>
+              <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">OCR</span>
+                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.ocr?.selectedModel || 'No configurado' }}</span>
               </div>
             </div>
           </div>

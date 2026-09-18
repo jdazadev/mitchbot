@@ -250,10 +250,10 @@ export const aiService = {
       throw new Error('No hay agente activo. Ve a Settings > Agente IA para configurar uno.');
     }
 
-    const model = agent.modelValue || '';
+    const model = env.OPENROUTER_LLM_MODEL || '';
 
     if (!model) {
-      throw new Error(`No hay modelo seleccionado para el agente "${agent.name}". Ve a Settings > Agente IA y selecciona un modelo.`);
+      throw new Error('Falta el modelo de lenguaje: define OPENROUTER_LLM_MODEL en el entorno.');
     }
 
     if (!env.OPENROUTER_API_KEY) {

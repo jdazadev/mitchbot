@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v3.3.0
+**Versión actual del proyecto:** v3.4.0
 
 ---
 
@@ -190,13 +190,13 @@ apps/frontend/src/
 - Proveedor único: `openrouter` (modelos de visión).
 - Cadena de fallback: **OpenRouter → pdf-parse (legacy)**.
 - Salida estructurada: `{ text, pages, method, confidence }`. `method` ∈ `ocr_vision` | `pdf-parse`.
-- Configuración vía `configService`: `rag.ocr_openrouter_model`, `rag.ocr_scale`, `rag.ocr_max_pages`, `rag.ocr_batch_size`, `rag.ocr_timeout_ms`.
+- Configuración vía `configService`: `rag.ocr_scale`, `rag.ocr_max_pages`, `rag.ocr_batch_size`, `rag.ocr_timeout_ms`.
 - Estadísticas por fuente: `extractionTimeMs`, `extractionConfidence`, `pagesProcessed`, `ocrProvider`, `ocrModel`.
-- La credencial se toma de `OPENROUTER_API_KEY` (entorno); el modelo por defecto es `OPENROUTER_OCR_MODEL`.
+- La credencial se toma de `OPENROUTER_API_KEY` y el modelo de `OPENROUTER_OCR_MODEL` (entorno); no hay override en BD.
 
 ### 3.3. Re-ranking (`services/reranker.service.ts`)
 
-- Re-ranking con embeddings de OpenRouter (`rag.reranker_model`, por defecto `openai/text-embedding-3-small`).
+- Re-ranking con embeddings de OpenRouter (`OPENROUTER_RERANKER_MODEL`, con fallback a `OPENROUTER_EMBEDDING_MODEL`).
 - Si no hay credencial o el modelo falla, usa una heurística (keyword + bigramas con prefijos) y, ante error, degrada a similarity-only.
 - Desactivable con `rag.use_reranker = false`.
 - Endpoint Qdrant configurado con HNSW `m:16`, `ef_construct:100`, `ef:64`, `on_disk` e índices `language`/`document_id`.
@@ -222,27 +222,27 @@ apps/frontend/src/
 - Opción para configurar la **personalidad del bot** (system prompt).
 - Opción para habilitar/deshabilitar la creación automática de contactos.
 - Configurar el agente asignado al proyecto.
-- Configurar el proveedor de embeddings.
-- Configurar el proveedor de LLM.
+- Los modelos de IA (chat, embeddings y OCR) ya no se configuran desde la interfaz: se muestran en modo solo lectura y provienen del entorno.
 
 #### 4.1. Proveedores de Embeddings
 
 - Proveedor único: **OpenRouter**.
-- El modelo por defecto se define en `OPENROUTER_EMBEDDING_MODEL` y puede sobreescribirse desde configuración (`provider_configs`, tipo `embedding`).
+- El modelo se define exclusivamente en `OPENROUTER_EMBEDDING_MODEL`; se ignoran `provider_configs.selectedModel`.
 - La credencial proviene de `OPENROUTER_API_KEY` (entorno).
+- ⚠️ Cambiar `OPENROUTER_EMBEDDING_MODEL` invalida los vectores existentes: hay que reindexar (`pnpm --filter @mitchbot/backend tsx src/scripts/reindex-rag.ts`).
 
 #### 4.2. Proveedores LLM
 
 - Proveedor único: **OpenRouter**.
-- Los modelos se listan dinámicamente con `GET /api/v1/models`.
+- El modelo de chat se define exclusivamente en `OPENROUTER_LLM_MODEL` (requerido, sin valor por defecto); se ignora `agent.modelValue`.
 - La API key proviene de `OPENROUTER_API_KEY` (entorno), **nunca de la base de datos**.
 - Solo 1 proveedor activo (OpenRouter) por tipo.
 
 #### 4.3. Agentes / Modelo de IA
 
-- Se listan dinámicamente los modelos disponibles de OpenRouter.
-- Al seleccionar modelo, se abre un **modal con buscador y filtros** mostrando información relevante (nombre, contexto, pricing).
-- El modelo seleccionado se guarda en la BD y se usa para las respuestas del chatbot.
+- La interfaz **no ofrece selección de modelo**: ni en el onboarding, ni en Agentes, ni en Configuración.
+- El modelo usado es el de `OPENROUTER_LLM_MODEL`; los campos `modelId`/`modelValue` del agente quedan ignorados en runtime.
+- Configuración muestra una tarjeta de solo lectura con los modelos de chat, embeddings y OCR resueltos del servidor.
 
 ### 4.5. Agent Tool Use (Function Calling)
 
@@ -251,7 +251,7 @@ Ver sección **9. Sistema de Herramientas (Tool Use)** más abajo.
 ### 4.6. Proveedores OCR
 
 - Proveedor único: **OpenRouter** (modelos de visión, tipo de proveedor `ocr`).
-- Modelo y parámetros (`scale`, `maxPages`, `batchSize`, `timeout`) se configuran vía `configService` (`rag.ocr_*`).
+- El modelo se define en `OPENROUTER_OCR_MODEL`; los parámetros (`scale`, `maxPages`, `batchSize`, `timeout`) se configuran vía `configService` (`rag.ocr_scale`, `rag.ocr_max_pages`, `rag.ocr_batch_size`, `rag.ocr_timeout_ms`).
 - La credencial proviene de `OPENROUTER_API_KEY` (entorno).
 
 ### 5. Módulo Usuarios del Sistema
@@ -352,7 +352,7 @@ Usuario abre la app
     │              ├── 401/403 → limpia sesión → /login (silencioso)
     │              ├── NO tiene proyecto → Redirige a /setup (onboarding 3 pasos)
     │              │         1. Datos del Proyecto (nombre, descripción)
-    │              │         2. Configurar Agente IA (modelo, rol, mensajes)
+    │              │         2. Configurar Agente IA (rol, mensajes)
     │              │         3. Canales y Opciones → Crear todo → Dashboard
     │              └── SÍ tiene proyecto → Dashboard ✅
 ```
@@ -400,7 +400,7 @@ Usuario abre la app
 | `messages` | conversationId, sender, content, contentType, isBot, toolData | Sender: contact, ai_agent, human_agent, tool. contentType: text, tool_call, tool_result, confirmation_request |
 | `agents` | projectId, name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
 | `ai_models` | name, value, provider, category, isActive | Catálogo de modelos (los disponibles se listan dinámicamente desde OpenRouter) |
-| `provider_configs` | type (llm/embedding/file/image/audio/ocr), provider, selectedModel, isActive | Sin credenciales: la API key proviene del entorno |
+| `provider_configs` | type (llm/embedding/file/image/audio/ocr), provider, selectedModel, isActive | Sin credenciales: la API key proviene del entorno. `selectedModel` ya no se usa para resolver llm/embedding/file/ocr |
 | `projects` | name, agentId, config (channels, messages, options) | Solo 1 proyecto activo |
 | `knowledge_sources` | name, type, size, status, vectorCount, filePath, extractionMethod, ocrProvider, extractionTimeMs | Status: Queued, Processing, Indexed, Failed |
 | `appointments` | date, time, service, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
@@ -500,9 +500,16 @@ FRONTEND_URL=http://localhost:5173
 # Proveedor único de IA (OpenRouter)
 OPENROUTER_API_KEY=<tu-api-key>
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_LLM_MODEL=<modelo-de-chat-obligatorio>
 OPENROUTER_EMBEDDING_MODEL=openai/text-embedding-3-small
 OPENROUTER_OCR_MODEL=google/gemini-3.8-flash
+OPENROUTER_FILE_MODEL=<opcional-conversion-csv>
+OPENROUTER_RERANKER_MODEL=<opcional-fallback-embedding>
 ```
+
+> ⚠️ `OPENROUTER_LLM_MODEL` es obligatorio (sin default): si falta, la generación falla con un mensaje que indica definirlo. `OPENROUTER_FILE_MODEL` y `OPENROUTER_RERANKER_MODEL` son opcionales (el CSV se indexa crudo y el re-ranker usa el modelo de embeddings, respectivamente).
+>
+> ⚠️ Cambiar `OPENROUTER_EMBEDDING_MODEL` **invalida los vectores existentes** y requiere reindexar con `pnpm --filter @mitchbot/backend tsx src/scripts/reindex-rag.ts`.
 
 > ⚠️ La API key de OpenRouter proviene **exclusivamente de variables de entorno** (`OPENROUTER_API_KEY`); nunca se almacena en la base de datos. Ver `apps/backend/.env.example`.
 

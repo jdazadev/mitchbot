@@ -5,6 +5,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v3.4.0 — 2026-09-18
+
+> 🧠 **Los modelos de IA pasan a ser configuración de despliegue: se resuelven desde variables de entorno y desaparece la selección de modelo en la interfaz**
+
+---
+
+### 🔄 Cambios
+- **Modelos resueltos desde el entorno**: el chat usa siempre `OPENROUTER_LLM_MODEL` (requerido, sin default); embeddings `OPENROUTER_EMBEDDING_MODEL`; OCR `OPENROUTER_OCR_MODEL`; conversión de archivos `OPENROUTER_FILE_MODEL` (opcional, CSV crudo si falta) y re-ranking `OPENROUTER_RERANKER_MODEL` (opcional, fallback al modelo de embeddings).
+- **Onboarding sin invocar a OpenRouter**: el bloque "Modelo IA" del setup se elimina; el alta del proyecto ya no requiere elegir modelo.
+- **Interfaz sin selectores de modelo**: se quitan el selector/buscador de Agentes y el selector del formulario de Configuración; Configuración muestra una tarjeta de solo lectura con los modelos de chat, embeddings y OCR.
+- **Endpoint de solo lectura**: `GET /ai-models/providers/active/:type` devuelve el modelo resuelto del entorno (llm, embedding, file, ocr).
+
+### 🗑️ Eliminado
+- **Overrides de modelo en base de datos**: `provider_configs.selectedModel` (embedding y file), `rag.ocr_openrouter_model` y `rag.reranker_model` dejan de tener efecto. Los campos `modelId`/`modelValue` del agente quedan ignorados en runtime.
+- **Frontend**: `getModelsForAgent()` y el tipo `AgentModelGroup` de `settings.service.ts`; envío de `model`/`modelValue` en setup, agentes y configuración.
+- **Pruebas**: filas de `provider_configs` de modelos en `seed-e2e.ts` y pasos de selección de modelo en `onboarding.spec.ts`.
+
+### 📚 Documentación
+- `apps/backend/.env.example` y `AGENTS.md` actualizados (secciones 4.1/4.2/4.3, pipeline OCR, re-ranking, flujo de setup y tabla de variables) incluyendo el caveat de reindexado al cambiar `OPENROUTER_EMBEDDING_MODEL`. Versión del proyecto a **v3.4.0**.
+
+### 🧪 Pruebas
+- Suite e2e completa en verde (20/20) con `OPENROUTER_LLM_MODEL` apuntando al stub.
+
+---
+
 ## v3.3.0 — 2026-09-18
 
 > 🔐 **Validación del setup: la primera vez lleva al wizard, la sesión inválida vuelve al login y el login queda limpio**

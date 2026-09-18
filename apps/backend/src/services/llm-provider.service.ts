@@ -72,7 +72,7 @@ export const llmProviderService = {
     logger.info(`[LLMRouter] Creating model: provider=openrouter, model=${model}`);
 
     if (!model) {
-      throw new Error('No se ha configurado un modelo. Ve a Settings > Agente IA para seleccionar uno.');
+      throw new Error('Falta el modelo de lenguaje: define OPENROUTER_LLM_MODEL en el entorno.');
     }
 
     const apiKey = resolveApiKey(config.apiKey);

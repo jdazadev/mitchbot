@@ -23,15 +23,9 @@ test.describe('Onboarding / setup', () => {
     await page.getByPlaceholder(/Describe brevemente/).fill('Proyecto creado por la suite e2e');
     await page.getByRole('button', { name: 'Siguiente' }).click();
 
-    // Paso 2: agente de IA
+    // Paso 2: agente de IA (sin selección de modelo: se resuelve por entorno)
     await expect(page.getByText('Agente de IA')).toBeVisible();
     await page.getByPlaceholder(/Asistente de Ventas, Soporte Bot/).fill('Agente Onboarding');
-    // Selección de modelo (el listado proviene del proveedor global → stub e2e).
-    const modelSelect = page.locator('select').first();
-    await expect(modelSelect).toBeVisible();
-    await expect(modelSelect.locator('option[value="stub-model"]')).toHaveCount(1);
-    await modelSelect.selectOption('stub-model');
-    await expect(modelSelect).toHaveValue('stub-model');
     await page.getByRole('button', { name: 'Asistente' }).click();
     await page.getByRole('button', { name: 'Siguiente' }).click();
 

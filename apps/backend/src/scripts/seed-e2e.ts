@@ -186,39 +186,11 @@ async function seedE2E() {
       }
     );
 
-    // --- Proveedor de embeddings activo (habilita RAG con el stub) ---
-    const providerConfigs = db.collection('provider_configs');
-    const providers: { type: string; provider: string; selectedModel: string }[] = [
-      { type: 'embedding', provider: 'openrouter', selectedModel: 'stub-embed' },
-      { type: 'llm', provider: 'openrouter', selectedModel: 'stub-model' },
-      { type: 'file', provider: 'openrouter', selectedModel: 'stub-model' },
-      { type: 'image', provider: 'openrouter', selectedModel: 'stub-model' },
-    ];
-
-    for (const provider of providers) {
-      await providerConfigs.updateOne(
-        { type: provider.type, projectId },
-        {
-          $set: {
-            type: provider.type,
-            projectId,
-            provider: provider.provider,
-            selectedModel: provider.selectedModel,
-            selectedModelName: provider.selectedModel,
-            isActive: true,
-            updatedAt: now,
-          },
-          $setOnInsert: { createdAt: now },
-        },
-        { upsert: true }
-      );
-    }
-
     console.log('✅ Seed E2E completado');
     console.log(`   👤 Usuario:  ${E2E_USER.email} / ${E2E_USER.password}`);
     console.log(`   📦 Proyecto: ${E2E_PROJECT.name} (slug: ${E2E_PROJECT.slug})`);
-    console.log(`   🤖 Agente:   ${E2E_AGENT.name} (modelo: ${E2E_AGENT.modelValue})`);
-    console.log(`   🧠 Embedding: stub-embed\n`);
+    console.log(`   🤖 Agente:   ${E2E_AGENT.name} (modelo por entorno)`);
+    console.log(`   🧠 Embedding: por entorno\n`);
 
     // Limpia contadores de rate limiting WebSocket para evitar acumulación entre
     // corridas consecutivas de la suite (mismo usuario e2e).

@@ -8,6 +8,15 @@ import env from '../config/env';
 /** Tipos de proveedor configurables */
 export type ProviderConfigType = 'llm' | 'embedding' | 'file' | 'image' | 'audio' | 'ocr';
 
+/** Configuración de modelo resuelta (solo lectura) expuesta a la interfaz */
+export interface ResolvedProviderConfig {
+  type: ProviderConfigType;
+  provider: string;
+  selectedModel: string | null;
+  source: 'environment' | 'database';
+  isActive: boolean;
+}
+
 export const aiModelService = {
   // =================== AI MODELS ===================
 
@@ -34,30 +43,62 @@ export const aiModelService = {
   },
 
   /**
-   * Obtiene la configuración de embeddings activa.
-   * Las credenciales provienen del entorno; el modelo puede sobreescribirse
-   * por configuración (provider_configs.selectedModel).
+   * Devuelve la configuración de modelo resuelta para la interfaz (solo lectura).
+   * Los modelos de llm, embedding, file y ocr provienen del entorno; el resto
+   * conserva el registro de base de datos.
    */
-  async getActiveEmbeddingConfig(projectId?: string): Promise<EmbeddingProviderConfig> {
-    const config = await this.getActiveProviderConfig('embedding', projectId);
-    const dimensions = Number(await configService.get('rag.qdrant_vector_size')) || undefined;
+  async getResolvedProviderConfig(type: ProviderConfigType, projectId?: string): Promise<ResolvedProviderConfig> {
+    const envModels: Partial<Record<ProviderConfigType, string | undefined>> = {
+      llm: env.OPENROUTER_LLM_MODEL,
+      embedding: env.OPENROUTER_EMBEDDING_MODEL,
+      ocr: env.OPENROUTER_OCR_MODEL,
+      file: env.OPENROUTER_FILE_MODEL,
+    };
+
+    if (type in envModels) {
+      return {
+        type,
+        provider: 'openrouter',
+        selectedModel: envModels[type] || null,
+        source: 'environment',
+        isActive: true,
+      };
+    }
+
+    const config = await this.getActiveProviderConfig(type, projectId);
     return {
-      provider: 'openrouter',
-      model: config?.selectedModel || env.OPENROUTER_EMBEDDING_MODEL,
-      dimensions,
-      baseUrl: config?.baseUrl,
+      type,
+      provider: config?.provider || 'openrouter',
+      selectedModel: config?.selectedModel || null,
+      source: 'database',
+      isActive: config?.isActive ?? false,
     };
   },
 
-  /** Obtiene configuración activa para modelos tipo file (extracción legacy) */
-  async getActiveFileConfig(projectId?: string) {
-    const config = await this.getActiveProviderConfig('file', projectId);
-    if (!config || !config.selectedModel) return null;
+  /**
+   * Obtiene la configuración de embeddings activa.
+   * El modelo y la credencial provienen exclusivamente del entorno.
+   */
+  async getActiveEmbeddingConfig(_projectId?: string): Promise<EmbeddingProviderConfig> {
+    const dimensions = Number(await configService.get('rag.qdrant_vector_size')) || undefined;
+    return {
+      provider: 'openrouter',
+      model: env.OPENROUTER_EMBEDDING_MODEL,
+      dimensions,
+    };
+  },
+
+  /**
+   * Obtiene configuración para modelos tipo file (conversión CSV a Markdown).
+   * Devuelve null si no se define `OPENROUTER_FILE_MODEL`.
+   */
+  async getActiveFileConfig(_projectId?: string) {
+    if (!env.OPENROUTER_FILE_MODEL) return null;
 
     return {
       provider: 'openrouter' as const,
-      model: config.selectedModel,
-      baseUrl: config.baseUrl,
+      model: env.OPENROUTER_FILE_MODEL,
+      baseUrl: env.OPENROUTER_BASE_URL,
       temperature: 0,
       maxTokens: 1024,
     };

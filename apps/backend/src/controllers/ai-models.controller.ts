@@ -26,7 +26,7 @@ export const getActiveProvider = async (req: Request, res: Response, next: NextF
     const projectId = (req as any).projectId as string | undefined;
     if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
     if (!ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId inválido' });
-    const config = await aiModelService.getActiveProviderConfig(type, projectId);
+    const config = await aiModelService.getResolvedProviderConfig(type, projectId);
     res.json(config);
   } catch (error) {
     next(error);

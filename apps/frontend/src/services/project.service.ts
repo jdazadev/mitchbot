@@ -13,7 +13,7 @@ export class SessionInvalidError extends Error {
 export interface ProjectAgent {
   name: string;
   description?: string;
-  model: string;
+  model?: string;
   personality?: any;
   enableWelcomeGreeting?: boolean;
   enableGoodbyeMessage?: boolean;

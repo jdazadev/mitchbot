@@ -10,7 +10,7 @@ import { logger } from '../utils/logger';
  * 1. Si el re-ranker está deshabilitado (`rag.use_reranker = false`) o hay pocos
  *    documentos, se devuelven tal cual (similarity-only).
  * 2. Se intenta un re-ranking con embeddings de OpenRouter (bi-encoder, modelo
- *    configurable vía `rag.reranker_model`).
+ *    `OPENROUTER_RERANKER_MODEL` con fallback a `OPENROUTER_EMBEDDING_MODEL`).
  * 3. Ante cualquier error o si no hay credencial, degrada a una heurística de
  *    solapamiento de términos (keyword/bigramas) y, si esta falla, a
  *    similarity-only (no bloquea el chat).
@@ -151,7 +151,7 @@ export const rerankerService = {
     }
 
     try {
-      const model = (await configService.get('rag.reranker_model')) || env.OPENROUTER_EMBEDDING_MODEL;
+      const model = env.OPENROUTER_RERANKER_MODEL || env.OPENROUTER_EMBEDDING_MODEL;
 
       if (env.OPENROUTER_API_KEY) {
         const reranked = await embeddingRerank(query, documents, model);

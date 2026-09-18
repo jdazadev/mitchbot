@@ -98,21 +98,16 @@ async function log(sourceId: string | undefined, entry: { level: 'info' | 'warn'
 }
 
 async function resolveOcrConfig(): Promise<ResolvedOcrConfig> {
-  const [openrouterModelCfg, scaleCfg, maxPagesCfg, batchCfg, timeoutCfg] = await Promise.all([
-    configService.get('rag.ocr_openrouter_model'),
+  const [scaleCfg, maxPagesCfg, batchCfg, timeoutCfg] = await Promise.all([
     configService.get('rag.ocr_scale'),
     configService.get('rag.ocr_max_pages'),
     configService.get('rag.ocr_batch_size'),
     configService.get('rag.ocr_timeout_ms'),
   ]);
 
-  const model = (typeof openrouterModelCfg === 'string' && openrouterModelCfg.trim())
-    ? openrouterModelCfg.trim()
-    : DEFAULT_OCR_MODEL;
-
   return {
     provider: 'openrouter',
-    model,
+    model: DEFAULT_OCR_MODEL,
     apiKey: env.OPENROUTER_API_KEY,
     baseUrl: env.OPENROUTER_BASE_URL,
     scale: resolveScale(scaleCfg),

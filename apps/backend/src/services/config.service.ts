@@ -28,14 +28,14 @@ const DEFAULTS: Record<string, any> = {
   'rag.pdf_extract_max_base64_chars': 0,
   'rag.pdf_extract_return_limit_chars': 0,
   // Pipeline OCR unificado (todos los PDFs) — proveedor único OpenRouter
-  // El modelo se toma de OPENROUTER_OCR_MODEL; puede sobreescribirse con `rag.ocr_openrouter_model`.
+  // El modelo se toma de OPENROUTER_OCR_MODEL.
   'rag.ocr_scale': 2,
   'rag.ocr_max_pages': 0,
   'rag.ocr_batch_size': 4,
   'rag.ocr_timeout_ms': 60000,
   // Re-ranking de resultados RAG (embeddings de OpenRouter)
+  // El modelo se toma de OPENROUTER_RERANKER_MODEL o de OPENROUTER_EMBEDDING_MODEL.
   'rag.use_reranker': true,
-  'rag.reranker_model': 'openai/text-embedding-3-small',
   'rag.reranker_top_k': 10,
   'rag.reranker_final_k': 3,
   // Configuración de colección Qdrant (HNSW / optimizers)

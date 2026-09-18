@@ -54,13 +54,6 @@ export interface ProviderConfig {
   isActive: boolean;
 }
 
-/** Grupo de modelos para un agente (del endpoint /agent/models) */
-export interface AgentModelGroup {
-  provider: string;
-  providerName: string;
-  models: { id: string; name: string; description?: string }[];
-}
-
 // =================== SERVICE ===================
 
 class SettingsService {
@@ -134,17 +127,6 @@ class SettingsService {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al obtener proveedor activo');
-    return data;
-  }
-
-  // =================== AGENT MODELS ===================
-
-  async getModelsForAgent(): Promise<AgentModelGroup[]> {
-    const res = await fetch(`${API_BASE}/ai-models/agent/models`, {
-      headers: authService.getHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al obtener modelos');
     return data;
   }
 

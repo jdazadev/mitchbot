@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { projectService, SessionInvalidError } from '../services/project.service';
 import { authService } from '../services/auth.service';
-import { settingsService, type AgentModelGroup } from '../services/settings.service';
 
 const route = useRoute();
 const router = useRouter();
@@ -25,7 +24,6 @@ const projectForm = ref({
 const agentForm = ref({
   name: '',
   description: '',
-  model: '',
   role: 'assistant' as 'assistant' | 'teacher' | 'seller' | 'support' | 'customer_service',
   temperature: 0.5,
   maxTokens: 300,
@@ -73,24 +71,9 @@ const configForm = ref({
   },
 });
 
-const agentModelGroups = ref<AgentModelGroup[]>([]);
-const modelsLoading = ref(true);
-
 onMounted(async () => {
   const proceed = await validateSetup();
   checking.value = false;
-  if (!proceed) return;
-  try {
-    agentModelGroups.value = await settingsService.getModelsForAgent();
-    // Pre-seleccionar primer modelo si existe
-    if (agentModelGroups.value.length > 0 && agentModelGroups.value[0].models.length > 0) {
-      agentForm.value.model = agentModelGroups.value[0].models[0].id;
-    }
-  } catch (err) {
-    console.error('Error loading models:', err);
-  } finally {
-    modelsLoading.value = false;
-  }
 });
 
 /**
@@ -154,7 +137,6 @@ async function handleSubmit() {
       agent: {
         name: agentForm.value.name,
         description: agentForm.value.description,
-        model: agentForm.value.model,
         personality: {
           role: agentForm.value.role,
           traits: ['neutro'],
@@ -289,22 +271,6 @@ async function handleSubmit() {
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">Modelo IA</label>
-            <div v-if="modelsLoading" class="text-sm text-slate-400 p-3">Cargando modelos...</div>
-            <div v-else-if="agentModelGroups.length === 0" class="p-4 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-700">
-              <span class="font-bold">Sin proveedor configurado.</span> Configura un proveedor LLM en Settings después del onboarding.
-            </div>
-            <select v-else v-model="agentForm.model" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white">
-              <option value="" disabled>Selecciona un modelo</option>
-              <template v-for="group in agentModelGroups" :key="group.provider">
-                <optgroup :label="group.providerName">
-                  <option v-for="m in group.models" :key="m.id" :value="m.id">{{ m.name }}</option>
-                </optgroup>
-              </template>
-            </select>
-          </div>
-
-          <div>
             <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">Rol del Bot</label>
             <p class="text-[10px] text-slate-400 mb-2">Podrás configurar la personalidad completa después en Settings</p>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -426,7 +392,7 @@ async function handleSubmit() {
             <h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Resumen</h3>
             <div class="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-300">
               <p>📁 <strong>Proyecto:</strong> {{ projectForm.name }}</p>
-              <p>🤖 <strong>Agente:</strong> {{ agentForm.name }} ({{ agentForm.model }})</p>
+              <p>🤖 <strong>Agente:</strong> {{ agentForm.name }}</p>
               <p>📡 <strong>Canales:</strong>
                 {{ [
                   configForm.channels.whatsapp ? 'WhatsApp' : '',

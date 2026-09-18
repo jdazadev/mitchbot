@@ -97,6 +97,7 @@ export default defineConfig({
         QDRANT_URL: process.env.QDRANT_URL || 'http://localhost:6333',
         OPENROUTER_API_KEY: E2E.stub.apiKey,
         OPENROUTER_BASE_URL: `${E2E.stubUrl}/v1`,
+        OPENROUTER_LLM_MODEL: E2E.stub.model,
         OPENROUTER_EMBEDDING_MODEL: E2E.stub.embedModel,
         FRONTEND_URL: E2E.frontendUrl,
       },
