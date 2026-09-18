@@ -14,7 +14,7 @@ const envSchema = z.object({
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_BASE_URL: z.string().url().default('https://openrouter.ai/api/v1'),
   OPENROUTER_EMBEDDING_MODEL: z.string().default('openai/text-embedding-3-small'),
-  OPENROUTER_OCR_MODEL: z.string().default('google/gemini-2.0-flash-001'),
+  OPENROUTER_OCR_MODEL: z.string().default('google/gemini-3.8-flash'),
 
   // Auth
   JWT_SECRET: z.string().default('mitchbot-secret-change-in-production'),

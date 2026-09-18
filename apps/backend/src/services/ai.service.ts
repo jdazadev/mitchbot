@@ -244,8 +244,8 @@ export const aiService = {
     }
   },
 
-  async resolveModelConfig(_projectId?: string): Promise<LLMProviderConfig> {
-    const agent = await agentService.getActiveAgent();
+  async resolveModelConfig(projectId?: string): Promise<LLMProviderConfig> {
+    const agent = await agentService.getActiveAgent(projectId);
     if (!agent) {
       throw new Error('No hay agente activo. Ve a Settings > Agente IA para configurar uno.');
     }

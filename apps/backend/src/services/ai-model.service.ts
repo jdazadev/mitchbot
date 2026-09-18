@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { getAIModelsCollection, getProviderConfigsCollection, ProviderConfig } from '../models/ai-model.model';
 import { llmProviderService, EmbeddingProviderConfig } from './llm-provider.service';
+import { configService } from './config.service';
 import { logger } from '../utils/logger';
 import env from '../config/env';
 
@@ -39,9 +40,11 @@ export const aiModelService = {
    */
   async getActiveEmbeddingConfig(projectId?: string): Promise<EmbeddingProviderConfig> {
     const config = await this.getActiveProviderConfig('embedding', projectId);
+    const dimensions = Number(await configService.get('rag.qdrant_vector_size')) || undefined;
     return {
       provider: 'openrouter',
       model: config?.selectedModel || env.OPENROUTER_EMBEDDING_MODEL,
+      dimensions,
       baseUrl: config?.baseUrl,
     };
   },

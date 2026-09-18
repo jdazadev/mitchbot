@@ -53,7 +53,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 - `llm-provider.service.ts` queda reducido a la rama de OpenRouter para chat y embeddings; `ai.service.resolveModelConfig` resuelve el modelo por agente y toma la credencial del entorno.
 - `ocr.service.ts` se simplifica a OpenRouter como único proveedor, conservando el fallback legacy `pdf-parse`.
 - `reranker.service.ts` re-rankea con embeddings de OpenRouter (configurable con `rag.reranker_model`), desactivable con `rag.use_reranker=false` y con degradación a heurística/similarity-only.
-- Los embeddings usan un modelo por defecto de OpenRouter, sobreescribible desde configuración.
+- Los embeddings usan un modelo por defecto de OpenRouter, sobreescribible desde configuración. La dimensión del vector se alinea con `rag.qdrant_vector_size` (768) para reutilizar las colecciones Qdrant existentes.
+- Modelo OCR por defecto actualizado a `google/gemini-3.8-flash` (el anterior `google/gemini-2.0-flash-001` ya no existe en OpenRouter).
 - El arranque del backend ya no comprueba la conexión con Ollama.
 - Nueva migración `scripts/migrate-openrouter.ts`: elimina `apiKey` de `provider_configs` y normaliza/desactiva usuarios `devadmin`.
 - El `seed` de modelos locales de Ollama se elimina; los modelos se listan dinámicamente desde OpenRouter.

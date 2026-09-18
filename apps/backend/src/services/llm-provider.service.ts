@@ -29,6 +29,8 @@ export interface EmbeddingProviderConfig {
   model: string;
   apiKey?: string;
   baseUrl?: string;
+  /** Número de dimensiones del vector (debe coincidir con el tamaño de la colección Qdrant). */
+  dimensions?: number;
 }
 
 /** Modelo remoto devuelto por la API de OpenRouter */
@@ -104,6 +106,7 @@ export const llmProviderService = {
     return new OpenAIEmbeddings({
       openAIApiKey: apiKey,
       model: config?.model || env.OPENROUTER_EMBEDDING_MODEL,
+      ...(config?.dimensions ? { dimensions: config.dimensions } : {}),
       configuration: {
         baseURL: config?.baseUrl || env.OPENROUTER_BASE_URL,
       },

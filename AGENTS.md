@@ -500,7 +500,7 @@ FRONTEND_URL=http://localhost:5173
 OPENROUTER_API_KEY=<tu-api-key>
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 OPENROUTER_EMBEDDING_MODEL=openai/text-embedding-3-small
-OPENROUTER_OCR_MODEL=google/gemini-2.0-flash-001
+OPENROUTER_OCR_MODEL=google/gemini-3.8-flash
 ```
 
 > ⚠️ La API key de OpenRouter proviene **exclusivamente de variables de entorno** (`OPENROUTER_API_KEY`); nunca se almacena en la base de datos. Ver `apps/backend/.env.example`.

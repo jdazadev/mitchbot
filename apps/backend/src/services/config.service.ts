@@ -28,7 +28,7 @@ const DEFAULTS: Record<string, any> = {
   'rag.pdf_extract_max_base64_chars': 0,
   'rag.pdf_extract_return_limit_chars': 0,
   // Pipeline OCR unificado (todos los PDFs) — proveedor único OpenRouter
-  'rag.ocr_openrouter_model': 'google/gemini-2.0-flash-001',
+  // El modelo se toma de OPENROUTER_OCR_MODEL; puede sobreescribirse con `rag.ocr_openrouter_model`.
   'rag.ocr_scale': 2,
   'rag.ocr_max_pages': 0,
   'rag.ocr_batch_size': 4,
