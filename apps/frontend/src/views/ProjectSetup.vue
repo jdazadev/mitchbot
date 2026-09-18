@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { projectService } from '../services/project.service';
+import { useRoute, useRouter } from 'vue-router';
+import { projectService, SessionInvalidError } from '../services/project.service';
 import { authService } from '../services/auth.service';
 import { settingsService, type AgentModelGroup } from '../services/settings.service';
 
+const route = useRoute();
 const router = useRouter();
 
 // Steps
 const currentStep = ref(1);
 const totalSteps = 3;
 const isLoading = ref(false);
+const checking = ref(true);
 const error = ref('');
 
 // Step 1: Proyecto
@@ -75,6 +77,9 @@ const agentModelGroups = ref<AgentModelGroup[]>([]);
 const modelsLoading = ref(true);
 
 onMounted(async () => {
+  const proceed = await validateSetup();
+  checking.value = false;
+  if (!proceed) return;
   try {
     agentModelGroups.value = await settingsService.getModelsForAgent();
     // Pre-seleccionar primer modelo si existe
@@ -87,6 +92,31 @@ onMounted(async () => {
     modelsLoading.value = false;
   }
 });
+
+/**
+ * Validación interna del setup: si el usuario ya tiene proyecto (y no pidió
+ * crear uno nuevo con ?mode=new), se le lleva al dashboard. Si la sesión ya no
+ * es válida en el servidor, se limpia y se vuelve al login.
+ * Devuelve `true` si debe mostrarse el wizard.
+ */
+async function validateSetup(): Promise<boolean> {
+  if (route.query.mode === 'new') return true;
+  try {
+    const hasProject = await projectService.checkProject();
+    if (hasProject) {
+      await router.replace({ name: 'dashboard' });
+      return false;
+    }
+    return true;
+  } catch (err) {
+    if (err instanceof SessionInvalidError) {
+      authService.clearSession();
+      await router.replace({ name: 'login' });
+      return false;
+    }
+    return true;
+  }
+}
 
 function nextStep() {
   error.value = '';
@@ -158,7 +188,15 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
+  <!-- Verificando si el setup ya fue realizado -->
+  <div v-if="checking" class="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
+    <div class="flex flex-col items-center gap-3 text-slate-500">
+      <span class="material-symbols-outlined text-[32px] animate-spin">progress_activity</span>
+      <p class="text-sm">Verificando configuración...</p>
+    </div>
+  </div>
+
+  <div v-else class="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
     <div class="w-full max-w-2xl">
 
       <!-- Header -->

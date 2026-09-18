@@ -2,6 +2,14 @@ import { authService } from './auth.service';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+/** La sesión almacenada ya no es válida en el servidor (token inválido o cuenta desactivada). */
+export class SessionInvalidError extends Error {
+  constructor(message = 'Sesión inválida') {
+    super(message);
+    this.name = 'SessionInvalidError';
+  }
+}
+
 export interface ProjectAgent {
   name: string;
   description?: string;
@@ -53,6 +61,9 @@ class ProjectService {
     const res = await fetch(`${API_BASE}/project/check`, {
       headers: authService.getHeaders(),
     });
+    if (res.status === 401 || res.status === 403) {
+      throw new SessionInvalidError();
+    }
     if (!res.ok) return false;
     const data = await res.json();
     return data.hasProject;

@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v3.2.0
+**Versión actual del proyecto:** v3.3.0
 
 ---
 
@@ -264,7 +264,8 @@ Ver sección **9. Sistema de Herramientas (Tool Use)** más abajo.
 ### 6. Módulo Login
 
 - Inicio de sesión con correo y contraseña (JWT con expiración de 24h).
-- Registro de nuevo usuario.
+- **Esta app solo permite iniciar sesión**: el registro de usuarios ocurre en otro sitio (el endpoint `POST /auth/register` existe para el seed/e2e).
+- Si el servidor rechaza la sesión (`401/403`, token inválido o cuenta desactivada), se limpia la sesión local y se redirige silenciosamente al **login**.
 - Passwords hasheados con bcrypt (12 rounds).
 
 ### 7. Seguridad
@@ -296,8 +297,8 @@ Cada usuario pertenece a uno o más proyectos y tiene un proyecto activo.
 
 - **Pertenencia**: `users.projectIds: ObjectId[]` y `users.activeProjectId: ObjectId`.
 - **Resolución por request** (`middleware/auth.middleware.ts`): usa el header `X-Project-Id` (valida pertenencia; **403** si es ajeno) o, en su defecto, el `activeProjectId` del usuario. El `projectId` resuelto se adjunta a `req.projectId`.
-- **Frontend**: `authService.getHeaders()` envía `X-Project-Id` con el proyecto activo; `Topbar.vue` permite cambiar de proyecto (`PUT /api/project/active`) y crear uno nuevo; al cambiar, se reconecta el socket.
-- **Onboarding**: `GET /api/project/check` responde según los proyectos del usuario (no de la existencia global). El guard del router consulta al servidor; ya no usa `localStorage` como fuente de verdad.
+- **Frontend**: `authService.getHeaders()` envía `X-Project-Id` con el proyecto activo; `Topbar.vue` permite cambiar de proyecto (`PUT /api/project/active`) y crear uno nuevo (navega a `/setup?mode=new`); al cambiar, se reconecta el socket.
+- **Onboarding**: `GET /api/project/check` responde según los proyectos del usuario (no de la existencia global). El guard del router y la validación interna de `ProjectSetup.vue` consultan al servidor; ya no usan `localStorage` como fuente de verdad. Un `401/403` limpia la sesión y vuelve al login.
 - **Creación de proyecto**: cualquier usuario autenticado puede crear (`POST /api/project`); el creador queda como miembro y su proyecto pasa a activo.
 - **Agente por proyecto**: `agents.projectId` + `agentService.getActiveAgent(projectId)`. La conversación determina el proyecto y con él el agente.
 - **Aislamiento**: conversaciones, contactos, fuentes RAG, agentes y configuración de proveedores se filtran por `projectId`. Los eventos de socket se emiten por room `project:<id>` (`emitToProject`).
@@ -345,20 +346,23 @@ Cada usuario pertenece a uno o más proyectos y tiene un proyecto activo.
 ```
 Usuario abre la app
     │
-    ├── ¿Tiene token válido? 
+    ├── ¿Tiene token local válido?
     │   ├── NO → Redirige a /login
-    │   └── SÍ → ¿Tiene proyecto configurado?
-    │              ├── NO → Redirige a /setup (onboarding 3 pasos)
-    │              │         1. Datos del Proyecto (nombre, descripción, foto)
-    │              │         2. Configurar Agente IA (modelo, system prompt)
+    │   └── SÍ → GET /project/check (fuente de verdad: el servidor)
+    │              ├── 401/403 → limpia sesión → /login (silencioso)
+    │              ├── NO tiene proyecto → Redirige a /setup (onboarding 3 pasos)
+    │              │         1. Datos del Proyecto (nombre, descripción)
+    │              │         2. Configurar Agente IA (modelo, rol, mensajes)
     │              │         3. Canales y Opciones → Crear todo → Dashboard
-    │              └── SÍ → Dashboard ✅
+    │              └── SÍ tiene proyecto → Dashboard ✅
 ```
+
+> El setup valida **internamente** al montarse: si el usuario ya tiene proyecto y no llega con `?mode=new`, redirige al dashboard. El botón "Crear nuevo proyecto" del Topbar usa `?mode=new` para abrir el wizard y permitir proyectos adicionales.
 
 ### Flujo de Usuario Nuevo
 
-1. Entra al login → se registra (automáticamente se le asigna el rol **admin**).
-2. Inicia sesión → se verifica que no tiene proyecto.
+1. Se registra en **otro sitio** (fuera de esta app) o vía seed.
+2. Inicia sesión → se verifica contra el servidor que no tiene proyecto.
 3. Se redirige al **setup** → crea un proyecto con su agente IA.
 4. Entra al **dashboard**.
 

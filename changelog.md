@@ -5,6 +5,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v3.3.0 — 2026-09-18
+
+> 🔐 **Validación del setup: la primera vez lleva al wizard, la sesión inválida vuelve al login y el login queda limpio**
+
+---
+
+### 🔄 Cambios
+- **Validación interna del setup**: `ProjectSetup.vue` consulta al servidor si el usuario ya tiene proyecto al montarse. Si ya lo tiene y no pidió crear uno nuevo, redirige al dashboard (la validación ya no depende solo del guard de navegación).
+- **Creación de proyectos múltiples preservada**: el botón "Crear nuevo proyecto" del `Topbar` navega a `/setup?mode=new`, que omite la validación interna y abre el wizard.
+- **Login sin credenciales demo**: se elimina el bloque con `admin@mitchbot.io` / `admin123` de `Login.vue`. El registro de usuarios no forma parte de esta app.
+
+### 🐛 Corregido
+- **Sesión "zombie" (token local válido pero rechazado por el servidor)**: `checkProject()` ahora distingue `401/403` (`SessionInvalidError`) de "sin proyecto". El guard y el setup limpian la sesión y redirigen silenciosamente al login, en vez de enviar al usuario al wizard con errores de "Cuenta desactivada".
+
+### 📚 Documentación
+- `AGENTS.md` actualizado (flujo de onboarding, módulo Login y versión a **v3.3.0**).
+
+### 🧪 Pruebas
+- Nuevo spec e2e `setup-validation.spec.ts`: usuario con proyecto entra a `/setup` → dashboard; el botón del Topbar abre el wizard con `?mode=new`; sesión inválida → login.
+
+---
+
 ## v3.2.0 — 2026-09-18
 
 > 🧹 **Pulido de `docker-compose`: solo los servicios en uso, MongoDB anclado, healthchecks y Redis durable (AOF)**

@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { authService } from '../services/auth.service'
-import { projectService } from '../services/project.service'
+import { projectService, SessionInvalidError } from '../services/project.service'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -97,7 +97,13 @@ router.beforeEach(async (to, _from, next) => {
   let hasProject = false
   try {
     hasProject = await projectService.checkProject()
-  } catch {
+  } catch (err) {
+    // Sesión inválida en el servidor (token inválido o cuenta desactivada):
+    // limpiar sesión y volver al login silenciosamente.
+    if (err instanceof SessionInvalidError) {
+      authService.clearSession()
+      return next({ name: 'login' })
+    }
     hasProject = false
   }
 

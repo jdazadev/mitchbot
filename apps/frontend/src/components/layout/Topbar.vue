@@ -62,7 +62,7 @@ async function selectProject(project: Project) {
 
 function createProject() {
   dropdownOpen.value = false;
-  router.push({ name: "setup" });
+  router.push({ name: "setup", query: { mode: "new" } });
 }
 </script>
 

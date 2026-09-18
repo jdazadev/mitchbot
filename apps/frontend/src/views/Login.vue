@@ -78,13 +78,6 @@ async function handleLogin() {
           </button>
         </form>
       </div>
-
-      <!-- Demo credentials hint -->
-      <div class="mt-4 text-center">
-        <p class="text-xs text-slate-400">
-          Demo: <span class="font-medium text-slate-500">admin@mitchbot.io</span> / <span class="font-medium text-slate-500">admin123</span>
-        </p>
-      </div>
     </div>
   </div>
 </template>
