@@ -2,15 +2,24 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { authService, type User } from '../../services/auth.service';
+import { socketService } from '../../services/socket.service';
+import { useConversations } from '../../composables/useConversations';
 
 const router = useRouter();
 const currentUser = ref<User | null>(null);
 const showUserMenu = ref(false);
 
+const { unreadTotal, loadConversations, bindConversationSocket } = useConversations();
+
 const navItems = computed(() => {
   return [
     { name: 'Dashboard', icon: 'dashboard', href: '/' },
-    { name: 'Conversations', icon: 'chat', href: '/messaging', badge: '12' },
+    {
+      name: 'Conversations',
+      icon: 'chat',
+      href: '/messaging',
+      badge: unreadTotal.value > 0 ? String(unreadTotal.value) : undefined,
+    },
     { name: 'Contacts', icon: 'groups', href: '/contacts' },
     { name: 'Brain & RAG', icon: 'psychology', href: '/brain' },
     { name: 'Users', icon: 'manage_accounts', href: '/users' },
@@ -19,6 +28,9 @@ const navItems = computed(() => {
 
 onMounted(() => {
   currentUser.value = authService.getUser();
+  // Socket compartido para mantener el conteo de no leídos en vivo.
+  bindConversationSocket();
+  loadConversations().catch(() => {});
 });
 
 const userInitials = computed(() => {
@@ -36,6 +48,7 @@ function toggleUserMenu() {
 }
 
 async function handleLogout() {
+  socketService.disconnect();
   await authService.logout();
   router.push('/login');
 }

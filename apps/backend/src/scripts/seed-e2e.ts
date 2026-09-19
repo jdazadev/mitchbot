@@ -29,16 +29,46 @@ const E2E_PROJECT = {
   name: 'E2E Project',
   slug: 'e2e-project',
   description: 'Proyecto dedicado a pruebas end-to-end',
-  channels: { whatsapp: true, instagram: true, web: true },
+  // Instagram deshabilitado para validar que los filtros derivan de la config.
+  channels: { whatsapp: true, instagram: false, web: true },
   welcomeMessage: '¡Hola! ¿En qué puedo ayudarte?',
   goodbyeMessage: '¡Gracias por tu consulta! Hasta pronto.',
   autoCreateContact: true,
+};
+
+const E2E_PROJECT_NOCONTACT = {
+  name: 'E2E NoContact',
+  slug: 'e2e-nocontact',
+  description: 'Proyecto e2e con creación automática de contactos deshabilitada',
+  channels: { whatsapp: true, instagram: false, web: true },
+  welcomeMessage: '¡Hola! ¿En qué puedo ayudarte?',
+  goodbyeMessage: '¡Gracias por tu consulta! Hasta pronto.',
+  autoCreateContact: false,
 };
 
 const E2E_AGENT = {
   name: 'E2E Agent',
   description: 'Agente determinista para pruebas e2e',
   modelValue: 'stub-model',
+};
+
+const E2E_AGENT_NOCONTACT = {
+  name: 'E2E Agent NoContact',
+  description: 'Agente determinista para pruebas e2e (sin auto-contacto)',
+  modelValue: 'stub-model',
+};
+
+const E2E_AGENT_CONFIG = {
+  temperature: 0.7,
+  maxTokens: 300,
+  enableWelcomeGreeting: false,
+  enableGoodbyeMessage: false,
+  enableFallbackAdvisor: false,
+  goodbyeKeywords: ['adios', 'hasta luego', 'bye'],
+  enableWhatsApp: true,
+  enableInstagram: true,
+  enableWeb: true,
+  autoCreateContact: true,
 };
 
 async function resetWsRateLimits() {
@@ -100,41 +130,51 @@ async function seedE2E() {
       userId = inserted.insertedId;
     }
 
-    // --- Proyecto e2e ---
+    // --- Proyectos e2e ---
     const projects = db.collection('projects');
-    let project = await projects.findOne({ slug: E2E_PROJECT.slug });
-    if (!project) {
-      const inserted = await projects.insertOne({
-        name: E2E_PROJECT.name,
-        slug: E2E_PROJECT.slug,
-        description: E2E_PROJECT.description,
-        config: {
-          channels: E2E_PROJECT.channels,
-          messages: {
-            welcome: E2E_PROJECT.welcomeMessage,
-            goodbye: E2E_PROJECT.goodbyeMessage,
-          },
-          options: { autoCreateContact: E2E_PROJECT.autoCreateContact },
-        },
-        createdBy: userId,
-        status: 'active',
-        createdAt: now,
-        updatedAt: now,
-      });
-      project = await projects.findOne({ _id: inserted.insertedId });
-    }
-    const projectId = project!._id;
-
-    // --- Agente e2e ---
     const agents = db.collection('agents');
-    let agent = await agents.findOne({ projectId });
-    if (!agent) {
-      const inserted = await agents.insertOne({
-        name: E2E_AGENT.name,
-        description: E2E_AGENT.description,
+
+    type ProjectDef = typeof E2E_PROJECT;
+    type AgentDef = typeof E2E_AGENT;
+
+    const upsertProject = async (def: ProjectDef) => {
+      const config = {
+        channels: def.channels,
+        messages: {
+          welcome: def.welcomeMessage,
+          goodbye: def.goodbyeMessage,
+        },
+        options: { autoCreateContact: def.autoCreateContact },
+      };
+      let doc = await projects.findOne({ slug: def.slug });
+      if (!doc) {
+        const inserted = await projects.insertOne({
+          name: def.name,
+          slug: def.slug,
+          description: def.description,
+          config,
+          createdBy: userId,
+          status: 'active',
+          createdAt: now,
+          updatedAt: now,
+        });
+        doc = await projects.findOne({ _id: inserted.insertedId });
+      } else {
+        await projects.updateOne(
+          { _id: doc._id },
+          { $set: { name: def.name, description: def.description, config, updatedAt: now } }
+        );
+      }
+      return doc!;
+    };
+
+    const upsertAgent = async (projectId: any, def: AgentDef) => {
+      const agentDoc = {
+        name: def.name,
+        description: def.description,
         projectId,
         modelId: projectId, // placeholder; no requiere un ai_model real
-        modelValue: E2E_AGENT.modelValue,
+        modelValue: def.modelValue,
         personality: {
           role: 'assistant',
           traits: ['neutro'],
@@ -146,58 +186,42 @@ async function seedE2E() {
         },
         status: 'active',
         createdBy: userId,
-        config: {
-          temperature: 0.7,
-          maxTokens: 300,
-          enableWelcomeGreeting: false,
-          enableGoodbyeMessage: false,
-          enableFallbackAdvisor: false,
-          goodbyeKeywords: ['adios', 'hasta luego', 'bye'],
-          enableWhatsApp: true,
-          enableInstagram: true,
-          enableWeb: true,
-          autoCreateContact: true,
-        },
-        createdAt: now,
-        updatedAt: now,
-      });
-      agent = await agents.findOne({ _id: inserted.insertedId });
-    } else {
-      await agents.updateOne(
-        { _id: agent._id },
-        {
-          $set: {
-            modelValue: E2E_AGENT.modelValue,
-            status: 'active',
-            config: {
-              temperature: 0.7,
-              maxTokens: 300,
-              enableWelcomeGreeting: false,
-              enableGoodbyeMessage: false,
-              enableFallbackAdvisor: false,
-              goodbyeKeywords: ['adios', 'hasta luego', 'bye'],
-              enableWhatsApp: true,
-              enableInstagram: true,
-              enableWeb: true,
-              autoCreateContact: true,
-            },
-            updatedAt: now,
-          },
-        }
-      );
-    }
+        config: E2E_AGENT_CONFIG,
+      };
+      let doc = await agents.findOne({ projectId });
+      if (!doc) {
+        const inserted = await agents.insertOne({ ...agentDoc, createdAt: now, updatedAt: now });
+        doc = await agents.findOne({ _id: inserted.insertedId });
+      } else {
+        await agents.updateOne({ _id: doc._id }, { $set: { ...agentDoc, updatedAt: now } });
+      }
+      return doc!;
+    };
 
+    // Proyecto principal (auto-creación de contactos habilitada).
+    const project = await upsertProject(E2E_PROJECT);
+    const projectId = project._id;
+    const agent = await upsertAgent(projectId, E2E_AGENT);
     await projects.updateOne(
       { _id: projectId },
-      { $set: { agentId: agent!._id, updatedAt: now } }
+      { $set: { agentId: agent._id, updatedAt: now } }
     );
 
-    // --- Pertenencia del usuario al proyecto ---
+    // Proyecto secundario (auto-creación de contactos deshabilitada).
+    const projectNc = await upsertProject(E2E_PROJECT_NOCONTACT);
+    const projectNcId = projectNc._id;
+    const agentNc = await upsertAgent(projectNcId, E2E_AGENT_NOCONTACT);
+    await projects.updateOne(
+      { _id: projectNcId },
+      { $set: { agentId: agentNc._id, updatedAt: now } }
+    );
+
+    // --- Pertenencia del usuario a los proyectos ---
     await users.updateOne(
       { _id: userId },
       {
         $set: {
-          projectIds: [projectId],
+          projectIds: [projectId, projectNcId],
           activeProjectId: projectId,
           updatedAt: now,
         },
@@ -207,6 +231,7 @@ async function seedE2E() {
     console.log('✅ Seed E2E completado');
     console.log(`   👤 Usuario:  ${E2E_USER.email} / ${E2E_USER.password}`);
     console.log(`   📦 Proyecto: ${E2E_PROJECT.name} (slug: ${E2E_PROJECT.slug})`);
+    console.log(`   📦 Proyecto: ${E2E_PROJECT_NOCONTACT.name} (slug: ${E2E_PROJECT_NOCONTACT.slug})`);
     console.log(`   🤖 Agente:   ${E2E_AGENT.name} (modelo por entorno)`);
     console.log(`   🧠 Embedding: por entorno\n`);
 

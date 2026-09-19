@@ -21,6 +21,8 @@ const envSchema = z.object({
   OPENROUTER_FILE_MODEL: z.string().optional(),
   // Modelo opcional para re-ranking; si no se define, se usa el modelo de embeddings.
   OPENROUTER_RERANKER_MODEL: z.string().optional(),
+  // Modelo opcional para el análisis de conversaciones (insights); si no se define, se usa el de chat.
+  OPENROUTER_INSIGHTS_MODEL: z.string().optional(),
 
   // Auth
   JWT_SECRET: z.string().default('mitchbot-secret-change-in-production'),

@@ -11,6 +11,7 @@ import { aiModelService } from './ai-model.service';
 import { toolService, ParsedToolCall } from './tool.service';
 import { toolExecutionService } from './tool-execution.service';
 import { buildSystemPrompt, getDefaultPersonality } from './prompt-builder.service';
+import { insightsService } from './insights.service';
 import { emitToRoom, emitToProject } from '../websocket/socket';
 import { ToolContext } from '../tools/types';
 import { logger } from '../utils/logger';
@@ -244,24 +245,38 @@ export const chatService = {
     return newMessage;
   },
 
-  async ensureContactCreated(conversationId: string) {
+  /**
+   * Crea (o vincula) el contacto de una conversación de forma idempotente.
+   * - Por defecto respeta `autoCreateContact` del proyecto (auto-creación).
+   * - Con `{ force: true }` ignora esa opción (acción explícita del agente).
+   * La búsqueda por identificador + proyecto evita duplicados.
+   */
+  async ensureContactCreated(
+    conversationId: string,
+    options?: { force?: boolean }
+  ): Promise<{ contact: Contact; created: boolean } | null> {
     const conversationsColl = getConversationsCollection();
     const contactsColl = getContactsCollection();
+    const force = options?.force === true;
 
-    const conversation = await conversationsColl.findOne({ 
-      _id: new ObjectId(conversationId) 
+    const conversation = await conversationsColl.findOne({
+      _id: new ObjectId(conversationId)
     });
 
-    if (!conversation || conversation.isContactCreated) {
-      return; 
+    if (!conversation) {
+      return null;
     }
 
-    if (conversation.projectId) {
+    if (conversation.isContactCreated && !force) {
+      return null;
+    }
+
+    if (!force && conversation.projectId) {
       const project = await getProjectsCollection().findOne({ _id: conversation.projectId });
       const autoCreateContact = project?.config?.options?.autoCreateContact ?? true;
       if (!autoCreateContact) {
         logger.info(`[Chat] Auto-create contact disabled for project ${conversation.projectId.toString()}`);
-        return;
+        return null;
       }
     }
 
@@ -277,11 +292,12 @@ export const chatService = {
     }
     const existingContact = await contactsColl.findOne(existingQuery);
 
-    let contactId: ObjectId;
+    let contact: Contact;
+    let created = false;
 
     if (existingContact) {
-      contactId = existingContact._id!;
-      logger.info(`Contact already exists: ${contactId}, linking to conversation`);
+      contact = existingContact;
+      logger.info(`Contact already exists: ${contact._id}, linking to conversation`);
     } else {
       const newContact: Contact = {
         projectId: conversation.projectId,
@@ -300,20 +316,23 @@ export const chatService = {
       };
 
       const result = await contactsColl.insertOne(newContact);
-      contactId = result.insertedId;
-      logger.info(`New contact created: ${contactId} for conversation ${conversationId}`);
+      contact = { ...newContact, _id: result.insertedId };
+      created = true;
+      logger.info(`New contact created: ${contact._id} for conversation ${conversationId}`);
     }
 
     await conversationsColl.updateOne(
       { _id: new ObjectId(conversationId) },
-      { 
-        $set: { 
-          contactId,
+      {
+        $set: {
+          contactId: contact._id,
           isContactCreated: true,
           updatedAt: new Date(),
-        } 
+        }
       }
     );
+
+    return { contact, created };
   },
 
   async generateBotResponse(conversationId: string, userMessage: string, options?: { closeAfter?: boolean }) {
@@ -497,6 +516,9 @@ export const chatService = {
       if (options?.closeAfter) {
         await this.markConversationClosed(conversationId);
       }
+
+      // Análisis de insights fire-and-forget: no bloquea ni altera la respuesta.
+      void insightsService.refreshInBackground(conversationId);
 
       logger.info(`[Bot] ===== END generateBotResponse (success) =====`);
     } catch (error: any) {
@@ -731,6 +753,9 @@ export const chatService = {
     } catch (e) {
       // ignore
     }
+
+    // Análisis de insights fire-and-forget tras la respuesta final con herramientas.
+    void insightsService.refreshInBackground(args.conversationId);
   },
 
   /** Actualiza el estado de un mensaje de confirmation_request y notifica al cliente */

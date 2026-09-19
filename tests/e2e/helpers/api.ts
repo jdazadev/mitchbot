@@ -92,11 +92,89 @@ export async function sendPublicMessage(
   return res.json();
 }
 
-export async function sendHumanMessage(api: APIRequestContext, conversationId: string, content: string) {
+export async function sendHumanMessage(
+  api: APIRequestContext,
+  conversationId: string,
+  content: string,
+  projectId?: string
+) {
   const res = await api.post(`conversations/${conversationId}/messages`, {
     data: { content, sender: 'human_agent' },
+    ...(projectId ? { headers: { 'X-Project-Id': projectId } } : {}),
   });
   if (!res.ok()) throw new Error(`sendHumanMessage falló (${res.status()}): ${await res.text()}`);
+  return res.json();
+}
+
+/** Lista los proyectos del usuario autenticado. */
+export async function listProjects(api: APIRequestContext): Promise<any[]> {
+  const res = await api.get('project/list');
+  if (!res.ok()) throw new Error(`listProjects falló (${res.status()})`);
+  return res.json();
+}
+
+/** Obtiene un proyecto por slug (de la lista del usuario). */
+export async function getProjectBySlug(api: APIRequestContext, slug: string): Promise<any> {
+  const projects = await listProjects(api);
+  const project = projects.find((p: any) => p.slug === slug);
+  if (!project) throw new Error(`Proyecto con slug "${slug}" no encontrado`);
+  return project;
+}
+
+/** Detalle de una conversación (con header de proyecto opcional). */
+export async function getConversation(api: APIRequestContext, conversationId: string, projectId?: string) {
+  const res = await api.get(`conversations/${conversationId}`, {
+    ...(projectId ? { headers: { 'X-Project-Id': projectId } } : {}),
+  });
+  if (!res.ok()) throw new Error(`getConversation falló (${res.status()})`);
+  return res.json();
+}
+
+/** Guarda al cliente como contacto (idempotente). */
+export async function createConversationContact(api: APIRequestContext, conversationId: string, projectId?: string) {
+  const res = await api.post(`conversations/${conversationId}/contact`, {
+    ...(projectId ? { headers: { 'X-Project-Id': projectId } } : {}),
+  });
+  if (!res.ok()) throw new Error(`createConversationContact falló (${res.status()}): ${await res.text()}`);
+  return res.json();
+}
+
+/** Cambia el modo de la conversación. */
+export async function updateConversationMode(
+  api: APIRequestContext,
+  conversationId: string,
+  mode: 'auto_pilot' | 'human_takeover',
+  projectId?: string
+) {
+  const res = await api.put(`conversations/${conversationId}/mode`, {
+    data: { mode },
+    ...(projectId ? { headers: { 'X-Project-Id': projectId } } : {}),
+  });
+  if (!res.ok()) throw new Error(`updateConversationMode falló (${res.status()})`);
+  return res.json();
+}
+
+/** Lee los insights almacenados (puede ser null). */
+export async function getInsights(api: APIRequestContext, conversationId: string) {
+  const res = await api.get(`conversations/${conversationId}/insights`);
+  if (!res.ok()) throw new Error(`getInsights falló (${res.status()})`);
+  return res.json();
+}
+
+/** Fuerza el recálculo de insights. */
+export async function analyzeInsights(api: APIRequestContext, conversationId: string) {
+  const res = await api.post(`conversations/${conversationId}/insights`);
+  if (!res.ok()) throw new Error(`analyzeInsights falló (${res.status()}): ${await res.text()}`);
+  return res.json();
+}
+
+/** Busca contactos por término (opcionalmente en otro proyecto). */
+export async function listContacts(api: APIRequestContext, search: string, projectId?: string) {
+  const res = await api.get(`contacts`, {
+    params: { q: search, limit: 50 },
+    ...(projectId ? { headers: { 'X-Project-Id': projectId } } : {}),
+  });
+  if (!res.ok()) throw new Error(`listContacts falló (${res.status()})`);
   return res.json();
 }
 

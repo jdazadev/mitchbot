@@ -19,6 +19,7 @@ export interface Conversation {
   aiInsights?: {
     sentiment: "positive" | "neutral" | "negative";
     sentimentScores: { positive: number; neutral: number; negative: number };
+    summary?: string;
     confidence?: string;
   };
   // Datos temporales del cliente antes de crear el contacto

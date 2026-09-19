@@ -145,8 +145,11 @@ async function handleChatCompletions(req, res, body) {
   const model = body.model || STUB_MODEL;
   const wantsStream = body.stream === true;
   const userText = lastUserMessage(body.messages);
+  // Petición de insights: el prompt del servicio incluye esta marca y espera JSON.
+  const allText = (body.messages || []).map((m) => textOf(m.content)).join('\n');
+  const wantsInsights = allText.includes('INSIGHTS_JSON');
   const toolName = pickTool(userText, body.tools);
-  const useTool = !!toolName;
+  const useTool = !wantsInsights && !!toolName;
   // Eco determinista y único: si el mensaje incluye [[echo:TOKEN]] la respuesta
   // contiene ese TOKEN, permitiendo correlacionar streaming por prueba.
   const echoMatch = userText.match(/\[\[echo:([^\]]+)\]\]/);
@@ -161,8 +164,15 @@ async function handleChatCompletions(req, res, body) {
       .some((m) => (m?.role === 'user' || m?.role === 'human') && textOf(m.content).includes(token));
     reply = earlier ? `MEMORIA_OK ${token}` : `MEMORIA_FALLO ${token}`;
   }
+  if (wantsInsights) {
+    reply = JSON.stringify({
+      sentiment: 'positive',
+      sentimentScores: { positive: 0.65, neutral: 0.25, negative: 0.1 },
+      summary: 'Resumen determinista de prueba E2E.',
+    });
+  }
 
-  log({ kind: 'chat.completions', model, stream: wantsStream, tool: useTool, toolName });
+  log({ kind: 'chat.completions', model, stream: wantsStream, tool: useTool, toolName, insights: wantsInsights });
 
   if (useTool) {
     const args = toolArguments(toolName);

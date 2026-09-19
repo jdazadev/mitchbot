@@ -58,6 +58,12 @@ export interface ChatConversation {
   avatar?: string;
 }
 
+export interface ConversationInsights {
+  sentiment: 'positive' | 'neutral' | 'negative';
+  sentimentScores: { positive: number; neutral: number; negative: number };
+  summary?: string;
+}
+
 export const messagingService = {
   // === Funciones del DASHBOARD (admin/agente) ===
   
@@ -79,6 +85,49 @@ export const messagingService = {
      return res.json();
   },
   
+  /** Cambia el modo de la conversación (auto_pilot / human_takeover) */
+  async updateConversationMode(conversationId: string, mode: ChatConversation['mode']): Promise<void> {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}/mode`, {
+      method: 'PUT',
+      headers: authService.getHeaders(),
+      body: JSON.stringify({ mode }),
+    });
+    if (!res.ok) throw new Error('Failed to update conversation mode');
+  },
+
+  /**
+   * Guarda al cliente como contacto de forma explícita e idempotente.
+   * Funciona aunque `autoCreateContact` esté deshabilitado.
+   */
+  async createContact(conversationId: string): Promise<{ contactId?: string; created: boolean }> {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}/contact`, {
+      method: 'POST',
+      headers: authService.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to create contact');
+    const data = await res.json();
+    return { contactId: data?.contact?._id, created: !!data?.created };
+  },
+
+  /** Lee los insights almacenados de una conversación (o null si no hay). */
+  async getInsights(conversationId: string): Promise<ConversationInsights | null> {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}/insights`, {
+      headers: authService.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch insights');
+    return res.json();
+  },
+
+  /** Fuerza el recálculo de insights de una conversación. */
+  async analyzeInsights(conversationId: string): Promise<ConversationInsights | null> {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}/insights`, {
+      method: 'POST',
+      headers: authService.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to analyze insights');
+    return res.json();
+  },
+
   /** Envía mensaje como agente humano (auto-crea contacto en primera respuesta) */
   async sendMessage(conversationId: string, content: string, sender: 'human_agent' | 'ai_agent' = 'human_agent'): Promise<ChatMessage> {
      const res = await fetch(`${API_URL}/conversations/${conversationId}/messages`, {

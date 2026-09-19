@@ -1,55 +1,89 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import {
   messagingService,
   type ChatConversation,
   type ChatMessage,
+  type ConversationInsights,
 } from "../services/messaging.service";
 import { socketService } from "../services/socket.service";
+import { projectService } from "../services/project.service";
+import { useConversations, type ChannelFilter } from "../composables/useConversations";
 
-const chats = ref<ChatConversation[]>([]);
+const {
+  conversations: chats,
+  isLoading: isLoadingChats,
+  activeChannel,
+  loadConversations,
+  markConversationRead,
+  setActiveChannel,
+  bindConversationSocket,
+} = useConversations();
+
 const messages = ref<ChatMessage[]>([]);
 const selectedChat = ref<ChatConversation | null>(null);
-const isLoadingChats = ref(true);
 const isLoadingMessages = ref(false);
 const newMessage = ref("");
 
-// Computed filtered chats if we implement search, for now just return all
-const filteredChats = computed(() => chats.value);
+const searchQuery = ref("");
+
+// === Filtros de canal derivados de la configuración del proyecto ===
+const channelMeta: Record<Exclude<ChannelFilter, "All">, { label: string; dot: string }> = {
+  WhatsApp: { label: "WhatsApp", dot: "bg-green-500" },
+  Instagram: { label: "Instagram", dot: "bg-purple-500" },
+  Web: { label: "Web", dot: "bg-blue-500" },
+};
+const enabledChannels = ref<ChannelFilter[]>(["All"]);
+
+async function loadChannels() {
+  try {
+    const project = await projectService.getProject();
+    const channels = project?.config?.channels;
+    const list: ChannelFilter[] = ["All"];
+    if (channels?.whatsapp) list.push("WhatsApp");
+    if (channels?.instagram) list.push("Instagram");
+    if (channels?.web) list.push("Web");
+    enabledChannels.value = list;
+  } catch (error) {
+    console.error("Failed to load project channels", error);
+    enabledChannels.value = ["All", "WhatsApp", "Instagram", "Web"];
+  }
+}
+
+const filteredChats = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  return chats.value.filter((chat) => {
+    if (activeChannel.value !== "All" && chat.platform !== activeChannel.value) return false;
+    if (!query) return true;
+    return (
+      (chat.name || "").toLowerCase().includes(query) ||
+      (chat.message || "").toLowerCase().includes(query)
+    );
+  });
+});
 
 async function fetchChats() {
   try {
-    isLoadingChats.value = true;
-    const res = await messagingService.getConversations();
-    chats.value = res.map((c) => ({
-      ...c,
-      time: formatTime(c.lastMessageAt),
-      avatar:
-        c.contactAvatar ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          c.contactName || 'Nuevo',
-        )}&background=random`,
-      name: c.contactName || c.clientInfo?.name || 'Cliente Nuevo',
-      message: c.lastMessage,
-    }));
-
-    if (chats.value.length > 0) {
-      selectChat(chats.value[0]);
-    }
+    await loadConversations(true);
+    const first = filteredChats.value[0] || chats.value[0];
+    if (first) selectChat(first);
   } catch (error) {
     console.error("Failed to fetch chats", error);
-  } finally {
-    isLoadingChats.value = false;
   }
 }
 
 async function selectChat(chat: ChatConversation) {
   selectedChat.value = chat;
   socketService.joinRoom(chat._id); // Join room
+  markConversationRead(chat._id);
 
   // Mark as active visually
   chats.value.forEach((c) => (c.active = c._id === chat._id));
 
+  await Promise.all([fetchMessages(chat), loadInsights(chat._id)]);
+}
+
+async function fetchMessages(chat: ChatConversation) {
   try {
     isLoadingMessages.value = true;
     const res = await messagingService.getMessages(chat._id);
@@ -78,6 +112,43 @@ function processMessage(m: ChatMessage, chat: ChatConversation) {
           )}`
         : undefined,
   };
+}
+
+// === Agrupación de mensajes por día ===
+const messageGroups = computed(() => {
+  const groups: { key: string; label: string; messages: ChatMessage[] }[] = [];
+  for (const message of messages.value) {
+    const date = new Date(message.createdAt);
+    const key = date.toDateString();
+    let group = groups.find((g) => g.key === key);
+    if (!group) {
+      group = { key, label: formatDayLabel(date), messages: [] };
+      groups.push(group);
+    }
+    group.messages.push(message);
+  }
+  return groups;
+});
+
+function sameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function formatDayLabel(date: Date) {
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (sameDay(date, today)) return "Hoy";
+  if (sameDay(date, yesterday)) return "Ayer";
+  return date.toLocaleDateString([], {
+    day: "numeric",
+    month: "long",
+    year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
+  });
 }
 
 function renderMarkdown(content: string) {
@@ -113,12 +184,127 @@ async function handleSendMessage() {
 
     // Si el contacto no estaba creado, refrescar la lista para actualizar los datos
     if (selectedChat.value && !selectedChat.value.isContactCreated) {
-      setTimeout(() => fetchChats(), 500); // Pequeño delay para que el backend termine
+      setTimeout(refreshSelectedConversation, 500); // Pequeño delay para que el backend termine
     }
   } catch (error) {
     console.error("Failed to send message", error);
   }
 }
+
+async function refreshSelectedConversation() {
+  const currentId = selectedChat.value?._id;
+  if (!currentId) return;
+  await loadConversations(true);
+  const refreshed = chats.value.find((c) => c._id === currentId);
+  if (refreshed) {
+    selectedChat.value = refreshed;
+    chats.value.forEach((c) => (c.active = c._id === currentId));
+  }
+}
+
+// === Toma de control manual (auto_pilot <-> human_takeover) ===
+const isUpdatingMode = ref(false);
+
+async function toggleMode() {
+  if (!selectedChat.value || isUpdatingMode.value) return;
+  const next = selectedChat.value.mode === "auto_pilot" ? "human_takeover" : "auto_pilot";
+  isUpdatingMode.value = true;
+  try {
+    await messagingService.updateConversationMode(selectedChat.value._id, next);
+    applyMode(selectedChat.value._id, next);
+  } catch (error) {
+    console.error("Failed to update conversation mode", error);
+  } finally {
+    isUpdatingMode.value = false;
+  }
+}
+
+function applyMode(id: string, mode: ChatConversation["mode"]) {
+  chats.value.forEach((c) => {
+    if (c._id === id) c.mode = mode;
+  });
+  if (selectedChat.value?._id === id) selectedChat.value.mode = mode;
+}
+
+// === Guardar cliente como contacto ===
+const isSavingContact = ref(false);
+
+async function saveAsContact() {
+  if (!selectedChat.value || isSavingContact.value || selectedChat.value.isContactCreated) return;
+  isSavingContact.value = true;
+  try {
+    await messagingService.createContact(selectedChat.value._id);
+    applyContactCreated(selectedChat.value._id);
+  } catch (error) {
+    console.error("Failed to save contact", error);
+  } finally {
+    isSavingContact.value = false;
+  }
+}
+
+function applyContactCreated(id: string) {
+  chats.value.forEach((c) => {
+    if (c._id === id) c.isContactCreated = true;
+  });
+  if (selectedChat.value?._id === id) selectedChat.value.isContactCreated = true;
+}
+
+// === AI Insights ===
+const insights = ref<ConversationInsights | null>(null);
+const isLoadingInsights = ref(false);
+const isAnalyzingInsights = ref(false);
+
+async function loadInsights(conversationId: string) {
+  isLoadingInsights.value = true;
+  insights.value = null;
+  try {
+    insights.value = await messagingService.getInsights(conversationId);
+  } catch (error) {
+    console.error("Failed to load insights", error);
+    insights.value = null;
+  } finally {
+    isLoadingInsights.value = false;
+  }
+}
+
+async function analyzeInsights() {
+  if (!selectedChat.value || isAnalyzingInsights.value) return;
+  isAnalyzingInsights.value = true;
+  try {
+    insights.value = await messagingService.analyzeInsights(selectedChat.value._id);
+  } catch (error) {
+    console.error("Failed to analyze insights", error);
+  } finally {
+    isAnalyzingInsights.value = false;
+  }
+}
+
+function onInsights(data: { conversationId: string; insights: ConversationInsights }) {
+  if (selectedChat.value?._id === data.conversationId) {
+    insights.value = data.insights;
+  }
+}
+
+const sentimentMeta = computed(() => {
+  const sentiment = insights.value?.sentiment || "neutral";
+  if (sentiment === "positive") {
+    return { label: "Positivo", class: "text-green-600 bg-green-50 border-green-100" };
+  }
+  if (sentiment === "negative") {
+    return { label: "Negativo", class: "text-red-600 bg-red-50 border-red-100" };
+  }
+  return { label: "Neutral", class: "text-amber-600 bg-amber-50 border-amber-100" };
+});
+
+const sentimentBars = computed(() => {
+  const scores = insights.value?.sentimentScores;
+  if (!scores) return [] as { key: string; class: string; width: string }[];
+  return [
+    { key: "negative", class: "bg-red-300", width: `${Math.round(scores.negative * 100)}%` },
+    { key: "neutral", class: "bg-yellow-300", width: `${Math.round(scores.neutral * 100)}%` },
+    { key: "positive", class: "bg-green-500", width: `${Math.round(scores.positive * 100)}%` },
+  ];
+});
 
 function formatTime(dateStr: string) {
   if (!dateStr) return '';
@@ -131,24 +317,9 @@ function formatTime(dateStr: string) {
 }
 
 function onNewMessage(msg: ChatMessage) {
-  // 1. Update chat list preview
-  const chatIndex = chats.value.findIndex(
-    (c) =>
-      c._id === msg.conversationId || c._id === (msg as any).conversationId,
-  );
-  if (chatIndex !== -1) {
-    const chat = chats.value[chatIndex];
-    chat.lastMessage = msg.content;
-    chat.lastMessageAt = msg.createdAt;
-    chat.time = formatTime(msg.createdAt);
-    chat.message = msg.content;
-
-    chats.value.splice(chatIndex, 1);
-    chats.value.unshift(chat);
-  }
-
-  // 2. If current chat, append
-  const convId = (msg as any).conversationId || msg.conversationId;
+  const convId = msg.conversationId;
+  if (!convId) return;
+  // La lista y el conteo de no leídos los mantiene el composable.
   if (selectedChat.value && selectedChat.value._id === convId) {
     const processed = processMessage(msg, selectedChat.value);
     const existingMsg = messages.value.find((m) => m._id === processed._id);
@@ -170,13 +341,6 @@ function onMessageChunk(data: { messageId: string, conversationId: string, conte
       existingMsg.content = data.content;
       scrollToBottom();
     }
-  }
-  
-  // Update sidebar chat preview
-  const chatIndex = chats.value.findIndex((c) => c._id === data.conversationId);
-  if (chatIndex !== -1) {
-    chats.value[chatIndex].message = data.content;
-    chats.value[chatIndex].lastMessage = data.content;
   }
 }
 
@@ -277,20 +441,6 @@ function onConversationStatus(data: { mode?: string; status?: string; tag?: stri
   if (item && item !== target) applyTo(item);
 }
 
-function onNewConversation(conv: ChatConversation) {
-  // Nueva conversación creada por un cliente
-  const mapped = {
-    ...conv,
-    time: formatTime(conv.lastMessageAt || new Date().toISOString()),
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      conv.clientInfo?.name || 'Nuevo',
-    )}&background=random`,
-    name: conv.clientInfo?.name || 'Cliente Nuevo',
-    message: conv.lastMessage || 'Nueva conversación',
-  };
-  chats.value.unshift(mapped);
-}
-
 function scrollToBottom() {
   nextTick(() => {
     const el = document.getElementById("chat-messages-container");
@@ -309,27 +459,26 @@ function onNotification(data: any) {
   console.log("Admin notification:", data);
 }
 
-onMounted(() => {
-  // Cargar las conversaciones primero: no debe depender del socket
-  fetchChats();
-
-  // Inicializar servicios auxiliares de forma aislada
+onMounted(async () => {
+  // Conectar el socket y registrar los handlers de lista/no leídos una sola vez.
   try {
-    socketService.connect();
+    bindConversationSocket();
     socketService.onMessage(onNewMessage);
     socketService.onMessageChunk(onMessageChunk);
     socketService.onMessageUpdated(onMessageUpdated);
     socketService.onConversationStatus(onConversationStatus);
+    socketService.onInsights(onInsights);
 
-    // Escuchar nuevas conversaciones
     if (socketService.socket) {
-      socketService.socket.on('chat:new_conversation', onNewConversation);
       socketService.socket.on('error', onSocketError);
       socketService.socket.on('admin:notification', onNotification);
     }
   } catch (error) {
     console.error("Failed to initialize socket service", error);
   }
+
+  // Cargar canales del proyecto y conversaciones (no dependen del socket).
+  await Promise.all([loadChannels(), fetchChats()]);
 });
 
 onUnmounted(() => {
@@ -337,12 +486,12 @@ onUnmounted(() => {
   socketService.offMessageChunk(onMessageChunk);
   socketService.offMessageUpdated(onMessageUpdated);
   socketService.offConversationStatus(onConversationStatus);
+  socketService.offInsights(onInsights);
   if (socketService.socket) {
-    socketService.socket.off('chat:new_conversation', onNewConversation);
     socketService.socket.off('error', onSocketError);
     socketService.socket.off('admin:notification', onNotification);
   }
-  socketService.disconnect();
+  // No desconectar: el sidebar mantiene el socket para el conteo en vivo.
 });
 </script>
 
@@ -355,21 +504,13 @@ onUnmounted(() => {
       <div class="p-4 border-b border-slate-100">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-bold tracking-tight text-slate-900">Inbox</h2>
-          <div class="flex items-center gap-2">
-            <button
-              class="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
-            >
-              <span class="material-symbols-outlined text-[20px]"
-                >filter_list</span
-              >
-            </button>
-          </div>
         </div>
         <div class="relative mb-3 group">
           <span class="absolute left-3 top-2.5 text-slate-400">
             <span class="material-symbols-outlined text-[18px]">search</span>
           </span>
           <input
+            v-model="searchQuery"
             class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
             placeholder="Buscar chats..."
             type="text"
@@ -377,20 +518,22 @@ onUnmounted(() => {
         </div>
         <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
           <button
-            class="px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-medium whitespace-nowrap"
+            v-for="channel in enabledChannels"
+            :key="channel"
+            @click="setActiveChannel(channel)"
+            :class="[
+              'px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5',
+              activeChannel === channel
+                ? 'bg-slate-900 text-white'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50',
+            ]"
           >
-            All
-          </button>
-          <button
-            class="px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
-          >
-            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> WhatsApp
-          </button>
-          <button
-            class="px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5"
-          >
-            <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-            Instagram
+            <span
+              v-if="channel !== 'All'"
+              class="w-1.5 h-1.5 rounded-full"
+              :class="channelMeta[channel as Exclude<ChannelFilter, 'All'>].dot"
+            ></span>
+            {{ channel === "All" ? "Todos" : channelMeta[channel as Exclude<ChannelFilter, 'All'>].label }}
           </button>
         </div>
       </div>
@@ -400,6 +543,9 @@ onUnmounted(() => {
         </div>
         <div v-else-if="chats.length === 0" class="p-4 text-center text-slate-400 text-sm">
           No hay conversaciones aún. Los clientes las iniciarán.
+        </div>
+        <div v-else-if="filteredChats.length === 0" class="p-4 text-center text-slate-400 text-sm">
+          No hay conversaciones que coincidan con el filtro.
         </div>
         <div
           v-for="chat in filteredChats"
@@ -480,6 +626,12 @@ onUnmounted(() => {
               >
                 Sin contacto
               </span>
+              <span
+                v-if="chat.unreadCount"
+                class="ml-auto bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+              >
+                {{ chat.unreadCount }}
+              </span>
             </div>
           </div>
         </div>
@@ -504,9 +656,6 @@ onUnmounted(() => {
                 class="text-base font-bold text-slate-900 flex items-center gap-2"
               >
                 {{ selectedChat.name }}
-                <span
-                  class="w-2 h-2 rounded-full bg-green-500 animate-pulse"
-                ></span>
               </h1>
               <div class="flex items-center gap-1.5 text-xs text-slate-500">
                 <span
@@ -521,7 +670,7 @@ onUnmounted(() => {
                 >
                 <span>{{ selectedChat.platform }}</span>
                 <span v-if="!selectedChat.isContactCreated" class="text-amber-500 font-bold ml-2">
-                  • Responde para crear contacto
+                  • Sin contacto
                 </span>
               </div>
             </div>
@@ -551,148 +700,121 @@ onUnmounted(() => {
                 >Human Takeover</span
               >
             </div>
-            <button
-              class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
-            >
-              <span class="material-symbols-outlined">more_vert</span>
-            </button>
           </div>
         </header>
         <div
           id="chat-messages-container"
-          class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 scroll-smooth bg-slate-50/50"
+          class="flex-1 overflow-y-auto p-6 flex flex-col scroll-smooth bg-slate-50/50"
         >
-          <div class="flex justify-center">
-            <span
-              class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-medium text-slate-500"
-              >Today</span
-            >
-          </div>
           <div v-if="isLoadingMessages" class="text-center text-slate-400 py-4">
             Cargando mensajes...
           </div>
-          <div
-            v-else
-            v-for="(msg, i) in messages"
-            :key="msg._id || i"
-            :class="[
-              'flex gap-4 max-w-[85%]',
-              isToolMessage(msg) ? 'max-w-full !flex-col' : '',
-              !isToolMessage(msg) && msg.isMe ? 'flex-row-reverse ml-auto' : '',
-            ]"
-          >
-            <template v-if="isToolMessage(msg)">
-              <div class="w-full flex justify-center">
-                <div
-                  class="max-w-[560px] w-full rounded-xl border p-4 shadow-sm"
-                  :class="msg.contentType === 'confirmation_request'
-                    ? 'bg-amber-50 border-amber-200'
-                    : (msg.toolData?.status === 'error' ? 'bg-red-50 border-red-200' : 'bg-slate-100 border-slate-200')"
-                >
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="material-symbols-outlined text-[16px] text-slate-500">{{ toolIcon(msg) }}</span>
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ toolLabel(msg) }}</span>
-                    <span v-if="msg.toolData?.status" class="ml-auto text-[10px] font-bold uppercase" :class="statusClass(msg.toolData.status)">{{ statusLabel(msg.toolData.status) }}</span>
-                  </div>
-                  <p class="text-sm text-slate-700 leading-relaxed" v-html="renderMarkdown(msg.content)"></p>
-
-                  <div v-if="msg.contentType === 'confirmation_request' && msg.toolData?.status === 'needs_confirmation'" class="flex flex-wrap gap-2 mt-3">
-                    <button @click="confirmTool(msg, 'confirm')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors">Confirmar</button>
-                    <button @click="confirmTool(msg, 'cancel')" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-white transition-colors">Cancelar</button>
-                    <button @click="modifyTool(msg)" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-white transition-colors">Modificar</button>
-                  </div>
-                  <div class="text-[10px] text-slate-400 mt-2">{{ msg.time }}</div>
-                </div>
-              </div>
-            </template>
-            <template v-else>
+          <template v-else>
             <div
-              v-if="!msg.isMe"
-              class="w-8 h-8 flex-none rounded-full bg-cover bg-center mt-auto"
-              :style="{ backgroundImage: `url(${msg.avatar})` }"
-            ></div>
-            <div
-              v-else
-              class="w-8 h-8 flex-none rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 mt-auto"
+              v-for="group in messageGroups"
+              :key="group.key"
+              class="flex flex-col gap-6 mb-6 last:mb-0"
             >
-              <span
-                class="material-symbols-outlined text-slate-500 text-[18px]"
-                >{{ msg.isBot ? "smart_toy" : "person" }}</span
-              >
-            </div>
-
-            <div
-              :class="[
-                'flex flex-col gap-1',
-                msg.isMe ? 'items-end' : 'items-start',
-              ]"
-            >
-              <div
-                :class="[
-                  'rounded-2xl px-5 py-3 shadow-sm border relative',
-                  msg.isMe
-                    ? 'bg-slate-100 border-slate-200 rounded-br-none'
-                    : 'bg-blue-600 border-transparent text-white rounded-bl-none',
-                ]"
-              >
-                <div v-if="!msg.content" class="flex items-center gap-1 h-5">
-                  <div class="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-                  <div class="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-                  <div class="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style="animation-delay: 300ms"></div>
-                </div>
-                <p v-else class="text-sm leading-relaxed" v-html="renderMarkdown(msg.content)"></p>
-                
-                <div v-if="msg.confidence" class="absolute -bottom-3 left-0">
-                  <span
-                    class="bg-white text-[10px] text-green-700 border border-green-200 px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1"
-                  >
-                    <span class="material-symbols-outlined text-[10px]"
-                      >bolt</span
-                    >
-                    {{ msg.confidence }}
-                  </span>
-                </div>
-              </div>
-              <div
-                :class="[
-                  'flex items-center gap-2 pr-1',
-                  msg.isMe ? 'flex-row-reverse' : 'pl-1',
-                ]"
-              >
+              <div class="flex justify-center">
                 <span
-                  :class="[
-                    'text-xs font-semibold',
-                    msg.isMe ? 'text-blue-600' : 'text-slate-600',
-                  ]"
-                  >{{ msg.senderName || msg.sender }}</span
+                  class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-medium text-slate-500"
+                  >{{ group.label }}</span
                 >
-                <span class="text-[10px] text-slate-400">{{ msg.time }}</span>
+              </div>
+              <div
+                v-for="(msg, i) in group.messages"
+                :key="msg._id || i"
+                :class="[
+                  'flex gap-4 max-w-[85%]',
+                  isToolMessage(msg) ? 'max-w-full !flex-col' : '',
+                  !isToolMessage(msg) && msg.isMe ? 'flex-row-reverse ml-auto' : '',
+                ]"
+              >
+                <template v-if="isToolMessage(msg)">
+                  <div class="w-full flex justify-center">
+                    <div
+                      class="max-w-[560px] w-full rounded-xl border p-4 shadow-sm"
+                      :class="msg.contentType === 'confirmation_request'
+                        ? 'bg-amber-50 border-amber-200'
+                        : (msg.toolData?.status === 'error' ? 'bg-red-50 border-red-200' : 'bg-slate-100 border-slate-200')"
+                    >
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-[16px] text-slate-500">{{ toolIcon(msg) }}</span>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ toolLabel(msg) }}</span>
+                        <span v-if="msg.toolData?.status" class="ml-auto text-[10px] font-bold uppercase" :class="statusClass(msg.toolData.status)">{{ statusLabel(msg.toolData.status) }}</span>
+                      </div>
+                      <p class="text-sm text-slate-700 leading-relaxed" v-html="renderMarkdown(msg.content)"></p>
+
+                      <div v-if="msg.contentType === 'confirmation_request' && msg.toolData?.status === 'needs_confirmation'" class="flex flex-wrap gap-2 mt-3">
+                        <button @click="confirmTool(msg, 'confirm')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors">Confirmar</button>
+                        <button @click="confirmTool(msg, 'cancel')" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-white transition-colors">Cancelar</button>
+                        <button @click="modifyTool(msg)" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-white transition-colors">Modificar</button>
+                      </div>
+                      <div class="text-[10px] text-slate-400 mt-2">{{ msg.time }}</div>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                <div
+                  v-if="!msg.isMe"
+                  class="w-8 h-8 flex-none rounded-full bg-cover bg-center mt-auto"
+                  :style="{ backgroundImage: `url(${msg.avatar})` }"
+                ></div>
+                <div
+                  v-else
+                  class="w-8 h-8 flex-none rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 mt-auto"
+                >
+                  <span
+                    class="material-symbols-outlined text-slate-500 text-[18px]"
+                    >{{ msg.isBot ? "smart_toy" : "person" }}</span
+                  >
+                </div>
+
+                <div
+                  :class="[
+                    'flex flex-col gap-1',
+                    msg.isMe ? 'items-end' : 'items-start',
+                  ]"
+                >
+                  <div
+                    :class="[
+                      'rounded-2xl px-5 py-3 shadow-sm border relative',
+                      msg.isMe
+                        ? 'bg-slate-100 border-slate-200 rounded-br-none'
+                        : 'bg-blue-600 border-transparent text-white rounded-bl-none',
+                    ]"
+                  >
+                    <div v-if="!msg.content" class="flex items-center gap-1 h-5">
+                      <div class="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                      <div class="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                      <div class="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                    </div>
+                    <p v-else class="text-sm leading-relaxed" v-html="renderMarkdown(msg.content)"></p>
+                  </div>
+                  <div
+                    :class="[
+                      'flex items-center gap-2 pr-1',
+                      msg.isMe ? 'flex-row-reverse' : 'pl-1',
+                    ]"
+                  >
+                    <span
+                      :class="[
+                        'text-xs font-semibold',
+                        msg.isMe ? 'text-blue-600' : 'text-slate-600',
+                      ]"
+                      >{{ msg.senderName || msg.sender }}</span
+                    >
+                    <span class="text-[10px] text-slate-400">{{ msg.time }}</span>
+                  </div>
+                </div>
+                </template>
               </div>
             </div>
-            </template>
-          </div>
+          </template>
         </div>
 
         <!-- Input Area -->
         <footer class="p-6 bg-white border-t border-slate-200 flex-none">
-          <div class="flex gap-2 mb-3 overflow-x-auto pb-1 no-scrollbar">
-            <button
-              class="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-600 transition-colors shadow-sm"
-            >
-              <span class="material-symbols-outlined text-[14px] text-blue-600"
-                >auto_awesome</span
-              >
-              Suggest tracking link
-            </button>
-            <button
-              class="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-600 transition-colors shadow-sm"
-            >
-              <span class="material-symbols-outlined text-[14px] text-slate-400"
-                >history</span
-              >
-              View recent orders
-            </button>
-          </div>
           <div
             class="relative bg-white rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all shadow-sm p-2"
           >
@@ -702,49 +824,26 @@ onUnmounted(() => {
               class="w-full bg-transparent border-none focus:ring-0 resize-none h-14 text-sm text-slate-800 placeholder:text-slate-400 p-2"
               placeholder="Escribe un mensaje..."
             ></textarea>
-            <div class="flex justify-between items-center mt-1 px-1 pb-1">
-              <div class="flex gap-1 text-slate-400">
-                <button
-                  class="p-1.5 hover:bg-slate-100 rounded transition-colors"
+            <div class="flex justify-end items-center mt-1 px-1 pb-1 gap-2">
+              <button
+                @click="toggleMode"
+                :disabled="isUpdatingMode"
+                class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors flex items-center gap-1.5 uppercase disabled:opacity-50"
+              >
+                <span class="material-symbols-outlined text-[16px]">{{
+                  selectedChat.mode === "auto_pilot" ? "person" : "smart_toy"
+                }}</span>
+                {{ selectedChat.mode === "auto_pilot" ? "Take Over" : "Auto-Pilot" }}
+              </button>
+              <button
+                @click="handleSendMessage"
+                class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 uppercase"
+              >
+                <span class="material-symbols-outlined text-[16px]"
+                  >send</span
                 >
-                  <span class="material-symbols-outlined text-[20px]"
-                    >sentiment_satisfied</span
-                  >
-                </button>
-                <button
-                  class="p-1.5 hover:bg-slate-100 rounded transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[20px]"
-                    >attach_file</span
-                  >
-                </button>
-                <button
-                  class="p-1.5 hover:bg-slate-100 rounded transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[20px]"
-                    >image</span
-                  >
-                </button>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors flex items-center gap-1.5 uppercase"
-                >
-                  <span class="material-symbols-outlined text-[16px]"
-                    >person</span
-                  >
-                  Take Over
-                </button>
-                <button
-                  @click="handleSendMessage"
-                  class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 uppercase"
-                >
-                  <span class="material-symbols-outlined text-[16px]"
-                    >send</span
-                  >
-                  Enviar
-                </button>
-              </div>
+                Enviar
+              </button>
             </div>
           </div>
         </footer>
@@ -791,40 +890,83 @@ onUnmounted(() => {
         <p class="text-sm text-slate-500 relative z-10 mb-3">
           {{ selectedChat.clientInfo?.identifier || selectedChat.contactPhone || '' }}
         </p>
-        <div class="flex gap-2 relative z-10 flex-wrap justify-center">
-          <span
-            v-if="selectedChat.isContactCreated"
-            class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wide border border-emerald-200"
-          >Contacto Creado</span>
-          <span
-            v-else
-            class="px-2 py-0.5 rounded bg-amber-50 text-amber-600 text-[10px] font-bold uppercase tracking-wide border border-amber-200"
-          >Pendiente</span>
+        <div class="flex flex-col gap-2 relative z-10 w-full">
+          <div class="flex justify-center">
+            <span
+              v-if="selectedChat.isContactCreated"
+              class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wide border border-emerald-200"
+            >Contacto Creado</span>
+            <span
+              v-else
+              class="px-2 py-0.5 rounded bg-amber-50 text-amber-600 text-[10px] font-bold uppercase tracking-wide border border-amber-200"
+            >Sin contacto</span>
+          </div>
+          <button
+            v-if="!selectedChat.isContactCreated"
+            @click="saveAsContact"
+            :disabled="isSavingContact"
+            class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            <span class="material-symbols-outlined text-[16px]">person_add</span>
+            {{ isSavingContact ? "Guardando..." : "Guardar como contacto" }}
+          </button>
         </div>
       </div>
       <div class="p-5 border-b border-slate-200">
-        <h3
-          class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"
-        >
-          <span class="material-symbols-outlined text-[16px]">psychology</span>
-          AI Insights
-        </h3>
-        <div
-          class="bg-white rounded-lg p-4 border border-slate-200 mb-3 shadow-sm"
-        >
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-xs font-medium text-slate-600">Sentiment</span>
-            <span
-              class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100"
-              >Positive</span
-            >
-          </div>
-          <div
-            class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex"
+        <div class="flex items-center justify-between mb-4">
+          <h3
+            class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"
           >
-            <div class="h-full bg-red-300 w-[10%]"></div>
-            <div class="h-full bg-yellow-300 w-[20%]"></div>
-            <div class="h-full bg-green-500 w-[70%]"></div>
+            <span class="material-symbols-outlined text-[16px]">psychology</span>
+            AI Insights
+          </h3>
+          <button
+            @click="analyzeInsights"
+            :disabled="isAnalyzingInsights"
+            class="text-[10px] font-bold uppercase tracking-wider text-blue-600 hover:text-blue-700 disabled:opacity-50 flex items-center gap-1"
+          >
+            <span class="material-symbols-outlined text-[14px]">refresh</span>
+            {{ isAnalyzingInsights ? "Analizando" : "Analizar" }}
+          </button>
+        </div>
+
+        <div v-if="isLoadingInsights" class="text-xs text-slate-400">Cargando insights...</div>
+        <div
+          v-else-if="!insights"
+          class="bg-white rounded-lg p-4 border border-dashed border-slate-300 text-center"
+        >
+          <span class="material-symbols-outlined text-slate-300 text-[28px]">psychology_alt</span>
+          <p class="text-xs text-slate-400 mt-1">
+            Todavía no hay insights para esta conversación.
+          </p>
+        </div>
+        <div v-else class="space-y-3">
+          <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-medium text-slate-600">Sentimiento</span>
+              <span
+                class="text-xs font-bold px-2 py-0.5 rounded border"
+                :class="sentimentMeta.class"
+                >{{ sentimentMeta.label }}</span
+              >
+            </div>
+            <div
+              class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex"
+            >
+              <div
+                v-for="bar in sentimentBars"
+                :key="bar.key"
+                class="h-full"
+                :class="bar.class"
+                :style="{ width: bar.width }"
+              ></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+              >Resumen</span
+            >
+            <p class="text-xs text-slate-600 leading-relaxed mt-1">{{ insights.summary }}</p>
           </div>
         </div>
       </div>

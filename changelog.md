@@ -5,6 +5,40 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v3.6.0 — 2026-09-19
+
+> 🧹 **La bandeja de mensajería deja de aparentar: cada control funciona o desaparece, y llegan los AI Insights reales**
+
+---
+
+### ✨ Añadido
+- **Filtros por canales habilitados**: los chips de canal se generan desde `project.config.channels` (solo los habilitados + "Todos") y filtran la lista por plataforma; un canal deshabilitado no aparece.
+- **Búsqueda de conversaciones** por nombre del cliente y contenido del último mensaje (sin distinguir mayúsculas); vaciar restaura la lista.
+- **Agrupación de mensajes por día** con encabezados reales ("Hoy", "Ayer", fecha), en orden cronológico.
+- **Toma de control manual bidireccional**: `PUT /api/conversations/:id/mode` expuesto en `messagingService.updateConversationMode`; "Take Over" ↔ "Auto-Pilot" actualiza el badge sin recargar y el bot no responde en `human_takeover`.
+- **Guardar cliente como contacto**: `POST /api/conversations/:id/contact` respaldado por `ensureContactCreated(id, { force: true })`; idempotente y funcional aunque `autoCreateContact` esté deshabilitado.
+- **Conteo de no leídos real** en el sidebar mediante el composable `useConversations` (estado de módulo compartido), con incremento en vivo por `chat:message` y `chat:new_conversation`.
+- **AI Insights reales**: nuevo `services/insights.service.ts` que analiza la conversación con `OPENROUTER_INSIGHTS_MODEL` (fallback a `OPENROUTER_LLM_MODEL`), valida `{ sentiment, sentimentScores, summary }`, lo persiste en `conversation.aiInsights` y lo emite por `chat:insights`. `GET /:id/insights` lee lo almacenado y `POST /:id/insights` recalcula; el panel del dashboard muestra sentimiento, distribución y resumen, con estado vacío y actualización en vivo.
+- **Análisis automático fire-and-forget** tras cada respuesta del bot (fallo silencioso que no afecta la respuesta).
+
+### 🔄 Cambios
+- **Compositor honesto**: se eliminan chips de sugerencia, emoji, adjuntos, imagen, botón de filtro, menú de tres puntos, indicador "online" simulado y badge de confianza; solo quedan las acciones funcionales (enviar y tomar control).
+- **`ensureContactCreated()`** acepta `{ force }` y devuelve el contacto con su estado de creación, manteniendo la búsqueda idempotente por identificador + proyecto.
+- **Evento de socket `chat:insights`** para la actualización en vivo de los insights.
+
+### 🐛 Corregido
+- **Respuestas fuera de orden en Contactos**: `fetchContacts()` ignora respuestas obsoletas cuando varios filtros disparan fetches seguidos (la concurrencia extra introducida por el fetch del sidebar lo exponía).
+
+### 🧪 Pruebas
+- Nuevos specs en `messaging.spec.ts`: filtros de canal + búsqueda, guardar contacto idempotente con auto-creación deshabilitada, toma de control bidireccional (con bot en pausa) e insights automáticos/manuales.
+- Stub de IA ampliado con respuesta JSON determinista para el análisis de insights (`INSIGHTS_JSON`); seed e2e con un segundo proyecto `e2e-nocontact` sin auto-creación de contactos y canales con Instagram deshabilitado.
+- Suite e2e completa en verde (28/28) y pruebas de integración del backend en verde (25/25).
+
+### 📚 Documentación
+- `AGENTS.md` (sección 1 de mensajería, estructura backend/frontend, tabla de endpoints, modelo `conversations`, evento `chat:insights` y variables de entorno con `OPENROUTER_INSIGHTS_MODEL`) actualizado. Versión del proyecto a **v3.6.0**.
+
+---
+
 ## v3.5.0 — 2026-09-18
 
 > 🧠 **El chatbot ahora recuerda la conversación, saluda y se despide con naturalidad, y el estado de la conversación se refleja en vivo**

@@ -32,8 +32,14 @@ export const E2E = {
   stub: {
     apiKey: 'e2e-stub-key',
     model: 'stub-model',
+    insightsModel: 'stub-insights',
     embedModel: 'stub-embed',
     reply: 'Respuesta determinista de prueba E2E.',
+  },
+
+  projectNoContact: {
+    name: 'E2E NoContact',
+    slug: 'e2e-nocontact',
   },
 
   /** Ruta del storageState generado por el project de setup. */

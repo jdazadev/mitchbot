@@ -54,7 +54,11 @@ watch([filterPlatform, filterStatus, sortBy, sortOrder, currentPage, pageSize], 
   fetchContacts();
 });
 
+// Ignora respuestas fuera de orden cuando varios filtros disparan fetches seguidos.
+let fetchSeq = 0;
+
 async function fetchContacts() {
+  const seq = ++fetchSeq;
   try {
     isLoading.value = true;
     error.value = null;
@@ -70,11 +74,14 @@ async function fetchContacts() {
       includeArchived: filterStatus.value === 'Archived',
     };
 
-    contactsData.value = await contactService.getContacts(filters);
+    const data = await contactService.getContacts(filters);
+    if (seq !== fetchSeq) return;
+    contactsData.value = data;
   } catch (err: any) {
+    if (seq !== fetchSeq) return;
     error.value = err.message;
   } finally {
-    isLoading.value = false;
+    if (seq === fetchSeq) isLoading.value = false;
   }
 }
 

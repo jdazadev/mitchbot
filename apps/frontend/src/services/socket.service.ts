@@ -32,12 +32,20 @@ const getActiveProjectId = () => {
 
 export const socketService = {
   socket: null as Socket | null,
+  isPublic: false,
 
   connect(options?: { isPublic?: boolean; slug?: string; projectId?: string }) {
-    if (this.socket?.connected) return;
+    const isPublic = options?.isPublic || false;
+    // Ya conectado en el mismo modo: no hacer nada.
+    if (this.socket?.connected && this.isPublic === isPublic) return;
+    // Cambio de modo (dashboard <-> público): reconectar para no reusar la sesión equivocada.
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+    this.isPublic = isPublic;
 
     const token = getAuthToken();
-    const isPublic = options?.isPublic || false;
     const slug = options?.slug;
     const projectId = options?.projectId || getActiveProjectId();
 
@@ -138,6 +146,18 @@ export const socketService = {
   offConversationStatus(callback?: (data: any) => void) {
     if (this.socket) {
       this.socket.off('chat:status', callback);
+    }
+  },
+
+  /** Escucha la actualización de insights de una conversación (chat:insights) */
+  onInsights(callback: (data: { conversationId: string; insights: any }) => void) {
+    if (!this.socket) this.connect();
+    this.socket?.on('chat:insights', callback);
+  },
+
+  offInsights(callback?: (data: any) => void) {
+    if (this.socket) {
+      this.socket.off('chat:insights', callback);
     }
   },
 

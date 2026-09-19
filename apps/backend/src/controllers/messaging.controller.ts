@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { chatService } from '../services/chat.service';
 import { agentService } from '../services/agent.service';
+import { insightsService } from '../services/insights.service';
 import { getConversationsCollection } from '../models/conversation.model';
 import { getMessagesCollection } from '../models/message.model';
 import { emitToRoom } from '../websocket/socket';
@@ -238,24 +239,68 @@ export const updateStatus = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+/**
+ * Acción explícita del agente: crea o vincula el contacto del cliente a partir
+ * de los datos de la conversación, incluso si `autoCreateContact` está deshabilitado.
+ * Es idempotente (no duplica) y queda acotada al proyecto de la conversación.
+ */
+export const createConversationContact = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+    if (!ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId inválido' });
+
+    const convo = await getConversationsCollection().findOne({
+      _id: new ObjectId(req.params.id),
+      projectId: new ObjectId(projectId),
+    });
+    if (!convo) return res.status(404).json({ error: 'Conversation not found' });
+
+    const result = await chatService.ensureContactCreated(req.params.id, { force: true });
+    if (!result) return res.status(400).json({ error: 'No se pudo crear el contacto' });
+
+    res.status(result.created ? 201 : 200).json({
+      contact: result.contact,
+      created: result.created,
+      isContactCreated: true,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** Lectura de los insights almacenados (o `null` si aún no hay análisis). */
 export const getInsights = async (req: Request, res: Response, next: NextFunction) => {
   try {
-      const projectId = (req as any).projectId as string | undefined;
-      if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
-      if (!ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId inválido' });
-      const convo = await getConversationsCollection().findOne({
-        _id: new ObjectId(req.params.id),
-        projectId: new ObjectId(projectId),
-      });
-      if (!convo) return res.status(404).json({ error: 'Conversation not found' });
-      const messages = await chatService.getMessages(req.params.id);
-      // Stub for now
-      res.json({
-          sentiment: 'neutral',
-          confidence: 0.8,
-          suggestion: 'Ensure user question is answered promptly.'
-      });
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+    if (!ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId inválido' });
+    const convo = await getConversationsCollection().findOne({
+      _id: new ObjectId(req.params.id),
+      projectId: new ObjectId(projectId),
+    });
+    if (!convo) return res.status(404).json({ error: 'Conversation not found' });
+    res.json(convo.aiInsights ?? null);
   } catch (error) {
-      next(error);
+    next(error);
+  }
+};
+
+/** Recálculo manual de insights (botón "Analizar"). */
+export const analyzeInsights = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+    if (!ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId inválido' });
+    const convo = await getConversationsCollection().findOne({
+      _id: new ObjectId(req.params.id),
+      projectId: new ObjectId(projectId),
+    });
+    if (!convo) return res.status(404).json({ error: 'Conversation not found' });
+
+    const insights = await insightsService.analyzeConversation(req.params.id);
+    res.json(insights);
+  } catch (error) {
+    next(error);
   }
 };

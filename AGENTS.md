@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v3.5.0
+**Versión actual del proyecto:** v3.6.0
 
 ---
 
@@ -97,6 +97,7 @@ apps/backend/src/
 │   ├── project-context.service.ts  # Contexto activo del proyecto
 │   ├── config.service.ts           # Configuración global
 │   ├── analytics.service.ts        # Métricas y estadísticas
+│   ├── insights.service.ts         # Análisis de sentimiento/resumen (AI Insights)
 │   ├── auth.service.ts             # Autenticación JWT + bcrypt
 │   └── user.service.ts             # Gestión de usuarios
 ├── models/                         # Schemas MongoDB (10 colecciones)
@@ -129,6 +130,7 @@ apps/frontend/src/
 │   ├── Profile.vue                 # Perfil del usuario autenticado
 │   └── TestChat.vue                # Simulador de chat para pruebas
 ├── services/                       # Capa de servicios HTTP + WebSocket
+├── composables/                    # Estado compartido (useConversations)
 ├── components/layout/              # Sidebar, Topbar, DashboardLayout
 ├── router/                         # Vue Router + navigation guards
 └── lib/                            # Utilidades (cn, etc.)
@@ -154,12 +156,18 @@ apps/frontend/src/
 - **Saludo y despedida naturales**: no se anteponen textos enlatados; el saludo/despedida los decide el LLM a partir del historial. Sin historial de por medio el bot saluda al inicio; en una reanudación tras pausa larga re-saluda. "Gracias" y variantes ya **no** cierran la conversación. Al detectar una despedida real, el bot responde con naturalidad y, tras generarla, la conversación se marca como `closed` (se emite `chat:status`) — sin mensaje enlatado ni corte previo.
 - **Streaming de respuestas**: Las respuestas del bot se transmiten token por token en tiempo real vía WebSockets.
 - **Renderizado Markdown**: Los mensajes del bot soportan negritas e itálicas en tiempo real.
+- **Filtros y búsqueda**: los chips de canal se generan desde `project.config.channels` (solo los habilitados + "Todos"); el filtrado por plataforma y la búsqueda por nombre/último mensaje son en cliente. Los mensajes se agrupan por día con encabezados reales.
+- **Toma de control manual bidireccional**: "Take Over" pasa a `human_takeover` y "Auto-Pilot" devuelve a `auto_pilot` vía `PUT /api/conversations/:id/mode`; el badge se actualiza en vivo con `chat:status` y el bot no responde mientras dure el takeover.
+- **Guardar como contacto**: acción explícita `POST /api/conversations/:id/contact` respaldada por `ensureContactCreated(id, { force: true })`; es idempotente y funciona aunque `autoCreateContact` esté deshabilitado.
+- **No leídos reales**: el badge del sidebar suma los `unreadCount` del proyecto activo mediante el composable `useConversations` (estado de módulo compartido) y se incrementa en vivo con `chat:message` / `chat:new_conversation`.
+- **Compositor honesto**: solo expone acciones funcionales (enviar, tomar control); se retiraron chips de sugerencia, emoji, adjuntos, menú y el indicador "online" simulado.
+- **AI Insights**: análisis de sentimiento/resumen persistido en `conversation.aiInsights`. `GET /:id/insights` lee lo almacenado y `POST /:id/insights` recalcula; se emite `chat:insights`. El análisis automático corre fire-and-forget tras cada respuesta del bot (un fallo no afecta la respuesta). El modelo se resuelve desde `OPENROUTER_INSIGHTS_MODEL` con fallback a `OPENROUTER_LLM_MODEL`.
 
 ### 2. Módulo de Contactos
 
 - Se puede editar, buscar, filtrar, ordenar y paginar contactos.
 - El contacto es un perfil con todos los datos del cliente (nombre, email, teléfono, plataforma, tags, metadata).
-- **No se puede crear un contacto manualmente** — Solo se crea automáticamente al contestar el primer mensaje del cliente.
+- **No se puede crear un contacto arbitrario** — Se crea automáticamente al contestar el primer mensaje del cliente, o de forma explícita desde una conversación ("Guardar como contacto", idempotente).
 - **No se puede eliminar un contacto** — Solo se puede archivar (soft delete) y restaurar.
 - Búsqueda por nombre, email y teléfono.
 - Filtros por plataforma (`WhatsApp`, `Instagram`, `Web`) y estado (`Active`, `New`, `Inactive`).
@@ -378,7 +386,7 @@ Usuario abre la app
 | **Auth** | `POST /register`, `POST /login`, `GET /me`, `PUT /profile`, `PUT /password` | Autenticación y perfil |
 | **Users** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Gestión de usuarios |
 | **Contacts** | `GET /`, `GET /:id`, `PUT /:id`, `PATCH /:id/archive`, `PATCH /:id/restore` | Gestión de contactos |
-| **Conversations** | `GET /`, `GET /:id`, `GET /:id/messages`, `POST /:id/messages`, `PATCH /:id/mode`, `PATCH /:id/status` | Mensajería |
+| **Conversations** | `GET /`, `GET /:id`, `GET /:id/messages`, `POST /:id/messages`, `PUT /:id/mode`, `PUT /:id/status`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, guardar contacto e insights |
 | **Brain** | `GET /sources`, `POST /upload`, `POST /text`, `DELETE /sources/:id`, `POST /search` | Base de conocimiento RAG |
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
@@ -399,7 +407,7 @@ Usuario abre la app
 |:----------|:-------------|:------|
 | `users` | name, email, password (hash), role, status, avatar, projectIds, activeProjectId | Roles: admin, support, assistant. Pertenencia multi-proyecto |
 | `contacts` | projectId, name, phone, email, platform, status, tags, metadata | Aislado por proyecto. Soft delete (archivar) |
-| `conversations` | contactId, platform, status, mode, clientInfo, unreadCount | Modos: auto_pilot, human_takeover |
+| `conversations` | contactId, platform, status, mode, clientInfo, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores, summary |
 | `messages` | conversationId, sender, content, contentType, isBot, toolData | Sender: contact, ai_agent, human_agent, tool. contentType: text, tool_call, tool_result, confirmation_request |
 | `agents` | projectId, name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
 | `ai_models` | name, value, provider, category, isActive | Catálogo de modelos (los disponibles se listan dinámicamente desde OpenRouter) |
@@ -436,6 +444,7 @@ Todas las conexiones WebSocket requieren autenticación JWT:
 | `chat:status` | Server → Client | Cambio de modo/estado de la conversación (lo consumen Messaging y TestChat sin recargar) |
 | `chat:new_conversation` | Server → Client | Nueva conversación iniciada |
 | `chat:message_updated` | Server → Client | Mensaje actualizado (estado de confirmación de tool) |
+| `chat:insights` | Server → Client | Insights de la conversación recalculados (sentimiento/resumen) |
 | `tool:confirm` | Client → Server | Confirmar / cancelar / modificar una ejecución de herramienta |
 | `tool:confirmed` | Server → Client | Resultado de la confirmación de herramienta |
 | `admin:notification` | Server → Client | Notificación de la tool `send_notification` |
@@ -508,9 +517,10 @@ OPENROUTER_EMBEDDING_MODEL=openai/text-embedding-3-small
 OPENROUTER_OCR_MODEL=google/gemini-3.8-flash
 OPENROUTER_FILE_MODEL=<opcional-conversion-csv>
 OPENROUTER_RERANKER_MODEL=<opcional-fallback-embedding>
+OPENROUTER_INSIGHTS_MODEL=<opcional-fallback-llm>
 ```
 
-> ⚠️ `OPENROUTER_LLM_MODEL` es obligatorio (sin default): si falta, la generación falla con un mensaje que indica definirlo. `OPENROUTER_FILE_MODEL` y `OPENROUTER_RERANKER_MODEL` son opcionales (el CSV se indexa crudo y el re-ranker usa el modelo de embeddings, respectivamente).
+> ⚠️ `OPENROUTER_LLM_MODEL` es obligatorio (sin default): si falta, la generación falla con un mensaje que indica definirlo. `OPENROUTER_FILE_MODEL`, `OPENROUTER_RERANKER_MODEL` y `OPENROUTER_INSIGHTS_MODEL` son opcionales (el CSV se indexa crudo, el re-ranker usa el modelo de embeddings y los insights usan `OPENROUTER_LLM_MODEL`, respectivamente).
 >
 > ⚠️ Cambiar `OPENROUTER_EMBEDDING_MODEL` **invalida los vectores existentes** y requiere reindexar con `pnpm --filter @mitchbot/backend tsx src/scripts/reindex-rag.ts`.
 
