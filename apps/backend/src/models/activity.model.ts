@@ -3,6 +3,7 @@ import { getDatabase } from '../config/database';
 
 export interface Activity {
   _id?: ObjectId;
+  projectId?: ObjectId;
   type:
     | "lead_captured"
     | "bot_handoff"

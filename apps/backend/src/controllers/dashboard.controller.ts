@@ -25,9 +25,24 @@ function parseRange(req: Request): DateRange {
   return {};
 }
 
+/**
+ * Obtiene el proyecto resuelto por el middleware `authenticate`.
+ * Sin proyecto no se calculan métricas; responde 403 y devuelve null.
+ */
+function resolveProjectId(req: Request, res: Response): string | null {
+  const projectId = (req as any).projectId as string | undefined;
+  if (!projectId) {
+    res.status(403).json({ error: 'Proyecto no resuelto' });
+    return null;
+  }
+  return projectId;
+}
+
 export const getStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const stats = await analyticsService.getStats(parseRange(req));
+    const projectId = resolveProjectId(req, res);
+    if (!projectId) return;
+    const stats = await analyticsService.getStats(projectId, parseRange(req));
     res.json(stats);
   } catch (error) {
     next(error);
@@ -36,9 +51,11 @@ export const getStats = async (req: Request, res: Response, next: NextFunction) 
 
 export const getVolume = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const projectId = resolveProjectId(req, res);
+    if (!projectId) return;
     const requested = req.query.period as VolumePeriod;
     const period = VOLUME_PERIODS.includes(requested) ? requested : 'daily';
-    const data = await analyticsService.getVolume(period, parseRange(req));
+    const data = await analyticsService.getVolume(projectId, period, parseRange(req));
     res.json(data);
   } catch (error) {
     next(error);
@@ -47,7 +64,9 @@ export const getVolume = async (req: Request, res: Response, next: NextFunction)
 
 export const getChannelDistribution = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await analyticsService.getChannelDistribution(parseRange(req));
+    const projectId = resolveProjectId(req, res);
+    if (!projectId) return;
+    const data = await analyticsService.getChannelDistribution(projectId, parseRange(req));
     res.json(data);
   } catch (error) {
     next(error);
@@ -56,7 +75,9 @@ export const getChannelDistribution = async (req: Request, res: Response, next: 
 
 export const getActivities = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await analyticsService.getRecentActivity();
+    const projectId = resolveProjectId(req, res);
+    if (!projectId) return;
+    const data = await analyticsService.getRecentActivity(projectId);
     res.json(data);
   } catch (error) {
     next(error);

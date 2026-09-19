@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v3.8.0
+**Versión actual del proyecto:** v3.8.1
 
 ---
 
@@ -322,7 +322,7 @@ Cada usuario pertenece a uno o más proyectos y tiene un proyecto activo.
 ### 11. Shell y navegación
 
 - **Nomenclatura de módulos**: el sidebar y los títulos del Topbar muestran **"Brain"** (no "Brain & RAG") y **"Clients"** (no "Contacts"). La ruta del módulo de clientes es `/clients` y `/contacts` redirige a ella. El renombre es de presentación y de frontend.
-- **Rango de fechas del panel**: el widget estático "Last 30 Days" del Topbar se eliminó. El Dashboard ofrece un control real de últimos 7/30/90 días (30 por defecto) que recalcula métricas, canales y volumen; los toggles Diaria/Semanal/Mensual cambian la granularidad del volumen. El backend (`analytics.service`/`dashboard.controller`) acepta `days` o `from`/`to` y `period = daily | weekly | monthly`.
+- **Rango de fechas del panel**: el widget estático "Last 30 Days" del Topbar se eliminó. El Dashboard ofrece un control real de últimos 7/30/90 días (30 por defecto) que recalcula métricas, canales y volumen; los toggles Diaria/Semanal/Mensual cambian la granularidad del volumen. El backend (`analytics.service`/`dashboard.controller`) acepta `days` o `from`/`to` y `period = daily | weekly | monthly`. Todas las rutas del dashboard exigen autenticación y acotan las métricas (`stats`, `volume`, `channels`, `activities`) al proyecto resuelto (`req.projectId`).
 - **Centro de notificaciones**: el Topbar escucha `admin:notification` (emitido por la tool `send_notification`), acumula las notificaciones en estado local, muestra el indicador solo si hay no leídas y permite marcarlas como leídas o limpiarlas. El alcance es la sesión activa (sin persistencia en base de datos).
 
 ### 12. Internacionalización (i18n)
@@ -413,7 +413,7 @@ Usuario abre la app
 | **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /` | Gestión de proyectos (multi-proyecto por usuario) |
 | **Appointments** | `GET /`, `GET /:id`, `PATCH /:id/status` | Citas agendadas por el agente |
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
-| **Dashboard** | `GET /stats`, `GET /volume`, `GET /channels`, `GET /activity` | Analytics |
+| **Dashboard** | `GET /stats`, `GET /volume`, `GET /channels`, `GET /activities` | Analytics autenticada y acotada al proyecto activo (`X-Project-Id`/`activeProjectId`) |
 | **Public Chat** | `GET /public/test-chat/:slug/config`, `POST /public/test-chat/:slug/start`, `POST /public/test-chat/:slug/:id/messages` | Chat público (clientes web); `config` expone el idioma del agente (sin auth) |
 
 > Todos los endpoints están bajo el prefijo `/api/<módulo>`.

@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import { getConversationsCollection } from '../models/conversation.model';
 import { getActivitiesCollection } from '../models/activity.model';
 
@@ -17,6 +18,11 @@ function buildDateFilter(range?: DateRange): Record<string, Date> | undefined {
   return filter;
 }
 
+/** Filtro obligatorio de aislamiento por proyecto. */
+function buildProjectFilter(projectId: string): { projectId: ObjectId } {
+  return { projectId: new ObjectId(projectId) };
+}
+
 const PERIOD_FORMAT: Record<VolumePeriod, string> = {
   daily: '%Y-%m-%d',
   weekly: '%G-%V',
@@ -24,10 +30,10 @@ const PERIOD_FORMAT: Record<VolumePeriod, string> = {
 };
 
 export const analyticsService = {
-  async getStats(range?: DateRange) {
+  async getStats(projectId: string, range?: DateRange) {
     const coll = getConversationsCollection();
     const dateFilter = buildDateFilter(range);
-    const base: Record<string, unknown> = {};
+    const base: Record<string, unknown> = { ...buildProjectFilter(projectId) };
     if (dateFilter) base.createdAt = dateFilter;
 
     const total = await coll.countDocuments(base);
@@ -39,14 +45,14 @@ export const analyticsService = {
     return { total, active, closed, responseRate };
   },
 
-  async getVolume(period: VolumePeriod = 'daily', range?: DateRange) {
+  async getVolume(projectId: string, period: VolumePeriod = 'daily', range?: DateRange) {
     const coll = getConversationsCollection();
     const dateFilter = buildDateFilter(range);
 
-    const pipeline: Record<string, unknown>[] = [];
-    if (dateFilter) {
-      pipeline.push({ $match: { createdAt: dateFilter } });
-    }
+    const match: Record<string, unknown> = { ...buildProjectFilter(projectId) };
+    if (dateFilter) match.createdAt = dateFilter;
+
+    const pipeline: Record<string, unknown>[] = [{ $match: match }];
     pipeline.push(
       {
         $group: {
@@ -63,10 +69,10 @@ export const analyticsService = {
     return results.map((row) => ({ date: row._id, count: row.count }));
   },
 
-  async getChannelDistribution(range?: DateRange) {
+  async getChannelDistribution(projectId: string, range?: DateRange) {
     const coll = getConversationsCollection();
     const dateFilter = buildDateFilter(range);
-    const base: Record<string, unknown> = {};
+    const base: Record<string, unknown> = { ...buildProjectFilter(projectId) };
     if (dateFilter) base.createdAt = dateFilter;
 
     const total = await coll.countDocuments(base);
@@ -81,8 +87,12 @@ export const analyticsService = {
     };
   },
 
-  async getRecentActivity(limit = 10) {
-    return getActivitiesCollection().find().sort({ createdAt: -1 }).limit(limit).toArray();
+  async getRecentActivity(projectId: string, limit = 10) {
+    return getActivitiesCollection()
+      .find(buildProjectFilter(projectId))
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
   },
 
   async trackActivity(activity: any) {

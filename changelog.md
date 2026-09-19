@@ -5,6 +5,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v3.8.1 — 2026-09-19
+
+> 🔒 **El Dashboard deja de mezclar datos de todos los proyectos: métricas autenticadas y acotadas al proyecto activo**
+
+---
+
+### 🔒 Seguridad
+- **Endpoints del dashboard autenticados**: `GET /api/dashboard/stats|volume|channels|activities` ahora exigen token JWT (middleware `authenticate`) y resuelven el proyecto por petición (`X-Project-Id` o `activeProjectId`); sin credenciales responden `401`.
+
+### 🐛 Corregido
+- **Aislamiento por proyecto en las métricas**: `analyticsService.getStats`, `getVolume`, `getChannelDistribution` y `getRecentActivity` reciben `projectId` y lo incorporan a todos sus filtros (`countDocuments`, `$match`, `find`), combinándolo con el rango de fechas. La tarjeta "Conversaciones totales" ya no mezcla datos de otros proyectos.
+- **Servicio de dashboard del frontend**: los cuatro métodos de `dashboard.service.ts` envían `Authorization` y `X-Project-Id` vía `authService.getHeaders()`, por lo que al cambiar de proyecto las métricas se recalculan para el nuevo proyecto.
+
+### 🧪 Pruebas
+- Spec e2e del dashboard ampliado: crea dos proyectos dedicados, genera tráfico en uno y comprueba que las métricas del otro no se alteran; además verifica que una petición sin autenticación es rechazada (`401`). Suite `pnpm test:e2e dashboard` en verde (4/4).
+
+### 📚 Documentación
+- `AGENTS.md` (endpoints del dashboard autenticados y acotados al proyecto) y `changelog.md` actualizados. Versión del proyecto a **v3.8.1**.
+
+---
+
 ## v3.8.0 — 2026-09-19
 
 > 🌐 **La interfaz deja de mezclar idiomas: i18n con español por defecto e inglés, selector en vivo y chat público con idioma propio**
