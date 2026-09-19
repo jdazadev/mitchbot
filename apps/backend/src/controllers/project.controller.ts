@@ -69,6 +69,10 @@ const createProjectSchema = z.object({
     options: z.object({
       autoCreateContact: z.boolean().optional(),
     }).optional(),
+    brand: z.object({
+      color: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'El color debe ser un HEX válido'),
+      logo: z.string().max(200_000, 'El logo es demasiado grande').optional(),
+    }).optional(),
   }).optional(),
 });
 
@@ -117,6 +121,10 @@ const updateProjectSchema = z.object({
     }).optional(),
     options: z.object({
       autoCreateContact: z.boolean().optional(),
+    }).optional(),
+    brand: z.object({
+      color: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'El color debe ser un HEX válido').optional(),
+      logo: z.string().max(200_000, 'El logo es demasiado grande').nullable().optional(),
     }).optional(),
   }).optional(),
 });

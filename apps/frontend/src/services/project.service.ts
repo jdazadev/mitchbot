@@ -36,6 +36,10 @@ export interface ProjectConfig {
   options?: {
     autoCreateContact?: boolean;
   };
+  brand?: {
+    color?: string;
+    logo?: string;
+  };
 }
 
 export interface Project {
@@ -49,7 +53,7 @@ export interface Project {
     channels: { whatsapp: boolean; instagram: boolean; web: boolean };
     messages: { welcome: string; goodbye: string };
     options: { autoCreateContact: boolean };
-  };
+  } & ProjectConfig;
   status: string;
   createdAt: string;
   updatedAt: string;

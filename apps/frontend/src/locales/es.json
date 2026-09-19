@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "BotMaster",
+    "name": "Mitchbot",
     "tagline": "Panel de analítica"
   },
   "nav": {
@@ -579,6 +579,20 @@
       "agentUpdated": "Agente actualizado correctamente",
       "channelsUpdated": "Canales actualizados",
       "optionsUpdated": "Opciones actualizadas"
+    },
+    "brand": {
+      "title": "Identidad del proyecto",
+      "subtitle": "Color, nombre y logo que se aplican a toda la interfaz (sidebar, botones y acentos).",
+      "nameLabel": "Nombre del proyecto",
+      "namePlaceholder": "Ej. Estudio La Rural",
+      "colorLabel": "Color de la marca",
+      "logoLabel": "Logo",
+      "uploadLogo": "Subir logo",
+      "removeLogo": "Quitar",
+      "logoHint": "PNG, JPG, SVG o WebP · máx. 150 KB",
+      "saved": "Identidad del proyecto actualizada",
+      "error": "No se pudo guardar la identidad",
+      "logoTooBig": "El logo supera 150 KB"
     }
   },
   "setup": {
@@ -753,5 +767,9 @@
       "send": "Enviar",
       "start": "Iniciar Chat"
     }
+  },
+  "sidebar": {
+    "operation": "Operación",
+    "organization": "Organización"
   }
 }

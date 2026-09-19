@@ -1,0 +1,161 @@
+{
+  "title": "Elige el mundo visual de Mitchbot · tanda 2",
+  "question": "Nueva mano tras tu re-roll (el Prospecto Cívico queda anclado y sigue disponible). Elige o re-lanza de nuevo.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Manifiesto de Carga",
+      "kicker": "THE ROLL",
+      "lineage": "manifiesto de carga / despacho de estiba regional",
+      "thesis": "Cada conversación de cliente es una pieza de carga en el manifiesto del día: se registra, se despacha, se actúa y queda sellada; el operador trabaja una tabla viva de despacho.",
+      "palette": [
+        "#F4F1EA",
+        "#20281F",
+        "<accent del proyecto>",
+        "#8A5A2B"
+      ],
+      "materials": [
+        "etiquetas manila",
+        "tinta estenográfica industrial",
+        "retícula de estiba",
+        "un solo radio de panel"
+      ],
+      "viewport": "Tablero de manifiesto: bandeja de conversaciones como lista de despacho con etiquetas manila perforadas (canal, estado, prioridad) y la conversación activa abierta a la derecha a modo de pieza escaneada.",
+      "risk": "Metáfora industrial puede caer en nicho si las etiquetas dejan de ser funcionales.",
+      "raised": [
+        {
+          "from": "challenger-lexicon",
+          "raise": "Disciplina de léxico: ancho de texto por medida de caracteres, palíndromos guía al inicio de la vista y controles como marcas impresas."
+        },
+        {
+          "from": "challenger-warm",
+          "raise": "Presupuesto de color: un acento cálido que solo aparece donde hay acción posible — y es la variable que cada proyecto personaliza."
+        }
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "Riel de Tickets de Cocina",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "riel de comandas de cocina abierta",
+      "thesis": "La bandeja como riel de comandas: cada conversación un ticket colgado, pinzado al progreso, rojo si está atrasado.",
+      "palette": [
+        "#EFE9DD",
+        "#26221C",
+        "#C23823",
+        "<accent del proyecto>"
+      ],
+      "materials": [
+        "papel de comanda",
+        "pinzas por fila",
+        "rior metálico"
+      ],
+      "viewport": "Tickets colgando en el riel horizontal; arrastrar un ticket avanza su estado.",
+      "risk": "Metáfora gastronómica puede sentirse ajena a negocios no restauración.",
+      "case": "La urgencia siempre visible: la mejor guerra de estados para un centro de mensajería que se usa todo el día."
+    },
+    {
+      "id": "challenger-lexicon",
+      "label": "Léxico con Hombro y Lámina",
+      "verdict": "competitive",
+      "lineage": "página de léxico del siglo XIX",
+      "thesis": "La app como página de léxico: tipografía Miller, guías de navegación como encabezados de otra, color solo dentro de láminas con borde.",
+      "palette": [
+        "#F6F1E6",
+        "#1E1C18",
+        "#7A6248"
+      ],
+      "materials": [
+        "papel sin estucar",
+        "grabado a tinta",
+        "láminas acotadas"
+      ],
+      "viewport": "Texto a medida anotado, guía superior conductual, una placa acotada de color por sección.",
+      "case": "Legibilidad que no se doblega nada; el color del proyecto vive solo en la lámina/piñón central.",
+      "kept": "Encabezados guía recalculados con lo visible y marcas impresas como controles."
+    },
+    {
+      "id": "challenger-warm",
+      "label": "App Cálida de Consumidor",
+      "verdict": "competitive",
+      "lineage": "canon de app consumer moderna",
+      "thesis": "Supersficie de consumo de uso diario: suelo cálido, tarjetas de radio suave, y un único color de acción que solo aparece donde se puede pulsar.",
+      "palette": [
+        "#FBF7F2",
+        "#1F2429",
+        "<action color = accent del proyecto>"
+      ],
+      "materials": [
+        "tarjetas blancas",
+        "radios suaves grandes",
+        "sans humanista redondeada"
+      ],
+      "viewport": "Columna única de tarjetas sobre suelo cálido con tab inferior persistente.",
+      "case": "UF a diario (uso sostenido, bautizo del estrés es mínimo); su grosor hace del color personalizable protagonista de todas las conversations.",
+      "kept": "El accent no es decoración, solo acción: la pieza perfecta para la personalización de color por proyecto."
+    },
+    {
+      "id": "challenger-sixpack",
+      "label": "Panel de Vuelo Nocturno",
+      "verdict": "declined",
+      "lineage": "instrumentos de seis gauges de avión",
+      "palette": [
+        "#0B0D10",
+        "#F2F6F7",
+        "#8CF2C5"
+      ],
+      "materials": [
+        "glow",
+        "aguentas resaltes"
+      ],
+      "case": "Fusiona mal: la pícula-test de vuelo no identifica a operadores de chat.",
+      "kept": "La lectura en barrido (cross-check sweep) y tendencias gráficas en agujas."
+    },
+    {
+      "id": "pinned-civic",
+      "label": "Prospecto Cívico",
+      "kicker": "ANCLADO POR TI",
+      "verdict": "pinned",
+      "lineage": "prospecto institucional late-modern",
+      "thesis": "Blanco hueso, violeta de compromiso, bandas regladas por hairlines, una familia tipográfica en dos pesos.",
+      "palette": [
+        "#F7F7FA",
+        "#1B1547",
+        "#6B5CE7"
+      ],
+      "materials": [
+        "hairlines #E6E7EE",
+        "filas por bandas"
+      ],
+      "viewport": "Bandas horizontales regladas, todo en blanco hueso salvo una fila de color vivo.",
+      "case": "La dirección más elegante y contenida de la primera mano; lo anclas para que siga en contienda."
+    }
+  ],
+  "reroll": {
+    "registers": [
+      "safer",
+      "bolder"
+    ]
+  },
+  "buildPath": {
+    "value": "code",
+    "toggle": false
+  },
+  "canon": true,
+  "canonCard": {
+    "label": "El estándar de la categoría",
+    "thesis": "Lo que esta categoría envía: dashboard SaaS limpio con sidebar, cards y un azul corporativo — ejecutado impecablemente.",
+    "palette": [
+      "#FFFFFF",
+      "#111827",
+      "#2563EB"
+    ],
+    "materials": [
+      "clean grid",
+      "cards suaves"
+    ],
+    "viewport": "El arreglo que todo visitante espera, al máximo nivel.",
+    "risk": "Indistinguible de la competencia por diseño."
+  },
+  "steer": true
+}

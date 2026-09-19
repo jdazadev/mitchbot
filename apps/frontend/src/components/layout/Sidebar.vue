@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { authService, type User } from '../../services/auth.service';
 import { socketService } from '../../services/socket.service';
 import { useConversations } from '../../composables/useConversations';
+import { useBrand } from '../../composables/useBrand';
 
 const router = useRouter();
 const { t } = useI18n();
+const route = useRoute();
 const currentUser = ref<User | null>(null);
 const showUserMenu = ref(false);
 
 const { unreadTotal, loadConversations, bindConversationSocket } = useConversations();
+const { brand } = useBrand();
 
 const navItems = computed(() => {
   return [
@@ -28,6 +31,11 @@ const navItems = computed(() => {
     { name: t('nav.users'), icon: 'manage_accounts', href: '/users', testId: 'users' },
   ];
 });
+
+const orgItems = computed(() => [
+  { name: t('nav.settings'), icon: 'settings', href: '/settings', testId: 'settings' },
+  { name: t('nav.profile'), icon: 'person', href: '/profile', testId: 'profile' },
+]);
 
 onMounted(() => {
   currentUser.value = authService.getUser();
@@ -46,6 +54,8 @@ const userInitials = computed(() => {
     .slice(0, 2);
 });
 
+const projectInitial = computed(() => (brand.value.name || 'M').trim().charAt(0).toUpperCase());
+
 function toggleUserMenu() {
   showUserMenu.value = !showUserMenu.value;
 }
@@ -59,93 +69,115 @@ async function handleLogout() {
 
 <template>
   <aside
-    class="hidden md:flex w-72 flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 transition-colors duration-200"
+    class="hidden md:flex w-72 flex-none flex-col border-r border-warm-line bg-warm-surface transition-colors duration-200"
   >
     <div class="flex flex-col h-full">
-      <div class="p-6">
-        <div class="flex items-center gap-3">
-          <div
-            class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-          >
-            <span class="material-symbols-outlined text-[24px]">smart_toy</span>
-          </div>
-          <div class="flex flex-col">
-            <h1
-              class="text-xl font-bold leading-tight tracking-tight text-slate-900 dark:text-white"
+      <div class="p-5">
+        <div class="flex items-center gap-3 px-1">
+          <template v-if="brand.logo">
+            <img
+              :src="brand.logo"
+              alt=""
+              class="h-11 w-11 rounded-[12px_6px_12px_6px] object-cover shadow-[--shadow-card]"
+            />
+          </template>
+          <template v-else>
+            <div
+              class="flex h-11 w-11 items-center justify-center rounded-[12px_6px_12px_6px] text-[18px] font-extrabold"
+              :style="{ background: 'var(--brand)', color: 'var(--brand-contrast)' }"
             >
-              {{ t('app.name') }}
+              {{ projectInitial }}
+            </div>
+          </template>
+          <div class="flex flex-col min-w-0">
+            <h1
+              class="text-[17px] font-extrabold leading-tight text-warm-ink truncate"
+            >
+              {{ brand.name || t('app.name') }}
             </h1>
-            <p class="text-xs font-medium text-slate-400 dark:text-slate-500">
-              {{ t('app.tagline') }}
+            <p class="text-[11px] font-bold text-warm-ink3 truncate">
+              {{ brand.name ? t('app.tagline') : t('app.name') }}
             </p>
           </div>
         </div>
       </div>
 
-      <nav class="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-1.5">
+      <nav class="flex-1 overflow-y-auto px-4 py-2 flex flex-col gap-1">
+        <p class="px-3 pb-1 pt-3 text-[10px] font-extrabold uppercase tracking-[0.14em] text-warm-ink3">
+          {{ t('sidebar.operation') }}
+        </p>
         <router-link
           v-for="item in navItems"
           :key="item.name"
           :to="item.href"
           :data-testid="'nav-' + item.testId"
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 hover:text-slate-900 dark:hover:bg-slate-700/50 dark:hover:text-slate-200 transition-colors group"
-          active-class="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium"
+          class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-warm-ink2 hover:bg-warm-deep hover:text-warm-ink transition-all duration-150"
+          active-class="nav-active"
         >
           <span
-            class="material-symbols-outlined group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
-            :class="{ filled: $route.path === item.href }"
+            class="material-symbols-outlined text-[20px] transition-colors"
+            :class="{ filled: route.path === item.href }"
+            :style="route.path === item.href ? { color: 'var(--brand)' } : {}"
           >
             {{ item.icon }}
           </span>
-          <span class="text-sm">{{ item.name }}</span>
+          <span class="text-sm font-bold">{{ item.name }}</span>
           <span
             v-if="item.badge"
-            class="ml-auto bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-full"
+            class="ml-auto text-[11px] font-extrabold px-2 py-0.5 rounded-full"
+            :style="{ background: 'var(--brand)', color: 'var(--brand-contrast)' }"
           >
             {{ item.badge }}
           </span>
         </router-link>
       </nav>
 
-      <div class="p-4 border-t border-slate-100 dark:border-slate-800">
-        <router-link
-          to="/settings"
-          data-testid="nav-settings"
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 hover:text-slate-900 dark:hover:bg-slate-700/50 dark:hover:text-slate-200 transition-colors group mb-2"
-          active-class="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium"
-        >
-          <span
-            class="material-symbols-outlined group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
-            >settings</span
+      <div class="p-4">
+        <div>
+          <router-link
+            v-for="item in orgItems"
+            :key="item.name"
+            :to="item.href"
+            :data-testid="'nav-' + item.testId"
+            class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-warm-ink2 hover:bg-warm-deep hover:text-warm-ink transition-all duration-150"
+            active-class="nav-active"
           >
-          <span class="text-sm font-medium">{{ t('nav.settings') }}</span>
-        </router-link>
+            <span
+              class="material-symbols-outlined text-[20px]"
+              :style="route.path === item.href ? { color: 'var(--brand)' } : {}"
+              >{{ item.icon }}</span
+            >
+            <span class="text-sm font-bold">{{ item.name }}</span>
+          </router-link>
+        </div>
 
-        <!-- User Card con menú -->
-        <div class="relative">
+        <!-- Tarjeta de usuario con menú -->
+        <div class="relative mt-3">
           <div
             @click="toggleUserMenu"
-            class="flex items-center gap-3 px-3 py-3 mt-2 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+            class="flex items-center gap-3 px-3 py-3 rounded-2xl bg-warm-ground hover:bg-warm-deep cursor-pointer transition-colors duration-150"
           >
             <div
-              class="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center ring-2 ring-white dark:ring-slate-700 text-white text-xs font-bold"
+              class="h-9 w-9 rounded-[12px_5px_12px_5px] flex items-center justify-center text-white text-xs font-extrabold"
+              :style="{ background: 'var(--brand)' }"
             >
               {{ userInitials }}
             </div>
             <div class="flex flex-col min-w-0 flex-1">
-              <p
-                class="text-sm font-semibold truncate text-slate-900 dark:text-white"
-              >
+              <p class="text-sm font-bold truncate text-warm-ink">
                 {{ currentUser?.name || t('nav.userPlaceholder') }}
               </p>
-              <p class="text-xs text-slate-500 truncate dark:text-slate-400">
+              <p class="text-[11px] text-warm-ink3 truncate font-bold">
                 {{ currentUser?.email || '' }}
               </p>
             </div>
-            <span class="material-symbols-outlined text-slate-400 text-[18px] transition-transform" :class="{ 'rotate-180': showUserMenu }">expand_more</span>
+            <span
+              class="material-symbols-outlined text-warm-ink3 text-[18px] transition-transform duration-150"
+              :class="{ 'rotate-180': showUserMenu }"
+              >expand_more</span
+            >
           </div>
 
-          <!-- Dropdown Menu -->
           <Transition
             enter-active-class="transition duration-100 ease-out"
             enter-from-class="opacity-0 scale-95 translate-y-1"
@@ -156,20 +188,20 @@ async function handleLogout() {
           >
             <div
               v-if="showUserMenu"
-              class="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden z-50"
+              class="absolute bottom-full left-0 right-0 mb-2 rounded-2xl border border-warm-line bg-warm-surface shadow-[--shadow-pop] overflow-hidden z-50"
             >
               <router-link
                 to="/profile"
                 @click="showUserMenu = false"
-                class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-warm-ink2 hover:bg-warm-ground hover:text-warm-ink transition-colors"
               >
                 <span class="material-symbols-outlined text-[18px]">person</span>
                 {{ t('nav.profile') }}
               </router-link>
-              <div class="border-t border-slate-100 dark:border-slate-700"></div>
+              <div class="border-t border-warm-line"></div>
               <button
                 @click="handleLogout"
-                class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                class="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-[color:var(--danger)] hover:bg-[color:var(--danger-soft)] transition-colors"
               >
                 <span class="material-symbols-outlined text-[18px]">logout</span>
                 {{ t('nav.logout') }}
@@ -181,3 +213,13 @@ async function handleLogout() {
     </div>
   </aside>
 </template>
+
+<style scoped>
+.nav-active {
+  color: var(--brand-ink);
+}
+.nav-active:hover {
+  background: var(--brand-softer);
+  color: var(--brand-ink);
+}
+</style>

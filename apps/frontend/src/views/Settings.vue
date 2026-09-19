@@ -9,6 +9,7 @@ import {
   type ProviderConfig,
 } from '../services/settings.service';
 import { projectService, type Project } from '../services/project.service';
+import { useBrand, applyBrand } from '../composables/useBrand';
 
 // ===================== TABS =====================
 type TabId = 'agent' | 'info' | 'channels' | 'options';
@@ -212,6 +213,13 @@ onMounted(async () => {
     // Project
     if (projectData) {
       project.value = projectData;
+  const brandColor = projectData?.config?.brand?.color;
+  brandForm.value = {
+    color: brandColor || '#E86A33',
+    name: projectData.name || '',
+    logo: projectData.config?.brand?.logo || projectData.logo || null,
+  };
+  hasBrand.value = Boolean(brandColor || projectData.logo);
       projectSlugDraft.value = projectData.slug || '';
       if (projectData.config?.channels) {
         channels.value[0].enabled = projectData.config.channels.whatsapp ?? true;
@@ -332,6 +340,64 @@ function applyAgent(data: AgentData) {
       additionalInstructions: p?.additionalInstructions || '',
     },
   };
+}
+
+// ===================== IDENTIDAD DEL PROYECTO =====================
+const brandForm = ref<{ color: string; name: string; logo: string | null }>({
+  color: '#E86A33',
+  name: '',
+  logo: null,
+});
+const hasBrand = ref(false);
+const brandSwatches = ['#E86A33', '#2563EB', '#1F8A60', '#7B2FF2', '#C23823', '#0E7490', '#B07314', '#2E2A26'];
+
+const brandLogoInput = ref<HTMLInputElement | null>(null);
+
+function pickBrandLogo() {
+  brandLogoInput.value?.click();
+}
+
+function onBrandLogoChange(ev: Event) {
+  const file = (ev.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  if (file.size > 150_000) {
+    showErrorMsg(t('settings.brand.logoTooBig'));
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    brandForm.value.logo = String(reader.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleSaveBrand() {
+  if (!project.value?._id) return showErrorMsg(t('settings.errors.projectNotFound'));
+  saving.value = true;
+  try {
+    const updated = await projectService.updateProject({
+      name: brandForm.value.name.trim() || project.value.name,
+      logo: brandForm.value.logo || undefined,
+      config: {
+        ...project.value.config,
+        brand: {
+          color: brandForm.value.color,
+          logo: brandForm.value.logo || '',
+        },
+      },
+    });
+    project.value = updated;
+    applyBrand({
+      name: updated.name || null,
+      color: updated.config?.brand?.color || brandForm.value.color,
+      logo: updated.config?.brand?.logo || updated.logo || null,
+    });
+    showSuccessMsg(t('settings.brand.saved'));
+  } catch (err: any) {
+    showErrorMsg(err.message || t('settings.brand.error'));
+  } finally {
+    saving.value = false;
+  }
 }
 
 // ===================== CHANNELS =====================
@@ -459,6 +525,96 @@ async function handleSaveOptions() {
               {{ t('settings.info.copyLink') }}
             </button>
           </div>
+
+          <!-- Identidad del proyecto (nombre, color, logo) -->
+          <div class="mt-8 pt-6 border-t" style="border-color: var(--hairline)">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-extrabold uppercase tracking-[0.14em]" style="color: var(--ink-2)">{{ t('settings.brand.title') }}</h3>
+                <p class="text-xs font-bold" style="color: var(--ink-3)">{{ t('settings.brand.subtitle') }}</p>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-5 mt-5">
+              <!-- Nombre -->
+              <div>
+                <label class="text-xs font-extrabold uppercase mb-1.5 block" style="color: var(--ink-2)">{{ t('settings.brand.nameLabel') }}</label>
+                <input v-model="brandForm.name" :placeholder="t('settings.brand.namePlaceholder')" class="field w-full py-3" data-testid="brand-name" />
+              </div>
+
+              <!-- Color -->
+              <div>
+                <label class="text-xs font-extrabold uppercase mb-1.5 block" style="color: var(--ink-2)">{{ t('settings.brand.colorLabel') }}</label>
+                <div class="flex items-center gap-3 flex-wrap">
+                  <label
+                    class="relative w-11 h-11 rounded-xl cursor-pointer overflow-hidden"
+                    :style="{ background: brandForm.color, boxShadow: 'var(--shadow-card)' }"
+                    :aria-label="t('settings.brand.colorLabel')"
+                  >
+                    <input type="color" v-model="brandForm.color" class="absolute inset-0 opacity-0 cursor-pointer" data-testid="brand-color" />
+                  </label>
+                  <input
+                    v-model="brandForm.color"
+                    class="field w-32 font-mono uppercase"
+                    maxlength="7"
+                    data-testid="brand-color-hex"
+                  />
+                  <div class="flex gap-1.5 flex-wrap">
+                    <button
+                      v-for="swatch in brandSwatches"
+                      :key="swatch"
+                      type="button"
+                      @click="brandForm.color = swatch"
+                      class="w-7 h-7 rounded-lg transition-transform hover:scale-110"
+                      :class="brandForm.color.toLowerCase() === swatch ? 'ring-2 ring-offset-2' : ''"
+                      :style="{ background: swatch, borderColor: swatch, '--tw-ring-color': swatch }"
+                      :aria-label="`Color ${swatch}`"
+                    ></button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Logo -->
+              <div>
+                <label class="text-xs font-extrabold uppercase mb-1.5 block" style="color: var(--ink-2)">{{ t('settings.brand.logoLabel') }}</label>
+                <div class="flex items-center gap-4">
+                  <div
+                    class="w-16 h-16 rounded-[12px_6px_12px_6px] flex items-center justify-center overflow-hidden"
+                    :style="brandForm.logo ? { background: 'var(--surface)' } : { background: brandForm.color }"
+                    style-fallback=""
+                  >
+                    <img v-if="brandForm.logo" :src="brandForm.logo" alt="" class="w-full h-full object-cover" />
+                    <span v-else class="text-lg font-extrabold" :style="{ color: 'var(--brand-contrast)' }">
+                      {{ (brandForm.name || 'M').charAt(0).toUpperCase() }}
+                    </span>
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2">
+                      <button type="button" @click="pickBrandLogo" class="btn btn-ghost text-xs">
+                        <span class="material-symbols-outlined text-[16px]">upload</span>
+                        {{ t('settings.brand.uploadLogo') }}
+                      </button>
+                      <button v-if="brandForm.logo" type="button" @click="brandForm.logo = null" class="btn btn-ghost text-xs" :style="{ color: 'var(--danger)' }">
+                        {{ t('settings.brand.removeLogo') }}
+                      </button>
+                    </div>
+                    <p class="text-[11px] font-bold" style="color: var(--ink-3)">{{ t('settings.brand.logoHint') }}</p>
+                  </div>
+                  <input
+                    ref="brandLogoInput"
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    class="hidden"
+                    @change="onBrandLogoChange"
+                  />
+                </div>
+              </div>
+
+              <button @click="handleSaveBrand" :disabled="saving" class="btn btn-primary self-start" data-testid="brand-save">
+                {{ t('common.save') }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -545,10 +701,10 @@ async function handleSaveOptions() {
                     @click="toggleTrait(trait.value)"
                     class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
                     :class="isTraitSelected(trait.value)
-                      ? 'bg-blue-100 border-blue-300 text-blue-700'
+                      ? 'bg-[color:var(--brand-soft)] text-[color:var(--brand-ink)]'
                       : agentForm.personality.traits.length >= 3
-                        ? 'bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed'
-                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50'"
+                        ? 'bg-warm-ground border-warm-line text-warm-ink3 cursor-not-allowed'
+                        : 'bg-warm-ground border-warm-line text-warm-ink2 hover:border-[color:var(--brand-soft)] hover:bg-[color:var(--brand-softer)]'"
                   >
                     {{ trait.label }}
                   </button>

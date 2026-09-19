@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mitchbot · Prospecto Cívico</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#6B5CE7;         /* ESTA ES LA VARIABLE QUE PERSONALIZA CADA PROYECTO */
+    --accent-2:#7FD8D0;
+    --accent-3:#C9B8F0;
+    --ground:#F7F7FA;
+    --ink:#1B1547;
+    --ink-2:#4B5165;
+    --ink-3:#8A8FA3;
+    --hairline:#E6E7EE;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Archivo',sans-serif;background:var(--ground);color:var(--ink);font-size:14.5px;line-height:1.55;font-weight:400}
+  b,.w5{font-weight:500}
+  a{text-decoration:none;color:inherit}
+  .app{display:grid;grid-template-columns:1fr;min-height:100vh}
+  /* Topbar — sticky 72px, todo reglado por hairlines */
+  .top{position:sticky;top:0;z-index:5;background:rgba(247,247,250,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--hairline);height:64px;display:flex;align-items:center;padding:0 28px;gap:28px}
+  .top .mk{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:500;letter-spacing:-.2px}
+  .mk .sig{width:30px;height:30px;border-radius:8px 8px 1px 8px;background:linear-gradient(135deg,var(--accent-2),var(--accent-3) 45%,var(--accent));display:grid;place-items:center;color:#fff;font-size:13px;font-weight:500}
+  .topnav{display:flex;gap:26px;margin-left:8px}
+  .topnav a{font-size:13.5px;color:var(--ink-2);padding:4px 0;border-bottom:1px solid transparent}
+  .topnav a.on{color:var(--ink);border-bottom-color:var(--accent)}
+  .cta{margin-left:auto;background:var(--accent);color:#fff;font-size:13px;font-weight:500;padding:9px 18px;border-radius:8px;letter-spacing:.01em}
+
+  /* Bandas regladas */
+  .band{border-bottom:1px solid var(--hairline);padding:22px 28px;display:flex;align-items:center;gap:20px;background:var(--ground)}
+  .band h2{font-size:19px;font-weight:500;letter-spacing:-.3px}
+  .kicker{font-size:11px;letter-spacing:.16em;color:var(--ink-3);text-transform:uppercase;margin-bottom:3px}
+  .toolrow{margin-left:auto;display:flex;gap:0;border:1px solid var(--hairline);border-radius:8px;overflow:hidden;background:#fff}
+  .tool{padding:8px 16px;font-size:12.5px;color:var(--ink-2);border-left:1px solid var(--hairline)}
+  .tool:first-child{border-left:none}
+  .tool.on{color:#fff;background:var(--accent)}
+
+  .work{display:grid;grid-template-columns:330px 1fr;flex:1;min-height:0}
+  /* Índice de conversaciones — filas por bandas */
+  .idx{border-right:1px solid var(--hairline);display:flex;flex-direction:column;background:#fff}
+  .idxhead{display:flex;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--hairline);font-size:11px;letter-spacing:.14em;color:var(--ink-3);text-transform:uppercase}
+  .idxrow{padding:14px 20px;border-bottom:1px solid var(--hairline);display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
+  .idxrow:hover{background:var(--ground)}
+  .idxrow.on{box-shadow:inset 3px 0 0 var(--accent)}
+  .mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--ink-3);letter-spacing:.04em}
+  .idxrow .t{font-weight:500;font-size:14.5px}
+  .idxrow .s{color:var(--ink-2);font-size:12.8px;margin-top:2px}
+  .state{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:3px 10px;border-radius:4px;border:1px solid}
+  .st-auto{color:var(--accent);border-color:rgba(107,92,231,.35)}
+  .st-hum{color:#8A5A2B;border-color:#E3D5C4}
+  .st-clo{color:var(--ink-3);border-color:var(--hairline)}
+  .unread{width:18px;height:18px;border-radius:99px;background:var(--accent);color:#fff;font-size:10px;display:grid;place-items:center;font-weight:500}
+  /* Hilo — la vista de lectura reglada */
+  .thread{display:flex;flex-direction:column;min-width:0;background:var(--ground)}
+  .thead{display:flex;align-items:center;gap:14px;padding:16px 26px;background:#fff;border-bottom:1px solid var(--hairline)}
+  .thead .g{font-weight:500;font-size:15.5px}
+  .thead .m{font-size:12px;color:var(--ink-3);margin-top:1px}
+  .switch{margin-left:auto;display:flex;border:1px solid var(--hairline);border-radius:8px;overflow:hidden;background:#fff;font-size:12.5px}
+  .switch span{padding:7px 16px;border-left:1px solid var(--hairline)}
+  .switch .on{background:var(--accent);color:#fff}
+
+  .stream{flex:1;overflow:auto;padding:28px 0}
+  .tstack{max-width:760px;margin:0 auto;padding:0 26px;display:flex;flex-direction:column;gap:18px}
+  .rule{display:flex;align-items:center;gap:14px;color:var(--ink-3);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+  .rule::before,.rule::after{content:"";flex:1;border-top:1px solid var(--hairline)}
+  .mn{max-width:74%;border:1px solid var(--hairline);background:#fff;border-radius:10px;padding:14px 18px}
+  .mn .h{display:flex;gap:10px;align-items:baseline;margin-bottom:5px}
+  .mn .h .n{font-weight:500;font-size:13px}
+  .mn .h .m{font-size:11px;color:var(--ink-3)}
+  .mn .x{color:var(--ink-2)}
+  .rep{align-self:flex-end}
+  .rep .x{color:#fff}
+  .rep .n{color:rgba(255,255,255,.75)}
+  .mn.rep{background:var(--accent);border-color:var(--accent)}
+  .pending{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-3)}
+  .pending .bar{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:p 1.2s infinite}
+  @keyframes p{50%{opacity:.25}}
+
+  .composer{display:flex;border-top:1px solid var(--hairline);background:#fff;padding:16px 26px}
+  .cin{max-width:760px;width:100%;margin:0 auto;display:flex;gap:10px}
+  .cin input{flex:1;border:1px solid var(--hairline);border-radius:8px;padding:11px 16px;font:inherit;color:var(--ink);background:#fff}
+  .cin button{background:var(--accent);border:none;color:#fff;border-radius:8px;padding:0 22px;font:inherit;font-size:13.5px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="mk"><span class="sig">M</span> <span>Mitchbot</span></div>
+    <nav class="topnav"><a href="#">Dashboard</a><a class="on" href="#">Messaging</a><a href="#">Clients</a><a href="#">Brain</a><a href="#">Agents</a><a href="#">Settings</a></nav>
+    <a class="cta" href="#">Nuevo proyecto</a>
+  </header>
+  <div class="band">
+    <div><div class="kicker">CENTRO DE MENSAJERÍA · 8 NO LEÍDOS</div><h2>Conversaciones</h2></div>
+    <div class="toolrow" style="margin-left:auto;display:none"></div>
+    <div class="toolrow toolrow2" style="margin-left:auto;display:flex;gap:0;border:1px solid var(--hairline);border-radius:8px;overflow:hidden;background:#fff" id="chips">
+      <span class="tool on">Todos</span><span class="tool">WhatsApp</span><span class="tool">Instagram</span><span class="tool">Web</span>
+    </div>
+  </div>
+  <div class="work">
+    <section class="idx">
+      <div class="idxhead"><span>Cola del día</span><span class="mono">REC 09:18</span></div>
+      <div class="idxrow idxrow on">
+        <span class="mono">MG·04</span>
+        <div><div class="t">María Gómez</div><div class="s">Perfecto, le agendo la cita para el jueves a las 10:00.</div></div>
+        <span class="unread">2</span>
+      </div>
+      <div class="idxrow">
+        <span class="mono">LC·09</span>
+        <div><div class="t">Luis Carlos <span class="state st-auto">auto</span></div><div class="s">¿Tienen disponibilidad para el viernes?</div></div>
+        <span></span>
+      </div>
+      <div class="idxrow">
+        <span class="mono">AS·03</span>
+        <div><div class="t">Ana Sofía <span class="state st-hum">humano</span></div><div class="s">Gracias, quedo pendiente de la confirmación.</div></div>
+        <span class="unread">1</span>
+      </div>
+      <div class="idxrow">
+        <span class="mono">RT·11</span>
+        <div><div class="t">Ricardo T. <span class="state st-clo">cerrado</span></div><div class="s">Confirmó la entrega de su pedido.</div></div>
+        <span></span>
+      </div>
+      <div class="idxrow">
+        <span class="mono">PR·07</span>
+        <div><div class="t">Paola R. <span class="state st-auto">auto</span></div><div class="s">El pedido #2311 quedó confirmado.</div></div>
+        <span></span>
+      </div>
+    </section>
+    <section class="thread">
+      <div class="thead">
+        <div><div class="g">María Gómez</div><div class="m">WhatsApp · Conversación MG·04 · auto-pilot</div></div>
+        <div class="switch"><span class="on">Auto-pilot</span><span>Tomar control</span></div>
+      </div>
+      <div class="stream"><div class="tstack">
+        <div class="rule">Hoy</div>
+        <div class="mn"><div class="h"><span class="n">María Gómez</span><span class="m">10:19</span></div>
+          <div class="x">Hola! Necesito reprogramar mi cita del jueves, tengo un viaje.</div></div>
+        <div class="mn"><div class="h"><span class="n">María Gómez</span><span class="m">10:20</span></div>
+          <div class="x">Cualquier hora del viernes también me sirve.</div></div>
+        <div class="mn rep"><div class="h"><span class="n">Mitchbot</span><span class="m">10:24</span></div>
+          <div class="x">Claro, María. Le reprogramo para el jueves a las 10:00. ¿Le va bien así?</div></div>
+        <div class="mn"><div class="h"><span class="n">María Gómez</span><span class="m">10:25</span></div>
+          <div class="x">Perfecto, gracias!</div></div>
+        <div class="pending"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+      </div></div>
+      <div class="composer"><div class="cin"><input placeholder="Escribe un mensaje…"><button>Enviar</button></div></div>
+    </section>
+  </div>
+</div>
+</body>
+</html>

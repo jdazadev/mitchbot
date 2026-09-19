@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "BotMaster",
+    "name": "Mitchbot",
     "tagline": "Analytics Panel"
   },
   "nav": {
@@ -579,6 +579,20 @@
       "agentUpdated": "Agent updated successfully",
       "channelsUpdated": "Channels updated",
       "optionsUpdated": "Options updated"
+    },
+    "brand": {
+      "title": "Project identity",
+      "subtitle": "Color, name and logo applied across the interface (sidebar, buttons and accents).",
+      "nameLabel": "Project name",
+      "namePlaceholder": "e.g. La Rural Studio",
+      "colorLabel": "Brand color",
+      "logoLabel": "Logo",
+      "uploadLogo": "Upload logo",
+      "removeLogo": "Remove",
+      "logoHint": "PNG, JPG, SVG or WebP · max 150 KB",
+      "saved": "Project identity updated",
+      "error": "Could not save project identity",
+      "logoTooBig": "Logo exceeds 150 KB"
     }
   },
   "setup": {
@@ -753,5 +767,9 @@
       "send": "Send",
       "start": "Start Chat"
     }
+  },
+  "sidebar": {
+    "operation": "Operations",
+    "organization": "Organization"
   }
 }

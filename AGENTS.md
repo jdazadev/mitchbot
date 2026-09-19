@@ -12,7 +12,15 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v3.9.0
+**Versión actual del proyecto:** v4.0.0
+
+---
+
+## Sistema de Diseño (v4.0.0 "App Cálida")
+
+- **Tokens** (`apps/frontend/src/style.css`): paleta CSS con suelo cálido (`--ground` `#fbf7f2`), tinta parda (`--ink-1 #2e2a26`), hairlines cálidas y componentes base (`.card`, `.btn`, `.btn-primary`, `.btn-ghost`, `.field`, `.stamp`). Tipografía Nunito, radios por rol (`--r-card`, `--r-bubble`, `--r-seal`) y sombras difusas.
+- **Identidad de marca por proyecto** (`apps/frontend/src/composables/useBrand.ts`): nombre, color y logo se configuran en **Configuración → Identidad** y persisten en `project.config.brand` (validado con Zod en `project.controller.ts`, logo hasta 200 KB). `useBrand` inyecta las variables `--brand-*` en `:root` (HSL + variantes `hover`/`deep`/`soft`/`softer`/`ink`), calcula `--brand-contrast` según luminancia y teñe el favicon con canvas. Se carga el config del proyecto al iniciar la app, así que cambiar el color re-tematiza la app completa en vivo.
+- **Migración gradual de vistas**: las clases `blue-*` de Tailwind se mapean al acento de marca y las utilidades `warm-*` exponen los tokens (`tailwind.config.js`). Vistas ya migradas al nuevo sistema: Layout (Sidebar/Topbar/DashboardLayout), Messaging y Settings. El resto sigue funcionando vía los mapeos.
 
 ---
 

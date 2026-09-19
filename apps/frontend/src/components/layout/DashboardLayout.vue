@@ -11,7 +11,7 @@ defineProps<{
   <div class="flex h-screen w-full overflow-hidden">
     <Sidebar />
     <main
-      class="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-50 dark:bg-slate-900"
+      class="flex-1 flex flex-col h-full overflow-hidden relative bg-warm-ground"
     >
       <Topbar />
       <div class="flex-1 overflow-y-auto" :class="{ 'p-6 md:p-8': !noPadding }">

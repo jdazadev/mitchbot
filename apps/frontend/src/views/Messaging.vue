@@ -326,12 +326,12 @@ function onInsights(data: { conversationId: string; insights: ConversationInsigh
 const sentimentMeta = computed(() => {
   const sentiment = insights.value?.sentiment || "neutral";
   if (sentiment === "positive") {
-    return { label: t("messaging.insights.sentiment.positive"), class: "text-green-600 bg-green-50 border-green-100" };
+    return { label: t("messaging.insights.sentiment.positive"), class: "stamp", style: "color: var(--ok); background: var(--ok-soft)" };
   }
   if (sentiment === "negative") {
-    return { label: t("messaging.insights.sentiment.negative"), class: "text-red-600 bg-red-50 border-red-100" };
+    return { label: t("messaging.insights.sentiment.negative"), class: "stamp", style: "color: var(--danger); background: var(--danger-soft)" };
   }
-  return { label: t("messaging.insights.sentiment.neutral"), class: "text-amber-600 bg-amber-50 border-amber-100" };
+  return { label: t("messaging.insights.sentiment.neutral"), class: "stamp", style: "color: var(--warn); background: var(--warn-soft)" };
 });
 
 const sentimentBars = computed(() => {
@@ -442,13 +442,13 @@ function statusLabel(status?: string) {
 
 function statusClass(status?: string) {
   const map: Record<string, string> = {
-    success: 'text-emerald-600',
-    error: 'text-red-600',
-    cancelled: 'text-slate-400',
-    needs_confirmation: 'text-amber-600',
-    pending: 'text-amber-600',
+    success: 'text-[color:var(--ok)]',
+    error: 'text-[color:var(--danger)]',
+    cancelled: 'text-warm-ink3',
+    needs_confirmation: 'text-[color:var(--warn)]',
+    pending: 'text-[color:var(--warn)]',
   };
-  return status ? (map[status] || 'text-slate-500') : 'text-slate-500';
+  return status ? (map[status] || 'text-warm-ink2') : 'text-warm-ink2';
 }
 
 function confirmTool(msg: ChatMessage, action: 'confirm' | 'cancel') {
@@ -563,22 +563,22 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex h-full bg-white overflow-hidden">
+  <div class="flex h-full overflow-hidden">
     <!-- Inbox Column -->
     <aside
-      class="w-80 flex-none bg-white border-r border-slate-200 flex flex-col"
+      class="w-80 flex-none bg-warm-surface border-r border-warm-line flex flex-col"
     >
-      <div class="p-4 border-b border-slate-100">
+      <div class="p-4 border-b border-warm-line">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold tracking-tight text-slate-900">{{ t("messaging.inbox.title") }}</h2>
+          <h2 class="text-xl font-bold tracking-tight text-warm-ink">{{ t("messaging.inbox.title") }}</h2>
         </div>
         <div class="relative mb-3 group">
-          <span class="absolute left-3 top-2.5 text-slate-400">
+          <span class="absolute left-3 top-2.5 text-warm-ink3">
             <span class="material-symbols-outlined text-[18px]">search</span>
           </span>
           <input
             v-model="searchQuery"
-            class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+            class="field pl-9 pr-4 py-2.5 transition-all" style="background: var(--ground)" 
             :placeholder="t('messaging.inbox.searchPlaceholder')"
             type="text"
           />
@@ -589,10 +589,10 @@ onUnmounted(() => {
             :key="channel"
             @click="setActiveChannel(channel)"
             :class="[
-              'px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5',
+              'px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors flex items-center gap-1.5',
               activeChannel === channel
-                ? 'bg-slate-900 text-white'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50',
+                ? 'bg-[color:var(--brand)] text-[color:var(--brand-contrast)]'
+                : 'bg-warm-surface border border-warm-line text-warm-ink2 hover:bg-warm-deep',
             ]"
           >
             <span
@@ -605,23 +605,23 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="flex-1 overflow-y-auto">
-        <div v-if="isLoadingChats" class="p-4 text-center text-slate-400 text-sm">
+        <div v-if="isLoadingChats" class="p-4 text-center text-warm-ink3 text-sm font-bold">
           {{ t("messaging.inbox.loading") }}
         </div>
-        <div v-else-if="chats.length === 0" class="p-4 text-center text-slate-400 text-sm">
+        <div v-else-if="chats.length === 0" class="p-4 text-center text-warm-ink3 text-sm font-bold">
           {{ t("messaging.inbox.empty") }}
         </div>
-        <div v-else-if="filteredChats.length === 0" class="p-4 text-center text-slate-400 text-sm">
+        <div v-else-if="filteredChats.length === 0" class="p-4 text-center text-warm-ink3 text-sm font-bold">
           {{ t("messaging.inbox.noMatches") }}
         </div>
         <div
           v-for="chat in filteredChats"
           :key="chat._id"
           :class="[
-            'group flex items-start gap-3 p-4 cursor-pointer transition-colors border-b border-slate-50 border-l-4',
+            'group flex items-start gap-3 p-4 cursor-pointer transition-colors border-b border-warm-line',
             chat.active
-              ? 'bg-blue-50/50 border-blue-600'
-              : 'hover:bg-slate-50 border-transparent',
+              ? 'bg-[color:var(--brand-softer)] active-row'
+              : 'hover:bg-warm-ground',
           ]"
           @click="selectChat(chat)"
         >
@@ -631,16 +631,16 @@ onUnmounted(() => {
               :style="{ backgroundImage: `url(${chat.avatar})` }"
             ></div>
             <div
-              class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 border border-slate-100"
+              class="absolute -bottom-1 -right-1 rounded-full p-0.5 border border-warm-line" style="background: var(--surface)"
             >
               <span
                 :class="[
                   'material-symbols-outlined text-[12px] rounded-full p-0.5',
                   chat.platform === 'WhatsApp'
-                    ? 'text-green-600 bg-green-100'
+                    ? 'text-[color:var(--ok)]'
                     : chat.platform === 'Instagram'
-                      ? 'text-purple-600 bg-purple-100'
-                      : 'text-blue-600 bg-blue-100',
+                      ? 'text-[color:var(--brand-ink)]'
+                      : 'text-[color:var(--ok)]',
                 ]"
                 >{{
                   chat.platform === "WhatsApp" ? "call" : chat.platform === "Instagram" ? "photo_camera" : "language"
@@ -654,8 +654,8 @@ onUnmounted(() => {
                 :class="[
                   'text-sm line-clamp-1',
                   chat.active
-                    ? 'font-bold text-slate-900'
-                    : 'font-semibold text-slate-900',
+                    ? 'font-extrabold text-warm-ink'
+                    : 'font-bold text-warm-ink',
                 ]"
               >
                 {{ chat.name }}
@@ -663,7 +663,7 @@ onUnmounted(() => {
               <span
                 :class="[
                   'text-[11px] whitespace-nowrap',
-                  chat.active ? 'text-slate-500 font-medium' : 'text-slate-400',
+                  chat.active ? 'text-warm-ink2 font-bold' : 'text-warm-ink3 font-bold',
                 ]"
                 >{{ chat.time }}</span
               >
@@ -671,7 +671,7 @@ onUnmounted(() => {
             <p
               :class="[
                 'text-xs line-clamp-1',
-                chat.active ? 'text-slate-600 font-medium' : 'text-slate-500',
+                chat.active ? 'text-warm-ink2 font-medium' : 'text-warm-ink2',
               ]"
             >
               {{ chat.message }}
@@ -682,20 +682,20 @@ onUnmounted(() => {
                 :class="[
                   'px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide border',
                   chat.tagColor === 'blue'
-                    ? 'bg-blue-100 text-blue-700 font-bold border-transparent'
-                    : 'bg-slate-100 text-slate-500 border-slate-200 font-medium',
+                    ? 'bg-[color:var(--brand-soft)] text-[color:var(--brand-ink)] font-extrabold border-transparent'
+                    : 'bg-warm-deep text-warm-ink2 border-warm-line font-bold',
                 ]"
                 >{{ chat.tag }}</span
               >
               <span
                 v-if="!chat.isContactCreated"
-                class="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-100 font-bold"
+                class="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide bg-[color:var(--warn-soft)] text-[color:var(--warn)] border border-transparent font-extrabold"
               >
                 {{ t("messaging.contact.noContact") }}
               </span>
               <span
                 v-if="chat.unreadCount"
-                class="ml-auto bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                class="ml-auto text-[10px] font-extrabold px-1.5 py-0.5 rounded-full" :style="{ background: 'var(--brand)', color: 'var(--brand-contrast)' }" 
               >
                 {{ chat.unreadCount }}
               </span>
@@ -706,27 +706,27 @@ onUnmounted(() => {
     </aside>
 
     <!-- Chat Main -->
-    <main class="flex-1 flex flex-col min-w-[400px] bg-white relative">
+    <main class="flex-1 flex flex-col min-w-[400px] relative">
       <div
         v-if="!selectedChat"
-        class="flex-1 flex items-center justify-center text-slate-400"
+        class="flex-1 flex items-center justify-center text-warm-ink3 font-bold"
       >
         {{ t("messaging.chat.selectPrompt") }}
       </div>
       <template v-else>
         <header
-          class="h-16 flex-none border-b border-slate-200 flex items-center justify-between px-6 bg-white z-10 sticky top-0"
+          class="h-16 flex-none border-b border-warm-line flex items-center justify-between px-6 bg-warm-surface z-10 sticky top-0"
         >
           <div class="flex items-center gap-3">
             <div class="flex flex-col">
               <h1
-                class="text-base font-bold text-slate-900 flex items-center gap-2"
+                class="text-base font-extrabold text-warm-ink flex items-center gap-2"
               >
                 {{ selectedChat.name }}
               </h1>
-              <div class="flex items-center gap-1.5 text-xs text-slate-500">
+              <div class="flex items-center gap-1.5 text-xs text-warm-ink2 font-bold">
                 <span
-                  class="material-symbols-outlined text-[14px] text-green-600"
+                  class="material-symbols-outlined text-[14px]" :style="{ color: 'var(--ok)' }"
                   >{{
                     selectedChat.platform === "WhatsApp"
                       ? "call"
@@ -736,7 +736,7 @@ onUnmounted(() => {
                   }}</span
                 >
                 <span>{{ selectedChat.platform }}</span>
-                <span v-if="!selectedChat.isContactCreated" class="text-amber-500 font-bold ml-2">
+                <span v-if="!selectedChat.isContactCreated" class="ml-2 font-extrabold" :style="{ color: 'var(--warn)' }">
                   • {{ t("messaging.contact.noContact") }}
                 </span>
               </div>
@@ -745,25 +745,25 @@ onUnmounted(() => {
           <div class="flex items-center gap-3">
             <div
               v-if="selectedChat.mode === 'auto_pilot'"
-              class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100"
+              class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[color:var(--brand-softer)]"
             >
-              <span class="material-symbols-outlined text-blue-600 text-[18px]"
+              <span class="material-symbols-outlined text-[18px]" :style="{ color: 'var(--brand-ink)' }"
                 >smart_toy</span
               >
               <span
-                class="text-xs font-bold text-blue-700 uppercase tracking-wider"
+                class="text-xs font-extrabold uppercase tracking-wider" :style="{ color: 'var(--brand-ink)' }"
                 >{{ t("messaging.mode.autoPilotOn") }}</span
               >
             </div>
             <div
               v-else
-              class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200"
+              class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[color:var(--warn-soft)]"
             >
-              <span class="material-symbols-outlined text-amber-600 text-[18px]"
+              <span class="material-symbols-outlined text-[18px]" :style="{ color: 'var(--warn)' }"
                 >support_agent</span
               >
               <span
-                class="text-xs font-bold text-amber-700 uppercase tracking-wider"
+                class="text-xs font-extrabold uppercase tracking-wider" :style="{ color: 'var(--warn)' }"
                 >{{ t("messaging.mode.humanTakeover") }}</span
               >
             </div>
@@ -771,9 +771,9 @@ onUnmounted(() => {
         </header>
         <div
           id="chat-messages-container"
-          class="flex-1 overflow-y-auto p-6 flex flex-col scroll-smooth bg-slate-50/50"
+          class="flex-1 overflow-y-auto p-6 flex flex-col scroll-smooth bg-warm-ground"
         >
-          <div v-if="isLoadingMessages" class="text-center text-slate-400 py-4">
+          <div v-if="isLoadingMessages" class="text-center text-warm-ink3 font-bold py-4">
             {{ t("messaging.chat.loadingMessages") }}
           </div>
           <template v-else>
@@ -784,7 +784,7 @@ onUnmounted(() => {
             >
               <div class="flex justify-center">
                 <span
-                  class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-medium text-slate-500"
+                  class="px-3 py-1 rounded-full bg-warm-deep border border-warm-line text-[10px] font-extrabold text-warm-ink2"
                   >{{ group.label }}</span
                 >
               </div>
@@ -800,24 +800,24 @@ onUnmounted(() => {
                 <template v-if="isToolMessage(msg)">
                   <div class="w-full flex justify-center">
                     <div
-                      class="max-w-[560px] w-full rounded-xl border p-4 shadow-sm"
+                      class="max-w-[560px] w-full rounded-2xl border p-4 shadow-[var(--shadow-card)]"
                       :class="msg.contentType === 'confirmation_request'
-                        ? 'bg-amber-50 border-amber-200'
-                        : (msg.toolData?.status === 'error' ? 'bg-red-50 border-red-200' : 'bg-slate-100 border-slate-200')"
+                        ? 'bg-[color:var(--warn-soft)] border-[color:var(--warn-soft)]'
+                        : (msg.toolData?.status === 'error' ? 'bg-[color:var(--danger-soft)] border-[color:var(--danger-soft)]' : 'bg-warm-deep border-warm-line')"
                     >
                       <div class="flex items-center gap-2 mb-1">
-                        <span class="material-symbols-outlined text-[16px] text-slate-500">{{ toolIcon(msg) }}</span>
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ toolLabel(msg) }}</span>
+                        <span class="material-symbols-outlined text-[16px] text-warm-ink2">{{ toolIcon(msg) }}</span>
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-warm-ink2">{{ toolLabel(msg) }}</span>
                         <span v-if="msg.toolData?.status" class="ml-auto text-[10px] font-bold uppercase" :class="statusClass(msg.toolData.status)">{{ statusLabel(msg.toolData.status) }}</span>
                       </div>
-                      <p class="text-sm text-slate-700 leading-relaxed" v-html="renderMarkdown(msg.content)"></p>
+                      <p class="text-sm font-medium text-warm-ink leading-relaxed" v-html="renderMarkdown(msg.content)"></p>
 
                       <div v-if="msg.contentType === 'confirmation_request' && msg.toolData?.status === 'needs_confirmation'" class="flex flex-wrap gap-2 mt-3">
-                        <button @click="confirmTool(msg, 'confirm')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors">{{ t("common.confirm") }}</button>
-                        <button @click="confirmTool(msg, 'cancel')" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-white transition-colors">{{ t("common.cancel") }}</button>
-                        <button @click="modifyTool(msg)" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-white transition-colors">{{ t("messaging.tools.modify") }}</button>
+                        <button @click="confirmTool(msg, 'confirm')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold transition-colors" style="background: var(--ok); color: #fff">{{ t("common.confirm") }}</button>
+                        <button @click="confirmTool(msg, 'cancel')" class="px-3 py-1.5 rounded-xl border border-warm-line text-warm-ink2 text-xs font-extrabold hover:bg-warm-ground transition-colors">{{ t("common.cancel") }}</button>
+                        <button @click="modifyTool(msg)" class="px-3 py-1.5 rounded-xl border border-warm-line text-warm-ink2 text-xs font-extrabold hover:bg-warm-ground transition-colors">{{ t("messaging.tools.modify") }}</button>
                       </div>
-                      <div class="text-[10px] text-slate-400 mt-2">{{ msg.time }}</div>
+                      <div class="text-[10px] text-warm-ink3 mt-2">{{ msg.time }}</div>
                     </div>
                   </div>
                 </template>
@@ -829,10 +829,10 @@ onUnmounted(() => {
                 ></div>
                 <div
                   v-else
-                  class="w-8 h-8 flex-none rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 mt-auto"
+                  class="w-8 h-8 flex-none rounded-full flex items-center justify-center border border-warm-line mt-auto" style="background: var(--ground)"
                 >
                   <span
-                    class="material-symbols-outlined text-slate-500 text-[18px]"
+                    class="material-symbols-outlined text-[18px]" style="color: var(--ink-2)"
                     >{{ msg.isBot ? "smart_toy" : "person" }}</span
                   >
                 </div>
@@ -845,33 +845,36 @@ onUnmounted(() => {
                 >
                   <div
                     :class="[
-                      'rounded-2xl px-5 py-3 shadow-sm border relative',
+                      'rounded-[18px] px-5 py-3 shadow-[var(--shadow-card)] relative',
                       msg.isMe
-                        ? 'bg-slate-100 border-slate-200 rounded-br-none'
-                        : 'bg-blue-600 border-transparent text-white rounded-bl-none',
+                        ? 'rounded-br-[6px]'
+                        : 'bg-warm-surface rounded-bl-[6px]',
                     ]"
+                    :style="msg.isMe
+                      ? { background: 'var(--brand)', color: 'var(--brand-contrast)' }
+                      : undefined"
                   >
                     <div v-if="!msg.content" class="flex items-center gap-1 h-5">
-                      <div class="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-                      <div class="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-                      <div class="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                      <div class="w-1.5 h-1.5 bg-current rounded-full dot-pulse" style="animation-delay: 0ms"></div>
+                      <div class="w-1.5 h-1.5 bg-current rounded-full dot-pulse" style="animation-delay: 150ms"></div>
+                      <div class="w-1.5 h-1.5 bg-current rounded-full dot-pulse" style="animation-delay: 300ms"></div>
                     </div>
                     <p v-else class="text-sm leading-relaxed" v-html="renderMarkdown(msg.content)"></p>
                   </div>
                   <div
                     :class="[
                       'flex items-center gap-2 pr-1',
-                      msg.isMe ? 'flex-row-reverse' : 'pl-1',
+                      msg.isMe ? 'flex-row-reverse pr-1' : 'pl-1',
                     ]"
                   >
                     <span
                       :class="[
                         'text-xs font-semibold',
-                        msg.isMe ? 'text-blue-600' : 'text-slate-600',
+                        msg.isMe ? 'text-warm-ink2' : 'text-warm-ink2',
                       ]"
                       >{{ msg.senderName || msg.sender }}</span
                     >
-                    <span class="text-[10px] text-slate-400">{{ msg.time }}</span>
+                    <span class="text-[10px] text-warm-ink3">{{ msg.time }}</span>
                   </div>
                 </div>
                 </template>
@@ -881,21 +884,21 @@ onUnmounted(() => {
         </div>
 
         <!-- Input Area -->
-        <footer class="p-6 bg-white border-t border-slate-200 flex-none">
+        <footer class="p-6 bg-warm-surface border-t border-warm-line flex-none">
           <div
-            class="relative bg-white rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all shadow-sm p-2"
+            class="relative rounded-2xl border transition-all p-2" :style="{ background: 'var(--surface)', borderColor: 'var(--hairline)' }"
           >
             <textarea
               v-model="newMessage"
               @keydown.enter.prevent="handleSendMessage"
-              class="w-full bg-transparent border-none focus:ring-0 resize-none h-14 text-sm text-slate-800 placeholder:text-slate-400 p-2"
+              class="w-full bg-transparent border-none focus:ring-0 resize-none h-14 text-sm font-medium p-2" :style="{ color: 'var(--ink-1)' }"
               :placeholder="t('messaging.composer.sendPlaceholder')"
             ></textarea>
             <div class="flex justify-end items-center mt-1 px-1 pb-1 gap-2">
               <button
                 @click="toggleMode"
                 :disabled="isUpdatingMode"
-                class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors flex items-center gap-1.5 uppercase disabled:opacity-50"
+                class="px-3 py-1.5 rounded-xl border border-warm-line text-warm-ink2 text-xs font-extrabold hover:bg-warm-ground transition-colors flex items-center gap-1.5 uppercase disabled:opacity-50"
               >
                 <span class="material-symbols-outlined text-[16px]">{{
                   selectedChat.mode === "auto_pilot" ? "person" : "smart_toy"
@@ -904,7 +907,7 @@ onUnmounted(() => {
               </button>
               <button
                 @click="handleSendMessage"
-                class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 uppercase"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold hover:bg-[color:var(--brand-hover)] transition-all flex items-center gap-1.5 uppercase disabled:opacity-50" :style="{ background: 'var(--brand)', color: 'var(--brand-contrast)' }"
               >
                 <span class="material-symbols-outlined text-[16px]"
                   >send</span
@@ -920,27 +923,27 @@ onUnmounted(() => {
     <!-- Details Column -->
     <aside
       v-if="selectedChat"
-      class="hidden lg:flex w-80 flex-none bg-slate-50 border-l border-slate-200 flex flex-col overflow-y-auto"
+      class="hidden lg:flex w-80 flex-none bg-warm-ground border-l border-warm-line flex flex-col overflow-y-auto"
     >
       <div
-        class="p-6 border-b border-slate-200 flex flex-col items-center relative overflow-hidden bg-white"
+        class="p-6 border-b border-warm-line flex flex-col items-center relative overflow-hidden bg-warm-surface"
       >
         <div
           class="absolute inset-0 opacity-5"
           style="
-            background-image: radial-gradient(#2563eb 1px, transparent 1px);
+            background-image: radial-gradient(var(--brand-soft) 1px, transparent 1px);
             background-size: 20px 20px;
           "
         ></div>
         <div
-          class="relative z-10 w-20 h-20 rounded-full p-1 border border-slate-200 mb-3 bg-white shadow-sm"
+          class="relative z-10 w-20 h-20 rounded-full p-1 mb-3 shadow-[var(--shadow-card)]" style="border: 1px solid var(--hairline); background: var(--surface)"
         >
           <div
             class="w-full h-full rounded-full bg-cover bg-center"
             :style="{ backgroundImage: `url('${selectedChat.avatar}')` }"
           ></div>
           <div
-            class="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow-sm border border-slate-100"
+            class="absolute bottom-0 right-0 p-1 rounded-full border border-warm-line" style="background: var(--surface); box-shadow: var(--shadow-card)"
           >
             <div
               :class="`w-5 h-5 rounded-full bg-${selectedChat.platform === 'WhatsApp' ? 'green' : selectedChat.platform === 'Instagram' ? 'purple' : 'blue'}-500 flex items-center justify-center text-white`"
@@ -951,38 +954,38 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
-        <h2 class="text-lg font-bold text-slate-900 relative z-10">
+        <h2 class="text-lg font-extrabold text-warm-ink relative z-10">
           {{ selectedChat.name }}
         </h2>
-        <p class="text-sm text-slate-500 relative z-10 mb-3">
+        <p class="text-sm font-bold text-warm-ink2 relative z-10 mb-3">
           {{ selectedChat.clientInfo?.identifier || selectedChat.contactPhone || '' }}
         </p>
         <div class="flex flex-col gap-2 relative z-10 w-full">
           <div class="flex justify-center">
             <span
               v-if="selectedChat.isContactCreated"
-              class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wide border border-emerald-200"
+              class="px-2 py-0.5 stamp" style="background: var(--ok-soft); color: var(--ok)"
             >{{ t("messaging.contact.contactCreated") }}</span>
             <span
               v-else
-              class="px-2 py-0.5 rounded bg-amber-50 text-amber-600 text-[10px] font-bold uppercase tracking-wide border border-amber-200"
+              class="px-2 py-0.5 stamp" style="background: var(--warn-soft); color: var(--warn)"
             >{{ t("messaging.contact.noContact") }}</span>
           </div>
           <button
             v-if="!selectedChat.isContactCreated"
             @click="saveAsContact"
             :disabled="isSavingContact"
-            class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors disabled:opacity-50"
+            class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold hover:bg-[color:var(--brand-hover)] transition-colors disabled:opacity-50" :style="{ background: 'var(--brand)', color: 'var(--brand-contrast)' }" 
           >
             <span class="material-symbols-outlined text-[16px]">person_add</span>
             {{ isSavingContact ? t("common.saving") : t("messaging.contact.saveAsContact") }}
           </button>
         </div>
       </div>
-      <div class="p-5 border-b border-slate-200">
+      <div class="p-5 border-b border-warm-line">
         <div class="flex items-center justify-between mb-4">
           <h3
-            class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"
+            class="text-xs font-extrabold text-warm-ink3 uppercase tracking-[0.14em] flex items-center gap-2"
           >
             <span class="material-symbols-outlined text-[16px]">psychology</span>
             {{ t("messaging.insights.title") }}
@@ -990,35 +993,35 @@ onUnmounted(() => {
           <button
             @click="analyzeInsights"
             :disabled="isAnalyzingInsights"
-            class="text-[10px] font-bold uppercase tracking-wider text-blue-600 hover:text-blue-700 disabled:opacity-50 flex items-center gap-1"
+            class="text-[10px] font-extrabold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1" style="color: var(--brand-ink)"
           >
             <span class="material-symbols-outlined text-[14px]">refresh</span>
             {{ isAnalyzingInsights ? t("messaging.insights.analyzing") : t("messaging.insights.analyze") }}
           </button>
         </div>
 
-        <div v-if="isLoadingInsights" class="text-xs text-slate-400">{{ t("messaging.insights.loading") }}</div>
+        <div v-if="isLoadingInsights" class="text-xs text-warm-ink3 font-bold">{{ t("messaging.insights.loading") }}</div>
         <div
           v-else-if="!insights"
-          class="bg-white rounded-lg p-4 border border-dashed border-slate-300 text-center"
+          class="rounded-2xl p-4 text-center" style="border: 1.5px dashed var(--hairline); background: var(--surface)"
         >
-          <span class="material-symbols-outlined text-slate-300 text-[28px]">psychology_alt</span>
-          <p class="text-xs text-slate-400 mt-1">
+          <span class="material-symbols-outlined text-[28px]" :style="{ color: 'var(--hairline)' }">psychology_alt</span>
+          <p class="text-xs text-warm-ink3 mt-1">
             {{ t("messaging.insights.empty") }}
           </p>
         </div>
         <div v-else class="space-y-3">
-          <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+          <div class="rounded-2xl p-4 border border-warm-line shadow-[var(--shadow-card)]" style="background: var(--surface)">
             <div class="flex justify-between items-center mb-2">
-              <span class="text-xs font-medium text-slate-600">{{ t("messaging.insights.sentimentLabel") }}</span>
+              <span class="text-xs font-bold text-warm-ink2">{{ t("messaging.insights.sentimentLabel") }}</span>
               <span
-                class="text-xs font-bold px-2 py-0.5 rounded border"
+                class="text-xs font-extrabold px-2 py-0.5 rounded-full"
                 :class="sentimentMeta.class"
                 >{{ sentimentMeta.label }}</span
               >
             </div>
             <div
-              class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex"
+              class="h-1.5 w-full rounded-full overflow-hidden flex" style="background: var(--ground-deep)"
             >
               <div
                 v-for="bar in sentimentBars"
@@ -1033,7 +1036,7 @@ onUnmounted(() => {
       </div>
       <div class="p-5 flex-1">
         <h3
-          class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"
+          class="text-xs font-extrabold text-warm-ink3 uppercase tracking-[0.14em] mb-4 flex items-center gap-2"
         >
           <span class="material-symbols-outlined text-[16px]">database</span>
           {{ t("messaging.details.title") }}
@@ -1042,20 +1045,20 @@ onUnmounted(() => {
           <div
             v-for="det in details"
             :key="det.label"
-            class="flex items-center gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-sm"
+            class="flex items-center gap-3 p-3 rounded-xl border border-warm-line shadow-[var(--shadow-card)]" style="background: var(--surface)"
           >
             <div
-              class="w-8 h-8 rounded-md bg-slate-50 flex items-center justify-center text-slate-400"
+              class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--ground); color: var(--ink-3)"
             >
               <span class="material-symbols-outlined text-[18px]">{{
                 det.icon
               }}</span>
             </div>
             <div class="flex flex-col overflow-hidden">
-              <span class="text-[10px] text-slate-400 font-medium uppercase">{{
+              <span class="text-[10px] text-warm-ink3 font-bold uppercase">{{
                 det.label
               }}</span>
-              <span class="text-sm text-slate-800 truncate font-medium">{{
+              <span class="text-sm text-warm-ink truncate font-bold">{{
                 det.value
               }}</span>
             </div>
@@ -1065,3 +1068,15 @@ onUnmounted(() => {
     </aside>
   </div>
 </template>
+<style>
+.dot-pulse {
+  animation: dotPulse 1.1s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+@keyframes dotPulse {
+  0%, 60%, 100% { transform: none; opacity: 0.35; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+.active-row {
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+</style>

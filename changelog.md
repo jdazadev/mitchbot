@@ -5,6 +5,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.0.0 — 2026-09-19
+
+> 🎨 **Rediseño visual completo de la plataforma: sistema de diseño cálido con identidad de marca personalizable**
+
+---
+
+### ✨ Añadido
+- **Sistema de diseño "App Cálida"** (`style.css`): paleta de tokens CSS (`--ground`, `--surface`, `--hairline`, `--ink-1/2/3`) con suelo cálido, tinta parda y un único acento de acción. Tipografía Nunito, radios por rol (`--r-card`, `--r-bubble`, `--r-seal`), sombras difusas y componentes base (`.card`, `.btn`, `.btn-primary`, `.btn-ghost`, `.field`, `.stamp`). Scrollbar y estados de foco templados al mundo.
+- **Identidad de marca por proyecto**: nueva sección en Configuración para personalizar **nombre, color de marca y logo** (sección "Identidad"). El backend valida `config.brand` con Zod (color HEX, logo hasta 200 KB en `createProjectSchema` y `updateProjectSchema`).
+- **Composable `useBrand`**: aplica el color de marca como variables HSL del proyecto (`--brand-h/s/l`) con variantes derivadas (`--brand-hover`, `--brand-deep`, `--brand-soft`, `--brand-softer`, `--brand-ink`, `--brand-contrast` con contraste automático según luminancia), teñido del favicon con canvas y carga el config del proyecto al iniciar.
+- **Actualización**: favicon dinámico teñido con color de marca.
+
+### 🔄 Cambios
+- **Layout renovado**: `Sidebar`, `Topbar`, `DashboardLayout`, `App.vue` e `index.html` migran al nuevo sistema visual y consumen la identidad del proyecto (nombre y logo en el shell).
+- **Módulo de Mensajería** y **Settings** rediseñados con los tokens del sistema (burbujas, composer, panel de insights, panel de identidad).
+- **Compatibilidad con vistas legacy**: las clases `blue-*` de Tailwind se mapean al acento de marca y las utilidades `warm-*` exponen los tokens del mundo, permitiendo migrar vistas gradualmente.
+
+### 🐛 Corregido
+- **Fondo de burbuja en el chat (Messaging)**: los mensajes salientes (bot/agente humano) no tenían fondo; ahora usan el acento de marca con texto en color de contraste.
+
+---
+
 ## v3.9.0 — 2026-09-19
 
 > 💬 **El bot responde de una vez, los insights dejan de resumir y desde cada cliente se abre su conversación**

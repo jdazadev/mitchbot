@@ -20,6 +20,30 @@ export default {
     },
     extend: {
       colors: {
+        /* El azul heredado de las vistas se mapea al acento de marca del proyecto */
+        brand: "hsl(var(--brand) 0 0)",
+        blue: {
+          50: "var(--brand-softer)",
+          100: "var(--brand-soft)",
+          200: "var(--brand-soft)",
+          300: "var(--brand-soft)",
+          400: "var(--brand)",
+          500: "var(--brand)",
+          600: "var(--brand)",
+          700: "var(--brand-hover)",
+          800: "var(--brand-hover)",
+          900: "var(--brand-deep)",
+          950: "var(--brand-deep)",
+        },
+        warm: {
+          ground: "var(--ground)",
+          deep: "var(--ground-deep)",
+          surface: "var(--surface)",
+          line: "var(--hairline)",
+          ink: "var(--ink-1)",
+          ink2: "var(--ink-2)",
+          ink3: "var(--ink-3)",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
