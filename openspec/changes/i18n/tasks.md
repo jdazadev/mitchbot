@@ -35,4 +35,4 @@
 
 - [x] 7.1 Ejecutar `pnpm --filter @mitchbot/frontend build` (y `pnpm --filter @mitchbot/backend build` como control) y confirmar que pasan sin errores.
 - [x] 7.2 Ejecutar `openspec validate i18n --strict` y confirmar que el change es válido.
-- [ ] 7.3 Realizar el commit del cambio implementado.
+- [x] 7.3 Realizar el commit del cambio implementado.
