@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   messagingService,
   type ChatConversation,
@@ -9,6 +10,8 @@ import {
 import { socketService } from "../services/socket.service";
 import { projectService } from "../services/project.service";
 import { useConversations, type ChannelFilter } from "../composables/useConversations";
+
+const { t } = useI18n();
 
 const {
   conversations: chats,
@@ -142,8 +145,8 @@ function formatDayLabel(date: Date) {
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
-  if (sameDay(date, today)) return "Hoy";
-  if (sameDay(date, yesterday)) return "Ayer";
+  if (sameDay(date, today)) return t("common.today");
+  if (sameDay(date, yesterday)) return t("common.yesterday");
   return date.toLocaleDateString([], {
     day: "numeric",
     month: "long",
@@ -288,12 +291,12 @@ function onInsights(data: { conversationId: string; insights: ConversationInsigh
 const sentimentMeta = computed(() => {
   const sentiment = insights.value?.sentiment || "neutral";
   if (sentiment === "positive") {
-    return { label: "Positivo", class: "text-green-600 bg-green-50 border-green-100" };
+    return { label: t("messaging.insights.sentiment.positive"), class: "text-green-600 bg-green-50 border-green-100" };
   }
   if (sentiment === "negative") {
-    return { label: "Negativo", class: "text-red-600 bg-red-50 border-red-100" };
+    return { label: t("messaging.insights.sentiment.negative"), class: "text-red-600 bg-red-50 border-red-100" };
   }
-  return { label: "Neutral", class: "text-amber-600 bg-amber-50 border-amber-100" };
+  return { label: t("messaging.insights.sentiment.neutral"), class: "text-amber-600 bg-amber-50 border-amber-100" };
 });
 
 const sentimentBars = computed(() => {
@@ -303,6 +306,33 @@ const sentimentBars = computed(() => {
     { key: "negative", class: "bg-red-300", width: `${Math.round(scores.negative * 100)}%` },
     { key: "neutral", class: "bg-yellow-300", width: `${Math.round(scores.neutral * 100)}%` },
     { key: "positive", class: "bg-green-500", width: `${Math.round(scores.positive * 100)}%` },
+  ];
+});
+
+const details = computed(() => {
+  const chat = selectedChat.value;
+  if (!chat) return [];
+  return [
+    {
+      label: t("common.email"),
+      value: chat.contactEmail || chat.clientInfo?.email || t("messaging.details.notAvailable"),
+      icon: "mail",
+    },
+    {
+      label: t("common.phone"),
+      value: chat.contactPhone || chat.clientInfo?.phone || t("messaging.details.notAvailable"),
+      icon: "smartphone",
+    },
+    {
+      label: t("messaging.details.platform"),
+      value: chat.platform,
+      icon: "language",
+    },
+    {
+      label: t("common.status"),
+      value: chat.status,
+      icon: "info",
+    },
   ];
 });
 
@@ -358,17 +388,17 @@ function toolIcon(msg: ChatMessage) {
 }
 
 function toolLabel(msg: ChatMessage) {
-  if (msg.contentType === 'confirmation_request') return 'Confirmación requerida';
-  return msg.toolData?.toolName || 'Herramienta';
+  if (msg.contentType === 'confirmation_request') return t('messaging.tools.confirmationRequired');
+  return msg.toolData?.toolName || t('messaging.tools.defaultName');
 }
 
 function statusLabel(status?: string) {
   const map: Record<string, string> = {
-    pending: 'Pendiente',
-    needs_confirmation: 'Pendiente',
-    success: 'Completado',
-    error: 'Error',
-    cancelled: 'Cancelado',
+    pending: t('messaging.tools.status.pending'),
+    needs_confirmation: t('messaging.tools.status.pending'),
+    success: t('messaging.tools.status.success'),
+    error: t('common.error'),
+    cancelled: t('messaging.tools.status.cancelled'),
   };
   return status ? (map[status] || status) : '';
 }
@@ -396,7 +426,7 @@ function confirmTool(msg: ChatMessage, action: 'confirm' | 'cancel') {
 function modifyTool(msg: ChatMessage) {
   if (!selectedChat.value || !msg.toolData?.executionId) return;
   const current = JSON.stringify(msg.toolData.params || {}, null, 0);
-  const input = window.prompt('Edita los datos de la acción (JSON):', current);
+  const input = window.prompt(t('messaging.tools.modifyPrompt'), current);
   if (!input) return;
   try {
     const params = JSON.parse(input);
@@ -407,7 +437,7 @@ function modifyTool(msg: ChatMessage) {
       params,
     });
   } catch {
-    window.alert('JSON inválido');
+    window.alert(t('messaging.tools.invalidJson'));
   }
 }
 
@@ -503,7 +533,7 @@ onUnmounted(() => {
     >
       <div class="p-4 border-b border-slate-100">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold tracking-tight text-slate-900">Inbox</h2>
+          <h2 class="text-xl font-bold tracking-tight text-slate-900">{{ t("messaging.inbox.title") }}</h2>
         </div>
         <div class="relative mb-3 group">
           <span class="absolute left-3 top-2.5 text-slate-400">
@@ -512,7 +542,7 @@ onUnmounted(() => {
           <input
             v-model="searchQuery"
             class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
-            placeholder="Buscar chats..."
+            :placeholder="t('messaging.inbox.searchPlaceholder')"
             type="text"
           />
         </div>
@@ -533,19 +563,19 @@ onUnmounted(() => {
               class="w-1.5 h-1.5 rounded-full"
               :class="channelMeta[channel as Exclude<ChannelFilter, 'All'>].dot"
             ></span>
-            {{ channel === "All" ? "Todos" : channelMeta[channel as Exclude<ChannelFilter, 'All'>].label }}
+            {{ channel === "All" ? t("messaging.filters.all") : channelMeta[channel as Exclude<ChannelFilter, 'All'>].label }}
           </button>
         </div>
       </div>
       <div class="flex-1 overflow-y-auto">
         <div v-if="isLoadingChats" class="p-4 text-center text-slate-400 text-sm">
-          Cargando conversaciones...
+          {{ t("messaging.inbox.loading") }}
         </div>
         <div v-else-if="chats.length === 0" class="p-4 text-center text-slate-400 text-sm">
-          No hay conversaciones aún. Los clientes las iniciarán.
+          {{ t("messaging.inbox.empty") }}
         </div>
         <div v-else-if="filteredChats.length === 0" class="p-4 text-center text-slate-400 text-sm">
-          No hay conversaciones que coincidan con el filtro.
+          {{ t("messaging.inbox.noMatches") }}
         </div>
         <div
           v-for="chat in filteredChats"
@@ -624,7 +654,7 @@ onUnmounted(() => {
                 v-if="!chat.isContactCreated"
                 class="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-100 font-bold"
               >
-                Sin contacto
+                {{ t("messaging.contact.noContact") }}
               </span>
               <span
                 v-if="chat.unreadCount"
@@ -644,7 +674,7 @@ onUnmounted(() => {
         v-if="!selectedChat"
         class="flex-1 flex items-center justify-center text-slate-400"
       >
-        Selecciona un chat para empezar a responder
+        {{ t("messaging.chat.selectPrompt") }}
       </div>
       <template v-else>
         <header
@@ -670,7 +700,7 @@ onUnmounted(() => {
                 >
                 <span>{{ selectedChat.platform }}</span>
                 <span v-if="!selectedChat.isContactCreated" class="text-amber-500 font-bold ml-2">
-                  • Sin contacto
+                  • {{ t("messaging.contact.noContact") }}
                 </span>
               </div>
             </div>
@@ -685,7 +715,7 @@ onUnmounted(() => {
               >
               <span
                 class="text-xs font-bold text-blue-700 uppercase tracking-wider"
-                >Auto-Pilot On</span
+                >{{ t("messaging.mode.autoPilotOn") }}</span
               >
             </div>
             <div
@@ -697,7 +727,7 @@ onUnmounted(() => {
               >
               <span
                 class="text-xs font-bold text-amber-700 uppercase tracking-wider"
-                >Human Takeover</span
+                >{{ t("messaging.mode.humanTakeover") }}</span
               >
             </div>
           </div>
@@ -707,7 +737,7 @@ onUnmounted(() => {
           class="flex-1 overflow-y-auto p-6 flex flex-col scroll-smooth bg-slate-50/50"
         >
           <div v-if="isLoadingMessages" class="text-center text-slate-400 py-4">
-            Cargando mensajes...
+            {{ t("messaging.chat.loadingMessages") }}
           </div>
           <template v-else>
             <div
@@ -746,9 +776,9 @@ onUnmounted(() => {
                       <p class="text-sm text-slate-700 leading-relaxed" v-html="renderMarkdown(msg.content)"></p>
 
                       <div v-if="msg.contentType === 'confirmation_request' && msg.toolData?.status === 'needs_confirmation'" class="flex flex-wrap gap-2 mt-3">
-                        <button @click="confirmTool(msg, 'confirm')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors">Confirmar</button>
-                        <button @click="confirmTool(msg, 'cancel')" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-white transition-colors">Cancelar</button>
-                        <button @click="modifyTool(msg)" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-white transition-colors">Modificar</button>
+                        <button @click="confirmTool(msg, 'confirm')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors">{{ t("common.confirm") }}</button>
+                        <button @click="confirmTool(msg, 'cancel')" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-white transition-colors">{{ t("common.cancel") }}</button>
+                        <button @click="modifyTool(msg)" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-white transition-colors">{{ t("messaging.tools.modify") }}</button>
                       </div>
                       <div class="text-[10px] text-slate-400 mt-2">{{ msg.time }}</div>
                     </div>
@@ -822,7 +852,7 @@ onUnmounted(() => {
               v-model="newMessage"
               @keydown.enter.prevent="handleSendMessage"
               class="w-full bg-transparent border-none focus:ring-0 resize-none h-14 text-sm text-slate-800 placeholder:text-slate-400 p-2"
-              placeholder="Escribe un mensaje..."
+              :placeholder="t('messaging.composer.sendPlaceholder')"
             ></textarea>
             <div class="flex justify-end items-center mt-1 px-1 pb-1 gap-2">
               <button
@@ -833,7 +863,7 @@ onUnmounted(() => {
                 <span class="material-symbols-outlined text-[16px]">{{
                   selectedChat.mode === "auto_pilot" ? "person" : "smart_toy"
                 }}</span>
-                {{ selectedChat.mode === "auto_pilot" ? "Take Over" : "Auto-Pilot" }}
+                {{ selectedChat.mode === "auto_pilot" ? t("messaging.composer.takeOver") : t("messaging.composer.autoPilot") }}
               </button>
               <button
                 @click="handleSendMessage"
@@ -842,7 +872,7 @@ onUnmounted(() => {
                 <span class="material-symbols-outlined text-[16px]"
                   >send</span
                 >
-                Enviar
+                {{ t("common.send") }}
               </button>
             </div>
           </div>
@@ -895,11 +925,11 @@ onUnmounted(() => {
             <span
               v-if="selectedChat.isContactCreated"
               class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wide border border-emerald-200"
-            >Contacto Creado</span>
+            >{{ t("messaging.contact.contactCreated") }}</span>
             <span
               v-else
               class="px-2 py-0.5 rounded bg-amber-50 text-amber-600 text-[10px] font-bold uppercase tracking-wide border border-amber-200"
-            >Sin contacto</span>
+            >{{ t("messaging.contact.noContact") }}</span>
           </div>
           <button
             v-if="!selectedChat.isContactCreated"
@@ -908,7 +938,7 @@ onUnmounted(() => {
             class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             <span class="material-symbols-outlined text-[16px]">person_add</span>
-            {{ isSavingContact ? "Guardando..." : "Guardar como contacto" }}
+            {{ isSavingContact ? t("common.saving") : t("messaging.contact.saveAsContact") }}
           </button>
         </div>
       </div>
@@ -918,7 +948,7 @@ onUnmounted(() => {
             class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"
           >
             <span class="material-symbols-outlined text-[16px]">psychology</span>
-            AI Insights
+            {{ t("messaging.insights.title") }}
           </h3>
           <button
             @click="analyzeInsights"
@@ -926,24 +956,24 @@ onUnmounted(() => {
             class="text-[10px] font-bold uppercase tracking-wider text-blue-600 hover:text-blue-700 disabled:opacity-50 flex items-center gap-1"
           >
             <span class="material-symbols-outlined text-[14px]">refresh</span>
-            {{ isAnalyzingInsights ? "Analizando" : "Analizar" }}
+            {{ isAnalyzingInsights ? t("messaging.insights.analyzing") : t("messaging.insights.analyze") }}
           </button>
         </div>
 
-        <div v-if="isLoadingInsights" class="text-xs text-slate-400">Cargando insights...</div>
+        <div v-if="isLoadingInsights" class="text-xs text-slate-400">{{ t("messaging.insights.loading") }}</div>
         <div
           v-else-if="!insights"
           class="bg-white rounded-lg p-4 border border-dashed border-slate-300 text-center"
         >
           <span class="material-symbols-outlined text-slate-300 text-[28px]">psychology_alt</span>
           <p class="text-xs text-slate-400 mt-1">
-            Todavía no hay insights para esta conversación.
+            {{ t("messaging.insights.empty") }}
           </p>
         </div>
         <div v-else class="space-y-3">
           <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
             <div class="flex justify-between items-center mb-2">
-              <span class="text-xs font-medium text-slate-600">Sentimiento</span>
+              <span class="text-xs font-medium text-slate-600">{{ t("messaging.insights.sentimentLabel") }}</span>
               <span
                 class="text-xs font-bold px-2 py-0.5 rounded border"
                 :class="sentimentMeta.class"
@@ -964,7 +994,7 @@ onUnmounted(() => {
           </div>
           <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
-              >Resumen</span
+              >{{ t("messaging.insights.summary") }}</span
             >
             <p class="text-xs text-slate-600 leading-relaxed mt-1">{{ insights.summary }}</p>
           </div>
@@ -975,32 +1005,11 @@ onUnmounted(() => {
           class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"
         >
           <span class="material-symbols-outlined text-[16px]">database</span>
-          Detalles
+          {{ t("messaging.details.title") }}
         </h3>
         <div class="grid grid-cols-1 gap-2">
           <div
-            v-for="det in [
-              {
-                label: 'Email',
-                value: selectedChat.contactEmail || selectedChat.clientInfo?.email || 'No disponible',
-                icon: 'mail',
-              },
-              {
-                label: 'Teléfono',
-                value: selectedChat.contactPhone || selectedChat.clientInfo?.phone || 'No disponible',
-                icon: 'smartphone',
-              },
-              {
-                label: 'Plataforma',
-                value: selectedChat.platform,
-                icon: 'language',
-              },
-              {
-                label: 'Estado',
-                value: selectedChat.status,
-                icon: 'info',
-              },
-            ]"
+            v-for="det in details"
             :key="det.label"
             class="flex items-center gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-sm"
           >

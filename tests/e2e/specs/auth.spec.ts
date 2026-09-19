@@ -10,7 +10,7 @@ test.describe('Autenticación', () => {
     await page.getByRole('button', { name: /Iniciar Sesión/ }).click();
 
     await page.waitForURL((url) => url.pathname === '/', { timeout: 30_000 });
-    await expect(page.getByText('Dashboard Overview')).toBeVisible();
+    await expect(page.getByTestId('page-title')).toHaveText('Resumen del panel');
   });
 
   test('login inválido muestra error', async ({ page }) => {

@@ -8,17 +8,17 @@ test.describe('Base de conocimiento (RAG)', () => {
       'La garantía cubre todos los productos por doce meses. El soporte técnico responde en menos de 24 horas.';
 
     await page.goto('/brain');
-    await expect(page.getByRole('heading', { name: 'Knowledge Sources' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Fuentes de conocimiento' })).toBeVisible();
 
     // El proveedor de embeddings e2e (stub) está configurado, así que RAG está disponible.
-    const addSource = page.getByRole('button', { name: /Add Source/ });
+    const addSource = page.getByRole('button', { name: /Añadir fuente/ });
     await expect(addSource).toBeEnabled();
 
     await addSource.click();
-    await expect(page.getByRole('heading', { name: 'Agregar fuente' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Añadir fuente' })).toBeVisible();
     await page.getByRole('button', { name: 'Escribir texto' }).click();
-    await page.getByPlaceholder('Ej: Guia de producto').fill(title);
-    await page.getByPlaceholder('Escribe el contenido aqui...').fill(content);
+    await page.getByPlaceholder('Ej.: Guía de producto').fill(title);
+    await page.getByPlaceholder('Escribe el contenido aquí...').fill(content);
     await page.getByRole('button', { name: /Guardar|Procesando/ }).click();
 
     // La fuente aparece en la tabla/listado.

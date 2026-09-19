@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { projectService, SessionInvalidError } from '../services/project.service';
 import { authService } from '../services/auth.service';
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -51,13 +54,19 @@ function removeGoodbyeKeyword(keyword: string) {
   agentForm.value.goodbyeKeywords = agentForm.value.goodbyeKeywords.filter(k => k !== keyword);
 }
 
-const setupRoleOptions = [
-  { id: 'assistant', label: 'Asistente', icon: 'support_agent', desc: 'Ayuda general' },
-  { id: 'teacher', label: 'Profesor', icon: 'school', desc: 'Enseña paso a paso' },
-  { id: 'seller', label: 'Vendedor', icon: 'storefront', desc: 'Persuade y cierra ventas' },
-  { id: 'support', label: 'Soporte', icon: 'build', desc: 'Resuelve problemas técnicos' },
-  { id: 'customer_service', label: 'Atención al cliente', icon: 'headset_mic', desc: 'Gestiona consultas' },
-];
+const setupRoleOptions = computed(() => [
+  { id: 'assistant', label: t('setup.agent.roles.assistant.label'), icon: 'support_agent', desc: t('setup.agent.roles.assistant.desc') },
+  { id: 'teacher', label: t('setup.agent.roles.teacher.label'), icon: 'school', desc: t('setup.agent.roles.teacher.desc') },
+  { id: 'seller', label: t('setup.agent.roles.seller.label'), icon: 'storefront', desc: t('setup.agent.roles.seller.desc') },
+  { id: 'support', label: t('setup.agent.roles.support.label'), icon: 'build', desc: t('setup.agent.roles.support.desc') },
+  { id: 'customer_service', label: t('setup.agent.roles.customer_service.label'), icon: 'headset_mic', desc: t('setup.agent.roles.customer_service.desc') },
+]);
+
+const setupChannels = computed(() => [
+  { key: 'whatsapp', name: t('setup.channels.whatsapp'), icon: 'call', color: 'green' },
+  { key: 'instagram', name: t('setup.channels.instagram'), icon: 'photo_camera', color: 'purple' },
+  { key: 'web', name: t('setup.channels.web'), icon: 'language', color: 'blue' },
+]);
 
 // Step 3: Canales
 const configForm = ref({
@@ -105,13 +114,13 @@ function nextStep() {
   error.value = '';
   if (currentStep.value === 1) {
     if (!projectForm.value.name.trim()) {
-      error.value = 'El nombre del proyecto es obligatorio';
+      error.value = t('setup.errors.projectNameRequired');
       return;
     }
   }
   if (currentStep.value === 2) {
     if (!agentForm.value.name.trim()) {
-      error.value = 'El nombre del agente es obligatorio';
+      error.value = t('setup.errors.agentNameRequired');
       return;
     }
   }
@@ -174,7 +183,7 @@ async function handleSubmit() {
   <div v-if="checking" class="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
     <div class="flex flex-col items-center gap-3 text-slate-500">
       <span class="material-symbols-outlined text-[32px] animate-spin">progress_activity</span>
-      <p class="text-sm">Verificando configuración...</p>
+      <p class="text-sm">{{ t('setup.checking') }}</p>
     </div>
   </div>
 
@@ -188,8 +197,8 @@ async function handleSubmit() {
             <span class="material-symbols-outlined text-[32px]">rocket_launch</span>
           </div>
         </div>
-        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Configurar Proyecto</h1>
-        <p class="text-sm text-slate-500 mt-2">Configura tu proyecto y agente para empezar a trabajar</p>
+        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{{ t('setup.title') }}</h1>
+        <p class="text-sm text-slate-500 mt-2">{{ t('setup.subtitle') }}</p>
       </div>
 
       <!-- Progress Steps -->
@@ -224,25 +233,25 @@ async function handleSubmit() {
               <span class="material-symbols-outlined text-blue-600 text-[22px]">folder_open</span>
             </div>
             <div>
-              <h2 class="text-lg font-bold text-slate-900 dark:text-white">Datos del Proyecto</h2>
-              <p class="text-xs text-slate-500">Información básica de tu proyecto</p>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ t('setup.project.title') }}</h2>
+              <p class="text-xs text-slate-500">{{ t('setup.project.subtitle') }}</p>
             </div>
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">Nombre del Proyecto *</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">{{ t('setup.project.name') }}</label>
             <input
               v-model="projectForm.name"
               type="text"
-              placeholder="Ej: Mi Tienda Online, Soporte Técnico..."
+              :placeholder="t('setup.project.namePlaceholder')"
               class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
             />
           </div>
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">Descripción</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">{{ t('setup.project.description') }}</label>
             <textarea
               v-model="projectForm.description"
-              placeholder="Describe brevemente de qué trata tu proyecto..."
+              :placeholder="t('setup.project.descriptionPlaceholder')"
               class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
             ></textarea>
           </div>
@@ -255,24 +264,24 @@ async function handleSubmit() {
               <span class="material-symbols-outlined text-purple-600 text-[22px]">smart_toy</span>
             </div>
             <div>
-              <h2 class="text-lg font-bold text-slate-900 dark:text-white">Agente de IA</h2>
-              <p class="text-xs text-slate-500">Configura la personalidad e inteligencia de tu bot</p>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ t('setup.agent.title') }}</h2>
+              <p class="text-xs text-slate-500">{{ t('setup.agent.subtitle') }}</p>
             </div>
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">Nombre del Agente *</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">{{ t('setup.agent.name') }}</label>
             <input
               v-model="agentForm.name"
               type="text"
-              placeholder="Ej: Asistente de Ventas, Soporte Bot..."
+              :placeholder="t('setup.agent.namePlaceholder')"
               class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
             />
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">Rol del Bot</label>
-            <p class="text-[10px] text-slate-400 mb-2">Podrás configurar la personalidad completa después en Settings</p>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">{{ t('setup.agent.roleLabel') }}</label>
+            <p class="text-[10px] text-slate-400 mb-2">{{ t('setup.agent.roleHelp') }}</p>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <button
                 v-for="r in setupRoleOptions" :key="r.id"
@@ -291,32 +300,32 @@ async function handleSubmit() {
           </div>
 
           <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">Mensajes automáticos</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">{{ t('setup.agent.autoMessages') }}</label>
             <div class="flex flex-col gap-3">
               <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
                 <div>
-                  <span class="text-sm font-medium text-slate-800 dark:text-white">Saludar siempre</span>
-                  <p class="text-xs text-slate-400 mt-0.5">Saluda al iniciar o retomar tras 6 horas</p>
+                  <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('setup.agent.welcomeGreeting') }}</span>
+                  <p class="text-xs text-slate-400 mt-0.5">{{ t('setup.agent.welcomeGreetingHelp') }}</p>
                 </div>
                 <input type="checkbox" v-model="agentForm.enableWelcomeGreeting" class="h-4 w-4 accent-blue-600" />
               </label>
               <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
                 <div>
-                  <span class="text-sm font-medium text-slate-800 dark:text-white">Despedir siempre</span>
-                  <p class="text-xs text-slate-400 mt-0.5">Despide cuando el usuario se despida o cierre chat</p>
+                  <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('setup.agent.goodbyeMessage') }}</span>
+                  <p class="text-xs text-slate-400 mt-0.5">{{ t('setup.agent.goodbyeMessageHelp') }}</p>
                 </div>
                 <input type="checkbox" v-model="agentForm.enableGoodbyeMessage" class="h-4 w-4 accent-blue-600" />
               </label>
               <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
                 <div>
-                  <span class="text-sm font-medium text-slate-800 dark:text-white">Cuando no sepa la respuesta</span>
-                  <p class="text-xs text-slate-400 mt-0.5">Disculparse y aconsejar contactar con un asesor</p>
+                  <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('setup.agent.fallbackAdvisor') }}</span>
+                  <p class="text-xs text-slate-400 mt-0.5">{{ t('setup.agent.fallbackAdvisorHelp') }}</p>
                 </div>
                 <input type="checkbox" v-model="agentForm.enableFallbackAdvisor" class="h-4 w-4 accent-blue-600" />
               </label>
             </div>
             <div class="mt-4">
-              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Keywords de despedida</label>
+              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('setup.agent.goodbyeKeywords') }}</label>
               <div class="flex flex-wrap gap-2 mb-2">
                 <span v-for="keyword in agentForm.goodbyeKeywords" :key="keyword" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs">
                   {{ keyword }}
@@ -329,14 +338,14 @@ async function handleSubmit() {
                 <input
                   v-model="goodbyeKeywordInput"
                   @keydown.enter.prevent="addGoodbyeKeyword"
-                  placeholder="Escribe una keyword"
+                  :placeholder="t('setup.agent.goodbyeKeywordPlaceholder')"
                   class="flex-1 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
                 />
                 <button type="button" class="px-3 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg" @click="addGoodbyeKeyword">
-                  Agregar
+                  {{ t('setup.agent.addKeyword') }}
                 </button>
               </div>
-              <p class="text-[10px] text-slate-400 mt-1">Se comparan en minúsculas. Usa términos como “adios”, “gracias”, “bye”.</p>
+              <p class="text-[10px] text-slate-400 mt-1">{{ t('setup.agent.goodbyeKeywordsHelp') }}</p>
             </div>
           </div>
         </div>
@@ -348,19 +357,15 @@ async function handleSubmit() {
               <span class="material-symbols-outlined text-emerald-600 text-[22px]">settings</span>
             </div>
             <div>
-              <h2 class="text-lg font-bold text-slate-900 dark:text-white">Canales y Opciones</h2>
-              <p class="text-xs text-slate-500">Elige los canales de comunicación</p>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ t('setup.channels.title') }}</h2>
+              <p class="text-xs text-slate-500">{{ t('setup.channels.subtitle') }}</p>
             </div>
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">Canales</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">{{ t('setup.channels.channelsLabel') }}</label>
             <div class="flex flex-col gap-3">
-              <div v-for="ch in [
-                { key: 'whatsapp', name: 'WhatsApp', icon: 'call', color: 'green' },
-                { key: 'instagram', name: 'Instagram', icon: 'photo_camera', color: 'purple' },
-                { key: 'web', name: 'Chat Web', icon: 'language', color: 'blue' },
-              ]" :key="ch.key" class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
+              <div v-for="ch in setupChannels" :key="ch.key" class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
                 <div class="flex items-center gap-3">
                   <span class="material-symbols-outlined text-slate-500 text-[20px]">{{ ch.icon }}</span>
                   <span class="text-sm font-medium text-slate-800 dark:text-white">{{ ch.name }}</span>
@@ -374,11 +379,11 @@ async function handleSubmit() {
           </div>
 
           <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">Opciones</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">{{ t('setup.channels.optionsLabel') }}</label>
             <div class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
               <div>
-                <span class="text-sm font-medium text-slate-800 dark:text-white">Crear contacto automáticamente</span>
-                <p class="text-xs text-slate-400 mt-0.5">Al contestar el primer mensaje del cliente</p>
+                <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('setup.channels.autoCreateContact') }}</span>
+                <p class="text-xs text-slate-400 mt-0.5">{{ t('setup.channels.autoCreateContactHelp') }}</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" v-model="configForm.options.autoCreateContact" class="sr-only peer">
@@ -389,16 +394,16 @@ async function handleSubmit() {
 
           <!-- Resumen -->
           <div class="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-4 mt-2">
-            <h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Resumen</h3>
+            <h3 class="text-xs font-bold text-slate-500 uppercase mb-2">{{ t('setup.summary.title') }}</h3>
             <div class="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-300">
-              <p>📁 <strong>Proyecto:</strong> {{ projectForm.name }}</p>
-              <p>🤖 <strong>Agente:</strong> {{ agentForm.name }}</p>
-              <p>📡 <strong>Canales:</strong>
+              <p>📁 <strong>{{ t('setup.summary.project') }}:</strong> {{ projectForm.name }}</p>
+              <p>🤖 <strong>{{ t('setup.summary.agent') }}:</strong> {{ agentForm.name }}</p>
+              <p>📡 <strong>{{ t('setup.summary.channels') }}:</strong>
                 {{ [
-                  configForm.channels.whatsapp ? 'WhatsApp' : '',
-                  configForm.channels.instagram ? 'Instagram' : '',
-                  configForm.channels.web ? 'Web' : ''
-                ].filter(Boolean).join(', ') || 'Ninguno' }}
+                  configForm.channels.whatsapp ? t('setup.channels.whatsapp') : '',
+                  configForm.channels.instagram ? t('setup.channels.instagram') : '',
+                  configForm.channels.web ? t('setup.channels.web') : ''
+                ].filter(Boolean).join(', ') || t('common.none') }}
               </p>
             </div>
           </div>
@@ -412,7 +417,7 @@ async function handleSubmit() {
             class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-            Anterior
+            {{ t('common.previous') }}
           </button>
           <div v-else></div>
 
@@ -421,7 +426,7 @@ async function handleSubmit() {
             @click="nextStep"
             class="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-all text-sm"
           >
-            Siguiente
+            {{ t('common.next') }}
             <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
           <button
@@ -431,7 +436,7 @@ async function handleSubmit() {
             class="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm"
           >
             <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
-            {{ isLoading ? 'Creando...' : 'Crear Proyecto' }}
+            {{ isLoading ? t('setup.actions.creating') : t('setup.actions.createProject') }}
           </button>
         </div>
       </div>

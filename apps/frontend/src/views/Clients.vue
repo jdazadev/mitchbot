@@ -1,11 +1,26 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   clientService,
   type Contact,
   type ContactsResponse,
   type ContactFilters,
 } from "../services/client.service";
+
+const { t } = useI18n();
+
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  Active: "clients.status.active",
+  New: "clients.status.new",
+  Inactive: "clients.status.inactive",
+  Archived: "clients.status.archived",
+};
+
+function statusLabel(status: string) {
+  const key = STATUS_LABEL_KEYS[status];
+  return key ? t(key) : status;
+}
 
 // Estado
 const contactsData = ref<ContactsResponse>({
@@ -141,7 +156,7 @@ async function saveEdit() {
     editingContact.value = null;
     fetchContacts();
   } catch (err: any) {
-    alert("Error al actualizar cliente: " + err.message);
+    alert(t("clients.errors.update", { message: err.message }));
   }
 }
 
@@ -159,7 +174,7 @@ async function confirmArchive() {
     archivingContact.value = null;
     fetchContacts();
   } catch (err: any) {
-    alert("Error al archivar cliente: " + err.message);
+    alert(t("clients.errors.archive", { message: err.message }));
   }
 }
 
@@ -169,7 +184,7 @@ async function restoreContact(contact: Contact) {
     await clientService.restoreContact(contact._id);
     fetchContacts();
   } catch (err: any) {
-    alert("Error al restaurar cliente: " + err.message);
+    alert(t("clients.errors.restore", { message: err.message }));
   }
 }
 </script>
@@ -190,7 +205,7 @@ async function restoreContact(contact: Contact) {
             <input
               v-model="searchQuery"
               class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-              placeholder="Buscar clientes..."
+              :placeholder="t('clients.search.placeholder')"
               type="text"
             />
           </div>
@@ -198,9 +213,10 @@ async function restoreContact(contact: Contact) {
           <!-- Filtro por plataforma -->
           <select
             v-model="filterPlatform"
+            data-testid="clients-platform-filter"
             class="bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           >
-            <option value="All">Todas las plataformas</option>
+            <option value="All">{{ t('clients.filters.allPlatforms') }}</option>
             <option value="WhatsApp">WhatsApp</option>
             <option value="Instagram">Instagram</option>
             <option value="Web">Web</option>
@@ -209,28 +225,29 @@ async function restoreContact(contact: Contact) {
           <!-- Filtro por status -->
           <select
             v-model="filterStatus"
+            data-testid="clients-status-filter"
             class="bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           >
-            <option value="All">Todos los estados</option>
-            <option value="Active">Active</option>
-            <option value="New">New</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Archived">Archivados</option>
+            <option value="All">{{ t('clients.filters.allStatuses') }}</option>
+            <option value="Active">{{ statusLabel('Active') }}</option>
+            <option value="New">{{ statusLabel('New') }}</option>
+            <option value="Inactive">{{ statusLabel('Inactive') }}</option>
+            <option value="Archived">{{ statusLabel('Archived') }}</option>
           </select>
         </div>
 
         <!-- Info: los contactos se crean automáticamente -->
         <div class="flex items-center gap-2 text-xs text-slate-400">
           <span class="material-symbols-outlined text-[16px]">info</span>
-          Los clientes se crean automáticamente al responder mensajes
+          {{ t('clients.hint.autoCreated') }}
         </div>
       </div>
 
       <!-- Info de resultados -->
       <div class="flex items-center justify-between text-xs text-slate-400">
-        <span>{{ totalContacts }} cliente{{ totalContacts !== 1 ? 's' : '' }} encontrado{{ totalContacts !== 1 ? 's' : '' }}</span>
+        <span>{{ t('clients.results.found', totalContacts) }}</span>
         <div class="flex items-center gap-2">
-          <span>Mostrar</span>
+          <span>{{ t('clients.pagination.show') }}</span>
           <select
             v-model="pageSize"
             class="bg-slate-50 border border-slate-200 rounded py-1 px-2 text-xs"
@@ -240,7 +257,7 @@ async function restoreContact(contact: Contact) {
             <option :value="25">25</option>
             <option :value="50">50</option>
           </select>
-          <span>por página</span>
+          <span>{{ t('clients.pagination.perPage') }}</span>
         </div>
       </div>
     </div>
@@ -250,7 +267,7 @@ async function restoreContact(contact: Contact) {
       class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden"
     >
       <div v-if="isLoading" class="p-8 text-center text-slate-500">
-        Cargando clientes...
+        {{ t('clients.loading') }}
       </div>
       <div v-else-if="error" class="p-8 text-center text-red-500">
         {{ error }}
@@ -263,35 +280,35 @@ async function restoreContact(contact: Contact) {
             >
               <th class="px-6 py-4 cursor-pointer hover:text-slate-700 transition-colors select-none" @click="toggleSort('name')">
                 <div class="flex items-center gap-1">
-                  Cliente
+                  {{ t('clients.table.client') }}
                   <span class="material-symbols-outlined text-[14px]">{{ getSortIcon('name') }}</span>
                 </div>
               </th>
               <th class="px-6 py-4 cursor-pointer hover:text-slate-700 transition-colors select-none" @click="toggleSort('platform')">
                 <div class="flex items-center gap-1">
-                  Plataforma
+                  {{ t('clients.table.platform') }}
                   <span class="material-symbols-outlined text-[14px]">{{ getSortIcon('platform') }}</span>
                 </div>
               </th>
               <th class="px-6 py-4 cursor-pointer hover:text-slate-700 transition-colors select-none" @click="toggleSort('status')">
                 <div class="flex items-center gap-1">
-                  Estado
+                  {{ t('common.status') }}
                   <span class="material-symbols-outlined text-[14px]">{{ getSortIcon('status') }}</span>
                 </div>
               </th>
               <th class="px-6 py-4 cursor-pointer hover:text-slate-700 transition-colors select-none" @click="toggleSort('phone')">
                 <div class="flex items-center gap-1">
-                  Teléfono
+                  {{ t('common.phone') }}
                   <span class="material-symbols-outlined text-[14px]">{{ getSortIcon('phone') }}</span>
                 </div>
               </th>
               <th class="px-6 py-4 cursor-pointer hover:text-slate-700 transition-colors select-none" @click="toggleSort('createdAt')">
                 <div class="flex items-center gap-1">
-                  Creado
+                  {{ t('clients.table.created') }}
                   <span class="material-symbols-outlined text-[14px]">{{ getSortIcon('createdAt') }}</span>
                 </div>
               </th>
-              <th class="px-6 py-4 text-right">Acciones</th>
+              <th class="px-6 py-4 text-right">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
@@ -315,7 +332,7 @@ async function restoreContact(contact: Contact) {
                       >{{ contact.name }}</span
                     >
                     <span class="text-xs text-slate-400">{{
-                      contact.email || "Sin email"
+                      contact.email || t('clients.noEmail')
                     }}</span>
                   </div>
                 </div>
@@ -346,7 +363,7 @@ async function restoreContact(contact: Contact) {
                           : 'bg-slate-50 text-slate-500 border-slate-200',
                   ]"
                 >
-                  {{ contact.status === 'Archived' ? 'Archivado' : contact.status }}
+                  {{ statusLabel(contact.status) }}
                 </span>
               </td>
               <td
@@ -366,7 +383,7 @@ async function restoreContact(contact: Contact) {
                     v-if="contact.status !== 'Archived'"
                     @click="openEditModal(contact)"
                     class="p-2 hover:bg-blue-50 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
-                    title="Editar"
+                    :title="t('common.edit')"
                   >
                     <span class="material-symbols-outlined text-[18px]">edit</span>
                   </button>
@@ -375,7 +392,7 @@ async function restoreContact(contact: Contact) {
                     v-if="contact.status !== 'Archived'"
                     @click="openArchiveModal(contact)"
                     class="p-2 hover:bg-amber-50 rounded-lg text-slate-400 hover:text-amber-600 transition-colors"
-                    title="Archivar"
+                    :title="t('common.archive')"
                   >
                     <span class="material-symbols-outlined text-[18px]">archive</span>
                   </button>
@@ -384,7 +401,7 @@ async function restoreContact(contact: Contact) {
                     v-if="contact.status === 'Archived'"
                     @click="restoreContact(contact)"
                     class="p-2 hover:bg-emerald-50 rounded-lg text-slate-400 hover:text-emerald-600 transition-colors"
-                    title="Restaurar"
+                    :title="t('common.restore')"
                   >
                     <span class="material-symbols-outlined text-[18px]">unarchive</span>
                   </button>
@@ -393,7 +410,7 @@ async function restoreContact(contact: Contact) {
             </tr>
             <tr v-if="contacts.length === 0">
               <td colspan="6" class="px-6 py-12 text-center text-slate-400">
-                No se encontraron clientes
+                {{ t('clients.empty') }}
               </td>
             </tr>
           </tbody>
@@ -406,7 +423,7 @@ async function restoreContact(contact: Contact) {
         class="flex items-center justify-between px-6 py-4 border-t border-slate-100"
       >
         <span class="text-xs text-slate-400">
-          Página {{ currentPage }} de {{ totalPages }}
+          {{ t('common.page') }} {{ currentPage }} {{ t('common.of') }} {{ totalPages }}
         </span>
         <div class="flex items-center gap-1">
           <button
@@ -469,7 +486,7 @@ async function restoreContact(contact: Contact) {
     >
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-lg font-bold text-slate-900">Editar Cliente</h2>
+          <h2 class="text-lg font-bold text-slate-900">{{ t('clients.editModal.title') }}</h2>
           <button @click="showEditModal = false" class="p-1 hover:bg-slate-100 rounded-lg transition-colors">
             <span class="material-symbols-outlined text-slate-400">close</span>
           </button>
@@ -477,22 +494,22 @@ async function restoreContact(contact: Contact) {
 
         <div class="flex flex-col gap-4">
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nombre *</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('clients.editModal.name') }}</label>
             <input v-model="editForm.name" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Email</label>
+              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('common.email') }}</label>
               <input v-model="editForm.email" type="email" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             <div>
-              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Teléfono</label>
+              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('common.phone') }}</label>
               <input v-model="editForm.phone" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Plataforma</label>
+              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('clients.editModal.platform') }}</label>
               <select v-model="editForm.platform" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
                 <option value="WhatsApp">WhatsApp</option>
                 <option value="Instagram">Instagram</option>
@@ -500,11 +517,11 @@ async function restoreContact(contact: Contact) {
               </select>
             </div>
             <div>
-              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Estado</label>
+              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('common.status') }}</label>
               <select v-model="editForm.status" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                <option value="Active">Active</option>
-                <option value="New">New</option>
-                <option value="Inactive">Inactive</option>
+                <option value="Active">{{ statusLabel('Active') }}</option>
+                <option value="New">{{ statusLabel('New') }}</option>
+                <option value="Inactive">{{ statusLabel('Inactive') }}</option>
               </select>
             </div>
           </div>
@@ -515,13 +532,13 @@ async function restoreContact(contact: Contact) {
             @click="showEditModal = false"
             class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            Cancelar
+            {{ t('common.cancel') }}
           </button>
           <button
             @click="saveEdit"
             class="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
           >
-            Guardar
+            {{ t('common.save') }}
           </button>
         </div>
       </div>
@@ -537,22 +554,28 @@ async function restoreContact(contact: Contact) {
         <div class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-amber-500 text-[28px]">archive</span>
         </div>
-        <h2 class="text-lg font-bold text-slate-900 mb-2">Archivar Cliente</h2>
-        <p class="text-sm text-slate-500 mb-6">
-          ¿Estás seguro de que quieres archivar a <strong>{{ archivingContact?.name }}</strong>? Podrás restaurarlo en cualquier momento.
-        </p>
+        <h2 class="text-lg font-bold text-slate-900 mb-2">{{ t('clients.archiveModal.title') }}</h2>
+        <i18n-t
+          keypath="clients.archiveModal.confirm"
+          tag="p"
+          class="text-sm text-slate-500 mb-6"
+        >
+          <template #name>
+            <strong>{{ archivingContact?.name }}</strong>
+          </template>
+        </i18n-t>
         <div class="flex justify-center gap-3">
           <button
             @click="showArchiveModal = false"
             class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            Cancelar
+            {{ t('common.cancel') }}
           </button>
           <button
             @click="confirmArchive"
             class="px-4 py-2 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-lg shadow-sm transition-colors"
           >
-            Archivar
+            {{ t('common.archive') }}
           </button>
         </div>
       </div>

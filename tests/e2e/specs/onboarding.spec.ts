@@ -35,6 +35,6 @@ test.describe('Onboarding / setup', () => {
     await page.getByRole('button', { name: /Crear Proyecto/ }).click();
 
     await page.waitForURL((url) => url.pathname === '/', { timeout: 30_000 });
-    await expect(page.getByText('Dashboard Overview')).toBeVisible();
+    await expect(page.getByTestId('page-title')).toHaveText('Resumen del panel');
   });
 });

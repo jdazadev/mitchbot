@@ -1,25 +1,27 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { projectService, type Project } from "../../services/project.service";
 import { authService } from "../../services/auth.service";
 import { socketService } from "../../services/socket.service";
 
 const route = useRoute();
 const router = useRouter();
+const { t, locale } = useI18n();
 
 const pageTitle = computed(() => {
   switch (route.name) {
     case "dashboard":
-      return "Dashboard Overview";
+      return t("topbar.dashboard");
     case "messaging":
-      return "Conversations";
+      return t("topbar.messaging");
     case "brain":
-      return "Brain";
+      return t("topbar.brain");
     case "clients":
-      return "Clients";
+      return t("topbar.clients");
     default:
-      return "BotMaster";
+      return t("topbar.default");
   }
 });
 
@@ -93,7 +95,7 @@ function handleNotification(data: any) {
     : "info";
   notifications.value.unshift({
     id: `${Date.now()}-${notificationSeq++}`,
-    message: data?.message || "Nueva notificación",
+    message: data?.message || t("topbar.newNotification"),
     level,
     conversationId: data?.conversationId,
     createdAt: data?.createdAt || new Date().toISOString(),
@@ -141,13 +143,13 @@ function formatNotificationTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "ahora";
+  if (seconds < 60) return t("topbar.time.now");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `hace ${minutes} min`;
+  if (minutes < 60) return t("topbar.time.minutesAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `hace ${hours} h`;
+  if (hours < 24) return t("topbar.time.hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  return `hace ${days} d`;
+  return t("topbar.time.daysAgo", { count: days });
 }
 
 onMounted(() => {
@@ -170,6 +172,7 @@ onBeforeUnmount(() => {
         <span class="material-symbols-outlined">menu</span>
       </button>
       <h2
+        data-testid="page-title"
         class="text-xl font-bold text-slate-800 dark:text-white tracking-tight"
       >
         {{ pageTitle }}
@@ -185,7 +188,7 @@ onBeforeUnmount(() => {
         >
           <span class="material-symbols-outlined text-slate-400 text-[20px]">folder_open</span>
           <span class="text-sm font-medium text-slate-600 dark:text-slate-300 max-w-[160px] truncate">
-            {{ activeProject?.name || "Selecciona proyecto" }}
+            {{ activeProject?.name || t("topbar.selectProject") }}
           </span>
           <span class="material-symbols-outlined text-slate-400 text-[20px]">expand_more</span>
         </button>
@@ -223,7 +226,7 @@ onBeforeUnmount(() => {
               v-if="projects.length === 0"
               class="px-4 py-3 text-sm text-slate-400"
             >
-              No tienes proyectos
+              {{ t("topbar.noProjects") }}
             </p>
           </div>
           <button
@@ -231,15 +234,36 @@ onBeforeUnmount(() => {
             class="w-full flex items-center gap-2 px-4 py-2.5 border-t border-slate-100 dark:border-slate-700 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
           >
             <span class="material-symbols-outlined text-[18px]">add</span>
-            Crear nuevo proyecto
+            {{ t("topbar.createProject") }}
           </button>
         </div>
+      </div>
+
+      <!-- Selector de idioma -->
+      <div class="relative flex items-center">
+        <span
+          class="material-symbols-outlined absolute left-2 text-slate-400 text-[18px] pointer-events-none"
+          >translate</span
+        >
+        <select
+          v-model="locale"
+          :aria-label="t('topbar.language')"
+          data-testid="language-selector"
+          class="appearance-none pl-8 pr-7 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm text-sm font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+        >
+          <option value="es">{{ t("common.spanish") }}</option>
+          <option value="en">{{ t("common.english") }}</option>
+        </select>
+        <span
+          class="material-symbols-outlined absolute right-1.5 text-slate-400 text-[18px] pointer-events-none"
+          >expand_more</span
+        >
       </div>
 
       <div class="relative">
         <button
           @click="toggleNotifications"
-          aria-label="Notificaciones"
+          :aria-label="t('topbar.notifications')"
           class="p-2 relative text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg dark:text-slate-400 dark:hover:bg-slate-700 transition-colors"
         >
           <span class="material-symbols-outlined">notifications</span>
@@ -262,14 +286,14 @@ onBeforeUnmount(() => {
             class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700"
           >
             <span class="text-sm font-bold text-slate-800 dark:text-white"
-              >Notificaciones</span
+              >{{ t("topbar.notifications") }}</span
             >
             <button
               v-if="unreadCount > 0"
               @click="markAllRead"
               class="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
             >
-              Marcar como leídas
+              {{ t("topbar.markAllRead") }}
             </button>
           </div>
           <div class="max-h-80 overflow-y-auto">
@@ -277,7 +301,7 @@ onBeforeUnmount(() => {
               v-if="notifications.length === 0"
               class="px-4 py-8 text-center text-sm text-slate-400"
             >
-              No hay notificaciones
+              {{ t("topbar.noNotifications") }}
             </p>
             <template v-else>
               <div
@@ -319,7 +343,7 @@ onBeforeUnmount(() => {
             @click="clearNotifications"
             class="w-full px-4 py-2.5 border-t border-slate-100 dark:border-slate-700 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
           >
-            Limpiar todo
+            {{ t("topbar.clearAll") }}
           </button>
         </div>
       </div>

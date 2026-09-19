@@ -5,6 +5,30 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v3.8.0 — 2026-09-19
+
+> 🌐 **La interfaz deja de mezclar idiomas: i18n con español por defecto e inglés, selector en vivo y chat público con idioma propio**
+
+---
+
+### ✨ Añadido
+- **Internacionalización (vue-i18n)**: catálogos `locales/es.json` y `locales/en.json` con claves por dominio, español por defecto y fallback a español. El plugin se registra en `main.ts` en modo Composition API.
+- **Selector de idioma en el Topbar**: aplica el idioma en vivo a todo el dashboard sin recargar y persiste la preferencia en `localStorage` (`mitchbot.locale`); el atributo `lang` del documento refleja el idioma activo.
+- **Chat público con idioma propio**: `TestChat.vue` usa un composer aislado y claves `publicChat.*`, y toma el idioma de la personalidad del agente del proyecto (nuevo endpoint público `GET /api/public/test-chat/:slug/config`); el idioma del dashboard no lo altera.
+- **Spec e2e de idioma** (`i18n.spec.ts`) y caso de independencia del chat público respecto a la preferencia del dashboard.
+
+### 🔄 Cambios
+- **Todos los textos visibles del dashboard externalizados** a los catálogos: shell (`Sidebar`, `Topbar`), `Dashboard`, `Messaging`, `Clients`, `Brain`, `Settings`, `Users`, `Agents`, `Profile`, `DevTests`, `Login` y `ProjectSetup`. El shell pasa de inglés a español por defecto; se elimina el "spanglish".
+- **`data-testid`** añadidos al título de página, la navegación del sidebar, las métricas y los controles de rango/granularidad del Dashboard para estabilizar los e2e.
+
+### 🧪 Pruebas
+- Specs e2e alineados al español por defecto y estabilizados con `data-testid`; nuevo `i18n.spec.ts` (español por defecto, cambio a inglés, `lang` y persistencia) y verificación de que el chat público conserva el idioma del agente.
+
+### 📚 Documentación
+- `AGENTS.md` (frontend: vue-i18n, catálogos es/en, selector en Topbar, idioma del chat público) y `changelog.md` actualizados. Versión del proyecto a **v3.8.0**.
+
+---
+
 ## v3.7.0 — 2026-09-19
 
 > 🧭 **La navegación deja de mezclar nombres, los controles de fecha por fin filtran de verdad y el centro de notificaciones deja de estar muerto**

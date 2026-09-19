@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   dashboardService,
   type DashboardStats,
@@ -9,6 +10,7 @@ import {
   type VolumePeriod,
 } from "../services/dashboard.service";
 
+const { t } = useI18n();
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 
@@ -16,11 +18,11 @@ const error = ref<string | null>(null);
 const rangeOptions = [7, 30, 90] as const;
 const rangeDays = ref<number>(30);
 const period = ref<VolumePeriod>("daily");
-const periodOptions: { id: VolumePeriod; label: string }[] = [
-  { id: "daily", label: "Daily" },
-  { id: "weekly", label: "Weekly" },
-  { id: "monthly", label: "Monthly" },
-];
+const periodOptions = computed<{ id: VolumePeriod; label: string }[]>(() => [
+  { id: "daily", label: t("dashboard.volume.daily") },
+  { id: "weekly", label: t("dashboard.volume.weekly") },
+  { id: "monthly", label: t("dashboard.volume.monthly") },
+]);
 const volumeData = ref<VolumeData[]>([]);
 
 const dashboardStats = ref<DashboardStats>({
@@ -40,28 +42,32 @@ const activityList = ref<Activity[]>([]);
 
 const stats = computed(() => [
   {
-    label: "Total Conversations",
+    label: t("dashboard.stats.totalConversations"),
+    testId: "total-conversations",
     value: new Intl.NumberFormat().format(dashboardStats.value.total),
     change: "+12%", // Mocked for now
     icon: "chat_bubble",
     color: "blue",
   },
   {
-    label: "Active Chats",
+    label: t("dashboard.stats.activeChats"),
+    testId: "active-chats",
     value: dashboardStats.value.active.toString(),
-    status: "Live",
+    status: t("dashboard.stats.live"),
     icon: "forum",
     color: "violet",
   },
   {
-    label: "Response Rate",
+    label: t("dashboard.stats.responseRate"),
+    testId: "response-rate",
     value: dashboardStats.value.responseRate,
     change: "+1.2%", // Mocked
     icon: "bolt",
     color: "amber",
   },
   {
-    label: "Lead Conversion",
+    label: t("dashboard.stats.leadConversion"),
+    testId: "lead-conversion",
     value: "14.0%", // Mocked
     change: "+0.5%", // Mocked
     icon: "filter_alt",
@@ -85,13 +91,13 @@ function timeAgo(dateString: string) {
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return t("dashboard.time.justNow");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 60) return t("dashboard.time.minutesAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hrs ago`;
+  if (hours < 24) return t("dashboard.time.hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  return `${days} days ago`;
+  return t("dashboard.time.daysAgo", { count: days });
 }
 
 // Donut chart calculations
@@ -197,6 +203,7 @@ onMounted(() => {
       <div
         v-for="stat in stats"
         :key="stat.label"
+        :data-testid="'stat-' + stat.testId"
         class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow"
       >
         <div class="flex justify-between items-start mb-4">
@@ -230,7 +237,7 @@ onMounted(() => {
             </span>
             <span
               class="text-xs font-semibold text-slate-600 dark:text-slate-300"
-              >Live</span
+              >{{ t("dashboard.stats.live") }}</span
             >
           </div>
         </div>
@@ -257,11 +264,11 @@ onMounted(() => {
       >
         <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
           <div>
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white">
-              Conversation Volume
+            <h3 data-testid="volume-title" class="text-lg font-bold text-slate-900 dark:text-white">
+              {{ t("dashboard.volume.title") }}
             </h3>
             <p class="text-sm text-slate-500 dark:text-slate-400">
-              Conversations started over time
+              {{ t("dashboard.volume.subtitle") }}
             </p>
           </div>
           <div class="flex flex-wrap items-center gap-3">
@@ -273,6 +280,7 @@ onMounted(() => {
                 v-for="days in rangeOptions"
                 :key="days"
                 @click="rangeDays = days"
+                :data-testid="'range-' + days"
                 :class="[
                   'px-3 py-1 text-xs rounded-md transition-colors',
                   rangeDays === days
@@ -280,7 +288,7 @@ onMounted(() => {
                     : 'font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white',
                 ]"
               >
-                Last {{ days }} Days
+                {{ t("dashboard.volume.lastDays", { days }) }}
               </button>
             </div>
             <!-- Granularidad -->
@@ -291,6 +299,7 @@ onMounted(() => {
                 v-for="p in periodOptions"
                 :key="p.id"
                 @click="period = p.id"
+                :data-testid="'period-' + p.id"
                 :class="[
                   'px-3 py-1 text-xs rounded-md transition-colors',
                   period === p.id
@@ -394,7 +403,7 @@ onMounted(() => {
               x="500"
               y="150"
             >
-              Sin datos en este rango
+              {{ t("dashboard.volume.noData") }}
             </text>
           </svg>
         </div>
@@ -411,8 +420,8 @@ onMounted(() => {
         <div
           class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm flex-1 min-h-[300px]"
         >
-          <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">
-            Channel Distribution
+          <h3 data-testid="channels-title" class="text-lg font-bold text-slate-900 dark:text-white mb-6">
+            {{ t("dashboard.channels.title") }}
           </h3>
           <div class="flex flex-col items-center justify-center">
             <div class="relative w-48 h-48">
@@ -465,7 +474,7 @@ onMounted(() => {
                 >
                 <span
                   class="text-xs text-slate-400 font-semibold uppercase tracking-wider"
-                  >Traffic</span
+                  >{{ t("dashboard.channels.traffic") }}</span
                 >
               </div>
             </div>
@@ -505,13 +514,13 @@ onMounted(() => {
           class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm flex-1"
         >
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white">
-              Recent Activity
+            <h3 data-testid="activity-title" class="text-lg font-bold text-slate-900 dark:text-white">
+              {{ t("dashboard.activity.title") }}
             </h3>
             <button
               class="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
             >
-              View All
+              {{ t("dashboard.activity.viewAll") }}
             </button>
           </div>
           <div class="relative flex flex-col gap-6">
@@ -522,7 +531,7 @@ onMounted(() => {
               v-if="activities.length === 0"
               class="text-sm text-slate-500 p-4"
             >
-              No recent activity
+              {{ t("dashboard.activity.empty") }}
             </div>
             <div
               v-else

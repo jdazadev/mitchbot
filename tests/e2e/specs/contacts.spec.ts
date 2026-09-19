@@ -56,14 +56,14 @@ test.describe('Clientes', () => {
     await expect(page.getByRole('heading', { name: 'Archivar Cliente' })).toHaveCount(0);
 
     // Verlo en el filtro de archivados.
-    await page.locator('select').nth(1).selectOption('Archived');
+    await page.getByTestId('clients-status-filter').selectOption('Archived');
     await page.getByPlaceholder('Buscar clientes...').fill(editedName);
     const archivedRow = page.getByRole('row', { name: new RegExp(editedName) });
     await expect(archivedRow).toBeVisible({ timeout: 20_000 });
 
     // Restauración.
     await archivedRow.getByTitle('Restaurar').click();
-    await page.locator('select').nth(1).selectOption('All');
+    await page.getByTestId('clients-status-filter').selectOption('All');
     await page.getByPlaceholder('Buscar clientes...').fill(editedName);
     await expect(page.getByRole('row', { name: new RegExp(editedName) })).toBeVisible({ timeout: 20_000 });
   });

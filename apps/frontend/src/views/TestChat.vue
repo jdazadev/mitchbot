@@ -1,12 +1,24 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import {
   messagingService,
   type ChatConversation,
   type ChatMessage,
 } from "../services/messaging.service";
 import { socketService } from "../services/socket.service";
+import es from "../locales/es.json";
+import en from "../locales/en.json";
+
+// El chat público es independiente del idioma del dashboard: usa un
+// composer aislado cuyo locale se fija según el idioma del agente del proyecto.
+const { t, locale: publicLocale } = useI18n({
+  useScope: "isolated",
+  locale: "es",
+  fallbackLocale: "es",
+  messages: { es, en },
+});
 
 const activeConversation = ref<ChatConversation | null>(null);
 const messages = ref<ChatMessage[]>([]);
@@ -30,6 +42,16 @@ onMounted(() => {
   socketService.onMessageChunk(onMessageChunk);
   socketService.onMessageUpdated(onMessageUpdated);
   socketService.onConversationStatus(onConversationStatus);
+
+  // El idioma del chat público sigue al del agente del proyecto.
+  if (isSlugReady.value) {
+    messagingService
+      .clientGetConfig(projectSlug.value)
+      .then((config) => {
+        publicLocale.value = config?.language === "en" ? "en" : "es";
+      })
+      .catch(() => {});
+  }
 });
 
 onUnmounted(() => {
@@ -161,7 +183,7 @@ function confirmTool(msg: ChatMessage, action: 'confirm' | 'cancel') {
 function modifyTool(msg: ChatMessage) {
   if (!activeConversation.value || !msg.toolData?.executionId) return;
   const current = JSON.stringify(msg.toolData.params || {}, null, 0);
-  const input = window.prompt('Edita los datos de la acción (JSON):', current);
+  const input = window.prompt(t("publicChat.tool.modifyPrompt"), current);
   if (!input) return;
   try {
     const params = JSON.parse(input);
@@ -172,8 +194,21 @@ function modifyTool(msg: ChatMessage) {
       params,
     });
   } catch {
-    window.alert('JSON inválido');
+    window.alert(t("publicChat.tool.invalidJson"));
   }
+}
+
+function toolStatusLabel(status?: string) {
+  if (!status) return "";
+  const key = `publicChat.tool.status.${status}`;
+  const translated = t(key);
+  return translated === key ? status : translated;
+}
+
+function senderLabel(sender: ChatMessage["sender"]) {
+  if (sender === "contact") return t("publicChat.sender.you");
+  if (sender === "ai_agent") return t("publicChat.sender.ai");
+  return t("publicChat.sender.human");
 }
 
 function onMessageUpdated(data: { messageId: string; status: string; params?: any; content?: string }) {
@@ -214,23 +249,22 @@ function scrollToBottom() {
       class="w-1/3 bg-white rounded-xl shadow-sm overflow-hidden flex flex-col"
     >
       <div class="p-4 border-b border-slate-100 bg-slate-50">
-        <h2 class="font-bold text-slate-700">🧪 Test — Simulador de Cliente</h2>
+        <h2 class="font-bold text-slate-700">{{ t("publicChat.simulator.title") }}</h2>
         <p class="text-xs text-slate-500 mt-1">
-          Simula un cliente que inicia una conversación. El contacto se crea
-          automáticamente cuando el agente responde.
+          {{ t("publicChat.simulator.subtitle") }}
         </p>
       </div>
       <div class="p-4 flex flex-col gap-4">
         <div>
-          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nombre</label>
+          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("publicChat.client.name") }}</label>
           <input
             v-model="clientName"
             class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            placeholder="Nombre del cliente"
+            :placeholder="t('publicChat.client.namePlaceholder')"
           />
         </div>
         <div>
-          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Teléfono</label>
+          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("publicChat.client.phone") }}</label>
           <input
             v-model="clientPhone"
             class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -238,15 +272,15 @@ function scrollToBottom() {
           />
         </div>
         <div>
-          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Email</label>
+          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("publicChat.client.email") }}</label>
           <input
             v-model="clientEmail"
             class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            placeholder="cliente@email.com"
+            :placeholder="t('publicChat.client.emailPlaceholder')"
           />
         </div>
         <div>
-          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Plataforma</label>
+          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("publicChat.client.platform") }}</label>
           <div class="flex gap-2">
             <button
               v-for="p in ['WhatsApp', 'Instagram', 'Web'] as const"
@@ -265,16 +299,16 @@ function scrollToBottom() {
         </div>
 
         <div v-if="activeConversation" class="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
-          <div class="text-xs font-bold text-blue-700 mb-1">Conversación Activa</div>
-          <div class="text-xs text-blue-600">ID: {{ activeConversation._id }}</div>
+          <div class="text-xs font-bold text-blue-700 mb-1">{{ t("publicChat.active.title") }}</div>
+          <div class="text-xs text-blue-600">{{ t("publicChat.active.idLabel") }} {{ activeConversation._id }}</div>
           <div class="text-xs text-blue-600">
-            Contacto creado: {{ activeConversation.isContactCreated ? '✅ Sí' : '⏳ Pendiente (responde desde el dashboard)' }}
+            {{ t("publicChat.active.contactCreated") }} {{ activeConversation.isContactCreated ? t("publicChat.active.contactCreatedYes") : t("publicChat.active.contactPending") }}
           </div>
           <button
             @click="resetConversation"
             class="mt-2 px-3 py-1 bg-red-100 text-red-600 rounded text-xs font-bold hover:bg-red-200 transition-colors"
           >
-            Resetear
+            {{ t("publicChat.active.reset") }}
           </button>
         </div>
       </div>
@@ -295,10 +329,10 @@ function scrollToBottom() {
           </div>
           <div>
             <div class="font-bold text-slate-800">
-              {{ clientName || 'Cliente Anónimo' }}
+              {{ clientName || t("publicChat.header.anonymous") }}
             </div>
             <div class="text-xs text-slate-500">
-              {{ activeConversation ? `Conversación activa — ${selectedPlatform}` : 'Escribe para iniciar conversación' }}
+              {{ activeConversation ? t("publicChat.header.activeWithPlatform", { platform: selectedPlatform }) : t("publicChat.header.startPrompt") }}
             </div>
           </div>
         </div>
@@ -309,7 +343,7 @@ function scrollToBottom() {
         class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-slate-100"
       >
         <div v-if="messages.length === 0" class="flex-1 flex items-center justify-center text-slate-400 text-sm">
-          Escribe un mensaje para iniciar una conversación como cliente
+          {{ t("publicChat.empty") }}
         </div>
         <template v-for="msg in messages" :key="msg._id">
           <template v-if="!isHiddenToolMessage(msg)">
@@ -322,21 +356,21 @@ function scrollToBottom() {
             >
               <div class="flex items-center gap-2 mb-1">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {{ msg.contentType === 'confirmation_request' ? 'Confirmación requerida' : (msg.toolData?.toolName || 'Herramienta') }}
+                  {{ msg.contentType === 'confirmation_request' ? t('publicChat.tool.confirmationRequired') : (msg.toolData?.toolName || t('publicChat.tool.tool')) }}
                 </span>
                 <span
                   v-if="msg.toolData?.status"
                   class="ml-auto text-[10px] font-bold uppercase"
                   :class="msg.toolData.status === 'success' ? 'text-emerald-600' : msg.toolData.status === 'error' ? 'text-red-600' : 'text-amber-600'"
                 >
-                  {{ msg.toolData.status }}
+                  {{ toolStatusLabel(msg.toolData.status) }}
                 </span>
               </div>
               <div v-html="renderMarkdown(msg.content)"></div>
               <div v-if="msg.contentType === 'confirmation_request' && msg.toolData?.status === 'needs_confirmation'" class="flex flex-wrap gap-2 mt-3">
-                <button @click="confirmTool(msg, 'confirm')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">Confirmar</button>
-                <button @click="confirmTool(msg, 'cancel')" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold bg-white hover:bg-slate-50">Cancelar</button>
-                <button @click="modifyTool(msg)" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold bg-white hover:bg-slate-50">Modificar</button>
+                <button @click="confirmTool(msg, 'confirm')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">{{ t("publicChat.tool.confirm") }}</button>
+                <button @click="confirmTool(msg, 'cancel')" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold bg-white hover:bg-slate-50">{{ t("publicChat.tool.cancel") }}</button>
+                <button @click="modifyTool(msg)" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold bg-white hover:bg-slate-50">{{ t("publicChat.tool.modify") }}</button>
               </div>
             </div>
           </div>
@@ -350,13 +384,7 @@ function scrollToBottom() {
             ]"
           >
             <div class="font-bold text-[10px] mb-1 opacity-50">
-              {{
-                msg.sender === "contact"
-                  ? "Tú (Cliente)"
-                  : msg.sender === "ai_agent"
-                    ? "Mitchbot (AI)"
-                    : "Agente Humano"
-              }}
+              {{ senderLabel(msg.sender) }}
             </div>
             <div v-if="!msg.content" class="flex items-center gap-1 h-5 mt-1">
               <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
@@ -374,7 +402,7 @@ function scrollToBottom() {
           <input
             v-model="newMessage"
             @keydown.enter="handleSend"
-            :placeholder="activeConversation ? 'Escribe un mensaje...' : 'Escribe tu primer mensaje para iniciar la conversación...'"
+            :placeholder="activeConversation ? t('publicChat.input.placeholder') : t('publicChat.input.firstPlaceholder')"
             class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
           <button
@@ -382,7 +410,7 @@ function scrollToBottom() {
             :disabled="!newMessage.trim() || isLoading || !isSlugReady"
             class="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-slate-300 text-white rounded-lg font-bold transition-colors"
           >
-            {{ activeConversation ? 'Enviar' : 'Iniciar Chat' }}
+            {{ activeConversation ? t("publicChat.input.send") : t("publicChat.input.start") }}
           </button>
         </div>
       </div>

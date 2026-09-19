@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import {
   settingsService,
   type AgentData,
@@ -15,15 +16,17 @@ type TabId = 'agent' | 'info' | 'channels' | 'options';
 const activeTab = ref<TabId>('agent');
 const route = useRoute();
 
-const tabs: { id: TabId; name: string; icon: string }[] = [
-  { id: 'agent', name: 'Agente IA', icon: 'smart_toy' },
-  { id: 'info', name: 'Información', icon: 'info' },
-  { id: 'channels', name: 'Canales', icon: 'language' },
-  { id: 'options', name: 'Opciones', icon: 'tune' },
-];
+const { t } = useI18n();
+
+const tabs = computed<{ id: TabId; name: string; icon: string }[]>(() => [
+  { id: 'agent', name: t('settings.tabs.agent'), icon: 'smart_toy' },
+  { id: 'info', name: t('settings.tabs.info'), icon: 'info' },
+  { id: 'channels', name: t('settings.tabs.channels'), icon: 'language' },
+  { id: 'options', name: t('settings.tabs.options'), icon: 'tune' },
+]);
 
 function isValidTab(tab: string): tab is TabId {
-  return tabs.some(t => t.id === tab);
+  return tabs.value.some(t => t.id === tab);
 }
 
 function syncTabFromRoute() {
@@ -70,51 +73,60 @@ const agentForm = ref({
 });
 
 // ===================== PERSONALITY OPTIONS =====================
-const roleOptions = [
-  { id: 'assistant', label: 'Asistente', icon: 'support_agent', desc: 'Ayuda general' },
-  { id: 'teacher', label: 'Profesor', icon: 'school', desc: 'Enseña paso a paso' },
-  { id: 'seller', label: 'Vendedor', icon: 'storefront', desc: 'Persuade y cierra ventas' },
-  { id: 'support', label: 'Soporte', icon: 'build', desc: 'Resuelve problemas técnicos' },
-  { id: 'customer_service', label: 'Atención al cliente', icon: 'headset_mic', desc: 'Gestiona consultas' },
-];
+const roleOptions = computed(() => [
+  { id: 'assistant', label: t('settings.agent.roles.assistant'), icon: 'support_agent', desc: t('settings.agent.roles.assistantDesc') },
+  { id: 'teacher', label: t('settings.agent.roles.teacher'), icon: 'school', desc: t('settings.agent.roles.teacherDesc') },
+  { id: 'seller', label: t('settings.agent.roles.seller'), icon: 'storefront', desc: t('settings.agent.roles.sellerDesc') },
+  { id: 'support', label: t('settings.agent.roles.support'), icon: 'build', desc: t('settings.agent.roles.supportDesc') },
+  { id: 'customer_service', label: t('settings.agent.roles.customerService'), icon: 'headset_mic', desc: t('settings.agent.roles.customerServiceDesc') },
+]);
 
-const traitOptions = [
-  'Formal', 'Empático', 'Irreverente', 'Directo', 'Objetivo',
-  'Entusiasta', 'Sarcástico', 'Sociable', 'Amable', 'Alegre', 'Neutro',
-];
+const traitOptions = computed(() => [
+  { value: 'Formal', label: t('settings.agent.traits.formal') },
+  { value: 'Empático', label: t('settings.agent.traits.empathetic') },
+  { value: 'Irreverente', label: t('settings.agent.traits.irreverent') },
+  { value: 'Directo', label: t('settings.agent.traits.direct') },
+  { value: 'Objetivo', label: t('settings.agent.traits.objective') },
+  { value: 'Entusiasta', label: t('settings.agent.traits.enthusiastic') },
+  { value: 'Sarcástico', label: t('settings.agent.traits.sarcastic') },
+  { value: 'Sociable', label: t('settings.agent.traits.sociable') },
+  { value: 'Amable', label: t('settings.agent.traits.kind') },
+  { value: 'Alegre', label: t('settings.agent.traits.cheerful') },
+  { value: 'Neutro', label: t('settings.agent.traits.neutral') },
+]);
 
-const emojiOptions = [
-  { id: 'low', label: 'Bajo', icon: '😐' },
-  { id: 'medium', label: 'Medio', icon: '🙂' },
-  { id: 'high', label: 'Alto', icon: '😄' },
-];
+const emojiOptions = computed(() => [
+  { id: 'low', label: t('settings.agent.emoji.low'), icon: '😐' },
+  { id: 'medium', label: t('settings.agent.emoji.medium'), icon: '🙂' },
+  { id: 'high', label: t('settings.agent.emoji.high'), icon: '😄' },
+]);
 
-const languageOptions = [
-  { id: 'es', label: 'Español', flag: '🇪🇸' },
-  { id: 'en', label: 'Inglés', flag: '🇺🇸' },
-];
+const languageOptions = computed(() => [
+  { id: 'es', label: t('common.spanish'), flag: '🇪🇸' },
+  { id: 'en', label: t('common.english'), flag: '🇺🇸' },
+]);
 
-const responseLengthOptions = [
-  { id: 'short', label: 'Corta', desc: '1-2 oraciones' },
-  { id: 'medium', label: 'Media', desc: 'Párrafos cortos' },
-  { id: 'detailed', label: 'Detallada', desc: 'Completa y extensa' },
-];
+const responseLengthOptions = computed(() => [
+  { id: 'short', label: t('settings.agent.responseLength.short'), desc: t('settings.agent.responseLength.shortDesc') },
+  { id: 'medium', label: t('settings.agent.responseLength.medium'), desc: t('settings.agent.responseLength.mediumDesc') },
+  { id: 'detailed', label: t('settings.agent.responseLength.detailed'), desc: t('settings.agent.responseLength.detailedDesc') },
+]);
 
-const maxTokenOptions = [
-  { label: 'Muy corto', value: 150 },
-  { label: 'Media', value: 300 },
-  { label: 'Larga', value: 800 },
-  { label: 'Máximo', value: 2048 },
-];
+const maxTokenOptions = computed(() => [
+  { label: t('settings.agent.maxTokensOption.veryShort'), value: 150 },
+  { label: t('settings.agent.maxTokensOption.medium'), value: 300 },
+  { label: t('settings.agent.maxTokensOption.long'), value: 800 },
+  { label: t('settings.agent.maxTokensOption.max'), value: 2048 },
+]);
 
 const maxTokensLabel = computed(() => {
   const current = agentForm.value.maxTokens;
-  const found = maxTokenOptions.find(option => option.value === current);
+  const found = maxTokenOptions.value.find(option => option.value === current);
   return found?.label || `${current}`;
 });
 
 const maxTokensIndex = computed(() => {
-  const index = maxTokenOptions.findIndex(option => option.value === agentForm.value.maxTokens);
+  const index = maxTokenOptions.value.findIndex(option => option.value === agentForm.value.maxTokens);
   return index >= 0 ? index : 1;
 });
 
@@ -133,19 +145,19 @@ function removeGoodbyeKeyword(keyword: string) {
   agentForm.value.goodbyeKeywords = agentForm.value.goodbyeKeywords.filter(k => k !== keyword);
 }
 
-const ragOptions = [
-  { id: 'strict', label: 'Solo documentos', desc: 'No usa conocimiento general', icon: 'lock' },
-  { id: 'hybrid', label: 'Híbrido', desc: 'Prioriza docs, complementa', icon: 'tune' },
-  { id: 'general', label: 'General', desc: 'Usa conocimiento libre', icon: 'public' },
-];
+const ragOptions = computed(() => [
+  { id: 'strict', label: t('settings.agent.rag.strict'), desc: t('settings.agent.rag.strictDesc'), icon: 'lock' },
+  { id: 'hybrid', label: t('settings.agent.rag.hybrid'), desc: t('settings.agent.rag.hybridDesc'), icon: 'tune' },
+  { id: 'general', label: t('settings.agent.rag.general'), desc: t('settings.agent.rag.generalDesc'), icon: 'public' },
+]);
 
 function toggleTrait(trait: string) {
-  const t = trait.toLowerCase();
-  const idx = agentForm.value.personality.traits.indexOf(t);
+  const normalized = trait.toLowerCase();
+  const idx = agentForm.value.personality.traits.indexOf(normalized);
   if (idx >= 0) {
     agentForm.value.personality.traits.splice(idx, 1);
   } else if (agentForm.value.personality.traits.length < 3) {
-    agentForm.value.personality.traits.push(t);
+    agentForm.value.personality.traits.push(normalized);
   }
 }
 
@@ -154,12 +166,12 @@ function isTraitSelected(trait: string) {
 }
 
 const temperatureLabel = computed(() => {
-  const t = agentForm.value.temperature;
-  if (t <= 0.2) return 'Muy baja';
-  if (t <= 0.4) return 'Baja';
-  if (t <= 0.6) return 'Media';
-  if (t <= 0.8) return 'Alta';
-  return 'Muy alta';
+  const value = agentForm.value.temperature;
+  if (value <= 0.2) return t('settings.agent.temperatureLevels.veryLow');
+  if (value <= 0.4) return t('settings.agent.temperatureLevels.low');
+  if (value <= 0.6) return t('settings.agent.temperatureLevels.medium');
+  if (value <= 0.8) return t('settings.agent.temperatureLevels.high');
+  return t('settings.agent.temperatureLevels.veryHigh');
 });
 
 const showTemperatureWarning = computed(() => agentForm.value.temperature > 0.6);
@@ -218,7 +230,7 @@ onMounted(async () => {
 
   } catch (err: any) {
     console.error('Error loading settings:', err);
-    saveError.value = 'Error al cargar la configuración';
+    saveError.value = t('settings.errors.loadConfig');
   } finally {
     loading.value = false;
   }
@@ -244,8 +256,8 @@ function showErrorMsg(msg: string) {
 }
 
 async function handleSaveProjectSlug() {
-  if (!project.value?._id) return showErrorMsg('No se encontró el proyecto');
-  if (!projectSlugDraft.value.trim()) return showErrorMsg('El slug es obligatorio');
+  if (!project.value?._id) return showErrorMsg(t('settings.errors.projectNotFound'));
+  if (!projectSlugDraft.value.trim()) return showErrorMsg(t('settings.errors.slugRequired'));
   saving.value = true;
   try {
     const updated = await projectService.updateProject({
@@ -253,27 +265,27 @@ async function handleSaveProjectSlug() {
     } as any);
     project.value = updated;
     projectSlugDraft.value = updated.slug || projectSlugDraft.value.trim();
-    showSuccessMsg('Slug actualizado correctamente');
+    showSuccessMsg(t('settings.toasts.slugUpdated'));
   } catch (err: any) {
-    showErrorMsg(err.message || 'Error al actualizar slug');
+    showErrorMsg(err.message || t('settings.errors.slugUpdate'));
   } finally {
     saving.value = false;
   }
 }
 
 async function copyTestChatLink() {
-  if (!projectSlugDraft.value.trim()) return showErrorMsg('El slug es obligatorio');
+  if (!projectSlugDraft.value.trim()) return showErrorMsg(t('settings.errors.slugRequired'));
   const link = `${window.location.origin}/test-chat/${projectSlugDraft.value.trim()}`;
   try {
     await navigator.clipboard.writeText(link);
-    showSuccessMsg('Link copiado');
+    showSuccessMsg(t('settings.toasts.linkCopied'));
   } catch {
-    showErrorMsg('No se pudo copiar el link');
+    showErrorMsg(t('settings.errors.copyLink'));
   }
 }
 
 async function handleSaveAgent() {
-  if (!agent.value?._id) return showErrorMsg('No se encontró el agente');
+  if (!agent.value?._id) return showErrorMsg(t('settings.errors.agentNotFound'));
   saving.value = true;
   try {
     await settingsService.updateAgent(agent.value._id, {
@@ -289,9 +301,9 @@ async function handleSaveAgent() {
         goodbyeKeywords: agentForm.value.goodbyeKeywords,
       },
     } as any);
-    showSuccessMsg('Agente actualizado correctamente');
+    showSuccessMsg(t('settings.toasts.agentUpdated'));
   } catch (err: any) {
-    showErrorMsg(err.message || 'Error al guardar agente');
+    showErrorMsg(err.message || t('settings.errors.agentSave'));
   } finally {
     saving.value = false;
   }
@@ -324,7 +336,7 @@ function applyAgent(data: AgentData) {
 
 // ===================== CHANNELS =====================
 async function handleSaveChannels() {
-  if (!project.value?._id) return showErrorMsg('No se encontró el proyecto');
+  if (!project.value?._id) return showErrorMsg(t('settings.errors.projectNotFound'));
   saving.value = true;
   try {
     await projectService.updateProject({
@@ -337,7 +349,7 @@ async function handleSaveChannels() {
         },
       },
     });
-    showSuccessMsg('Canales actualizados');
+    showSuccessMsg(t('settings.toasts.channelsUpdated'));
   } catch (err: any) {
     showErrorMsg(err.message);
   } finally {
@@ -348,7 +360,7 @@ async function handleSaveChannels() {
 
 // ===================== OPTIONS =====================
 async function handleSaveOptions() {
-  if (!project.value?._id) return showErrorMsg('No se encontró el proyecto');
+  if (!project.value?._id) return showErrorMsg(t('settings.errors.projectNotFound'));
   saving.value = true;
   try {
     await projectService.updateProject({
@@ -357,7 +369,7 @@ async function handleSaveOptions() {
         options: optionsForm.value,
       },
     });
-    showSuccessMsg('Opciones actualizadas');
+    showSuccessMsg(t('settings.toasts.optionsUpdated'));
   } catch (err: any) {
     showErrorMsg(err.message);
   } finally {
@@ -371,8 +383,8 @@ async function handleSaveOptions() {
 <template>
   <div class="flex flex-col gap-6">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Configuración</h1>
-      <p class="text-sm text-slate-500 mt-1">Gestiona agente, canales y configuración</p>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ t('settings.title') }}</h1>
+      <p class="text-sm text-slate-500 mt-1">{{ t('settings.subtitle') }}</p>
     </div>
 
     <!-- Global feedback -->
@@ -389,7 +401,7 @@ async function handleSaveOptions() {
     <div v-if="loading" class="flex items-center justify-center p-12">
       <div class="flex flex-col items-center gap-3">
         <div class="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-sm text-slate-500">Cargando...</span>
+        <span class="text-sm text-slate-500">{{ t('common.loading') }}</span>
       </div>
     </div>
 
@@ -414,37 +426,37 @@ async function handleSaveOptions() {
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
           <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">info</span>
-            Información del Proyecto
+            {{ t('settings.info.title') }}
           </h2>
-          <p class="text-xs text-slate-400 mb-6">Administra datos básicos del proyecto y el enlace de test chat</p>
+          <p class="text-xs text-slate-400 mb-6">{{ t('settings.info.subtitle') }}</p>
 
           <div class="flex items-center justify-between mb-3">
             <div>
-              <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Slug del Proyecto</h3>
-              <p class="text-xs text-slate-400 mt-1">Se usa para compartir el enlace de test chat</p>
+              <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ t('settings.info.slugLabel') }}</h3>
+              <p class="text-xs text-slate-400 mt-1">{{ t('settings.info.slugHint') }}</p>
             </div>
-            <div class="text-[10px] text-slate-400">/test-chat/<span class="font-mono">{{ project?.slug || 'slug' }}</span></div>
+            <div class="text-[10px] text-slate-400">/test-chat/<span class="font-mono">{{ project?.slug || t('settings.info.slugFallback') }}</span></div>
           </div>
 
           <div class="flex items-center gap-3">
             <input
               v-model="projectSlugDraft"
               class="flex-1 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
-              placeholder="mi-proyecto"
+              :placeholder="t('settings.info.slugPlaceholder')"
             />
             <button
               @click="handleSaveProjectSlug"
               :disabled="saving"
               class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm"
             >
-              Guardar
+              {{ t('common.save') }}
             </button>
             <button
               @click="copyTestChatLink"
               :disabled="saving || !projectSlugDraft.trim()"
               class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-bold text-slate-600 transition-all"
             >
-              Copiar link
+              {{ t('settings.info.copyLink') }}
             </button>
           </div>
         </div>
@@ -458,16 +470,16 @@ async function handleSaveOptions() {
           <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
             <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-5 flex items-center gap-2">
               <span class="material-symbols-outlined text-[18px]">smart_toy</span>
-              Información del Agente
+              {{ t('settings.agent.basicTitle') }}
             </h2>
             <div class="flex flex-col gap-4">
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nombre *</label>
-                <input v-model="agentForm.name" placeholder="Ej: Asistente de Ventas" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
+                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.nameLabel') }}</label>
+                <input v-model="agentForm.name" :placeholder="t('settings.agent.namePlaceholder')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
               </div>
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Descripción</label>
-                <textarea v-model="agentForm.description" placeholder="¿Qué hace este agente?" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"></textarea>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.descriptionLabel') }}</label>
+                <textarea v-model="agentForm.description" :placeholder="t('settings.agent.descriptionPlaceholder')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"></textarea>
               </div>
             </div>
           </div>
@@ -476,21 +488,21 @@ async function handleSaveOptions() {
           <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
             <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
               <span class="material-symbols-outlined text-[18px]">memory</span>
-              Modelos de IA
+              {{ t('settings.agent.modelsTitle') }}
             </h2>
-            <p class="text-xs text-slate-400 mb-5">Definidos por el entorno del servidor. No son editables desde la interfaz.</p>
+            <p class="text-xs text-slate-400 mb-5">{{ t('settings.agent.modelsHint') }}</p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Chat</span>
-                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.llm?.selectedModel || 'No configurado' }}</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">{{ t('settings.agent.modelChat') }}</span>
+                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.llm?.selectedModel || t('settings.agent.notConfigured') }}</span>
               </div>
               <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Embeddings</span>
-                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.embedding?.selectedModel || 'No configurado' }}</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">{{ t('settings.agent.modelEmbeddings') }}</span>
+                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.embedding?.selectedModel || t('settings.agent.notConfigured') }}</span>
               </div>
               <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">OCR</span>
-                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.ocr?.selectedModel || 'No configurado' }}</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">{{ t('settings.agent.modelOcr') }}</span>
+                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.ocr?.selectedModel || t('settings.agent.notConfigured') }}</span>
               </div>
             </div>
           </div>
@@ -499,14 +511,14 @@ async function handleSaveOptions() {
           <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
             <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
               <span class="material-symbols-outlined text-[18px]">psychology</span>
-              Personalidad del Bot
+              {{ t('settings.agent.personalityTitle') }}
             </h2>
-            <p class="text-xs text-slate-400 mb-5">Configura cómo se comporta y responde el chatbot</p>
+            <p class="text-xs text-slate-400 mb-5">{{ t('settings.agent.personalityHint') }}</p>
 
             <div class="flex flex-col gap-6">
               <!-- ROL -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Rol</label>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('settings.agent.roleLabel') }}</label>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <button
                     v-for="r in roleOptions" :key="r.id"
@@ -525,27 +537,27 @@ async function handleSaveOptions() {
 
               <!-- RASGOS -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Rasgos de personalidad <span class="text-slate-400 font-normal">(máx. 3)</span></label>
-                <p class="text-[10px] text-slate-400 mb-2">Selecciona hasta 3 rasgos que definen el tono del bot</p>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.traitsLabel') }} <span class="text-slate-400 font-normal">{{ t('settings.agent.traitsMax') }}</span></label>
+                <p class="text-[10px] text-slate-400 mb-2">{{ t('settings.agent.traitsHint') }}</p>
                 <div class="flex flex-wrap gap-2">
                   <button
-                    v-for="trait in traitOptions" :key="trait"
-                    @click="toggleTrait(trait)"
+                    v-for="trait in traitOptions" :key="trait.value"
+                    @click="toggleTrait(trait.value)"
                     class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
-                    :class="isTraitSelected(trait)
+                    :class="isTraitSelected(trait.value)
                       ? 'bg-blue-100 border-blue-300 text-blue-700'
                       : agentForm.personality.traits.length >= 3
                         ? 'bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed'
                         : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50'"
                   >
-                    {{ trait }}
+                    {{ trait.label }}
                   </button>
                 </div>
               </div>
 
               <!-- EMOJIS -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Uso de emojis</label>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('settings.agent.emojiLabel') }}</label>
                 <div class="grid grid-cols-3 gap-2">
                   <button
                     v-for="e in emojiOptions" :key="e.id"
@@ -562,7 +574,7 @@ async function handleSaveOptions() {
 
               <!-- IDIOMA -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Idioma</label>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('common.language') }}</label>
                 <div class="grid grid-cols-4 gap-2">
                   <button
                     v-for="l in languageOptions" :key="l.id"
@@ -579,7 +591,7 @@ async function handleSaveOptions() {
 
               <!-- LONGITUD -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Longitud de respuesta</label>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('settings.agent.responseLengthLabel') }}</label>
                 <div class="grid grid-cols-3 gap-2">
                   <button
                     v-for="rl in responseLengthOptions" :key="rl.id"
@@ -597,7 +609,7 @@ async function handleSaveOptions() {
 
               <!-- COMPORTAMIENTO RAG -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Comportamiento de búsqueda (RAG)</label>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('settings.agent.ragBehaviorLabel') }}</label>
                 <div class="grid grid-cols-3 gap-2">
                   <button
                     v-for="rg in ragOptions" :key="rg.id"
@@ -616,21 +628,21 @@ async function handleSaveOptions() {
 
               <!-- TEMPERATURA -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Creatividad — {{ temperatureLabel }} ({{ agentForm.temperature }})</label>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.temperatureLabel', { level: temperatureLabel, value: agentForm.temperature }) }}</label>
                 <input v-model.number="agentForm.temperature" type="range" min="0" max="1" step="0.1" class="w-full accent-blue-600" />
                 <div class="flex justify-between text-[10px] text-slate-400 mt-1">
-                  <span>🎯 Preciso</span>
-                  <span>🎨 Creativo</span>
+                  <span>🎯 {{ t('settings.agent.temperaturePrecise') }}</span>
+                  <span>🎨 {{ t('settings.agent.temperatureCreative') }}</span>
                 </div>
                 <div v-if="showTemperatureWarning" class="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
                   <span class="material-symbols-outlined text-[16px]">warning</span>
-                  Cuidado: aumenta el riesgo de que el bot pierda coherencia lógica o invente hechos.
+                  {{ t('settings.agent.temperatureWarning') }}
                 </div>
               </div>
 
               <!-- MAX TOKENS -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Max tokens — {{ maxTokensLabel }} ({{ agentForm.maxTokens }})</label>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.maxTokensLabel', { level: maxTokensLabel, value: agentForm.maxTokens }) }}</label>
                 <input
                   type="range"
                   min="0"
@@ -641,41 +653,41 @@ async function handleSaveOptions() {
                   @input="agentForm.maxTokens = maxTokenOptions[Number(($event.target as HTMLInputElement).value)]?.value || 300"
                 />
                 <div class="flex justify-between text-[10px] text-slate-400 mt-1">
-                  <span>Muy corto</span>
-                  <span>Media</span>
-                  <span>Larga</span>
-                  <span>Máximo</span>
+                  <span>{{ t('settings.agent.maxTokensOption.veryShort') }}</span>
+                  <span>{{ t('settings.agent.maxTokensOption.medium') }}</span>
+                  <span>{{ t('settings.agent.maxTokensOption.long') }}</span>
+                  <span>{{ t('settings.agent.maxTokensOption.max') }}</span>
                 </div>
               </div>
 
               <!-- MENSAJES AUTOMÁTICOS -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">Mensajes automáticos</label>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">{{ t('settings.agent.autoMessagesTitle') }}</label>
                 <div class="flex flex-col gap-3">
                   <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
                     <div>
-                      <span class="text-sm font-medium text-slate-800 dark:text-white">Saludar siempre</span>
-                      <p class="text-xs text-slate-400 mt-0.5">Saluda al iniciar o retomar tras 6 horas</p>
+                      <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('settings.agent.welcome') }}</span>
+                      <p class="text-xs text-slate-400 mt-0.5">{{ t('settings.agent.welcomeHint') }}</p>
                     </div>
                     <input type="checkbox" v-model="agentForm.enableWelcomeGreeting" class="h-4 w-4 accent-blue-600" />
                   </label>
                   <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
                     <div>
-                      <span class="text-sm font-medium text-slate-800 dark:text-white">Despedir siempre</span>
-                      <p class="text-xs text-slate-400 mt-0.5">Despide cuando el usuario se despida o cierre chat</p>
+                      <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('settings.agent.goodbye') }}</span>
+                      <p class="text-xs text-slate-400 mt-0.5">{{ t('settings.agent.goodbyeHint') }}</p>
                     </div>
                     <input type="checkbox" v-model="agentForm.enableGoodbyeMessage" class="h-4 w-4 accent-blue-600" />
                   </label>
                   <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
                     <div>
-                      <span class="text-sm font-medium text-slate-800 dark:text-white">Cuando no sepa la respuesta</span>
-                      <p class="text-xs text-slate-400 mt-0.5">Disculparse y aconsejar contactar con un asesor</p>
+                      <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('settings.agent.fallbackAdvisor') }}</span>
+                      <p class="text-xs text-slate-400 mt-0.5">{{ t('settings.agent.fallbackAdvisorHint') }}</p>
                     </div>
                     <input type="checkbox" v-model="agentForm.enableFallbackAdvisor" class="h-4 w-4 accent-blue-600" />
                   </label>
                 </div>
                 <div class="mt-4">
-                  <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Keywords de despedida</label>
+                  <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.goodbyeKeywordsLabel') }}</label>
                   <div class="flex flex-wrap gap-2 mb-2">
                     <span v-for="keyword in agentForm.goodbyeKeywords" :key="keyword" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs">
                       {{ keyword }}
@@ -688,21 +700,21 @@ async function handleSaveOptions() {
                     <input
                       v-model="goodbyeKeywordInput"
                       @keydown.enter.prevent="addGoodbyeKeyword"
-                      placeholder="Escribe una keyword"
+                      :placeholder="t('settings.agent.goodbyeKeywordPlaceholder')"
                       class="flex-1 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
                     />
                     <button type="button" class="px-3 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg" @click="addGoodbyeKeyword">
-                      Agregar
+                      {{ t('common.add') }}
                     </button>
                   </div>
-                  <p class="text-[10px] text-slate-400 mt-1">Se comparan en minúsculas. Usa términos como “adios”, “gracias”, “bye”.</p>
+                  <p class="text-[10px] text-slate-400 mt-1">{{ t('settings.agent.goodbyeKeywordsHint') }}</p>
                 </div>
               </div>
 
               <!-- INSTRUCCIONES ADICIONALES -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Instrucciones adicionales <span class="text-slate-400 font-normal">(opcional)</span></label>
-                <textarea v-model="agentForm.personality.additionalInstructions" placeholder="Ej: No menciones precios, siempre sugiere contactar a un asesor..." class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"></textarea>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.additionalInstructionsLabel') }} <span class="text-slate-400 font-normal">({{ t('common.optional') }})</span></label>
+                <textarea v-model="agentForm.personality.additionalInstructions" :placeholder="t('settings.agent.additionalInstructionsPlaceholder')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"></textarea>
               </div>
             </div>
           </div>
@@ -710,7 +722,7 @@ async function handleSaveOptions() {
           <!-- Guardar -->
           <div class="flex justify-end">
             <button @click="handleSaveAgent" :disabled="saving" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm">
-              {{ saving ? 'Guardando...' : 'Guardar Agente' }}
+              {{ saving ? t('common.saving') : t('settings.agent.save') }}
             </button>
           </div>
 
@@ -722,7 +734,7 @@ async function handleSaveOptions() {
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
           <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">language</span>
-            Canales de Comunicación
+            {{ t('settings.channels.title') }}
           </h2>
           <div class="flex flex-col gap-4">
             <div v-for="channel in channels" :key="channel.key" class="flex items-center justify-between p-4 rounded-lg border border-slate-100 dark:border-slate-700">
@@ -738,7 +750,7 @@ async function handleSaveOptions() {
           </div>
           <div class="flex justify-end pt-4">
             <button @click="handleSaveChannels" :disabled="saving" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm">
-              {{ saving ? 'Guardando...' : 'Guardar Canales' }}
+              {{ saving ? t('common.saving') : t('settings.channels.save') }}
             </button>
           </div>
         </div>
@@ -750,12 +762,12 @@ async function handleSaveOptions() {
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
           <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">tune</span>
-            Opciones
+            {{ t('settings.options.title') }}
           </h2>
           <div class="flex items-center justify-between p-4 rounded-lg border border-slate-100 dark:border-slate-700">
             <div>
-              <span class="text-sm font-medium text-slate-800 dark:text-white">Crear contacto automáticamente</span>
-              <p class="text-xs text-slate-400 mt-0.5">Al contestar el primer mensaje del cliente</p>
+              <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('settings.options.autoCreateContact') }}</span>
+              <p class="text-xs text-slate-400 mt-0.5">{{ t('settings.options.autoCreateContactHint') }}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" v-model="optionsForm.autoCreateContact" class="sr-only peer">
@@ -764,7 +776,7 @@ async function handleSaveOptions() {
           </div>
           <div class="flex justify-end pt-4">
             <button @click="handleSaveOptions" :disabled="saving" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm">
-              {{ saving ? 'Guardando...' : 'Guardar' }}
+              {{ saving ? t('common.saving') : t('common.save') }}
             </button>
           </div>
         </div>

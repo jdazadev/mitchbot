@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { authService, type User } from '../../services/auth.service';
 import { socketService } from '../../services/socket.service';
 import { useConversations } from '../../composables/useConversations';
 
 const router = useRouter();
+const { t } = useI18n();
 const currentUser = ref<User | null>(null);
 const showUserMenu = ref(false);
 
@@ -13,16 +15,17 @@ const { unreadTotal, loadConversations, bindConversationSocket } = useConversati
 
 const navItems = computed(() => {
   return [
-    { name: 'Dashboard', icon: 'dashboard', href: '/' },
+    { name: t('nav.dashboard'), icon: 'dashboard', href: '/', testId: 'dashboard' },
     {
-      name: 'Conversations',
+      name: t('nav.conversations'),
       icon: 'chat',
       href: '/messaging',
+      testId: 'conversations',
       badge: unreadTotal.value > 0 ? String(unreadTotal.value) : undefined,
     },
-    { name: 'Clients', icon: 'groups', href: '/clients' },
-    { name: 'Brain', icon: 'psychology', href: '/brain' },
-    { name: 'Users', icon: 'manage_accounts', href: '/users' },
+    { name: t('nav.clients'), icon: 'groups', href: '/clients', testId: 'clients' },
+    { name: t('nav.brain'), icon: 'psychology', href: '/brain', testId: 'brain' },
+    { name: t('nav.users'), icon: 'manage_accounts', href: '/users', testId: 'users' },
   ];
 });
 
@@ -70,10 +73,10 @@ async function handleLogout() {
             <h1
               class="text-xl font-bold leading-tight tracking-tight text-slate-900 dark:text-white"
             >
-              BotMaster
+              {{ t('app.name') }}
             </h1>
             <p class="text-xs font-medium text-slate-400 dark:text-slate-500">
-              Analytics Panel
+              {{ t('app.tagline') }}
             </p>
           </div>
         </div>
@@ -84,6 +87,7 @@ async function handleLogout() {
           v-for="item in navItems"
           :key="item.name"
           :to="item.href"
+          :data-testid="'nav-' + item.testId"
           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 hover:text-slate-900 dark:hover:bg-slate-700/50 dark:hover:text-slate-200 transition-colors group"
           active-class="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium"
         >
@@ -106,6 +110,7 @@ async function handleLogout() {
       <div class="p-4 border-t border-slate-100 dark:border-slate-800">
         <router-link
           to="/settings"
+          data-testid="nav-settings"
           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 hover:text-slate-900 dark:hover:bg-slate-700/50 dark:hover:text-slate-200 transition-colors group mb-2"
           active-class="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium"
         >
@@ -113,7 +118,7 @@ async function handleLogout() {
             class="material-symbols-outlined group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
             >settings</span
           >
-          <span class="text-sm font-medium">Configuración</span>
+          <span class="text-sm font-medium">{{ t('nav.settings') }}</span>
         </router-link>
 
         <!-- User Card con menú -->
@@ -131,7 +136,7 @@ async function handleLogout() {
               <p
                 class="text-sm font-semibold truncate text-slate-900 dark:text-white"
               >
-                {{ currentUser?.name || 'Usuario' }}
+                {{ currentUser?.name || t('nav.userPlaceholder') }}
               </p>
               <p class="text-xs text-slate-500 truncate dark:text-slate-400">
                 {{ currentUser?.email || '' }}
@@ -159,7 +164,7 @@ async function handleLogout() {
                 class="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
               >
                 <span class="material-symbols-outlined text-[18px]">person</span>
-                Mi Perfil
+                {{ t('nav.profile') }}
               </router-link>
               <div class="border-t border-slate-100 dark:border-slate-700"></div>
               <button
@@ -167,7 +172,7 @@ async function handleLogout() {
                 class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               >
                 <span class="material-symbols-outlined text-[18px]">logout</span>
-                Cerrar Sesión
+                {{ t('nav.logout') }}
               </button>
             </div>
           </Transition>

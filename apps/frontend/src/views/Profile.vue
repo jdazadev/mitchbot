@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { authService, type User } from '../services/auth.service';
 import { projectService, type Project } from '../services/project.service';
+
+const { t } = useI18n();
 
 const currentUser = ref<User | null>(null);
 const projects = ref<Project[]>([]);
@@ -37,7 +40,7 @@ async function handleUpdateProfile() {
   profileSuccess.value = '';
 
   if (profileForm.value.newPassword && profileForm.value.newPassword !== profileForm.value.confirmPassword) {
-    profileError.value = 'Las contraseñas no coinciden';
+    profileError.value = t('profile.error.passwordMismatch');
     return;
   }
 
@@ -53,7 +56,7 @@ async function handleUpdateProfile() {
 
     const updated = await authService.updateProfile(data);
     currentUser.value = updated;
-    profileSuccess.value = 'Perfil actualizado correctamente';
+    profileSuccess.value = t('profile.toast.updated');
     profileForm.value.currentPassword = '';
     profileForm.value.newPassword = '';
     profileForm.value.confirmPassword = '';
@@ -69,8 +72,8 @@ async function handleUpdateProfile() {
   <div class="flex flex-col gap-6">
     <div class="flex justify-between items-center">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Mi Perfil</h1>
-        <p class="text-sm text-slate-500 mt-1">Gestiona tu información personal y contraseña</p>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ t('profile.title') }}</h1>
+        <p class="text-sm text-slate-500 mt-1">{{ t('profile.subtitle') }}</p>
       </div>
     </div>
 
@@ -82,7 +85,7 @@ async function handleUpdateProfile() {
             {{ currentUser?.name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?' }}
           </div>
           <div>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ currentUser?.name || 'Cargando...' }}</h2>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ currentUser?.name || t('common.loading') }}</h2>
             <p class="text-sm text-slate-500">{{ currentUser?.email || '' }}</p>
             <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-blue-50 text-blue-700 border border-blue-100">
               {{ currentUser?.role || '' }}
@@ -93,9 +96,9 @@ async function handleUpdateProfile() {
         <div class="mb-6 pb-6 border-b border-slate-100 dark:border-slate-700">
           <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">folder_open</span>
-            Mis Proyectos ({{ projects.length }})
+            {{ t('profile.projects.title', { count: projects.length }) }}
           </h2>
-          <div v-if="projects.length === 0" class="text-sm text-slate-400">Sin proyectos asignados</div>
+          <div v-if="projects.length === 0" class="text-sm text-slate-400">{{ t('profile.projects.empty') }}</div>
           <div v-else class="flex flex-wrap gap-2">
             <span
               v-for="p in projects"
@@ -113,7 +116,7 @@ async function handleUpdateProfile() {
 
         <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
           <span class="material-symbols-outlined text-[18px]">person</span>
-          Información Personal
+          {{ t('profile.info.title') }}
         </h2>
 
         <!-- Success / Error -->
@@ -128,20 +131,20 @@ async function handleUpdateProfile() {
 
         <div class="flex flex-col gap-4">
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nombre</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('common.name') }}</label>
             <input v-model="profileForm.name" type="text" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
           </div>
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Email</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('common.email') }}</label>
             <input v-model="profileForm.email" type="email" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
           </div>
 
           <div class="border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
-            <h3 class="text-xs font-bold text-slate-500 uppercase mb-3">Cambiar Contraseña</h3>
+            <h3 class="text-xs font-bold text-slate-500 uppercase mb-3">{{ t('profile.password.title') }}</h3>
             <div class="flex flex-col gap-3">
-              <input v-model="profileForm.currentPassword" type="password" placeholder="Contraseña actual" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
-              <input v-model="profileForm.newPassword" type="password" placeholder="Nueva contraseña" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
-              <input v-model="profileForm.confirmPassword" type="password" placeholder="Confirmar nueva contraseña" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
+              <input v-model="profileForm.currentPassword" type="password" :placeholder="t('profile.password.current')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
+              <input v-model="profileForm.newPassword" type="password" :placeholder="t('profile.password.new')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
+              <input v-model="profileForm.confirmPassword" type="password" :placeholder="t('profile.password.confirm')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
             </div>
           </div>
 
@@ -151,7 +154,7 @@ async function handleUpdateProfile() {
               :disabled="profileLoading"
               class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm"
             >
-              {{ profileLoading ? 'Guardando...' : 'Guardar Cambios' }}
+              {{ profileLoading ? t('common.saving') : t('common.saveChanges') }}
             </button>
           </div>
         </div>

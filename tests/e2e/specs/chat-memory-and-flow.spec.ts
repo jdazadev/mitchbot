@@ -94,7 +94,7 @@ test.describe('Memoria y flujo de conversación', () => {
     await page.goto('/messaging');
     await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
     await page.getByText(clientName).first().click();
-    await expect(page.getByText('Auto-Pilot On')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Piloto automático activo')).toBeVisible({ timeout: 20_000 });
 
     // El socket del dashboard debe estar dentro de la room de la conversación.
     await expect
@@ -107,8 +107,8 @@ test.describe('Memoria y flujo de conversación', () => {
     await sendPublicMessage(api, E2E.project.slug, conversationId, `TRANSFERIR ${id}`);
 
     // Cambia el badge sin recargar la página.
-    await expect(page.getByText('Human Takeover')).toBeVisible({ timeout: 25_000 });
-    await expect(page.getByText('Auto-Pilot On')).toHaveCount(0);
+    await expect(page.getByText('Atención humana')).toBeVisible({ timeout: 25_000 });
+    await expect(page.getByText('Piloto automático activo')).toHaveCount(0);
 
     const conversations = (await listConversations(api)) as any[];
     const found = conversations.find((c) => c._id === conversationId);

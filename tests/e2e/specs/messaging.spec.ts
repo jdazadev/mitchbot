@@ -33,7 +33,7 @@ test.describe('Mensajería', () => {
     expect(conversationId).toBeTruthy();
 
     await page.goto('/messaging');
-    await expect(page.getByRole('heading', { name: 'Inbox' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Bandeja de entrada' })).toBeVisible();
 
     // Regresión del cuelgue: el spinner debe desaparecer.
     await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
@@ -51,7 +51,7 @@ test.describe('Mensajería', () => {
     await expect(page.getByText(reply).first()).toBeVisible({ timeout: 20_000 });
 
     // Al responder se crea el contacto automáticamente.
-    await expect(page.getByText('Contacto Creado').first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Contacto creado').first()).toBeVisible({ timeout: 20_000 });
 
     // Verificación de backend.
     const conversations = await listConversations(api);
@@ -95,7 +95,7 @@ test.describe('Mensajería', () => {
 
     await page.goto('/messaging');
     await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
-    const inbox = page.locator('aside', { has: page.getByRole('heading', { name: 'Inbox' }) });
+    const inbox = page.locator('aside', { has: page.getByRole('heading', { name: 'Bandeja de entrada' }) });
 
     // Chips derivados de la config del proyecto: Instagram está deshabilitado.
     await expect(inbox.getByRole('button', { name: 'Todos' })).toBeVisible();
@@ -168,12 +168,12 @@ test.describe('Mensajería', () => {
     await page.goto('/messaging');
     await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
     await page.getByText(clientName).first().click();
-    await expect(page.getByText('Auto-Pilot On')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Piloto automático activo')).toBeVisible({ timeout: 20_000 });
 
     // Tomar control.
-    await page.getByRole('button', { name: /Take Over/i }).click();
-    await expect(page.getByText('Human Takeover')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText('Auto-Pilot On')).toHaveCount(0);
+    await page.getByRole('button', { name: /Tomar control/i }).click();
+    await expect(page.getByText('Atención humana')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('Piloto automático activo')).toHaveCount(0);
     await expect
       .poll(async () => (await getConversation(api, conversationId)).mode)
       .toBe('human_takeover');
@@ -188,8 +188,8 @@ test.describe('Mensajería', () => {
     expect(botRepliesAfter).toBe(botRepliesBefore);
 
     // Devolver al modo automático.
-    await page.getByRole('button', { name: /Auto-Pilot/i }).click();
-    await expect(page.getByText('Auto-Pilot On')).toBeVisible({ timeout: 15_000 });
+    await page.getByRole('button', { name: /Piloto automático/i }).click();
+    await expect(page.getByText('Piloto automático activo')).toBeVisible({ timeout: 15_000 });
     await expect
       .poll(async () => (await getConversation(api, conversationId)).mode)
       .toBe('auto_pilot');

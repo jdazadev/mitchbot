@@ -1,0 +1,755 @@
+{
+  "app": {
+    "name": "BotMaster",
+    "tagline": "Analytics Panel"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "conversations": "Conversations",
+    "clients": "Clients",
+    "brain": "Brain",
+    "users": "Users",
+    "settings": "Settings",
+    "profile": "My Profile",
+    "logout": "Log out",
+    "userPlaceholder": "User"
+  },
+  "topbar": {
+    "dashboard": "Dashboard Overview",
+    "messaging": "Conversations",
+    "brain": "Brain",
+    "clients": "Clients",
+    "default": "BotMaster",
+    "selectProject": "Select project",
+    "noProjects": "You have no projects",
+    "createProject": "Create new project",
+    "notifications": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications",
+    "clearAll": "Clear all",
+    "newNotification": "New notification",
+    "language": "Language",
+    "time": {
+      "now": "now",
+      "minutesAgo": "{count} min ago",
+      "hoursAgo": "{count} h ago",
+      "daysAgo": "{count} d ago"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "add": "Add",
+    "remove": "Remove",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "new": "New",
+    "status": "Status",
+    "actions": "Actions",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "date": "Date",
+    "time": "Time",
+    "type": "Type",
+    "yes": "Yes",
+    "no": "No",
+    "retry": "Retry",
+    "viewAll": "View All",
+    "noData": "No data",
+    "saving": "Saving...",
+    "send": "Send",
+    "saveChanges": "Save changes",
+    "optional": "optional",
+    "required": "required",
+    "archived": "Archived",
+    "restore": "Restore",
+    "archive": "Archive",
+    "filter": "Filter",
+    "sort": "Sort",
+    "page": "Page",
+    "of": "of",
+    "results": "results",
+    "showing": "Showing",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "copy": "Copy",
+    "copied": "Copied",
+    "upload": "Upload",
+    "download": "Download",
+    "refresh": "Refresh",
+    "submit": "Submit",
+    "select": "Select",
+    "language": "Language",
+    "spanish": "Spanish",
+    "english": "English",
+    "clear": "Clear",
+    "apply": "Apply",
+    "open": "Open",
+    "none": "None",
+    "unknown": "Unknown",
+    "you": "You",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "and": "and"
+  },
+  "dashboard": {
+    "stats": {
+      "totalConversations": "Total Conversations",
+      "activeChats": "Active Chats",
+      "responseRate": "Response Rate",
+      "leadConversion": "Lead Conversion",
+      "live": "Live"
+    },
+    "volume": {
+      "title": "Conversation Volume",
+      "subtitle": "Conversations started over time",
+      "lastDays": "Last {days} Days",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "noData": "No data in this range"
+    },
+    "channels": {
+      "title": "Channel Distribution",
+      "traffic": "Traffic"
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "viewAll": "View All",
+      "empty": "No recent activity"
+    },
+    "time": {
+      "justNow": "just now",
+      "minutesAgo": "{count} min ago",
+      "hoursAgo": "{count} hrs ago",
+      "daysAgo": "{count} days ago"
+    }
+  },
+  "agents": {
+    "title": "Agents",
+    "subtitle": "Create and configure AI agents",
+    "createButton": "Create Agent",
+    "createFirst": "Create your first agent",
+    "deleteConfirm": "Delete agent \"{name}\"?",
+    "createModal": {
+      "title": "Create Agent"
+    },
+    "editModal": {
+      "title": "Edit Agent"
+    },
+    "form": {
+      "name": "Name",
+      "nameRequired": "Name *",
+      "namePlaceholder": "E.g.: Sales Assistant",
+      "description": "Description",
+      "descriptionPlaceholder": "What does it do?"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "create": "Create",
+      "creating": "Creating...",
+      "save": "Save",
+      "saving": "Saving..."
+    }
+  },
+  "brain": {
+    "subtitle": "Manage and train your AI with custom knowledge sources.",
+    "addSource": "Add source",
+    "stats": {
+      "totalDocuments": "Total documents",
+      "totalVectors": "Total vectors",
+      "syncStatus": "Sync status"
+    },
+    "status": {
+      "processing": "Processing",
+      "failed": "Error",
+      "ready": "Ready"
+    },
+    "stage": {
+      "queued": "Queued",
+      "extracting": "Extracting",
+      "chunking": "Chunking",
+      "embedding": "Embedding",
+      "indexing": "Indexing",
+      "finalizing": "Finalizing"
+    },
+    "sources": {
+      "title": "Knowledge sources",
+      "loading": "Loading knowledge sources...",
+      "empty": "No knowledge sources found. Add one to get started.",
+      "viewExtracted": "View extracted text",
+      "viewLogs": "View logs",
+      "delete": "Delete source",
+      "table": {
+        "sourceName": "Source name",
+        "sizePages": "Size/Pages",
+        "progress": "Progress",
+        "lastSynced": "Last synced"
+      }
+    },
+    "logs": {
+      "empty": "No logs available",
+      "general": "general"
+    },
+    "errors": {
+      "extractFailed": "Failed to retrieve extracted text.",
+      "deleteFailed": "Failed to delete source.",
+      "invalidFile": "File type not allowed. Only PDF, TXT, CSV or images.",
+      "embeddingsConfig": "Configure an embeddings model before uploading sources.",
+      "noFileSelected": "Select a file before continuing.",
+      "titleRequired": "Title is required.",
+      "contentTooShort": "Content must be at least 10 characters long.",
+      "processFailed": "Failed to process source.",
+      "embeddingsValidation": "Could not validate the embeddings configuration."
+    },
+    "success": {
+      "deleted": "Source deleted successfully.",
+      "fileQueued": "File queued for processing.",
+      "textSaved": "Text saved and processed."
+    },
+    "modal": {
+      "title": "Add source",
+      "subtitle": "Upload a PDF, TXT, CSV or image, or write text manually",
+      "tabFile": "Upload file",
+      "tabText": "Write text",
+      "dropzone": "Drag a file here or select one",
+      "selectFile": "Select file",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Product guide",
+      "contentLabel": "Content",
+      "contentPlaceholder": "Write the content here...",
+      "processing": "Processing..."
+    },
+    "extracted": {
+      "title": "Extracted text",
+      "method": "Method: {method}",
+      "empty": "No extracted text."
+    }
+  },
+  "clients": {
+    "search": {
+      "placeholder": "Search clients..."
+    },
+    "filters": {
+      "allPlatforms": "All platforms",
+      "allStatuses": "All statuses",
+      "archived": "Archived"
+    },
+    "hint": {
+      "autoCreated": "Clients are created automatically when replying to messages"
+    },
+    "results": {
+      "found": "No clients found | {count} client found | {count} clients found"
+    },
+    "pagination": {
+      "show": "Show",
+      "perPage": "per page"
+    },
+    "loading": "Loading clients...",
+    "table": {
+      "client": "Client",
+      "platform": "Platform",
+      "created": "Created"
+    },
+    "empty": "No clients found",
+    "noEmail": "No email",
+    "errors": {
+      "update": "Error updating client: {message}",
+      "archive": "Error archiving client: {message}",
+      "restore": "Error restoring client: {message}"
+    },
+    "editModal": {
+      "title": "Edit Client",
+      "name": "Name *",
+      "platform": "Platform"
+    },
+    "archiveModal": {
+      "title": "Archive Client",
+      "confirm": "Are you sure you want to archive {name}? You can restore them at any time."
+    },
+    "status": {
+      "active": "Active",
+      "new": "New",
+      "inactive": "Inactive",
+      "archived": "Archived"
+    }
+  },
+  "devTests": {
+    "title": "Tests",
+    "subtitle": "Internal diagnostic tools",
+    "tabs": {
+      "extract": "Extract text",
+      "pdfPreview": "PDF to images",
+      "comingSoon": "Coming soon"
+    },
+    "extract": {
+      "inputTitle": "Input",
+      "inputDescription": "Upload a file to extract text using a file/image model.",
+      "dropHint": "Drag a file here or select one",
+      "selectFile": "Select file",
+      "submit": "Extract text",
+      "submitting": "Extracting...",
+      "outputTitle": "Output",
+      "outputDescription": "Markdown extracted from the file.",
+      "pagesCount": "{count} page | {count} pages",
+      "empty": "The result will appear here",
+      "success": "Text extracted successfully.",
+      "noText": "No text was found in the file."
+    },
+    "pdfPreview": {
+      "inputTitle": "Input",
+      "inputDescription": "Convert a PDF into images to validate the vision model.",
+      "dropHint": "Drag a PDF here or select one",
+      "selectFile": "Select PDF",
+      "pagesLabel": "Pages to convert",
+      "pagesHint": "Maximum 10 pages",
+      "submit": "Convert PDF",
+      "submitting": "Converting...",
+      "outputTitle": "Preview",
+      "outputDescription": "Images generated from the PDF.",
+      "pagesCount": "{count} page | {count} pages",
+      "empty": "The preview will appear here",
+      "pageLabel": "Page {page}",
+      "pageAlt": "Page {page}",
+      "success": "PDF converted ({count} page). | PDF converted ({count} pages).",
+      "noImages": "Could not generate images."
+    },
+    "comingSoon": {
+      "description": "More tools will be added in upcoming versions."
+    },
+    "errors": {
+      "invalidFile": "File type not allowed. Only PDF, TXT, CSV or images.",
+      "noFile": "Select a file before continuing.",
+      "noPdf": "Select a PDF before continuing.",
+      "notPdf": "File type not allowed. Only PDF.",
+      "extractFailed": "Failed to extract text.",
+      "convertFailed": "Failed to convert PDF."
+    }
+  },
+  "login": {
+    "subtitle": "Sign in to your account",
+    "submit": "Sign In",
+    "loading": "Signing in...",
+    "form": {
+      "emailPlaceholder": "you{'@'}email.com",
+      "password": "Password",
+      "passwordPlaceholder": "••••••••"
+    },
+    "errors": {
+      "requiredFields": "Email and password are required"
+    }
+  },
+  "messaging": {
+    "inbox": {
+      "title": "Inbox",
+      "searchPlaceholder": "Search chats...",
+      "loading": "Loading conversations...",
+      "empty": "No conversations yet. Customers will start them.",
+      "noMatches": "No conversations match the filter."
+    },
+    "filters": {
+      "all": "All"
+    },
+    "contact": {
+      "noContact": "No contact",
+      "contactCreated": "Contact created",
+      "saveAsContact": "Save as contact"
+    },
+    "chat": {
+      "selectPrompt": "Select a chat to start replying",
+      "loadingMessages": "Loading messages..."
+    },
+    "mode": {
+      "autoPilotOn": "Auto-Pilot On",
+      "humanTakeover": "Human Takeover"
+    },
+    "composer": {
+      "sendPlaceholder": "Type a message...",
+      "takeOver": "Take Over",
+      "autoPilot": "Auto-Pilot"
+    },
+    "tools": {
+      "confirmationRequired": "Confirmation required",
+      "defaultName": "Tool",
+      "modify": "Modify",
+      "modifyPrompt": "Edit the action data (JSON):",
+      "invalidJson": "Invalid JSON",
+      "status": {
+        "pending": "Pending",
+        "success": "Completed",
+        "cancelled": "Cancelled"
+      }
+    },
+    "insights": {
+      "title": "AI Insights",
+      "analyze": "Analyze",
+      "analyzing": "Analyzing",
+      "loading": "Loading insights...",
+      "empty": "No insights for this conversation yet.",
+      "sentimentLabel": "Sentiment",
+      "summary": "Summary",
+      "sentiment": {
+        "positive": "Positive",
+        "negative": "Negative",
+        "neutral": "Neutral"
+      }
+    },
+    "details": {
+      "title": "Details",
+      "platform": "Platform",
+      "notAvailable": "Not available"
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your personal information and password",
+    "projects": {
+      "title": "My Projects ({count})",
+      "empty": "No projects assigned"
+    },
+    "info": {
+      "title": "Personal Information"
+    },
+    "password": {
+      "title": "Change Password",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password"
+    },
+    "toast": {
+      "updated": "Profile updated successfully"
+    },
+    "error": {
+      "passwordMismatch": "Passwords do not match"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage the agent, channels and settings",
+    "tabs": {
+      "agent": "AI Agent",
+      "info": "Information",
+      "channels": "Channels",
+      "options": "Options"
+    },
+    "info": {
+      "title": "Project Information",
+      "subtitle": "Manage basic project data and the test chat link",
+      "slugLabel": "Project Slug",
+      "slugHint": "Used to share the test chat link",
+      "slugPlaceholder": "my-project",
+      "slugFallback": "slug",
+      "copyLink": "Copy link"
+    },
+    "agent": {
+      "basicTitle": "Agent Information",
+      "nameLabel": "Name *",
+      "namePlaceholder": "e.g. Sales Assistant",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "What does this agent do?",
+      "modelsTitle": "AI Models",
+      "modelsHint": "Defined by the server environment. They cannot be edited from the interface.",
+      "modelChat": "Chat",
+      "modelEmbeddings": "Embeddings",
+      "modelOcr": "OCR",
+      "notConfigured": "Not configured",
+      "personalityTitle": "Bot Personality",
+      "personalityHint": "Configure how the chatbot behaves and responds",
+      "roleLabel": "Role",
+      "roles": {
+        "assistant": "Assistant",
+        "assistantDesc": "General help",
+        "teacher": "Teacher",
+        "teacherDesc": "Teaches step by step",
+        "seller": "Seller",
+        "sellerDesc": "Persuades and closes sales",
+        "support": "Support",
+        "supportDesc": "Resolves technical issues",
+        "customerService": "Customer Service",
+        "customerServiceDesc": "Handles inquiries"
+      },
+      "traitsLabel": "Personality traits",
+      "traitsMax": "(max. 3)",
+      "traitsHint": "Select up to 3 traits that define the bot's tone",
+      "traits": {
+        "formal": "Formal",
+        "empathetic": "Empathetic",
+        "irreverent": "Irreverent",
+        "direct": "Direct",
+        "objective": "Objective",
+        "enthusiastic": "Enthusiastic",
+        "sarcastic": "Sarcastic",
+        "sociable": "Sociable",
+        "kind": "Kind",
+        "cheerful": "Cheerful",
+        "neutral": "Neutral"
+      },
+      "emojiLabel": "Emoji usage",
+      "emoji": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "responseLengthLabel": "Response length",
+      "responseLength": {
+        "short": "Short",
+        "shortDesc": "1-2 sentences",
+        "medium": "Medium",
+        "mediumDesc": "Short paragraphs",
+        "detailed": "Detailed",
+        "detailedDesc": "Complete and extensive"
+      },
+      "ragBehaviorLabel": "Search behavior (RAG)",
+      "rag": {
+        "strict": "Documents only",
+        "strictDesc": "Does not use general knowledge",
+        "hybrid": "Hybrid",
+        "hybridDesc": "Prioritizes docs, complements",
+        "general": "General",
+        "generalDesc": "Uses free knowledge"
+      },
+      "temperatureLabel": "Creativity — {level} ({value})",
+      "temperaturePrecise": "Precise",
+      "temperatureCreative": "Creative",
+      "temperatureWarning": "Careful: this increases the risk of the bot losing logical coherence or making up facts.",
+      "temperatureLevels": {
+        "veryLow": "Very low",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "veryHigh": "Very high"
+      },
+      "maxTokensLabel": "Max tokens — {level} ({value})",
+      "maxTokensOption": {
+        "veryShort": "Very short",
+        "medium": "Medium",
+        "long": "Long",
+        "max": "Maximum"
+      },
+      "autoMessagesTitle": "Automatic messages",
+      "welcome": "Always greet",
+      "welcomeHint": "Greets at the start or when resuming after 6 hours",
+      "goodbye": "Always say goodbye",
+      "goodbyeHint": "Says goodbye when the user says goodbye or closes the chat",
+      "fallbackAdvisor": "When it doesn't know the answer",
+      "fallbackAdvisorHint": "Apologizes and suggests contacting an advisor",
+      "goodbyeKeywordsLabel": "Goodbye keywords",
+      "goodbyeKeywordPlaceholder": "Type a keyword",
+      "goodbyeKeywordsHint": "Compared in lowercase. Use terms like “adios”, “gracias”, “bye”.",
+      "additionalInstructionsLabel": "Additional instructions",
+      "additionalInstructionsPlaceholder": "e.g. Don't mention prices, always suggest contacting an advisor...",
+      "save": "Save Agent"
+    },
+    "channels": {
+      "title": "Communication Channels",
+      "save": "Save Channels"
+    },
+    "options": {
+      "title": "Options",
+      "autoCreateContact": "Automatically create contact",
+      "autoCreateContactHint": "When replying to the customer's first message"
+    },
+    "errors": {
+      "loadConfig": "Error loading settings",
+      "projectNotFound": "Project not found",
+      "slugRequired": "Slug is required",
+      "slugUpdate": "Error updating slug",
+      "copyLink": "Could not copy the link",
+      "agentNotFound": "Agent not found",
+      "agentSave": "Error saving agent"
+    },
+    "toasts": {
+      "slugUpdated": "Slug updated successfully",
+      "linkCopied": "Link copied",
+      "agentUpdated": "Agent updated successfully",
+      "channelsUpdated": "Channels updated",
+      "optionsUpdated": "Options updated"
+    }
+  },
+  "setup": {
+    "title": "Configure Project",
+    "subtitle": "Set up your project and agent to start working",
+    "checking": "Checking configuration...",
+    "errors": {
+      "projectNameRequired": "Project name is required",
+      "agentNameRequired": "Agent name is required"
+    },
+    "project": {
+      "title": "Project Details",
+      "subtitle": "Basic information about your project",
+      "name": "Project Name *",
+      "namePlaceholder": "E.g.: My Online Store, Tech Support...",
+      "description": "Description",
+      "descriptionPlaceholder": "Briefly describe what your project is about..."
+    },
+    "agent": {
+      "title": "AI Agent",
+      "subtitle": "Configure your bot's personality and intelligence",
+      "name": "Agent Name *",
+      "namePlaceholder": "E.g.: Sales Assistant, Support Bot...",
+      "roleLabel": "Bot Role",
+      "roleHelp": "You can configure the full personality later in Settings",
+      "roles": {
+        "assistant": {
+          "label": "Assistant",
+          "desc": "General help"
+        },
+        "teacher": {
+          "label": "Teacher",
+          "desc": "Teaches step by step"
+        },
+        "seller": {
+          "label": "Seller",
+          "desc": "Persuades and closes sales"
+        },
+        "support": {
+          "label": "Support",
+          "desc": "Solves technical issues"
+        },
+        "customer_service": {
+          "label": "Customer Service",
+          "desc": "Handles inquiries"
+        }
+      },
+      "autoMessages": "Automatic messages",
+      "welcomeGreeting": "Always greet",
+      "welcomeGreetingHelp": "Greets at the start or when resuming after 6 hours",
+      "goodbyeMessage": "Always say goodbye",
+      "goodbyeMessageHelp": "Says goodbye when the user says goodbye or closes the chat",
+      "fallbackAdvisor": "When it doesn't know the answer",
+      "fallbackAdvisorHelp": "Apologizes and suggests contacting an advisor",
+      "goodbyeKeywords": "Goodbye keywords",
+      "goodbyeKeywordPlaceholder": "Type a keyword",
+      "addKeyword": "Add",
+      "goodbyeKeywordsHelp": "They are compared in lowercase. Use terms like “adios”, “gracias”, “bye”."
+    },
+    "channels": {
+      "title": "Channels & Options",
+      "subtitle": "Choose your communication channels",
+      "channelsLabel": "Channels",
+      "whatsapp": "WhatsApp",
+      "instagram": "Instagram",
+      "web": "Web Chat",
+      "optionsLabel": "Options",
+      "autoCreateContact": "Create contact automatically",
+      "autoCreateContactHelp": "When replying to the client's first message"
+    },
+    "summary": {
+      "title": "Summary",
+      "project": "Project",
+      "agent": "Agent",
+      "channels": "Channels"
+    },
+    "actions": {
+      "creating": "Creating...",
+      "createProject": "Create Project"
+    }
+  },
+  "users": {
+    "title": "System Users",
+    "subtitle": "Manage the users who can access the panel ({count} total)",
+    "searchPlaceholder": "Search by name or email...",
+    "loading": "Loading users...",
+    "noProjects": "No projects available",
+    "toast": {
+      "created": "User created successfully",
+      "updated": "User updated successfully"
+    },
+    "table": {
+      "user": "User",
+      "role": "Role",
+      "createdAt": "Created",
+      "empty": "No users found"
+    },
+    "create": {
+      "title": "Create User",
+      "submitting": "Creating..."
+    },
+    "edit": {
+      "title": "Edit User"
+    },
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "role": "Role",
+      "projects": "Projects",
+      "namePlaceholder": "Full name",
+      "emailPlaceholder": "email{'@'}example.com",
+      "passwordPlaceholder": "********"
+    },
+    "roles": {
+      "admin": "Admin",
+      "support": "Support",
+      "assistant": "Assistant"
+    }
+  },
+  "publicChat": {
+    "simulator": {
+      "title": "🧪 Test — Client Simulator",
+      "subtitle": "Simulate a client starting a conversation. The contact is created automatically when the agent replies."
+    },
+    "client": {
+      "name": "Name",
+      "namePlaceholder": "Client name",
+      "phone": "Phone",
+      "email": "Email",
+      "emailPlaceholder": "client{'@'}email.com",
+      "platform": "Platform"
+    },
+    "active": {
+      "title": "Active Conversation",
+      "idLabel": "ID:",
+      "contactCreated": "Contact created:",
+      "contactCreatedYes": "✅ Yes",
+      "contactPending": "⏳ Pending (reply from the dashboard)",
+      "reset": "Reset"
+    },
+    "header": {
+      "anonymous": "Anonymous Client",
+      "activeWithPlatform": "Active conversation — {platform}",
+      "startPrompt": "Type to start a conversation"
+    },
+    "empty": "Type a message to start a conversation as a client",
+    "tool": {
+      "confirmationRequired": "Confirmation required",
+      "tool": "Tool",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "modify": "Modify",
+      "modifyPrompt": "Edit the action data (JSON):",
+      "invalidJson": "Invalid JSON",
+      "status": {
+        "pending": "Pending",
+        "success": "Completed",
+        "error": "Error",
+        "needs_confirmation": "Confirmation required",
+        "cancelled": "Cancelled"
+      }
+    },
+    "sender": {
+      "you": "You (Client)",
+      "ai": "Mitchbot (AI)",
+      "human": "Human Agent"
+    },
+    "input": {
+      "placeholder": "Type a message...",
+      "firstPlaceholder": "Type your first message to start the conversation...",
+      "send": "Send",
+      "start": "Start Chat"
+    }
+  }
+}

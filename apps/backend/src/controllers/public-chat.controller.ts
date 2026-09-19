@@ -1,8 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
 import { projectService } from '../services/project.service';
+import { agentService } from '../services/agent.service';
 import { chatService } from '../services/chat.service';
 import { getConversationsCollection } from '../models/conversation.model';
 import { ObjectId } from 'mongodb';
+
+export const publicGetConfig = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { slug } = req.params;
+    if (!slug) return res.status(400).json({ error: 'Project slug requerido' });
+
+    const project = await projectService.findBySlug(slug);
+    if (!project?._id) return res.status(404).json({ error: 'Proyecto no encontrado' });
+
+    const agent = await agentService.getActiveAgent(project._id.toString());
+    const language = agent?.personality?.language === 'en' ? 'en' : 'es';
+
+    res.json({ language });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const publicStartConversation = async (req: Request, res: Response, next: NextFunction) => {
   try {

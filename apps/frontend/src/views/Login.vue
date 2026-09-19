@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { authService } from '../services/auth.service';
 
+const { t } = useI18n();
 const router = useRouter();
 const isLoading = ref(false);
 const error = ref<string | null>(null);
@@ -12,7 +14,7 @@ const loginForm = ref({ email: '', password: '' });
 async function handleLogin() {
   error.value = null;
   if (!loginForm.value.email || !loginForm.value.password) {
-    error.value = 'Email y contraseña son requeridos';
+    error.value = t('login.errors.requiredFields');
     return;
   }
   isLoading.value = true;
@@ -38,7 +40,7 @@ async function handleLogin() {
           </div>
         </div>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">BotMaster</h1>
-        <p class="text-sm text-slate-500">Inicia sesión en tu cuenta</p>
+        <p class="text-sm text-slate-500">{{ t('login.subtitle') }}</p>
       </div>
 
       <!-- Card -->
@@ -52,20 +54,20 @@ async function handleLogin() {
         <!-- Login Form -->
         <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Email</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('common.email') }}</label>
             <input
               v-model="loginForm.email"
               type="email"
-              placeholder="tu@email.com"
+              :placeholder="t('login.form.emailPlaceholder')"
               class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
             />
           </div>
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Contraseña</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('login.form.password') }}</label>
             <input
               v-model="loginForm.password"
               type="password"
-              placeholder="••••••••"
+              :placeholder="t('login.form.passwordPlaceholder')"
               class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
             />
           </div>
@@ -74,7 +76,7 @@ async function handleLogin() {
             :disabled="isLoading"
             class="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm"
           >
-            {{ isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
+            {{ isLoading ? t('login.loading') : t('login.submit') }}
           </button>
         </form>
       </div>

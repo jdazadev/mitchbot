@@ -11,7 +11,7 @@ test.describe('Perfil', () => {
 
     const nameInput = page.locator('input').first();
     await nameInput.fill(newName);
-    await page.getByRole('button', { name: /Guardar Cambios/ }).click();
+    await page.getByRole('button', { name: /Guardar cambios/i }).click();
     await expect(page.getByText('Perfil actualizado correctamente')).toBeVisible({ timeout: 20_000 });
 
     await page.reload();

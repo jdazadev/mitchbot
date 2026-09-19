@@ -18,7 +18,7 @@ setup('autenticar usuario e2e', async ({ page }) => {
 
   // El guard redirige al dashboard cuando el usuario tiene proyecto.
   await page.waitForURL((url) => url.pathname === '/', { timeout: 30_000 });
-  await expect(page.getByText('Dashboard Overview')).toBeVisible();
+  await expect(page.getByTestId('page-title')).toHaveText('Resumen del panel');
 
   await page.context().storageState({ path: E2E.storageState });
 });

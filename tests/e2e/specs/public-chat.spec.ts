@@ -67,4 +67,17 @@ test.describe('Chat público', () => {
     // El resultado interno de la herramienta NO se muestra al cliente.
     await expect(page.getByText(/Cita agendada/i)).toHaveCount(0, { timeout: 5_000 });
   });
+
+  test('el idioma del chat público no depende de la preferencia del dashboard', async ({ page }) => {
+    // El dashboard quedó en inglés en el dispositivo...
+    await page.addInitScript(() => {
+      localStorage.setItem('mitchbot.locale', 'en');
+    });
+
+    // ...pero el agente del proyecto e2e está en español, así que el chat sigue en español.
+    await page.goto(`/test-chat/${E2E.project.slug}`);
+    await expect(page.getByRole('heading', { name: /Simulador de Cliente/ })).toBeVisible();
+    await expect(page.getByPlaceholder('Nombre del cliente')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Iniciar Chat/ })).toBeVisible();
+  });
 });

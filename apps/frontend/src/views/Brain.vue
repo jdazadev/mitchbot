@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   brainService,
   type KnowledgeSource,
   type BrainStats,
 } from "../services/brain.service";
+
+const { t } = useI18n();
 
 const isLoading = ref(true);
 const error = ref<string | null>(null);
@@ -42,23 +45,23 @@ const sources = computed(() =>
     const progress = typeof s.progress === 'number' ? s.progress : s.status === 'Indexed' ? 100 : s.status === 'Failed' ? 100 : s.status === 'Processing' ? 40 : 0;
     const stageLabel = s.stage
       ? s.stage === 'queued'
-        ? 'En cola'
+        ? t('brain.stage.queued')
         : s.stage === 'extracting'
-          ? 'Extrayendo'
+          ? t('brain.stage.extracting')
           : s.stage === 'chunking'
-            ? 'Fragmentando'
+            ? t('brain.stage.chunking')
             : s.stage === 'embedding'
-              ? 'Embeddings'
+              ? t('brain.stage.embedding')
               : s.stage === 'indexing'
-                ? 'Indexando'
-                : 'Finalizando'
+                ? t('brain.stage.indexing')
+                : t('brain.stage.finalizing')
       : s.status === 'Queued'
-        ? 'En cola'
+        ? t('brain.stage.queued')
         : s.status === 'Processing'
-          ? 'Procesando'
+          ? t('brain.status.processing')
           : s.status === 'Failed'
-            ? 'Error'
-            : 'Listo';
+            ? t('brain.status.failed')
+            : t('brain.status.ready');
     return {
       ...s,
       date: new Date(s.createdAt).toLocaleDateString("en-US", {
@@ -82,16 +85,16 @@ const sources = computed(() =>
 
 const stats = computed(() => [
   {
-    label: "Total Documents",
+    label: t("brain.stats.totalDocuments"),
     value: brainStats.value.totalDocs.toString(),
     icon: "folder_open",
   },
   {
-    label: "Total Vectors",
+    label: t("brain.stats.totalVectors"),
     value: new Intl.NumberFormat().format(brainStats.value.totalVectors),
     icon: "account_tree",
   },
-  { label: "Sync Status", value: brainStats.value.syncStatus, icon: "sync" },
+  { label: t("brain.stats.syncStatus"), value: brainStats.value.syncStatus, icon: "sync" },
 ]);
 
 function getTypeMetadata(type: string) {
@@ -144,7 +147,7 @@ async function openExtractedText(sourceId: string) {
     extractedModalSourceId.value = sourceId;
     extractedModalOpen.value = true;
   } catch (err: any) {
-    actionError.value = err.message || 'Error al obtener texto extraido.';
+    actionError.value = err.message || t('brain.errors.extractFailed');
   }
 }
 
@@ -158,10 +161,10 @@ async function handleDeleteSource(sourceId: string) {
   actionSuccess.value = null;
   try {
     await brainService.deleteSource(sourceId);
-    actionSuccess.value = 'Fuente eliminada correctamente.';
+    actionSuccess.value = t('brain.success.deleted');
     await refreshBrain();
   } catch (err: any) {
-    actionError.value = err.message || 'Error al eliminar fuente.';
+    actionError.value = err.message || t('brain.errors.deleteFailed');
   }
 }
 
@@ -189,7 +192,7 @@ function handleFileChange(e: Event) {
   const file = input.files?.[0] || null;
   if (!file) return;
   if (!isValidFile(file)) {
-    actionError.value = 'Tipo de archivo no permitido. Solo PDF, TXT, CSV o imagenes.';
+    actionError.value = t('brain.errors.invalidFile');
     return;
   }
   selectedFile.value = file;
@@ -202,7 +205,7 @@ function handleDrop(e: DragEvent) {
   const file = e.dataTransfer?.files?.[0];
   if (!file) return;
   if (!isValidFile(file)) {
-    actionError.value = 'Tipo de archivo no permitido. Solo PDF, TXT, CSV o imagenes.';
+    actionError.value = t('brain.errors.invalidFile');
     return;
   }
   selectedFile.value = file;
@@ -237,30 +240,30 @@ async function handleSubmit() {
   isSubmitting.value = true;
   try {
     if (!ragAvailable.value) {
-      throw new Error('Configura un modelo de embeddings antes de cargar fuentes.');
+      throw new Error(t('brain.errors.embeddingsConfig'));
     }
     if (uploadMode.value === 'file') {
       if (!selectedFile.value) {
-        throw new Error('Selecciona un archivo antes de continuar.');
+        throw new Error(t('brain.errors.noFileSelected'));
       }
       const result = await brainService.uploadSource(selectedFile.value);
-      actionSuccess.value = 'Archivo en cola para procesamiento.';
+      actionSuccess.value = t('brain.success.fileQueued');
       if (result.sourceId) {
         await refreshBrain();
         await refreshLogsForSource(result.sourceId);
       }
     } else {
       if (!textTitle.value.trim()) {
-        throw new Error('El titulo es obligatorio.');
+        throw new Error(t('brain.errors.titleRequired'));
       }
       if (textContent.value.trim().length < 10) {
-        throw new Error('El contenido debe tener al menos 10 caracteres.');
+        throw new Error(t('brain.errors.contentTooShort'));
       }
       await brainService.writeTextSource({
         title: textTitle.value.trim(),
         content: textContent.value.trim(),
       });
-      actionSuccess.value = 'Texto guardado y procesado.';
+      actionSuccess.value = t('brain.success.textSaved');
     }
 
     await refreshBrain();
@@ -268,7 +271,7 @@ async function handleSubmit() {
       closeAddModal();
     }, 600);
   } catch (err: any) {
-    actionError.value = err.message || 'Error al procesar la fuente.';
+    actionError.value = err.message || t('brain.errors.processFailed');
   } finally {
     isSubmitting.value = false;
   }
@@ -283,7 +286,7 @@ async function resolveRagStatus() {
     fileAlert.value = null;
   } catch (err: any) {
     ragAvailable.value = false;
-    ragAlert.value = 'No se pudo validar la configuración de embeddings.';
+    ragAlert.value = t('brain.errors.embeddingsValidation');
     fileAlert.value = null;
   }
 }
@@ -327,7 +330,7 @@ function startPolling() {
     <div class="flex flex-wrap justify-between items-center gap-4">
       <div>
         <p class="text-sm text-slate-500 dark:text-slate-400">
-          Manage and train your AI with custom knowledge sources.
+          {{ t("brain.subtitle") }}
         </p>
       </div>
       <button
@@ -335,8 +338,7 @@ function startPolling() {
         @click="openAddModal"
         :disabled="!ragAvailable"
       >
-        <span class="material-symbols-outlined text-[20px]">add</span> Add
-        Source
+        <span class="material-symbols-outlined text-[20px]">add</span> {{ t("brain.addSource") }}
       </button>
     </div>
 
@@ -385,12 +387,12 @@ function startPolling() {
     >
       <div class="p-6 border-b border-slate-100 dark:border-slate-700">
         <h3 class="text-lg font-bold text-slate-900 dark:text-white">
-          Knowledge Sources
+          {{ t("brain.sources.title") }}
         </h3>
       </div>
 
       <div v-if="isLoading" class="p-8 text-center text-slate-500">
-        Loading knowledge sources...
+        {{ t("brain.sources.loading") }}
       </div>
       <div v-else-if="error" class="p-8 text-center text-red-500">
         {{ error }}
@@ -401,12 +403,12 @@ function startPolling() {
             <tr
               class="bg-slate-50/50 dark:bg-slate-700/30 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold tracking-widest"
             >
-              <th class="px-6 py-4">Source Name</th>
-              <th class="px-6 py-4">Size/Pages</th>
-              <th class="px-6 py-4">Status</th>
-              <th class="px-6 py-4">Progress</th>
-              <th class="px-6 py-4">Last Synced</th>
-              <th class="px-6 py-4 text-right">Actions</th>
+              <th class="px-6 py-4">{{ t("brain.sources.table.sourceName") }}</th>
+              <th class="px-6 py-4">{{ t("brain.sources.table.sizePages") }}</th>
+              <th class="px-6 py-4">{{ t("common.status") }}</th>
+              <th class="px-6 py-4">{{ t("brain.sources.table.progress") }}</th>
+              <th class="px-6 py-4">{{ t("brain.sources.table.lastSynced") }}</th>
+              <th class="px-6 py-4 text-right">{{ t("common.actions") }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
@@ -415,7 +417,7 @@ function startPolling() {
                 colspan="6"
                 class="px-6 py-8 text-center text-slate-500 text-sm"
               >
-                No knowledge sources found. Add one to get started.
+                {{ t("brain.sources.empty") }}
               </td>
             </tr>
             <template v-else v-for="source in sources" :key="source._id">
@@ -471,21 +473,21 @@ function startPolling() {
                 <button
                   class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-colors"
                   @click="openExtractedText(source._id)"
-                  title="Ver texto extraido"
+                  :title="t('brain.sources.viewExtracted')"
                 >
                   <span class="material-symbols-outlined text-[20px]">description</span>
                 </button>
                 <button
                   class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-colors"
                   @click="toggleLogs(source._id)"
-                  title="Ver logs"
+                  :title="t('brain.sources.viewLogs')"
                 >
                   <span class="material-symbols-outlined text-[20px]">receipt_long</span>
                 </button>
                 <button
                   class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-colors"
                   @click="handleDeleteSource(source._id)"
-                  title="Eliminar fuente"
+                  :title="t('brain.sources.delete')"
                 >
                   <span class="material-symbols-outlined text-[20px]">delete</span>
                 </button>
@@ -494,11 +496,11 @@ function startPolling() {
               <tr v-if="expandedLogs[source._id]">
                 <td colspan="6" class="px-6 pb-6">
                   <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-600 space-y-2">
-                    <div v-if="!logsBySource[source._id]?.length" class="text-slate-400">Sin logs disponibles</div>
+                    <div v-if="!logsBySource[source._id]?.length" class="text-slate-400">{{ t("brain.logs.empty") }}</div>
                     <div v-else v-for="log in logsBySource[source._id]" :key="log.timestamp">
                       <span class="font-bold">{{ new Date(log.timestamp).toLocaleTimeString() }}</span>
                       <span class="uppercase text-[10px]">{{ log.level }}</span>
-                      <span class="text-slate-400">{{ log.stage || 'general' }}</span>
+                      <span class="text-slate-400">{{ log.stage || t('brain.logs.general') }}</span>
                       — {{ log.message }}
                     </div>
                   </div>
@@ -516,8 +518,8 @@ function startPolling() {
         <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
           <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
             <div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Agregar fuente</h3>
-              <p class="text-xs text-slate-400 mt-0.5">Sube PDF, TXT, CSV o imagen, o escribe texto manual</p>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ t("brain.modal.title") }}</h3>
+              <p class="text-xs text-slate-400 mt-0.5">{{ t("brain.modal.subtitle") }}</p>
             </div>
             <button @click="closeAddModal" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
               <span class="material-symbols-outlined text-slate-400">close</span>
@@ -530,14 +532,14 @@ function startPolling() {
               class="px-4 py-2 rounded-lg text-sm font-medium"
               :class="uploadMode === 'file' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'"
             >
-              Subir archivo
+              {{ t("brain.modal.tabFile") }}
             </button>
             <button
               @click="uploadMode = 'text'"
               class="px-4 py-2 rounded-lg text-sm font-medium"
               :class="uploadMode === 'text' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'"
             >
-              Escribir texto
+              {{ t("brain.modal.tabText") }}
             </button>
           </div>
 
@@ -559,7 +561,7 @@ function startPolling() {
                 @dragleave="handleDragLeave"
               >
                 <div class="text-sm text-slate-500">
-                  Arrastra un archivo aqui o selecciona uno
+                  {{ t("brain.modal.dropzone") }}
                 </div>
                 <input
                   type="file"
@@ -569,7 +571,7 @@ function startPolling() {
                   @change="handleFileChange"
                 />
                 <label for="brain-file" class="inline-flex mt-3 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
-                  Seleccionar archivo
+                  {{ t("brain.modal.selectFile") }}
                 </label>
                 <div v-if="selectedFile" class="mt-3 text-xs text-slate-600">
                   {{ selectedFile.name }}
@@ -579,19 +581,19 @@ function startPolling() {
 
             <div v-else class="space-y-4">
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Titulo</label>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("brain.modal.titleLabel") }}</label>
                 <input
                   v-model="textTitle"
                   class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  placeholder="Ej: Guia de producto"
+                  :placeholder="t('brain.modal.titlePlaceholder')"
                 />
               </div>
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Contenido</label>
+                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("brain.modal.contentLabel") }}</label>
                 <textarea
                   v-model="textContent"
                   class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm h-36 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  placeholder="Escribe el contenido aqui..."
+                  :placeholder="t('brain.modal.contentPlaceholder')"
                 ></textarea>
               </div>
             </div>
@@ -599,14 +601,14 @@ function startPolling() {
 
           <div class="p-5 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-2">
             <button @click="closeAddModal" class="px-4 py-2.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600">
-              Cancelar
+              {{ t("common.cancel") }}
             </button>
             <button
               @click="handleSubmit"
               :disabled="isSubmitting"
               class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-xs font-bold"
             >
-              {{ isSubmitting ? 'Procesando...' : 'Guardar' }}
+              {{ isSubmitting ? t("brain.modal.processing") : t("common.save") }}
             </button>
           </div>
         </div>
@@ -618,9 +620,9 @@ function startPolling() {
         <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
           <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
             <div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Texto extraido</h3>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ t("brain.extracted.title") }}</h3>
               <p class="text-xs text-slate-400 mt-0.5">
-                Metodo: {{ extractedModalSourceId ? extractedTextBySource[extractedModalSourceId]?.method || 'llm' : 'llm' }}
+                {{ t("brain.extracted.method", { method: extractedModalSourceId ? extractedTextBySource[extractedModalSourceId]?.method || 'llm' : 'llm' }) }}
               </p>
             </div>
             <button @click="closeExtractedText" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
@@ -629,7 +631,7 @@ function startPolling() {
           </div>
           <div class="p-5 max-h-[70vh] overflow-y-auto">
             <div v-if="extractedModalSourceId && !extractedTextBySource[extractedModalSourceId]?.markdown" class="text-sm text-slate-400">
-              Sin texto extraido.
+              {{ t("brain.extracted.empty") }}
             </div>
             <pre v-else class="text-sm text-slate-700 whitespace-pre-wrap">{{ extractedModalSourceId ? extractedTextBySource[extractedModalSourceId]?.markdown : '' }}</pre>
           </div>

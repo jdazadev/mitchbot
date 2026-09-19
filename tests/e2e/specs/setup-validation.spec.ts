@@ -13,12 +13,12 @@ test.describe('Validación del setup', () => {
     await page.goto('/setup');
 
     await page.waitForURL((url) => url.pathname === '/', { timeout: 30_000 });
-    await expect(page.getByText('Dashboard Overview')).toBeVisible();
+    await expect(page.getByTestId('page-title')).toHaveText('Resumen del panel');
   });
 
   test('el botón crear proyecto del Topbar abre el wizard con ?mode=new', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('Dashboard Overview')).toBeVisible();
+    await expect(page.getByTestId('page-title')).toHaveText('Resumen del panel');
 
     await page.locator('button').filter({ hasText: E2E.project.name }).first().click();
     await page.getByRole('button', { name: 'Crear nuevo proyecto' }).click();

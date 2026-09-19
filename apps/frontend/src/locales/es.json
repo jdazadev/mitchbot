@@ -1,0 +1,755 @@
+{
+  "app": {
+    "name": "BotMaster",
+    "tagline": "Panel de analítica"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "conversations": "Conversaciones",
+    "clients": "Clientes",
+    "brain": "Brain",
+    "users": "Usuarios",
+    "settings": "Configuración",
+    "profile": "Mi Perfil",
+    "logout": "Cerrar Sesión",
+    "userPlaceholder": "Usuario"
+  },
+  "topbar": {
+    "dashboard": "Resumen del panel",
+    "messaging": "Conversaciones",
+    "brain": "Brain",
+    "clients": "Clientes",
+    "default": "BotMaster",
+    "selectProject": "Selecciona proyecto",
+    "noProjects": "No tienes proyectos",
+    "createProject": "Crear nuevo proyecto",
+    "notifications": "Notificaciones",
+    "markAllRead": "Marcar como leídas",
+    "noNotifications": "No hay notificaciones",
+    "clearAll": "Limpiar todo",
+    "newNotification": "Nueva notificación",
+    "language": "Idioma",
+    "time": {
+      "now": "ahora",
+      "minutesAgo": "hace {count} min",
+      "hoursAgo": "hace {count} h",
+      "daysAgo": "hace {count} d"
+    }
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "add": "Añadir",
+    "remove": "Quitar",
+    "search": "Buscar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "all": "Todos",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "new": "Nuevo",
+    "status": "Estado",
+    "actions": "Acciones",
+    "name": "Nombre",
+    "email": "Correo",
+    "phone": "Teléfono",
+    "date": "Fecha",
+    "time": "Hora",
+    "type": "Tipo",
+    "yes": "Sí",
+    "no": "No",
+    "retry": "Reintentar",
+    "viewAll": "Ver todo",
+    "noData": "Sin datos",
+    "saving": "Guardando...",
+    "send": "Enviar",
+    "saveChanges": "Guardar cambios",
+    "optional": "opcional",
+    "required": "requerido",
+    "archived": "Archivado",
+    "restore": "Restaurar",
+    "archive": "Archivar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "page": "Página",
+    "of": "de",
+    "results": "resultados",
+    "showing": "Mostrando",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "upload": "Subir",
+    "download": "Descargar",
+    "refresh": "Actualizar",
+    "submit": "Enviar",
+    "select": "Seleccionar",
+    "language": "Idioma",
+    "spanish": "Español",
+    "english": "Inglés",
+    "clear": "Limpiar",
+    "apply": "Aplicar",
+    "open": "Abrir",
+    "none": "Ninguno",
+    "unknown": "Desconocido",
+    "you": "Tú",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "and": "y"
+  },
+  "dashboard": {
+    "stats": {
+      "totalConversations": "Conversaciones totales",
+      "activeChats": "Chats activos",
+      "responseRate": "Tasa de respuesta",
+      "leadConversion": "Conversión de leads",
+      "live": "En vivo"
+    },
+    "volume": {
+      "title": "Volumen de conversaciones",
+      "subtitle": "Conversaciones iniciadas en el tiempo",
+      "lastDays": "Últimos {days} días",
+      "daily": "Diaria",
+      "weekly": "Semanal",
+      "monthly": "Mensual",
+      "noData": "Sin datos en este rango"
+    },
+    "channels": {
+      "title": "Distribución por canal",
+      "traffic": "Tráfico"
+    },
+    "activity": {
+      "title": "Actividad reciente",
+      "viewAll": "Ver todo",
+      "empty": "Sin actividad reciente"
+    },
+    "time": {
+      "justNow": "ahora mismo",
+      "minutesAgo": "hace {count} min",
+      "hoursAgo": "hace {count} h",
+      "daysAgo": "hace {count} días"
+    }
+  },
+  "agents": {
+    "title": "Agentes",
+    "subtitle": "Crea y configura los agentes de IA",
+    "createButton": "Crear Agente",
+    "createFirst": "Crear tu primer agente",
+    "deleteConfirm": "¿Eliminar el agente \"{name}\"?",
+    "createModal": {
+      "title": "Crear Agente"
+    },
+    "editModal": {
+      "title": "Editar Agente"
+    },
+    "form": {
+      "name": "Nombre",
+      "nameRequired": "Nombre *",
+      "namePlaceholder": "Ej: Asistente de Ventas",
+      "description": "Descripción",
+      "descriptionPlaceholder": "¿Qué hace?"
+    },
+    "actions": {
+      "cancel": "Cancelar",
+      "create": "Crear",
+      "creating": "Creando...",
+      "save": "Guardar",
+      "saving": "Guardando..."
+    }
+  },
+  "brain": {
+    "subtitle": "Gestiona y entrena tu IA con fuentes de conocimiento personalizadas.",
+    "addSource": "Añadir fuente",
+    "stats": {
+      "totalDocuments": "Documentos totales",
+      "totalVectors": "Vectores totales",
+      "syncStatus": "Estado de sincronización"
+    },
+    "status": {
+      "processing": "Procesando",
+      "failed": "Error",
+      "ready": "Listo"
+    },
+    "stage": {
+      "queued": "En cola",
+      "extracting": "Extrayendo",
+      "chunking": "Fragmentando",
+      "embedding": "Embeddings",
+      "indexing": "Indexando",
+      "finalizing": "Finalizando"
+    },
+    "sources": {
+      "title": "Fuentes de conocimiento",
+      "loading": "Cargando fuentes de conocimiento...",
+      "empty": "No se encontraron fuentes de conocimiento. Añade una para empezar.",
+      "viewExtracted": "Ver texto extraído",
+      "viewLogs": "Ver logs",
+      "delete": "Eliminar fuente",
+      "table": {
+        "sourceName": "Nombre de la fuente",
+        "sizePages": "Tamaño/Páginas",
+        "progress": "Progreso",
+        "lastSynced": "Última sincronización"
+      }
+    },
+    "logs": {
+      "empty": "Sin logs disponibles",
+      "general": "general"
+    },
+    "errors": {
+      "extractFailed": "Error al obtener el texto extraído.",
+      "deleteFailed": "Error al eliminar la fuente.",
+      "invalidFile": "Tipo de archivo no permitido. Solo PDF, TXT, CSV o imágenes.",
+      "embeddingsConfig": "Configura un modelo de embeddings antes de cargar fuentes.",
+      "noFileSelected": "Selecciona un archivo antes de continuar.",
+      "titleRequired": "El título es obligatorio.",
+      "contentTooShort": "El contenido debe tener al menos 10 caracteres.",
+      "processFailed": "Error al procesar la fuente.",
+      "embeddingsValidation": "No se pudo validar la configuración de embeddings."
+    },
+    "success": {
+      "deleted": "Fuente eliminada correctamente.",
+      "fileQueued": "Archivo en cola para procesamiento.",
+      "textSaved": "Texto guardado y procesado."
+    },
+    "modal": {
+      "title": "Añadir fuente",
+      "subtitle": "Sube PDF, TXT, CSV o imagen, o escribe texto manual",
+      "tabFile": "Subir archivo",
+      "tabText": "Escribir texto",
+      "dropzone": "Arrastra un archivo aquí o selecciona uno",
+      "selectFile": "Seleccionar archivo",
+      "titleLabel": "Título",
+      "titlePlaceholder": "Ej.: Guía de producto",
+      "contentLabel": "Contenido",
+      "contentPlaceholder": "Escribe el contenido aquí...",
+      "processing": "Procesando..."
+    },
+    "extracted": {
+      "title": "Texto extraído",
+      "method": "Método: {method}",
+      "empty": "Sin texto extraído."
+    }
+  },
+  "clients": {
+    "search": {
+      "placeholder": "Buscar clientes..."
+    },
+    "filters": {
+      "allPlatforms": "Todas las plataformas",
+      "allStatuses": "Todos los estados",
+      "archived": "Archivados"
+    },
+    "hint": {
+      "autoCreated": "Los clientes se crean automáticamente al responder mensajes"
+    },
+    "results": {
+      "found": "No se encontró ningún cliente | {count} cliente encontrado | {count} clientes encontrados"
+    },
+    "pagination": {
+      "show": "Mostrar",
+      "perPage": "por página"
+    },
+    "loading": "Cargando clientes...",
+    "table": {
+      "client": "Cliente",
+      "platform": "Plataforma",
+      "created": "Creado"
+    },
+    "empty": "No se encontraron clientes",
+    "noEmail": "Sin email",
+    "errors": {
+      "update": "Error al actualizar cliente: {message}",
+      "archive": "Error al archivar cliente: {message}",
+      "restore": "Error al restaurar cliente: {message}"
+    },
+    "editModal": {
+      "title": "Editar Cliente",
+      "name": "Nombre *",
+      "platform": "Plataforma"
+    },
+    "archiveModal": {
+      "title": "Archivar Cliente",
+      "confirm": "¿Estás seguro de que quieres archivar a {name}? Podrás restaurarlo en cualquier momento."
+    },
+    "status": {
+      "active": "Activo",
+      "new": "Nuevo",
+      "inactive": "Inactivo",
+      "archived": "Archivado"
+    }
+  },
+  "devTests": {
+    "title": "Pruebas",
+    "subtitle": "Herramientas internas de diagnóstico",
+    "tabs": {
+      "extract": "Extraer texto",
+      "pdfPreview": "PDF a imágenes",
+      "comingSoon": "Próximamente"
+    },
+    "extract": {
+      "inputTitle": "Entrada",
+      "inputDescription": "Sube un archivo para extraer texto mediante un modelo de tipo archivo/imagen.",
+      "dropHint": "Arrastra un archivo aquí o selecciona uno",
+      "selectFile": "Seleccionar archivo",
+      "submit": "Extraer texto",
+      "submitting": "Extrayendo...",
+      "outputTitle": "Salida",
+      "outputDescription": "Markdown extraído del archivo.",
+      "pagesCount": "{count} página | {count} páginas",
+      "empty": "El resultado aparecerá aquí",
+      "success": "Texto extraído correctamente.",
+      "noText": "No se encontró texto en el archivo."
+    },
+    "pdfPreview": {
+      "inputTitle": "Entrada",
+      "inputDescription": "Convierte un PDF en imágenes para validar el modelo de visión.",
+      "dropHint": "Arrastra un PDF aquí o selecciona uno",
+      "selectFile": "Seleccionar PDF",
+      "pagesLabel": "Páginas a convertir",
+      "pagesHint": "Máximo 10 páginas",
+      "submit": "Convertir PDF",
+      "submitting": "Convirtiendo...",
+      "outputTitle": "Vista previa",
+      "outputDescription": "Imágenes generadas del PDF.",
+      "pagesCount": "{count} página | {count} páginas",
+      "empty": "La vista previa aparecerá aquí",
+      "pageLabel": "Página {page}",
+      "pageAlt": "Página {page}",
+      "success": "PDF convertido ({count} página). | PDF convertido ({count} páginas).",
+      "noImages": "No se pudieron generar imágenes."
+    },
+    "comingSoon": {
+      "description": "Más herramientas se agregarán en próximas versiones."
+    },
+    "errors": {
+      "invalidFile": "Tipo de archivo no permitido. Solo PDF, TXT, CSV o imágenes.",
+      "noFile": "Selecciona un archivo antes de continuar.",
+      "noPdf": "Selecciona un PDF antes de continuar.",
+      "notPdf": "Tipo de archivo no permitido. Solo PDF.",
+      "extractFailed": "Error al extraer texto.",
+      "convertFailed": "Error al convertir PDF."
+    }
+  },
+  "login": {
+    "subtitle": "Inicia sesión en tu cuenta",
+    "submit": "Iniciar Sesión",
+    "loading": "Iniciando sesión...",
+    "form": {
+      "emailPlaceholder": "tu{'@'}email.com",
+      "password": "Contraseña",
+      "passwordPlaceholder": "••••••••"
+    },
+    "errors": {
+      "requiredFields": "Email y contraseña son requeridos"
+    }
+  },
+  "messaging": {
+    "inbox": {
+      "title": "Bandeja de entrada",
+      "searchPlaceholder": "Buscar chats...",
+      "loading": "Cargando conversaciones...",
+      "empty": "No hay conversaciones aún. Los clientes las iniciarán.",
+      "noMatches": "No hay conversaciones que coincidan con el filtro."
+    },
+    "filters": {
+      "all": "Todos"
+    },
+    "contact": {
+      "noContact": "Sin contacto",
+      "contactCreated": "Contacto creado",
+      "saveAsContact": "Guardar como contacto"
+    },
+    "chat": {
+      "selectPrompt": "Selecciona un chat para empezar a responder",
+      "loadingMessages": "Cargando mensajes..."
+    },
+    "mode": {
+      "autoPilotOn": "Piloto automático activo",
+      "humanTakeover": "Atención humana"
+    },
+    "composer": {
+      "sendPlaceholder": "Escribe un mensaje...",
+      "takeOver": "Tomar control",
+      "autoPilot": "Piloto automático"
+    },
+    "tools": {
+      "confirmationRequired": "Confirmación requerida",
+      "defaultName": "Herramienta",
+      "modify": "Modificar",
+      "modifyPrompt": "Edita los datos de la acción (JSON):",
+      "invalidJson": "JSON inválido",
+      "status": {
+        "pending": "Pendiente",
+        "success": "Completado",
+        "cancelled": "Cancelado"
+      }
+    },
+    "insights": {
+      "title": "Análisis de IA",
+      "analyze": "Analizar",
+      "analyzing": "Analizando",
+      "loading": "Cargando análisis...",
+      "empty": "Todavía no hay análisis para esta conversación.",
+      "sentimentLabel": "Sentimiento",
+      "summary": "Resumen",
+      "sentiment": {
+        "positive": "Positivo",
+        "negative": "Negativo",
+        "neutral": "Neutral"
+      }
+    },
+    "details": {
+      "title": "Detalles",
+      "platform": "Plataforma",
+      "notAvailable": "No disponible"
+    }
+  },
+  "profile": {
+    "title": "Mi Perfil",
+    "subtitle": "Gestiona tu información personal y contraseña",
+    "projects": {
+      "title": "Mis Proyectos ({count})",
+      "empty": "Sin proyectos asignados"
+    },
+    "info": {
+      "title": "Información Personal"
+    },
+    "password": {
+      "title": "Cambiar Contraseña",
+      "current": "Contraseña actual",
+      "new": "Nueva contraseña",
+      "confirm": "Confirmar nueva contraseña"
+    },
+    "toast": {
+      "updated": "Perfil actualizado correctamente"
+    },
+    "error": {
+      "passwordMismatch": "Las contraseñas no coinciden"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Gestiona agente, canales y configuración",
+    "tabs": {
+      "agent": "Agente IA",
+      "info": "Información",
+      "channels": "Canales",
+      "options": "Opciones"
+    },
+    "info": {
+      "title": "Información del Proyecto",
+      "subtitle": "Administra datos básicos del proyecto y el enlace de test chat",
+      "slugLabel": "Slug del Proyecto",
+      "slugHint": "Se usa para compartir el enlace de test chat",
+      "slugPlaceholder": "mi-proyecto",
+      "slugFallback": "slug",
+      "copyLink": "Copiar link"
+    },
+    "agent": {
+      "basicTitle": "Información del Agente",
+      "nameLabel": "Nombre *",
+      "namePlaceholder": "Ej: Asistente de Ventas",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "¿Qué hace este agente?",
+      "modelsTitle": "Modelos de IA",
+      "modelsHint": "Definidos por el entorno del servidor. No son editables desde la interfaz.",
+      "modelChat": "Chat",
+      "modelEmbeddings": "Embeddings",
+      "modelOcr": "OCR",
+      "notConfigured": "No configurado",
+      "personalityTitle": "Personalidad del Bot",
+      "personalityHint": "Configura cómo se comporta y responde el chatbot",
+      "roleLabel": "Rol",
+      "roles": {
+        "assistant": "Asistente",
+        "assistantDesc": "Ayuda general",
+        "teacher": "Profesor",
+        "teacherDesc": "Enseña paso a paso",
+        "seller": "Vendedor",
+        "sellerDesc": "Persuade y cierra ventas",
+        "support": "Soporte",
+        "supportDesc": "Resuelve problemas técnicos",
+        "customerService": "Atención al cliente",
+        "customerServiceDesc": "Gestiona consultas"
+      },
+      "traitsLabel": "Rasgos de personalidad",
+      "traitsMax": "(máx. 3)",
+      "traitsHint": "Selecciona hasta 3 rasgos que definen el tono del bot",
+      "traits": {
+        "formal": "Formal",
+        "empathetic": "Empático",
+        "irreverent": "Irreverente",
+        "direct": "Directo",
+        "objective": "Objetivo",
+        "enthusiastic": "Entusiasta",
+        "sarcastic": "Sarcástico",
+        "sociable": "Sociable",
+        "kind": "Amable",
+        "cheerful": "Alegre",
+        "neutral": "Neutro"
+      },
+      "emojiLabel": "Uso de emojis",
+      "emoji": {
+        "low": "Bajo",
+        "medium": "Medio",
+        "high": "Alto"
+      },
+      "responseLengthLabel": "Longitud de respuesta",
+      "responseLength": {
+        "short": "Corta",
+        "shortDesc": "1-2 oraciones",
+        "medium": "Media",
+        "mediumDesc": "Párrafos cortos",
+        "detailed": "Detallada",
+        "detailedDesc": "Completa y extensa"
+      },
+      "ragBehaviorLabel": "Comportamiento de búsqueda (RAG)",
+      "rag": {
+        "strict": "Solo documentos",
+        "strictDesc": "No usa conocimiento general",
+        "hybrid": "Híbrido",
+        "hybridDesc": "Prioriza docs, complementa",
+        "general": "General",
+        "generalDesc": "Usa conocimiento libre"
+      },
+      "temperatureLabel": "Creatividad — {level} ({value})",
+      "temperaturePrecise": "Preciso",
+      "temperatureCreative": "Creativo",
+      "temperatureWarning": "Cuidado: aumenta el riesgo de que el bot pierda coherencia lógica o invente hechos.",
+      "temperatureLevels": {
+        "veryLow": "Muy baja",
+        "low": "Baja",
+        "medium": "Media",
+        "high": "Alta",
+        "veryHigh": "Muy alta"
+      },
+      "maxTokensLabel": "Max tokens — {level} ({value})",
+      "maxTokensOption": {
+        "veryShort": "Muy corto",
+        "medium": "Media",
+        "long": "Larga",
+        "max": "Máximo"
+      },
+      "autoMessagesTitle": "Mensajes automáticos",
+      "welcome": "Saludar siempre",
+      "welcomeHint": "Saluda al iniciar o retomar tras 6 horas",
+      "goodbye": "Despedir siempre",
+      "goodbyeHint": "Despide cuando el usuario se despida o cierre chat",
+      "fallbackAdvisor": "Cuando no sepa la respuesta",
+      "fallbackAdvisorHint": "Disculparse y aconsejar contactar con un asesor",
+      "goodbyeKeywordsLabel": "Keywords de despedida",
+      "goodbyeKeywordPlaceholder": "Escribe una keyword",
+      "goodbyeKeywordsHint": "Se comparan en minúsculas. Usa términos como “adios”, “gracias”, “bye”.",
+      "additionalInstructionsLabel": "Instrucciones adicionales",
+      "additionalInstructionsPlaceholder": "Ej: No menciones precios, siempre sugiere contactar a un asesor...",
+      "save": "Guardar Agente"
+    },
+    "channels": {
+      "title": "Canales de Comunicación",
+      "save": "Guardar Canales"
+    },
+    "options": {
+      "title": "Opciones",
+      "autoCreateContact": "Crear contacto automáticamente",
+      "autoCreateContactHint": "Al contestar el primer mensaje del cliente"
+    },
+    "errors": {
+      "loadConfig": "Error al cargar la configuración",
+      "projectNotFound": "No se encontró el proyecto",
+      "slugRequired": "El slug es obligatorio",
+      "slugUpdate": "Error al actualizar slug",
+      "copyLink": "No se pudo copiar el link",
+      "agentNotFound": "No se encontró el agente",
+      "agentSave": "Error al guardar agente"
+    },
+    "toasts": {
+      "slugUpdated": "Slug actualizado correctamente",
+      "linkCopied": "Link copiado",
+      "agentUpdated": "Agente actualizado correctamente",
+      "channelsUpdated": "Canales actualizados",
+      "optionsUpdated": "Opciones actualizadas"
+    }
+  },
+  "setup": {
+    "title": "Configurar Proyecto",
+    "subtitle": "Configura tu proyecto y agente para empezar a trabajar",
+    "checking": "Verificando configuración...",
+    "errors": {
+      "projectNameRequired": "El nombre del proyecto es obligatorio",
+      "agentNameRequired": "El nombre del agente es obligatorio"
+    },
+    "project": {
+      "title": "Datos del Proyecto",
+      "subtitle": "Información básica de tu proyecto",
+      "name": "Nombre del Proyecto *",
+      "namePlaceholder": "Ej: Mi Tienda Online, Soporte Técnico...",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Describe brevemente de qué trata tu proyecto..."
+    },
+    "agent": {
+      "title": "Agente de IA",
+      "subtitle": "Configura la personalidad e inteligencia de tu bot",
+      "name": "Nombre del Agente *",
+      "namePlaceholder": "Ej: Asistente de Ventas, Soporte Bot...",
+      "roleLabel": "Rol del Bot",
+      "roleHelp": "Podrás configurar la personalidad completa después en Configuración",
+      "roles": {
+        "assistant": {
+          "label": "Asistente",
+          "desc": "Ayuda general"
+        },
+        "teacher": {
+          "label": "Profesor",
+          "desc": "Enseña paso a paso"
+        },
+        "seller": {
+          "label": "Vendedor",
+          "desc": "Persuade y cierra ventas"
+        },
+        "support": {
+          "label": "Soporte",
+          "desc": "Resuelve problemas técnicos"
+        },
+        "customer_service": {
+          "label": "Atención al cliente",
+          "desc": "Gestiona consultas"
+        }
+      },
+      "autoMessages": "Mensajes automáticos",
+      "welcomeGreeting": "Saludar siempre",
+      "welcomeGreetingHelp": "Saluda al iniciar o retomar tras 6 horas",
+      "goodbyeMessage": "Despedir siempre",
+      "goodbyeMessageHelp": "Despide cuando el usuario se despida o cierre chat",
+      "fallbackAdvisor": "Cuando no sepa la respuesta",
+      "fallbackAdvisorHelp": "Disculparse y aconsejar contactar con un asesor",
+      "goodbyeKeywords": "Palabras clave de despedida",
+      "goodbyeKeywordPlaceholder": "Escribe una palabra clave",
+      "addKeyword": "Agregar",
+      "goodbyeKeywordsHelp": "Se comparan en minúsculas. Usa términos como “adios”, “gracias”, “bye”."
+    },
+    "channels": {
+      "title": "Canales y Opciones",
+      "subtitle": "Elige los canales de comunicación",
+      "channelsLabel": "Canales",
+      "whatsapp": "WhatsApp",
+      "instagram": "Instagram",
+      "web": "Chat Web",
+      "optionsLabel": "Opciones",
+      "autoCreateContact": "Crear contacto automáticamente",
+      "autoCreateContactHelp": "Al contestar el primer mensaje del cliente"
+    },
+    "summary": {
+      "title": "Resumen",
+      "project": "Proyecto",
+      "agent": "Agente",
+      "channels": "Canales"
+    },
+    "actions": {
+      "creating": "Creando...",
+      "createProject": "Crear Proyecto"
+    }
+  },
+  "users": {
+    "title": "Usuarios del Sistema",
+    "subtitle": "Administra los usuarios que pueden acceder al panel ({count} total)",
+    "searchPlaceholder": "Buscar por nombre o email...",
+    "loading": "Cargando usuarios...",
+    "noProjects": "No hay proyectos disponibles",
+    "toast": {
+      "created": "Usuario creado correctamente",
+      "updated": "Usuario actualizado correctamente"
+    },
+    "table": {
+      "user": "Usuario",
+      "role": "Rol",
+      "createdAt": "Creado",
+      "empty": "No se encontraron usuarios"
+    },
+    "create": {
+      "title": "Crear Usuario",
+      "submitting": "Creando..."
+    },
+    "edit": {
+      "title": "Editar Usuario"
+    },
+    "form": {
+      "name": "Nombre",
+      "email": "Email",
+      "password": "Contraseña",
+      "role": "Rol",
+      "projects": "Proyectos",
+      "namePlaceholder": "Nombre completo",
+      "emailPlaceholder": "email{'@'}ejemplo.com",
+      "passwordPlaceholder": "********"
+    },
+    "roles": {
+      "admin": "Administrador",
+      "support": "Soporte",
+      "assistant": "Asistente"
+    }
+  },
+  "publicChat": {
+    "simulator": {
+      "title": "🧪 Test — Simulador de Cliente",
+      "subtitle": "Simula un cliente que inicia una conversación. El contacto se crea automáticamente cuando el agente responde."
+    },
+    "client": {
+      "name": "Nombre",
+      "namePlaceholder": "Nombre del cliente",
+      "phone": "Teléfono",
+      "email": "Email",
+      "emailPlaceholder": "cliente{'@'}email.com",
+      "platform": "Plataforma"
+    },
+    "active": {
+      "title": "Conversación Activa",
+      "idLabel": "ID:",
+      "contactCreated": "Contacto creado:",
+      "contactCreatedYes": "✅ Sí",
+      "contactPending": "⏳ Pendiente (responde desde el dashboard)",
+      "reset": "Resetear"
+    },
+    "header": {
+      "anonymous": "Cliente Anónimo",
+      "activeWithPlatform": "Conversación activa — {platform}",
+      "startPrompt": "Escribe para iniciar conversación"
+    },
+    "empty": "Escribe un mensaje para iniciar una conversación como cliente",
+    "tool": {
+      "confirmationRequired": "Confirmación requerida",
+      "tool": "Herramienta",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar",
+      "modify": "Modificar",
+      "modifyPrompt": "Edita los datos de la acción (JSON):",
+      "invalidJson": "JSON inválido",
+      "status": {
+        "pending": "Pendiente",
+        "success": "Completado",
+        "error": "Error",
+        "needs_confirmation": "Confirmación requerida",
+        "cancelled": "Cancelado"
+      }
+    },
+    "sender": {
+      "you": "Tú (Cliente)",
+      "ai": "Mitchbot (AI)",
+      "human": "Agente Humano"
+    },
+    "input": {
+      "placeholder": "Escribe un mensaje...",
+      "firstPlaceholder": "Escribe tu primer mensaje para iniciar la conversación...",
+      "send": "Enviar",
+      "start": "Iniciar Chat"
+    }
+  }
+}

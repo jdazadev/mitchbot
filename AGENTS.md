@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v3.7.0
+**Versión actual del proyecto:** v3.8.0
 
 ---
 
@@ -39,7 +39,7 @@ mitchbot_v2/
 |:-----|:------------|
 | **Runtime** | Node.js, TypeScript, tsx (desarrollo) |
 | **Backend** | Express 4, Socket.io, Multer, Zod v4, JWT |
-| **Frontend** | Vue 3 (Composition API + `<script setup>`), Vite, Tailwind CSS 3, Pinia, Vue Router 4, Radix Vue, Lucide Icons |
+| **Frontend** | Vue 3 (Composition API + `<script setup>`), Vite, Tailwind CSS 3, Pinia, Vue Router 4, Radix Vue, Lucide Icons, vue-i18n |
 | **Base de datos** | MongoDB 8 (principal), Redis (caché y colas BullMQ), Qdrant (vectorial) |
 | **IA / LLM** | LangChain.js v1.x (`@langchain/core`, `@langchain/openai`, `@langchain/qdrant`, `@langchain/textsplitters`) |
 | **Proveedores IA** | OpenRouter (único proveedor: LLM, embeddings y OCR) |
@@ -115,6 +115,8 @@ apps/backend/src/
 apps/frontend/src/
 ├── App.vue                         # Root component
 ├── main.ts                         # Entry point
+├── i18n.ts                         # Instancia vue-i18n (es por defecto, persistencia)
+├── locales/                        # Catálogos de traducción (es.json, en.json)
 ├── style.css                       # Estilos globales + Tailwind
 ├── views/
 │   ├── Login.vue                   # Autenticación
@@ -323,6 +325,15 @@ Cada usuario pertenece a uno o más proyectos y tiene un proyecto activo.
 - **Rango de fechas del panel**: el widget estático "Last 30 Days" del Topbar se eliminó. El Dashboard ofrece un control real de últimos 7/30/90 días (30 por defecto) que recalcula métricas, canales y volumen; los toggles Diaria/Semanal/Mensual cambian la granularidad del volumen. El backend (`analytics.service`/`dashboard.controller`) acepta `days` o `from`/`to` y `period = daily | weekly | monthly`.
 - **Centro de notificaciones**: el Topbar escucha `admin:notification` (emitido por la tool `send_notification`), acumula las notificaciones en estado local, muestra el indicador solo si hay no leídas y permite marcarlas como leídas o limpiarlas. El alcance es la sesión activa (sin persistencia en base de datos).
 
+### 12. Internacionalización (i18n)
+
+- **Librería**: `vue-i18n` en modo Composition API (`legacy: false`), registrada en `main.ts` y configurada en `i18n.ts`.
+- **Catálogos**: `src/locales/es.json` y `src/locales/en.json`, con claves por dominio (`common.*`, `nav.*`, `topbar.*`, `dashboard.*`, `messaging.*`, `clients.*`, `brain.*`, `settings.*`, `users.*`, `agents.*`, `profile.*`, `devTests.*`, `login.*`, `setup.*`, `publicChat.*`). **Español por defecto** y fallback a español; ambos catálogos deben tener las mismas claves.
+- **Uso**: `import { useI18n } from 'vue-i18n'; const { t } = useI18n();` en `<script setup>`, y `{{ t('clave') }}` / `:placeholder="t('clave')"` en plantillas. Las etiquetas de arrays estáticos se resuelven en `computed(() => [...])` para que reaccionen al cambio de idioma.
+- **Selector de idioma**: en el `Topbar` (`data-testid="language-selector"`); aplica el idioma en vivo sin recargar, lo persiste en `localStorage` (`mitchbot.locale`) y actualiza el atributo `lang` del documento.
+- **Chat público (TestChat)**: usa su catálogo propio (`publicChat.*`) y un composer **aislado** cuyo idioma proviene de la personalidad del agente del proyecto (`GET /api/public/test-chat/:slug/config`, sin autenticación); es independiente del idioma elegido en el dashboard.
+- **Fuera de alcance**: los mensajes de error del backend permanecen en español (requerirían códigos de error en la API).
+
 ---
 
 ## Arquitectura de las Funciones del Chatbot
@@ -403,7 +414,7 @@ Usuario abre la app
 | **Appointments** | `GET /`, `GET /:id`, `PATCH /:id/status` | Citas agendadas por el agente |
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
 | **Dashboard** | `GET /stats`, `GET /volume`, `GET /channels`, `GET /activity` | Analytics |
-| **Public Chat** | Rutas para chat público (clientes web) | Chat embebible |
+| **Public Chat** | `GET /public/test-chat/:slug/config`, `POST /public/test-chat/:slug/start`, `POST /public/test-chat/:slug/:id/messages` | Chat público (clientes web); `config` expone el idioma del agente (sin auth) |
 
 > Todos los endpoints están bajo el prefijo `/api/<módulo>`.
 

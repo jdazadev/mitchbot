@@ -141,6 +141,13 @@ export const messagingService = {
 
   // === Funciones del CLIENTE (chatbot/widget/test) ===
 
+  /** Configuración pública del chat (idioma del agente del proyecto) */
+  async clientGetConfig(slug: string): Promise<{ language: 'es' | 'en' }> {
+    const res = await fetch(`${API_URL}/public/test-chat/${slug}/config`);
+    if (!res.ok) throw new Error('Failed to load public chat config');
+    return res.json();
+  },
+
   /** El cliente inicia una conversación (NO el admin) */
   async clientStartConversation(slug: string, data: {
     platform: 'WhatsApp' | 'Instagram' | 'Web';

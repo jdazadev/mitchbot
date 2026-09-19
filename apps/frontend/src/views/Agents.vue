@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { settingsService, type AgentData } from '../services/settings.service';
+
+const { t } = useI18n();
 
 const agents = ref<AgentData[]>([]);
 const pageLoading = ref(true);
@@ -83,7 +86,7 @@ async function handleUpdateAgent() {
 }
 
 async function handleDeleteAgent(agent: any) {
-  if (!confirm(`¿Eliminar el agente "${agent.name}"?`)) return;
+  if (!confirm(t('agents.deleteConfirm', { name: agent.name }))) return;
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/agents/${agent._id}`, {
       method: 'DELETE',
@@ -102,15 +105,15 @@ async function handleDeleteAgent(agent: any) {
   <div class="flex flex-col gap-6">
     <div class="flex justify-between items-center">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Agentes</h1>
-        <p class="text-sm text-slate-500 mt-1">Crea y configura los agentes de IA</p>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ t('agents.title') }}</h1>
+        <p class="text-sm text-slate-500 mt-1">{{ t('agents.subtitle') }}</p>
       </div>
       <button
         @click="showCreateModal = true"
         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-all flex items-center gap-2 uppercase text-sm"
       >
         <span class="material-symbols-outlined text-[20px]">add</span>
-        Crear Agente
+        {{ t('agents.createButton') }}
       </button>
     </div>
 
@@ -154,7 +157,7 @@ async function handleDeleteAgent(agent: any) {
         class="bg-slate-50 dark:bg-slate-800/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors min-h-[200px]"
       >
         <span class="material-symbols-outlined text-slate-300 text-[48px] mb-2">add_circle</span>
-        <span class="text-sm font-bold text-slate-400">Crear tu primer agente</span>
+        <span class="text-sm font-bold text-slate-400">{{ t('agents.createFirst') }}</span>
       </div>
     </div>
 
@@ -162,23 +165,23 @@ async function handleDeleteAgent(agent: any) {
     <div v-if="showCreateModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center" @click.self="showCreateModal = false">
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-lg font-bold text-slate-900">Crear Agente</h2>
+          <h2 class="text-lg font-bold text-slate-900">{{ t('agents.createModal.title') }}</h2>
           <button @click="showCreateModal = false" class="p-1 hover:bg-slate-100 rounded-lg"><span class="material-symbols-outlined text-slate-400">close</span></button>
         </div>
         <div class="flex flex-col gap-4">
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nombre *</label>
-            <input v-model="createForm.name" placeholder="Ej: Asistente de Ventas" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('agents.form.nameRequired') }}</label>
+            <input v-model="createForm.name" :placeholder="t('agents.form.namePlaceholder')" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
           </div>
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Descripción</label>
-            <textarea v-model="createForm.description" placeholder="¿Qué hace?" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"></textarea>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('agents.form.description') }}</label>
+            <textarea v-model="createForm.description" :placeholder="t('agents.form.descriptionPlaceholder')" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"></textarea>
           </div>
         </div>
         <div class="flex justify-end gap-3 mt-6">
-          <button @click="showCreateModal = false" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg">Cancelar</button>
+          <button @click="showCreateModal = false" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg">{{ t('agents.actions.cancel') }}</button>
           <button @click="handleCreateAgent" :disabled="createLoading || !createForm.name.trim()" class="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg shadow-sm">
-            {{ createLoading ? 'Creando...' : 'Crear' }}
+            {{ createLoading ? t('agents.actions.creating') : t('agents.actions.create') }}
           </button>
         </div>
       </div>
@@ -188,23 +191,23 @@ async function handleDeleteAgent(agent: any) {
     <div v-if="showEditModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center" @click.self="showEditModal = false">
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-lg font-bold text-slate-900">Editar Agente</h2>
+          <h2 class="text-lg font-bold text-slate-900">{{ t('agents.editModal.title') }}</h2>
           <button @click="showEditModal = false" class="p-1 hover:bg-slate-100 rounded-lg"><span class="material-symbols-outlined text-slate-400">close</span></button>
         </div>
         <div class="flex flex-col gap-4">
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nombre</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('agents.form.name') }}</label>
             <input v-model="editForm.name" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
           </div>
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Descripción</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('agents.form.description') }}</label>
             <textarea v-model="editForm.description" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"></textarea>
           </div>
         </div>
         <div class="flex justify-end gap-3 mt-6">
-          <button @click="showEditModal = false" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg">Cancelar</button>
+          <button @click="showEditModal = false" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg">{{ t('agents.actions.cancel') }}</button>
           <button @click="handleUpdateAgent" :disabled="editLoading" class="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg shadow-sm">
-            {{ editLoading ? 'Guardando...' : 'Guardar' }}
+            {{ editLoading ? t('agents.actions.saving') : t('agents.actions.save') }}
           </button>
         </div>
       </div>

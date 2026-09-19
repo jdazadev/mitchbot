@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { brainService } from '../services/brain.service';
 
-const tabs = [
-  { id: 'extract', label: 'Extraer texto', icon: 'description' },
-  { id: 'pdf-preview', label: 'PDF a imagenes', icon: 'image' },
-  { id: 'placeholder', label: 'Proximamente', icon: 'more_horiz' },
-];
+const { t } = useI18n();
+
+const tabs = computed(() => [
+  { id: 'extract', label: t('devTests.tabs.extract'), icon: 'description' },
+  { id: 'pdf-preview', label: t('devTests.tabs.pdfPreview'), icon: 'image' },
+  { id: 'placeholder', label: t('devTests.tabs.comingSoon'), icon: 'more_horiz' },
+]);
 
 const activeTab = ref('extract');
 const selectedFile = ref<File | null>(null);
@@ -31,7 +34,7 @@ function handleFileChange(e: Event) {
   const file = input.files?.[0] || null;
   if (!file) return;
   if (!isValidFile(file)) {
-    actionError.value = 'Tipo de archivo no permitido. Solo PDF, TXT, CSV o imagenes.';
+    actionError.value = t('devTests.errors.invalidFile');
     return;
   }
   selectedFile.value = file;
@@ -49,7 +52,7 @@ function handleDrop(e: DragEvent) {
   const file = e.dataTransfer?.files?.[0];
   if (!file) return;
   if (!isValidFile(file)) {
-    actionError.value = 'Tipo de archivo no permitido. Solo PDF, TXT, CSV o imagenes.';
+    actionError.value = t('devTests.errors.invalidFile');
     return;
   }
   selectedFile.value = file;
@@ -79,7 +82,7 @@ async function handleExtract() {
   previewImages.value = [];
   previewPages.value = 0;
   if (!selectedFile.value) {
-    actionError.value = 'Selecciona un archivo antes de continuar.';
+    actionError.value = t('devTests.errors.noFile');
     return;
   }
 
@@ -88,9 +91,9 @@ async function handleExtract() {
     const result = await brainService.extractTextOnly(selectedFile.value);
     extractedMarkdown.value = result.extractedMarkdown || '';
     extractionMeta.value = { method: result.method, pages: result.pages };
-    actionSuccess.value = extractedMarkdown.value ? 'Texto extraido correctamente.' : 'No se encontro texto en el archivo.';
+    actionSuccess.value = extractedMarkdown.value ? t('devTests.extract.success') : t('devTests.extract.noText');
   } catch (err: any) {
-    actionError.value = err.message || 'Error al extraer texto.';
+    actionError.value = err.message || t('devTests.errors.extractFailed');
   } finally {
     isSubmitting.value = false;
   }
@@ -102,11 +105,11 @@ async function handlePdfPreview() {
   previewImages.value = [];
   previewPages.value = 0;
   if (!selectedFile.value) {
-    actionError.value = 'Selecciona un PDF antes de continuar.';
+    actionError.value = t('devTests.errors.noPdf');
     return;
   }
   if (selectedFile.value.type !== 'application/pdf' && !selectedFile.value.name.toLowerCase().endsWith('.pdf')) {
-    actionError.value = 'Tipo de archivo no permitido. Solo PDF.';
+    actionError.value = t('devTests.errors.notPdf');
     return;
   }
 
@@ -116,10 +119,10 @@ async function handlePdfPreview() {
     previewImages.value = result.images || [];
     previewPages.value = result.pages || 0;
     actionSuccess.value = previewImages.value.length
-      ? `PDF convertido (${previewImages.value.length} pagina${previewImages.value.length === 1 ? '' : 's'}).`
-      : 'No se pudieron generar imagenes.';
+      ? t('devTests.pdfPreview.success', previewImages.value.length)
+      : t('devTests.pdfPreview.noImages');
   } catch (err: any) {
-    actionError.value = err.message || 'Error al convertir PDF.';
+    actionError.value = err.message || t('devTests.errors.convertFailed');
   } finally {
     isSubmitting.value = false;
   }
@@ -138,8 +141,8 @@ function clearResult() {
 <template>
   <div class="flex flex-col gap-6">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Pruebas</h1>
-      <p class="text-sm text-slate-500 mt-1">Herramientas internas de diagnóstico</p>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ t('devTests.title') }}</h1>
+      <p class="text-sm text-slate-500 mt-1">{{ t('devTests.subtitle') }}</p>
     </div>
 
     <div class="flex flex-col gap-6">
@@ -159,8 +162,8 @@ function clearResult() {
 
       <div v-if="activeTab === 'extract'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Entrada</h2>
-          <p class="text-xs text-slate-400 mt-1">Sube un archivo para extraer texto via modelo tipo file/image.</p>
+          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ t('devTests.extract.inputTitle') }}</h2>
+          <p class="text-xs text-slate-400 mt-1">{{ t('devTests.extract.inputDescription') }}</p>
 
           <div v-if="actionError" class="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">error</span>
@@ -179,7 +182,7 @@ function clearResult() {
             @dragleave="handleDragLeave"
           >
             <div class="text-sm text-slate-500">
-              Arrastra un archivo aqui o selecciona uno
+              {{ t('devTests.extract.dropHint') }}
             </div>
             <input
               type="file"
@@ -189,7 +192,7 @@ function clearResult() {
               @change="handleFileChange"
             />
             <label for="dev-extract-file" class="inline-flex mt-3 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
-              Seleccionar archivo
+              {{ t('devTests.extract.selectFile') }}
             </label>
             <div v-if="selectedFile" class="mt-3 text-xs text-slate-600">
               {{ selectedFile.name }}
@@ -202,13 +205,13 @@ function clearResult() {
               :disabled="isSubmitting"
               class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-xs font-bold"
             >
-              {{ isSubmitting ? 'Extrayendo...' : 'Extraer texto' }}
+              {{ isSubmitting ? t('devTests.extract.submitting') : t('devTests.extract.submit') }}
             </button>
             <button
               @click="clearResult"
               class="px-4 py-2.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600"
             >
-              Limpiar
+              {{ t('common.clear') }}
             </button>
           </div>
         </div>
@@ -216,17 +219,17 @@ function clearResult() {
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Salida</h2>
-              <p class="text-xs text-slate-400 mt-1">Markdown extraido del archivo.</p>
+              <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ t('devTests.extract.outputTitle') }}</h2>
+              <p class="text-xs text-slate-400 mt-1">{{ t('devTests.extract.outputDescription') }}</p>
             </div>
             <div v-if="extractionMeta" class="text-[10px] text-slate-400 uppercase tracking-widest">
-              {{ extractionMeta.method || 'llm_file' }} · {{ extractionMeta.pages || 0 }} paginas
+              {{ extractionMeta.method || 'llm_file' }} · {{ t('devTests.extract.pagesCount', extractionMeta.pages || 0) }}
             </div>
           </div>
 
           <div class="mt-4 h-[420px] border border-slate-100 dark:border-slate-700 rounded-lg overflow-y-auto bg-slate-50 dark:bg-slate-900/30">
             <div v-if="!extractedMarkdown" class="h-full flex items-center justify-center text-sm text-slate-400">
-              El resultado aparecera aqui
+              {{ t('devTests.extract.empty') }}
             </div>
             <pre v-else class="p-4 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{{ extractedMarkdown }}</pre>
           </div>
@@ -235,8 +238,8 @@ function clearResult() {
 
       <div v-else-if="activeTab === 'pdf-preview'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Entrada</h2>
-          <p class="text-xs text-slate-400 mt-1">Convierte un PDF en imagenes para validar el modelo vision.</p>
+          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ t('devTests.pdfPreview.inputTitle') }}</h2>
+          <p class="text-xs text-slate-400 mt-1">{{ t('devTests.pdfPreview.inputDescription') }}</p>
 
           <div v-if="actionError" class="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">error</span>
@@ -255,7 +258,7 @@ function clearResult() {
             @dragleave="handleDragLeave"
           >
             <div class="text-sm text-slate-500">
-              Arrastra un PDF aqui o selecciona uno
+              {{ t('devTests.pdfPreview.dropHint') }}
             </div>
             <input
               type="file"
@@ -265,7 +268,7 @@ function clearResult() {
               @change="handleFileChange"
             />
             <label for="dev-pdf-preview-file" class="inline-flex mt-3 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
-              Seleccionar PDF
+              {{ t('devTests.pdfPreview.selectFile') }}
             </label>
             <div v-if="selectedFile" class="mt-3 text-xs text-slate-600">
               {{ selectedFile.name }}
@@ -273,7 +276,7 @@ function clearResult() {
           </div>
 
           <div class="mt-4">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Paginas a convertir</label>
+            <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('devTests.pdfPreview.pagesLabel') }}</label>
             <div class="flex items-center gap-3">
               <input
                 v-model.number="previewMaxPages"
@@ -282,7 +285,7 @@ function clearResult() {
                 max="10"
                 class="w-24 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white"
               />
-              <span class="text-xs text-slate-400">Maximo 10 paginas</span>
+              <span class="text-xs text-slate-400">{{ t('devTests.pdfPreview.pagesHint') }}</span>
             </div>
           </div>
 
@@ -292,13 +295,13 @@ function clearResult() {
               :disabled="isSubmitting"
               class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-xs font-bold"
             >
-              {{ isSubmitting ? 'Convirtiendo...' : 'Convertir PDF' }}
+              {{ isSubmitting ? t('devTests.pdfPreview.submitting') : t('devTests.pdfPreview.submit') }}
             </button>
             <button
               @click="clearResult"
               class="px-4 py-2.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600"
             >
-              Limpiar
+              {{ t('common.clear') }}
             </button>
           </div>
         </div>
@@ -306,22 +309,22 @@ function clearResult() {
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Preview</h2>
-              <p class="text-xs text-slate-400 mt-1">Imagenes generadas del PDF.</p>
+              <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ t('devTests.pdfPreview.outputTitle') }}</h2>
+              <p class="text-xs text-slate-400 mt-1">{{ t('devTests.pdfPreview.outputDescription') }}</p>
             </div>
             <div v-if="previewPages" class="text-[10px] text-slate-400 uppercase tracking-widest">
-              {{ previewPages }} pagina{{ previewPages === 1 ? '' : 's' }}
+              {{ t('devTests.pdfPreview.pagesCount', previewPages) }}
             </div>
           </div>
 
           <div class="mt-4 h-[420px] border border-slate-100 dark:border-slate-700 rounded-lg overflow-y-auto bg-slate-50 dark:bg-slate-900/30 p-4">
             <div v-if="!previewImages.length" class="h-full flex items-center justify-center text-sm text-slate-400">
-              El preview aparecera aqui
+              {{ t('devTests.pdfPreview.empty') }}
             </div>
             <div v-else class="grid grid-cols-1 gap-4">
               <div v-for="(img, idx) in previewImages" :key="`${idx}-${img.slice(0, 20)}`" class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                <div class="px-3 py-2 text-[10px] uppercase tracking-widest text-slate-400 bg-slate-50">Pagina {{ idx + 1 }}</div>
-                <img :src="img" :alt="`Pagina ${idx + 1}`" class="w-full object-contain" />
+                <div class="px-3 py-2 text-[10px] uppercase tracking-widest text-slate-400 bg-slate-50">{{ t('devTests.pdfPreview.pageLabel', { page: idx + 1 }) }}</div>
+                <img :src="img" :alt="t('devTests.pdfPreview.pageAlt', { page: idx + 1 })" class="w-full object-contain" />
               </div>
             </div>
           </div>
@@ -331,7 +334,7 @@ function clearResult() {
       <div v-else class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
         <div class="flex items-center gap-2 text-slate-400 text-sm">
           <span class="material-symbols-outlined text-[18px]">science</span>
-          Mas herramientas se agregaran en proximas versiones.
+          {{ t('devTests.comingSoon.description') }}
         </div>
       </div>
     </div>
