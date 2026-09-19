@@ -19,8 +19,6 @@ const EMOJI_MAP: Record<AgentPersonality['emojiUsage'], string> = {
 const LANGUAGE_MAP: Record<AgentPersonality['language'], string> = {
   es: 'Responde siempre en español.',
   en: 'Always respond in English.',
-  pt: 'Sempre responda em português.',
-  auto: 'Responde en el mismo idioma que use el usuario.',
 };
 
 const RESPONSE_LENGTH_MAP: Record<AgentPersonality['responseLength'], string> = {

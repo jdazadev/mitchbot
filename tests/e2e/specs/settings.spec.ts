@@ -36,4 +36,25 @@ test.describe('Configuración y agentes', () => {
     await page.reload();
     await expect(page.getByPlaceholder('Ej: Asistente de Ventas')).toHaveValue(agentName, { timeout: 20_000 });
   });
+
+  test('restringe el idioma del agente a español e inglés', async ({ page, api }) => {
+    await page.goto('/settings');
+    await expect(page.getByRole('heading', { name: 'Configuración' })).toBeVisible();
+
+    // Solo se ofrecen Español e Inglés.
+    await expect(page.getByRole('button', { name: 'Español' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Inglés' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Portugués' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Detectar' })).toHaveCount(0);
+
+    // El backend rechaza un idioma fuera de es/en.
+    const agentsRes = await api.get('agents');
+    expect(agentsRes.ok()).toBeTruthy();
+    const agents = await agentsRes.json();
+    expect(agents.length).toBeGreaterThan(0);
+    const res = await api.put(`agents/${agents[0]._id}`, {
+      data: { personality: { language: 'pt' } },
+    });
+    expect(res.status()).toBe(400);
+  });
 });

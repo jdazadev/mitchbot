@@ -1,9 +1,33 @@
 import { Request, Response, NextFunction } from 'express';
-import { analyticsService } from '../services/analytics.service';
+import { analyticsService, type DateRange, type VolumePeriod } from '../services/analytics.service';
+
+const VOLUME_PERIODS: VolumePeriod[] = ['daily', 'weekly', 'monthly'];
+
+function toValidDate(value: unknown): Date | undefined {
+  if (!value) return undefined;
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+/** Resuelve el rango de fechas desde `from`/`to` o `days` (por defecto sin rango). */
+function parseRange(req: Request): DateRange {
+  const from = toValidDate(req.query.from);
+  const to = toValidDate(req.query.to);
+  if (from || to) return { from, to };
+
+  const days = Number(req.query.days);
+  if (Number.isFinite(days) && days > 0) {
+    const rangeTo = new Date();
+    const rangeFrom = new Date();
+    rangeFrom.setDate(rangeFrom.getDate() - days);
+    return { from: rangeFrom, to: rangeTo };
+  }
+  return {};
+}
 
 export const getStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const stats = await analyticsService.getStats();
+    const stats = await analyticsService.getStats(parseRange(req));
     res.json(stats);
   } catch (error) {
     next(error);
@@ -12,8 +36,9 @@ export const getStats = async (req: Request, res: Response, next: NextFunction) 
 
 export const getVolume = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const period = (req.query.period as 'daily' | 'weekly') || 'daily';
-    const data = await analyticsService.getVolume(period);
+    const requested = req.query.period as VolumePeriod;
+    const period = VOLUME_PERIODS.includes(requested) ? requested : 'daily';
+    const data = await analyticsService.getVolume(period, parseRange(req));
     res.json(data);
   } catch (error) {
     next(error);
@@ -22,7 +47,7 @@ export const getVolume = async (req: Request, res: Response, next: NextFunction)
 
 export const getChannelDistribution = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await analyticsService.getChannelDistribution();
+    const data = await analyticsService.getChannelDistribution(parseRange(req));
     res.json(data);
   } catch (error) {
     next(error);

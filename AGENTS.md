@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v3.6.0
+**Versión actual del proyecto:** v3.7.0
 
 ---
 
@@ -121,7 +121,7 @@ apps/frontend/src/
 │   ├── ProjectSetup.vue            # Onboarding (3 pasos)
 │   ├── Dashboard.vue               # Métricas y analytics
 │   ├── Messaging.vue               # Centro de mensajería en tiempo real
-│   ├── Contacts.vue                # Gestión de contactos
+│   ├── Clients.vue                 # Gestión de clientes (contactos)
 │   ├── Brain.vue                   # Base de conocimiento RAG
 │   ├── DevTests.vue                # Herramientas internas de prueba (ruta /dev/tests)
 │   ├── Agents.vue                  # Configuración de agentes IA
@@ -163,10 +163,11 @@ apps/frontend/src/
 - **Compositor honesto**: solo expone acciones funcionales (enviar, tomar control); se retiraron chips de sugerencia, emoji, adjuntos, menú y el indicador "online" simulado.
 - **AI Insights**: análisis de sentimiento/resumen persistido en `conversation.aiInsights`. `GET /:id/insights` lee lo almacenado y `POST /:id/insights` recalcula; se emite `chat:insights`. El análisis automático corre fire-and-forget tras cada respuesta del bot (un fallo no afecta la respuesta). El modelo se resuelve desde `OPENROUTER_INSIGHTS_MODEL` con fallback a `OPENROUTER_LLM_MODEL`.
 
-### 2. Módulo de Contactos
+### 2. Módulo de Clientes (Contactos)
 
-- Se puede editar, buscar, filtrar, ordenar y paginar contactos.
-- El contacto es un perfil con todos los datos del cliente (nombre, email, teléfono, plataforma, tags, metadata).
+- En la interfaz el módulo se llama **"Clients"** (ruta `/clients`, con redirección desde `/contacts`). El backend, la API (`/api/contacts`), la colección `contacts` y los tipos internos conservan su nombre: el renombre es solo de presentación y de frontend.
+- Se puede editar, buscar, filtrar, ordenar y paginar clientes.
+- El cliente/contacto es un perfil con todos los datos (nombre, email, teléfono, plataforma, tags, metadata).
 - **No se puede crear un contacto arbitrario** — Se crea automáticamente al contestar el primer mensaje del cliente, o de forma explícita desde una conversación ("Guardar como contacto", idempotente).
 - **No se puede eliminar un contacto** — Solo se puede archivar (soft delete) y restaurar.
 - Búsqueda por nombre, email y teléfono.
@@ -253,6 +254,7 @@ apps/frontend/src/
 - La interfaz **no ofrece selección de modelo**: ni en el onboarding, ni en Agentes, ni en Configuración.
 - El modelo usado es el de `OPENROUTER_LLM_MODEL`; los campos `modelId`/`modelValue` del agente quedan ignorados en runtime.
 - Configuración muestra una tarjeta de solo lectura con los modelos de chat, embeddings y OCR resueltos del servidor.
+- **Idioma del agente limitado a español e inglés**: el tipo `AgentPersonality['language']`, el `z.enum` de `agents.controller.ts` y `LANGUAGE_MAP` de `prompt-builder.service.ts` solo aceptan `'es' | 'en'`; no se ofrecen Portugués ni "Detectar". Los agentes con valores obsoletos se normalizan a español con `pnpm --filter @mitchbot/backend exec tsx src/scripts/normalize-agent-language.ts` (el fallback del prompt también cae a español).
 
 ### 4.5. Agent Tool Use (Function Calling)
 
@@ -314,6 +316,12 @@ Cada usuario pertenece a uno o más proyectos y tiene un proyecto activo.
 - **Agente por proyecto**: `agents.projectId` + `agentService.getActiveAgent(projectId)`. La conversación determina el proyecto y con él el agente.
 - **Aislamiento**: conversaciones, contactos, fuentes RAG, agentes y configuración de proveedores se filtran por `projectId`. Los eventos de socket se emiten por room `project:<id>` (`emitToProject`).
 - **Migración**: `pnpm --filter @mitchbot/backend tsx src/scripts/migrate-multi-project.ts` asigna el proyecto actual a usuarios/agentes existentes.
+
+### 11. Shell y navegación
+
+- **Nomenclatura de módulos**: el sidebar y los títulos del Topbar muestran **"Brain"** (no "Brain & RAG") y **"Clients"** (no "Contacts"). La ruta del módulo de clientes es `/clients` y `/contacts` redirige a ella. El renombre es de presentación y de frontend.
+- **Rango de fechas del panel**: el widget estático "Last 30 Days" del Topbar se eliminó. El Dashboard ofrece un control real de últimos 7/30/90 días (30 por defecto) que recalcula métricas, canales y volumen; los toggles Diaria/Semanal/Mensual cambian la granularidad del volumen. El backend (`analytics.service`/`dashboard.controller`) acepta `days` o `from`/`to` y `period = daily | weekly | monthly`.
+- **Centro de notificaciones**: el Topbar escucha `admin:notification` (emitido por la tool `send_notification`), acumula las notificaciones en estado local, muestra el indicador solo si hay no leídas y permite marcarlas como leídas o limpiarlas. El alcance es la sesión activa (sin persistencia en base de datos).
 
 ---
 

@@ -8,7 +8,7 @@ export interface AgentPersonality {
   role: 'assistant' | 'teacher' | 'seller' | 'support' | 'customer_service';
   traits: string[];
   emojiUsage: 'low' | 'medium' | 'high';
-  language: 'es' | 'en' | 'pt' | 'auto';
+  language: 'es' | 'en';
   responseLength: 'short' | 'medium' | 'detailed';
   ragBehavior: 'strict' | 'hybrid' | 'general';
   fallbackMessage: string;

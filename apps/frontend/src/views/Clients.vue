@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import {
-  contactService,
+  clientService,
   type Contact,
   type ContactsResponse,
   type ContactFilters,
-} from "../services/contact.service";
+} from "../services/client.service";
 
 // Estado
 const contactsData = ref<ContactsResponse>({
@@ -74,7 +74,7 @@ async function fetchContacts() {
       includeArchived: filterStatus.value === 'Archived',
     };
 
-    const data = await contactService.getContacts(filters);
+    const data = await clientService.getContacts(filters);
     if (seq !== fetchSeq) return;
     contactsData.value = data;
   } catch (err: any) {
@@ -136,12 +136,12 @@ function openEditModal(contact: Contact) {
 async function saveEdit() {
   if (!editingContact.value) return;
   try {
-    await contactService.updateContact(editingContact.value._id, editForm.value);
+    await clientService.updateContact(editingContact.value._id, editForm.value);
     showEditModal.value = false;
     editingContact.value = null;
     fetchContacts();
   } catch (err: any) {
-    alert("Error al actualizar contacto: " + err.message);
+    alert("Error al actualizar cliente: " + err.message);
   }
 }
 
@@ -154,22 +154,22 @@ function openArchiveModal(contact: Contact) {
 async function confirmArchive() {
   if (!archivingContact.value) return;
   try {
-    await contactService.archiveContact(archivingContact.value._id);
+    await clientService.archiveContact(archivingContact.value._id);
     showArchiveModal.value = false;
     archivingContact.value = null;
     fetchContacts();
   } catch (err: any) {
-    alert("Error al archivar contacto: " + err.message);
+    alert("Error al archivar cliente: " + err.message);
   }
 }
 
 // === Restaurar ===
 async function restoreContact(contact: Contact) {
   try {
-    await contactService.restoreContact(contact._id);
+    await clientService.restoreContact(contact._id);
     fetchContacts();
   } catch (err: any) {
-    alert("Error al restaurar contacto: " + err.message);
+    alert("Error al restaurar cliente: " + err.message);
   }
 }
 </script>
@@ -190,7 +190,7 @@ async function restoreContact(contact: Contact) {
             <input
               v-model="searchQuery"
               class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-              placeholder="Buscar contactos..."
+              placeholder="Buscar clientes..."
               type="text"
             />
           </div>
@@ -222,13 +222,13 @@ async function restoreContact(contact: Contact) {
         <!-- Info: los contactos se crean automáticamente -->
         <div class="flex items-center gap-2 text-xs text-slate-400">
           <span class="material-symbols-outlined text-[16px]">info</span>
-          Los contactos se crean automáticamente al responder mensajes
+          Los clientes se crean automáticamente al responder mensajes
         </div>
       </div>
 
       <!-- Info de resultados -->
       <div class="flex items-center justify-between text-xs text-slate-400">
-        <span>{{ totalContacts }} contacto{{ totalContacts !== 1 ? 's' : '' }} encontrado{{ totalContacts !== 1 ? 's' : '' }}</span>
+        <span>{{ totalContacts }} cliente{{ totalContacts !== 1 ? 's' : '' }} encontrado{{ totalContacts !== 1 ? 's' : '' }}</span>
         <div class="flex items-center gap-2">
           <span>Mostrar</span>
           <select
@@ -250,7 +250,7 @@ async function restoreContact(contact: Contact) {
       class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden"
     >
       <div v-if="isLoading" class="p-8 text-center text-slate-500">
-        Cargando contactos...
+        Cargando clientes...
       </div>
       <div v-else-if="error" class="p-8 text-center text-red-500">
         {{ error }}
@@ -263,7 +263,7 @@ async function restoreContact(contact: Contact) {
             >
               <th class="px-6 py-4 cursor-pointer hover:text-slate-700 transition-colors select-none" @click="toggleSort('name')">
                 <div class="flex items-center gap-1">
-                  Contacto
+                  Cliente
                   <span class="material-symbols-outlined text-[14px]">{{ getSortIcon('name') }}</span>
                 </div>
               </th>
@@ -393,7 +393,7 @@ async function restoreContact(contact: Contact) {
             </tr>
             <tr v-if="contacts.length === 0">
               <td colspan="6" class="px-6 py-12 text-center text-slate-400">
-                No se encontraron contactos
+                No se encontraron clientes
               </td>
             </tr>
           </tbody>
@@ -469,7 +469,7 @@ async function restoreContact(contact: Contact) {
     >
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-lg font-bold text-slate-900">Editar Contacto</h2>
+          <h2 class="text-lg font-bold text-slate-900">Editar Cliente</h2>
           <button @click="showEditModal = false" class="p-1 hover:bg-slate-100 rounded-lg transition-colors">
             <span class="material-symbols-outlined text-slate-400">close</span>
           </button>
@@ -537,7 +537,7 @@ async function restoreContact(contact: Contact) {
         <div class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-amber-500 text-[28px]">archive</span>
         </div>
-        <h2 class="text-lg font-bold text-slate-900 mb-2">Archivar Contacto</h2>
+        <h2 class="text-lg font-bold text-slate-900 mb-2">Archivar Cliente</h2>
         <p class="text-sm text-slate-500 mb-6">
           ¿Estás seguro de que quieres archivar a <strong>{{ archivingContact?.name }}</strong>? Podrás restaurarlo en cualquier momento.
         </p>

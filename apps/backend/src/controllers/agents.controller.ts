@@ -26,7 +26,7 @@ const personalitySchema = z.object({
   role: z.enum(['assistant', 'teacher', 'seller', 'support', 'customer_service']).default('assistant'),
   traits: z.array(z.string()).max(3).default(['neutro']),
   emojiUsage: z.enum(['low', 'medium', 'high']).default('medium'),
-  language: z.enum(['es', 'en', 'pt', 'auto']).default('es'),
+  language: z.enum(['es', 'en']).default('es'),
   responseLength: z.enum(['short', 'medium', 'detailed']).default('medium'),
   ragBehavior: z.enum(['strict', 'hybrid', 'general']).default('hybrid'),
   fallbackMessage: z.string().default('Lo siento, no tengo información disponible sobre ese tema en este momento.'),

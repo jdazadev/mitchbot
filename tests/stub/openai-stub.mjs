@@ -13,6 +13,7 @@
  * Disparadores deterministas:
  *   - Si el último mensaje de usuario contiene "AGENDAR_CITA" se emite un
  *     tool_call de `create_appointment`.
+ *   - "TRANSFERIR" emite `transfer_to_human`; "NOTIFICAR" emite `send_notification`.
  *   - En caso contrario se responde el texto fijo STUB_REPLY.
  */
 import http from 'node:http';
@@ -23,6 +24,7 @@ const STUB_EMBED_MODEL = process.env.STUB_EMBED_MODEL || 'stub-embed';
 const STUB_REPLY = process.env.STUB_REPLY || 'Respuesta determinista de prueba E2E.';
 const TOOL_TRIGGER = /AGENDAR_CITA|agendar cita|crear cita/i;
 const TRANSFER_TRIGGER = /TRANSFERIR|transferir a (un )?(humano|asesor)/i;
+const NOTIFICATION_TRIGGER = /NOTIFICAR|notificar al equipo/i;
 // Alineado con `rag.qdrant_vector_size` por defecto del backend (768).
 const EMBED_DIM = Number(process.env.STUB_EMBED_DIM || 768);
 
@@ -110,11 +112,13 @@ function pickTool(userText, tools) {
   if (!Array.isArray(tools) || tools.length === 0) return null;
   if (TOOL_TRIGGER.test(userText)) return 'create_appointment';
   if (TRANSFER_TRIGGER.test(userText)) return 'transfer_to_human';
+  if (NOTIFICATION_TRIGGER.test(userText)) return 'send_notification';
   return null;
 }
 
 function toolArguments(name) {
   if (name === 'transfer_to_human') return { reason: 'Prueba E2E' };
+  if (name === 'send_notification') return { message: 'Notificación E2E', level: 'warning' };
   return buildToolArgs();
 }
 

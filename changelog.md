@@ -5,6 +5,34 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v3.7.0 — 2026-09-19
+
+> 🧭 **La navegación deja de mezclar nombres, los controles de fecha por fin filtran de verdad y el centro de notificaciones deja de estar muerto**
+
+---
+
+### ✨ Añadido
+- **Rango de fechas real en el Dashboard**: control de últimos 7/30/90 días (30 por defecto) que recalcula métricas, canales y volumen; los toggles Diaria/Semanal/Mensual cambian la granularidad del volumen y el gráfico se dibuja con los datos del rango.
+- **Centro de notificaciones en el Topbar**: escucha `admin:notification` (emitido por la tool `send_notification`), acumula las notificaciones en estado local, muestra el indicador solo si hay no leídas y permite marcarlas como leídas o limpiarlas (alcance de sesión).
+- **Backend de analítica ampliado**: `analytics.service`/`dashboard.controller` aceptan `days` o `from`/`to` y `period = daily | weekly | monthly`; `getStats`, `getVolume` y `getChannelDistribution` filtran por rango.
+- **Script de normalización** `normalize-agent-language.ts`: migra los agentes con idioma `pt`, `auto` o ausente a español.
+
+### 🔄 Cambios
+- **Nomenclatura de módulos**: el sidebar y el Topbar muestran **"Brain"** (antes "Brain & RAG") y **"Clients"** (antes "Contacts"); la ruta pasa a `/clients` con redirección desde `/contacts`. Se renombran `views/Contacts.vue` → `views/Clients.vue` y `services/contact.service.ts` → `client.service.ts`; la API `/api/contacts`, la colección y los tipos internos no cambian.
+- **Textos visibles del módulo de clientes** ("contacto" → "cliente") en búsqueda, tabla, modales y mensajes de error.
+- **Se elimina el widget estático "Last 30 Days"** del Topbar (era UI muerta).
+- **Idioma del agente restringido a `'es' | 'en'`**: se ajustan el tipo `AgentPersonality['language']` (frontend y backend), el `z.enum` de `agents.controller.ts` y `LANGUAGE_MAP` de `prompt-builder.service.ts`; se eliminan Portugués y "Detectar" de `Settings.vue`. Un idioma distinto de español/inglés se rechaza con error de validación y los valores obsoletos degradan a español.
+
+### 🧪 Pruebas
+- **e2e**: redirección `/contacts` → `/clients`, spec de clientes actualizado, cobertura de rango/granularidad en el Dashboard, nuevo spec del centro de notificaciones y verificación de que solo se ofrecen Español/Inglés y que el backend rechaza un idioma inválido.
+- **Stub de IA** ampliado con el disparador `NOTIFICAR` → tool `send_notification`.
+- Suite e2e completa en verde (32/32) y pruebas de integración del backend en verde (25/25).
+
+### 📚 Documentación
+- `AGENTS.md` (nueva sección "Shell y navegación", módulo de clientes, idioma del agente es/en y estructura del frontend) actualizado. Versión del proyecto a **v3.7.0**.
+
+---
+
 ## v3.6.0 — 2026-09-19
 
 > 🧹 **La bandeja de mensajería deja de aparentar: cada control funciona o desaparece, y llegan los AI Insights reales**

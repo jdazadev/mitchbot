@@ -43,7 +43,7 @@ export interface ContactFilters {
   includeArchived?: boolean;
 }
 
-export const contactService = {
+export const clientService = {
   async getContacts(filters: ContactFilters = {}): Promise<ContactsResponse> {
     const url = new URL(`${API_URL}/contacts`);
     

@@ -92,8 +92,6 @@ const emojiOptions = [
 const languageOptions = [
   { id: 'es', label: 'Español', flag: '🇪🇸' },
   { id: 'en', label: 'Inglés', flag: '🇺🇸' },
-  { id: 'pt', label: 'Portugués', flag: '🇧🇷' },
-  { id: 'auto', label: 'Detectar', flag: '🌐' },
 ];
 
 const responseLengthOptions = [

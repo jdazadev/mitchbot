@@ -5,7 +5,7 @@ export interface AgentPersonality {
   role: 'assistant' | 'teacher' | 'seller' | 'support' | 'customer_service';
   traits: string[];              // máximo 3 rasgos, e.g. ['empático', 'entusiasta']
   emojiUsage: 'low' | 'medium' | 'high';
-  language: 'es' | 'en' | 'pt' | 'auto';
+  language: 'es' | 'en';
   responseLength: 'short' | 'medium' | 'detailed';
   ragBehavior: 'strict' | 'hybrid' | 'general';
   fallbackMessage: string;

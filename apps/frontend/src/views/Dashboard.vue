@@ -1,14 +1,27 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import {
   dashboardService,
   type DashboardStats,
   type Activity,
   type ChannelDistribution,
+  type VolumeData,
+  type VolumePeriod,
 } from "../services/dashboard.service";
 
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+
+// Rango de fechas (últimos 7/30/90 días) y granularidad del volumen.
+const rangeOptions = [7, 30, 90] as const;
+const rangeDays = ref<number>(30);
+const period = ref<VolumePeriod>("daily");
+const periodOptions: { id: VolumePeriod; label: string }[] = [
+  { id: "daily", label: "Daily" },
+  { id: "weekly", label: "Weekly" },
+  { id: "monthly", label: "Monthly" },
+];
+const volumeData = ref<VolumeData[]>([]);
 
 const dashboardStats = ref<DashboardStats>({
   total: 0,
@@ -95,26 +108,85 @@ const donutInstagram = computed(
 );
 const donutInstagramOffset = computed(() => 25 - whatsappPercent.value); // Continuously after whatsapp
 
-onMounted(async () => {
+// === Gráfico de volumen (a partir de los datos del rango/periodo) ===
+const volumePoints = computed(() => {
+  const data = volumeData.value;
+  if (data.length === 0) return [] as { x: number; y: number; date: string; count: number }[];
+  const max = Math.max(...data.map((d) => d.count), 1);
+  const denominator = data.length > 1 ? data.length - 1 : 1;
+  return data.map((d, i) => ({
+    x: data.length > 1 ? (i / denominator) * 1000 : 500,
+    y: 280 - (d.count / max) * 260,
+    date: d.date,
+    count: d.count,
+  }));
+});
+
+const volumeLinePath = computed(() => {
+  const points = volumePoints.value;
+  if (points.length === 0) return "";
+  return points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ");
+});
+
+const volumeAreaPath = computed(() => {
+  const line = volumeLinePath.value;
+  return line ? `${line} L 1000 300 L 0 300 Z` : "";
+});
+
+// Muestra hasta 7 etiquetas repartidas uniformemente.
+const volumeLabels = computed(() => {
+  const points = volumePoints.value;
+  if (points.length === 0) return [] as string[];
+  if (points.length <= 7) return points.map((p) => p.date);
+  const step = (points.length - 1) / 6;
+  return Array.from({ length: 7 }, (_, i) => points[Math.round(i * step)].date);
+});
+
+async function loadVolume() {
+  try {
+    volumeData.value = await dashboardService.getVolume(period.value, rangeDays.value);
+  } catch (err: any) {
+    console.error("Failed to load volume data:", err);
+  }
+}
+
+async function loadDashboard() {
   try {
     isLoading.value = true;
+    error.value = null;
 
     // Parallel fetch
-    const [statsRes, channelsRes, activitiesRes] = await Promise.all([
-      dashboardService.getStats(),
-      dashboardService.getChannelDistribution(),
+    const [statsRes, channelsRes, activitiesRes, volumeRes] = await Promise.all([
+      dashboardService.getStats(rangeDays.value),
+      dashboardService.getChannelDistribution(rangeDays.value),
       dashboardService.getActivities(),
+      dashboardService.getVolume(period.value, rangeDays.value),
     ]);
 
     dashboardStats.value = statsRes;
     channelData.value = channelsRes;
     activityList.value = activitiesRes;
+    volumeData.value = volumeRes;
   } catch (err: any) {
     console.error("Failed to load dashboard data:", err);
     error.value = err.message;
   } finally {
     isLoading.value = false;
   }
+}
+
+// Cambiar el rango recalcula métricas, canales y volumen.
+watch(rangeDays, () => {
+  loadDashboard();
+});
+
+// Cambiar la granularidad solo afecta al volumen.
+watch(period, () => {
+  loadVolume();
+});
+
+onMounted(() => {
+  loadDashboard();
 });
 </script>
 
@@ -189,27 +261,46 @@ onMounted(async () => {
               Conversation Volume
             </h3>
             <p class="text-sm text-slate-500 dark:text-slate-400">
-              Total messages processed over time
+              Conversations started over time
             </p>
           </div>
-          <div
-            class="flex gap-1 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg"
-          >
-            <button
-              class="px-3 py-1 text-xs font-semibold rounded-md bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-500"
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- Rango de fechas -->
+            <div
+              class="flex gap-1 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg"
             >
-              Daily
-            </button>
-            <button
-              class="px-3 py-1 text-xs font-medium rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+              <button
+                v-for="days in rangeOptions"
+                :key="days"
+                @click="rangeDays = days"
+                :class="[
+                  'px-3 py-1 text-xs rounded-md transition-colors',
+                  rangeDays === days
+                    ? 'font-semibold bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-500'
+                    : 'font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white',
+                ]"
+              >
+                Last {{ days }} Days
+              </button>
+            </div>
+            <!-- Granularidad -->
+            <div
+              class="flex gap-1 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg"
             >
-              Weekly
-            </button>
-            <button
-              class="px-3 py-1 text-xs font-medium rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              Monthly
-            </button>
+              <button
+                v-for="p in periodOptions"
+                :key="p.id"
+                @click="period = p.id"
+                :class="[
+                  'px-3 py-1 text-xs rounded-md transition-colors',
+                  period === p.id
+                    ? 'font-semibold bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-500'
+                    : 'font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white',
+                ]"
+              >
+                {{ p.label }}
+              </button>
+            </div>
           </div>
         </div>
         <div class="relative w-full h-80">
@@ -268,7 +359,8 @@ onMounted(async () => {
               y2="75"
             ></line>
             <path
-              d="M0 250 C 100 250, 150 180, 250 180 S 350 210, 450 150 S 550 100, 650 120 S 750 80, 850 60 S 950 20, 1000 10"
+              v-if="volumeLinePath"
+              :d="volumeLinePath"
               fill="none"
               stroke="#2563EB"
               stroke-linecap="round"
@@ -276,41 +368,40 @@ onMounted(async () => {
               stroke-width="3"
             ></path>
             <path
-              d="M0 250 C 100 250, 150 180, 250 180 S 350 210, 450 150 S 550 100, 650 120 S 750 80, 850 60 S 950 20, 1000 10 V 300 H 0 Z"
+              v-if="volumeAreaPath"
+              :d="volumeAreaPath"
               fill="url(#chartGradient)"
               stroke="none"
             ></path>
             <circle
-              class="fill-white stroke-blue-600 stroke-2"
-              cx="250"
-              cy="180"
-              r="5"
+              v-for="(p, i) in volumePoints"
+              :key="i"
+              :class="
+                i === volumePoints.length - 1
+                  ? 'fill-blue-600 stroke-white'
+                  : 'fill-white stroke-blue-600'
+              "
+              :cx="p.x"
+              :cy="p.y"
+              :r="i === volumePoints.length - 1 ? 7 : 5"
+              stroke-width="2"
             ></circle>
-            <circle
-              class="fill-white stroke-blue-600 stroke-2"
-              cx="450"
-              cy="150"
-              r="5"
-            ></circle>
-            <circle
-              class="fill-white stroke-blue-600 stroke-2"
-              cx="650"
-              cy="120"
-              r="5"
-            ></circle>
-            <circle
-              class="fill-blue-600 stroke-white stroke-2 shadow-lg"
-              cx="850"
-              cy="60"
-              r="7"
-            ></circle>
+            <text
+              v-if="volumePoints.length === 0"
+              class="fill-slate-400"
+              font-size="16"
+              text-anchor="middle"
+              x="500"
+              y="150"
+            >
+              Sin datos en este rango
+            </text>
           </svg>
         </div>
         <div
           class="flex justify-between mt-4 text-xs text-slate-400 font-medium px-2"
         >
-          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span
-          ><span>Fri</span><span>Sat</span><span>Sun</span>
+          <span v-for="(label, i) in volumeLabels" :key="i">{{ label }}</span>
         </div>
       </div>
 

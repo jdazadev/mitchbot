@@ -27,21 +27,27 @@ export interface Activity {
   createdAt: string;
 }
 
+export type VolumePeriod = 'daily' | 'weekly' | 'monthly';
+
 export const dashboardService = {
-  async getStats(): Promise<DashboardStats> {
-    const res = await fetch(`${API_URL}/dashboard/stats`);
+  async getStats(days?: number): Promise<DashboardStats> {
+    const query = days ? `?days=${days}` : '';
+    const res = await fetch(`${API_URL}/dashboard/stats${query}`);
     if (!res.ok) throw new Error('Failed to fetch stats');
     return res.json();
   },
 
-  async getVolume(period: 'daily' | 'weekly' = 'daily'): Promise<VolumeData[]> {
-    const res = await fetch(`${API_URL}/dashboard/volume?period=${period}`);
+  async getVolume(period: VolumePeriod = 'daily', days?: number): Promise<VolumeData[]> {
+    const params = new URLSearchParams({ period });
+    if (days) params.set('days', String(days));
+    const res = await fetch(`${API_URL}/dashboard/volume?${params.toString()}`);
     if (!res.ok) throw new Error('Failed to fetch volume');
     return res.json();
   },
 
-  async getChannelDistribution(): Promise<ChannelDistribution> {
-    const res = await fetch(`${API_URL}/dashboard/channels`);
+  async getChannelDistribution(days?: number): Promise<ChannelDistribution> {
+    const query = days ? `?days=${days}` : '';
+    const res = await fetch(`${API_URL}/dashboard/channels${query}`);
     if (!res.ok) throw new Error('Failed to fetch channels');
     return res.json();
   },

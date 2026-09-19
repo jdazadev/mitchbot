@@ -31,9 +31,13 @@ const router = createRouter({
       component: () => import('../views/Messaging.vue'),
     },
     {
+      path: '/clients',
+      name: 'clients',
+      component: () => import('../views/Clients.vue'),
+    },
+    {
       path: '/contacts',
-      name: 'contacts',
-      component: () => import('../views/Contacts.vue'),
+      redirect: '/clients',
     },
     {
       path: '/brain',

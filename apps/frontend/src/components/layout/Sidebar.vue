@@ -20,8 +20,8 @@ const navItems = computed(() => {
       href: '/messaging',
       badge: unreadTotal.value > 0 ? String(unreadTotal.value) : undefined,
     },
-    { name: 'Contacts', icon: 'groups', href: '/contacts' },
-    { name: 'Brain & RAG', icon: 'psychology', href: '/brain' },
+    { name: 'Clients', icon: 'groups', href: '/clients' },
+    { name: 'Brain', icon: 'psychology', href: '/brain' },
     { name: 'Users', icon: 'manage_accounts', href: '/users' },
   ];
 });
