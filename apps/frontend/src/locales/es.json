@@ -266,6 +266,9 @@
     },
     "empty": "No se encontraron clientes",
     "noEmail": "Sin email",
+    "actions": {
+      "viewConversation": "Ver conversación"
+    },
     "errors": {
       "update": "Error al actualizar cliente: {message}",
       "archive": "Error al archivar cliente: {message}",
@@ -400,7 +403,6 @@
       "loading": "Cargando análisis...",
       "empty": "Todavía no hay análisis para esta conversación.",
       "sentimentLabel": "Sentimiento",
-      "summary": "Resumen",
       "sentiment": {
         "positive": "Positivo",
         "negative": "Negativo",

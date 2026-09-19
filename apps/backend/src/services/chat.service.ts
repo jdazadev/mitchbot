@@ -419,31 +419,14 @@ export const chatService = {
         logger.warn('[Bot] RAG search failed (continuing without context)');
       }
 
-      // STREAMING IMPLEMENTATION (con soporte de herramientas)
+      // El bot no emite fragmentos parciales: el placeholder da el indicador de
+      // escritura y la respuesta llega completa en el mensaje final.
       logger.info('[Bot] Calling aiService.generateResponseStreamWithTools...');
 
-      let accumulatedResponse = '';
-
-      const onChunk = (chunk: string) => {
-        accumulatedResponse += chunk;
-        try {
-          emitToRoom(conversationId, 'chat:message_chunk', {
-            messageId: placeholderMsgId.toString(),
-            conversationId,
-            content: accumulatedResponse,
-            isDone: false,
-          });
-        } catch (e) {
-          // Ignore socket errors for individual chunks
-        }
-      };
-
-      // 2. Call generateResponseStreamWithTools with chunk callback
       const toolRun = await aiService.generateResponseStreamWithTools({
         systemPrompt,
         userMessage,
         context: contextText,
-        onChunk,
         projectId,
         toolsEnabled: true,
         history,
@@ -460,7 +443,6 @@ export const chatService = {
           systemPrompt,
           toolCalls: toolRun.toolCalls,
           placeholderMsgId,
-          emittedText: accumulatedResponse,
         });
         if (options?.closeAfter && !toolOutcome?.awaitingConfirmation) {
           await this.markConversationClosed(conversationId);
@@ -469,7 +451,7 @@ export const chatService = {
         return;
       }
 
-      const responseText = toolRun.text || accumulatedResponse;
+      const responseText = toolRun.text;
 
       const responseTextFinal = responseText?.trim() || '';
 
@@ -609,7 +591,6 @@ export const chatService = {
     systemPrompt: string;
     toolCalls: ParsedToolCall[];
     placeholderMsgId: ObjectId;
-    emittedText?: string;
   }): Promise<{ awaitingConfirmation: boolean }> {
     const context = this.buildToolContext(args.conversation, args.projectId, args.userMessage, args.agent);
     const confirmationCall = args.toolCalls.find(call => toolService.requiresConfirmation(call.name));
@@ -685,7 +666,7 @@ export const chatService = {
     return { awaitingConfirmation: false };
   },
 
-  /** Genera (streaming) la respuesta final del bot usando los resultados de herramientas */
+  /** Genera la respuesta final del bot usando los resultados de herramientas */
   async generateFinalToolResponse(args: {
     conversationId: string;
     projectId: string;
@@ -696,21 +677,6 @@ export const chatService = {
     results: { name: string; success: boolean; message: string }[];
   }) {
     const messagesColl = getMessagesCollection();
-    let accumulated = '';
-
-    const onChunk = (chunk: string) => {
-      accumulated += chunk;
-      try {
-        emitToRoom(args.conversationId, 'chat:message_chunk', {
-          messageId: args.placeholderMsgId.toString(),
-          conversationId: args.conversationId,
-          content: accumulated,
-          isDone: false,
-        });
-      } catch (e) {
-        // ignore
-      }
-    };
 
     let finalText = '';
     try {
@@ -719,13 +685,12 @@ export const chatService = {
         systemPrompt: args.systemPrompt,
         userMessage: args.userMessage || 'Continúa con la acción confirmada.',
         context: '',
-        onChunk,
         projectId: args.projectId,
         toolsEnabled: false,
         toolResults: args.results,
         history,
       });
-      finalText = (run.text || accumulated).trim();
+      finalText = (run.text || '').trim();
     } catch (error: any) {
       logger.error(`[Bot] Final tool response failed: ${error?.message || error}`);
     }

@@ -208,23 +208,25 @@ test.describe('Mensajería', () => {
 
     // El análisis automático corre en segundo plano tras la respuesta del bot.
     await expect
-      .poll(async () => (await getInsights(api, conversationId))?.summary, { timeout: 25_000 })
+      .poll(async () => (await getInsights(api, conversationId))?.sentiment, { timeout: 25_000 })
       .toBeTruthy();
 
     const auto = await getInsights(api, conversationId);
     expect(['positive', 'neutral', 'negative']).toContain(auto.sentiment);
+    expect(auto.summary).toBeUndefined();
     const scores = auto.sentimentScores;
     const sum = scores.positive + scores.neutral + scores.negative;
     expect(Math.abs(sum - 1)).toBeLessThan(0.01);
 
     // Recálculo manual desde el botón "Analizar".
     const manual = await analyzeInsights(api, conversationId);
-    expect(manual.summary).toBeTruthy();
+    expect(manual.sentiment).toBe('positive');
+    expect(manual.summary).toBeUndefined();
 
-    // El panel muestra los datos reales (no valores fijos).
+    // El panel muestra el sentimiento real (no valores fijos).
     await page.goto('/messaging');
     await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
     await page.getByText(clientName).first().click();
-    await expect(page.getByText(manual.summary).first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Positivo').first()).toBeVisible({ timeout: 20_000 });
   });
 });

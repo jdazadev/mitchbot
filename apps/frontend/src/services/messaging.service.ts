@@ -61,19 +61,28 @@ export interface ChatConversation {
 export interface ConversationInsights {
   sentiment: 'positive' | 'neutral' | 'negative';
   sentimentScores: { positive: number; neutral: number; negative: number };
-  summary?: string;
 }
 
 export const messagingService = {
   // === Funciones del DASHBOARD (admin/agente) ===
   
-  async getConversations(status?: string): Promise<ChatConversation[]> {
+  async getConversations(status?: string, contactId?: string): Promise<ChatConversation[]> {
     const url = new URL(`${API_URL}/conversations`);
     if (status && status !== 'All') url.searchParams.append('status', status);
+    if (contactId) url.searchParams.append('contactId', contactId);
     const res = await fetch(url.toString(), {
       headers: authService.getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to fetch conversations');
+    return res.json();
+  },
+
+  async getConversation(conversationId: string): Promise<ChatConversation | null> {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}`, {
+      headers: authService.getHeaders(),
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Failed to fetch conversation');
     return res.json();
   },
 

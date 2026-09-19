@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 import {
   clientService,
   type Contact,
   type ContactsResponse,
   type ContactFilters,
 } from "../services/client.service";
+import { messagingService, type ChatConversation } from "../services/messaging.service";
 
 const { t } = useI18n();
+const router = useRouter();
 
 const STATUS_LABEL_KEYS: Record<string, string> = {
   Active: "clients.status.active",
@@ -100,8 +103,58 @@ async function fetchContacts() {
   }
 }
 
+// === Conversación del cliente ===
+const conversationsByContact = ref<Record<string, ChatConversation>>({});
+
+/** Prefiere la conversación activa y, en su defecto, la más reciente (orden del servidor). */
+function pickPreferredConversation(list: ChatConversation[]): ChatConversation | undefined {
+  return list.find((c) => c.status === "active") || list[0];
+}
+
+function conversationFor(contact: Contact): ChatConversation | undefined {
+  return contact._id ? conversationsByContact.value[contact._id] : undefined;
+}
+
+/**
+ * Carga un mapa contacto→conversación para saber si ofrecer la acción.
+ * La conversación definitiva se resuelve en el servidor al abrirla.
+ */
+async function loadContactConversations() {
+  try {
+    const list = await messagingService.getConversations();
+    const map: Record<string, ChatConversation> = {};
+    for (const conv of list) {
+      if (!conv.contactId) continue;
+      const current = map[conv.contactId];
+      // La lista viene ordenada por `lastMessageAt` desc: se conserva la primera
+      // salvo que aparezca una activa y la actual no lo sea.
+      if (!current || (current.status !== "active" && conv.status === "active")) {
+        map[conv.contactId] = conv;
+      }
+    }
+    conversationsByContact.value = map;
+  } catch {
+    conversationsByContact.value = {};
+  }
+}
+
+/** Abre la bandeja con la conversación del cliente preseleccionada. */
+async function openConversation(contact: Contact) {
+  let conversationId = conversationFor(contact)?._id;
+  try {
+    const list = await messagingService.getConversations("All", contact._id);
+    const resolved = pickPreferredConversation(list);
+    if (resolved?._id) conversationId = resolved._id;
+  } catch {
+    // Si la resolución en el servidor falla, se usa el mapa local.
+  }
+  if (!conversationId) return;
+  router.push({ path: "/messaging", query: { conversation: conversationId } });
+}
+
 onMounted(() => {
   fetchContacts();
+  loadContactConversations();
 });
 
 function getAvatar(contact: Contact) {
@@ -378,6 +431,16 @@ async function restoreContact(contact: Contact) {
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-1">
+                  <!-- Ver conversación (solo si el cliente tiene conversación) -->
+                  <button
+                    v-if="conversationFor(contact)"
+                    @click="openConversation(contact)"
+                    data-testid="clients-view-conversation"
+                    class="p-2 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors"
+                    :title="t('clients.actions.viewConversation')"
+                  >
+                    <span class="material-symbols-outlined text-[18px]">forum</span>
+                  </button>
                   <!-- Editar (solo si no está archivado) -->
                   <button
                     v-if="contact.status !== 'Archived'"

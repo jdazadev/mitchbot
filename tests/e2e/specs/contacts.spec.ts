@@ -67,4 +67,37 @@ test.describe('Clientes', () => {
     await page.getByPlaceholder('Buscar clientes...').fill(editedName);
     await expect(page.getByRole('row', { name: new RegExp(editedName) })).toBeVisible({ timeout: 20_000 });
   });
+
+  test('abre la conversación de un cliente desde su fila', async ({ page, api }) => {
+    const id = uniqueId();
+    const name = uniqueName('Cliente Conversacion');
+
+    const started = await startPublicConversation(api, {
+      slug: E2E.project.slug,
+      clientIdentifier: `wa-conv-${id}`,
+      clientName: name,
+      initialMessage: `Hola, quiero información ${id}`,
+    });
+    await sendHumanMessage(api, started.conversation._id, `Claro, te ayudo ${id}`);
+
+    await page.goto('/clients');
+    await page.getByPlaceholder('Buscar clientes...').fill(name);
+    const row = page.getByRole('row', { name: new RegExp(name) });
+    await expect(row).toBeVisible({ timeout: 20_000 });
+
+    await row.getByTestId('clients-view-conversation').click();
+
+    await expect(page).toHaveURL(new RegExp(`/messaging\\?conversation=${started.conversation._id}`));
+    await expect(page.getByText(`Claro, te ayudo ${id}`, { exact: false }).first()).toBeVisible({
+      timeout: 20_000,
+    });
+  });
+
+  test('un cliente sin conversación no muestra la acción', async ({ page }) => {
+    await page.goto('/clients');
+    await page.getByPlaceholder('Buscar clientes...').fill('Cliente Sin Conversacion');
+    const row = page.getByRole('row', { name: /Cliente Sin Conversacion/ });
+    await expect(row).toBeVisible({ timeout: 20_000 });
+    await expect(row.getByTestId('clients-view-conversation')).toHaveCount(0);
+  });
 });

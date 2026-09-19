@@ -172,7 +172,6 @@ async function handleChatCompletions(req, res, body) {
     reply = JSON.stringify({
       sentiment: 'positive',
       sentimentScores: { positive: 0.65, neutral: 0.25, negative: 0.1 },
-      summary: 'Resumen determinista de prueba E2E.',
     });
   }
 

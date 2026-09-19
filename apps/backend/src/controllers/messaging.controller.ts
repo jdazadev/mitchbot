@@ -14,12 +14,17 @@ import { ObjectId } from 'mongodb';
 export const listConversations = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const status = req.query.status as string;
+    const contactId = req.query.contactId as string | undefined;
     const match: any = {};
     const projectId = (req as any).projectId as string | undefined;
     if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
     if (!ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId inválido' });
     match.projectId = new ObjectId(projectId);
     if (status && status !== 'All') match.status = status.toLowerCase();
+    if (contactId) {
+      if (!ObjectId.isValid(contactId)) return res.status(400).json({ error: 'contactId inválido' });
+      match.contactId = new ObjectId(contactId);
+    }
 
     const conversations = await getConversationsCollection().aggregate([
       { $match: match },
@@ -280,7 +285,9 @@ export const getInsights = async (req: Request, res: Response, next: NextFunctio
       projectId: new ObjectId(projectId),
     });
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });
-    res.json(convo.aiInsights ?? null);
+    const insights = convo.aiInsights;
+    // Solo sentimiento y su distribución: nunca un resumen (aunque exista en datos antiguos).
+    res.json(insights ? { sentiment: insights.sentiment, sentimentScores: insights.sentimentScores } : null);
   } catch (error) {
     next(error);
   }

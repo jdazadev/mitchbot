@@ -147,6 +147,8 @@ function onNewMessage(msg: ChatMessage) {
 }
 
 function onMessageChunk(data: { messageId: string, conversationId: string, content: string, isDone: boolean }) {
+  // El bot no emite fragmentos parciales: solo se aplica el mensaje final.
+  if (!data.isDone) return;
   if (
     activeConversation.value &&
     data.conversationId === activeConversation.value._id

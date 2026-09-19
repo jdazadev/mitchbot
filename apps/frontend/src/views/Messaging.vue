@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 import {
   messagingService,
   type ChatConversation,
@@ -9,9 +10,14 @@ import {
 } from "../services/messaging.service";
 import { socketService } from "../services/socket.service";
 import { projectService } from "../services/project.service";
-import { useConversations, type ChannelFilter } from "../composables/useConversations";
+import {
+  useConversations,
+  decorateConversation,
+  type ChannelFilter,
+} from "../composables/useConversations";
 
 const { t } = useI18n();
+const route = useRoute();
 
 const {
   conversations: chats,
@@ -65,9 +71,38 @@ const filteredChats = computed(() => {
   });
 });
 
+/**
+ * Resuelve la conversación indicada por la ruta: la busca en la lista cargada
+ * y, si no está (por estar fuera del límite del listado), la trae del servidor.
+ * Devuelve `null` si no existe o no pertenece al proyecto activo.
+ */
+async function resolveRequestedChat(id: string): Promise<ChatConversation | null> {
+  const existing = chats.value.find((c) => c._id === id);
+  if (existing) return existing;
+  try {
+    const fetched = await messagingService.getConversation(id);
+    if (!fetched) return null;
+    const decorated = decorateConversation(fetched);
+    chats.value.unshift(decorated);
+    return decorated;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchChats() {
   try {
     await loadConversations(true);
+    const requestedId = typeof route.query.conversation === "string"
+      ? route.query.conversation
+      : undefined;
+    if (requestedId) {
+      const requested = await resolveRequestedChat(requestedId);
+      if (requested) {
+        await selectChat(requested);
+        return;
+      }
+    }
     const first = filteredChats.value[0] || chats.value[0];
     if (first) selectChat(first);
   } catch (error) {
@@ -364,6 +399,8 @@ function onNewMessage(msg: ChatMessage) {
 }
 
 function onMessageChunk(data: { messageId: string, conversationId: string, content: string, isDone: boolean }) {
+  // El bot no emite fragmentos parciales: solo se aplica el mensaje final.
+  if (!data.isDone) return;
   // Only update UI if we are in the correct chat
   if (selectedChat.value && selectedChat.value._id === data.conversationId) {
     const existingMsg = messages.value.find((m) => m._id === data.messageId);
@@ -991,12 +1028,6 @@ onUnmounted(() => {
                 :style="{ width: bar.width }"
               ></div>
             </div>
-          </div>
-          <div class="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
-              >{{ t("messaging.insights.summary") }}</span
-            >
-            <p class="text-xs text-slate-600 leading-relaxed mt-1">{{ insights.summary }}</p>
           </div>
         </div>
       </div>

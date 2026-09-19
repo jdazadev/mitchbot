@@ -216,6 +216,27 @@ async function seedE2E() {
       { $set: { agentId: agentNc._id, updatedAt: now } }
     );
 
+    // --- Contacto sin conversación (fixture e2e) ---
+    // Permite validar que la acción "Ver conversación" no se ofrece cuando el
+    // cliente no tiene ninguna conversación vinculada.
+    const orphanName = 'Cliente Sin Conversacion';
+    const contacts = db.collection('contacts');
+    const existingOrphan = await contacts.findOne({ projectId, name: orphanName });
+    if (!existingOrphan) {
+      await contacts.insertOne({
+        projectId,
+        name: orphanName,
+        phone: 'e2e-orphan',
+        email: 'orphan@mitchbot.test',
+        platform: 'Web',
+        status: 'Active',
+        tags: [],
+        metadata: { identifier: 'e2e-orphan' },
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
     // --- Pertenencia del usuario a los proyectos ---
     await users.updateOne(
       { _id: userId },

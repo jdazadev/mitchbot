@@ -5,6 +5,30 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v3.9.0 — 2026-09-19
+
+> 💬 **El bot responde de una vez, los insights dejan de resumir y desde cada cliente se abre su conversación**
+
+---
+
+### ✨ Añadido
+- **Ver conversación desde Clients**: cada fila con conversación ofrece una acción que abre la bandeja con esa conversación preseleccionada (`/messaging?conversation=<id>`). La conversación se resuelve en el servidor por `contactId` (`GET /api/conversations?contactId=<id>`, validado y acotado al proyecto), prefiriendo la activa y, en su defecto, la más reciente. Si el cliente no tiene conversación vinculada, la acción no se muestra.
+- **Preselección en la bandeja**: `Messaging.vue` lee `route.query.conversation`, selecciona esa conversación (cargándola del servidor si no está entre las del listado) y aplica el fallback por defecto si no es válida, sin error visible.
+
+### 🔄 Cambios
+- **Respuesta del bot como mensaje completo**: se deja de emitir fragmentos parciales (`isDone: false`) en la respuesta directa y en la posterior a herramientas. El placeholder vacío sostiene el indicador de escritura y la respuesta llega completa en un único mensaje final (`isDone: true`); `Messaging.vue`, `TestChat.vue` y `useConversations` aplican únicamente el mensaje final.
+- **AI Insights sin resumen**: el análisis produce únicamente sentimiento y su distribución. El resumen se retira del prompt, del tipo, de la validación, de la persistencia, del modelo de datos, de la tarjeta del panel y de los catálogos `es.json`/`en.json`. `GET /:id/insights` devuelve solo sentimiento y `sentimentScores` (aunque existan resúmenes antiguos) y el recálculo limpia `aiInsights.summary` con `$unset`.
+
+### 🧪 Pruebas
+- `realtime.spec.ts` ahora espera un único mensaje final con `isDone: true` y verifica que no hay fragmentos parciales.
+- `messaging.spec.ts` valida el sentimiento por API y su etiqueta visible, y que no se devuelve resumen; el stub e2e deja de producir `summary`.
+- `contacts.spec.ts` cubre abrir la conversación desde una fila y que un cliente sin conversación no muestra la acción (fixture de contacto sin conversación en el seed e2e).
+
+### 📚 Documentación
+- `AGENTS.md` (respuesta como mensaje completo, insights solo sentimiento, acceso a la conversación desde Clients, contrato de `chat:message_chunk`, filtro `?contactId=`) y `changelog.md` actualizados. Versión del proyecto a **v3.9.0**.
+
+---
+
 ## v3.8.1 — 2026-09-19
 
 > 🔒 **El Dashboard deja de mezclar datos de todos los proyectos: métricas autenticadas y acotadas al proyecto activo**

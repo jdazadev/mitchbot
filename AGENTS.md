@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v3.8.1
+**Versión actual del proyecto:** v3.9.0
 
 ---
 
@@ -97,7 +97,7 @@ apps/backend/src/
 │   ├── project-context.service.ts  # Contexto activo del proyecto
 │   ├── config.service.ts           # Configuración global
 │   ├── analytics.service.ts        # Métricas y estadísticas
-│   ├── insights.service.ts         # Análisis de sentimiento/resumen (AI Insights)
+│   ├── insights.service.ts         # Análisis de sentimiento y distribución (AI Insights)
 │   ├── auth.service.ts             # Autenticación JWT + bcrypt
 │   └── user.service.ts             # Gestión de usuarios
 ├── models/                         # Schemas MongoDB (10 colecciones)
@@ -156,14 +156,14 @@ apps/frontend/src/
 - **Modos de operación**: `auto_pilot` (bot responde automáticamente) y `human_takeover` (agente humano toma control). El cambio de modo/estado se propaga en vivo por WebSocket (`chat:status`) y el dashboard y la vista del cliente lo reflejan sin recargar.
 - **Memoria de conversación**: el LLM recibe el historial reciente (últimos 20 mensajes) al generar una respuesta (directa o tras ejecutar herramientas). Los turnos del cliente y del agente humano se representan como `HumanMessage` (el humano con prefijo `[Agente humano]`) y los del bot como `AIMessage`; se excluyen los mensajes internos de herramientas (`tool_call`, `tool_result`, `confirmation_request`) y los placeholders vacíos. Si la pausa respecto al mensaje anterior supera las 6 horas, se inserta un marcador en el historial para que el bot re-salude.
 - **Saludo y despedida naturales**: no se anteponen textos enlatados; el saludo/despedida los decide el LLM a partir del historial. Sin historial de por medio el bot saluda al inicio; en una reanudación tras pausa larga re-saluda. "Gracias" y variantes ya **no** cierran la conversación. Al detectar una despedida real, el bot responde con naturalidad y, tras generarla, la conversación se marca como `closed` (se emite `chat:status`) — sin mensaje enlatado ni corte previo.
-- **Streaming de respuestas**: Las respuestas del bot se transmiten token por token en tiempo real vía WebSockets.
-- **Renderizado Markdown**: Los mensajes del bot soportan negritas e itálicas en tiempo real.
+- **Respuesta como mensaje completo**: el bot **no emite fragmentos parciales** (`isDone: false`); mientras el modelo genera se mantiene un placeholder vacío que da el indicador de escritura y, al finalizar, la respuesta completa llega en un único mensaje final (`isDone: true`) tanto en respuestas directas como tras ejecutar herramientas. El frontend (`Messaging.vue`, `TestChat.vue`, `useConversations`) aplica únicamente el mensaje final.
+- **Renderizado Markdown**: Los mensajes del bot soportan negritas e itálicas.
 - **Filtros y búsqueda**: los chips de canal se generan desde `project.config.channels` (solo los habilitados + "Todos"); el filtrado por plataforma y la búsqueda por nombre/último mensaje son en cliente. Los mensajes se agrupan por día con encabezados reales.
 - **Toma de control manual bidireccional**: "Take Over" pasa a `human_takeover` y "Auto-Pilot" devuelve a `auto_pilot` vía `PUT /api/conversations/:id/mode`; el badge se actualiza en vivo con `chat:status` y el bot no responde mientras dure el takeover.
 - **Guardar como contacto**: acción explícita `POST /api/conversations/:id/contact` respaldada por `ensureContactCreated(id, { force: true })`; es idempotente y funciona aunque `autoCreateContact` esté deshabilitado.
 - **No leídos reales**: el badge del sidebar suma los `unreadCount` del proyecto activo mediante el composable `useConversations` (estado de módulo compartido) y se incrementa en vivo con `chat:message` / `chat:new_conversation`.
 - **Compositor honesto**: solo expone acciones funcionales (enviar, tomar control); se retiraron chips de sugerencia, emoji, adjuntos, menú y el indicador "online" simulado.
-- **AI Insights**: análisis de sentimiento/resumen persistido en `conversation.aiInsights`. `GET /:id/insights` lee lo almacenado y `POST /:id/insights` recalcula; se emite `chat:insights`. El análisis automático corre fire-and-forget tras cada respuesta del bot (un fallo no afecta la respuesta). El modelo se resuelve desde `OPENROUTER_INSIGHTS_MODEL` con fallback a `OPENROUTER_LLM_MODEL`.
+- **AI Insights**: análisis de **sentimiento y su distribución** (sin resumen) persistido en `conversation.aiInsights`. `GET /:id/insights` devuelve solo sentimiento y `sentimentScores` (aunque existan resúmenes antiguos en la BD) y `POST /:id/insights` recalcula (el `$set` limpia `aiInsights.summary` con `$unset`); se emite `chat:insights`. El análisis automático corre fire-and-forget tras cada respuesta del bot (un fallo no afecta la respuesta). El modelo se resuelve desde `OPENROUTER_INSIGHTS_MODEL` con fallback a `OPENROUTER_LLM_MODEL`.
 
 ### 2. Módulo de Clientes (Contactos)
 
@@ -172,6 +172,7 @@ apps/frontend/src/
 - El cliente/contacto es un perfil con todos los datos (nombre, email, teléfono, plataforma, tags, metadata).
 - **No se puede crear un contacto arbitrario** — Se crea automáticamente al contestar el primer mensaje del cliente, o de forma explícita desde una conversación ("Guardar como contacto", idempotente).
 - **No se puede eliminar un contacto** — Solo se puede archivar (soft delete) y restaurar.
+- **Ver conversación**: cada fila con conversación ofrece un botón que abre la bandeja con esa conversación preseleccionada (`/messaging?conversation=<id>`). La conversación se resuelve en el servidor por `contactId` (`GET /api/conversations?contactId=<id>`, validado y acotado al proyecto), prefiriendo la activa y, en su defecto, la más reciente. Si el cliente no tiene conversación vinculada, la acción no se ofrece.
 - Búsqueda por nombre, email y teléfono.
 - Filtros por plataforma (`WhatsApp`, `Instagram`, `Web`) y estado (`Active`, `New`, `Inactive`).
 
@@ -366,7 +367,7 @@ Cada usuario pertenece a uno o más proyectos y tiene un proyecto activo.
 - **Capa de Abstracción**: El chatbot no sabe qué modelo está usando. Solo envía una lista de mensajes a una función intermediaria.
 - **El Enrutador** (`llm-provider.service.ts`): Recibe la petición (proveedor fijo OpenRouter) y devuelve el `BaseChatModel` instanciado; rechaza cualquier otro proveedor.
 - **Manejo de Errores**: Si el modelo falla, el chatbot envía un mensaje de error claro en el chat y registra el error en el historial. Timeout general de **60s** para evitar LLMs "zombie".
-- **Streaming**: Las respuestas se transmiten token por token usando `generateResponseStream` con `.stream()`.
+- **Generación con streaming interna**: el modelo se consume con `.stream()` (`generateResponseStreamWithTools`), pero el bot **no** propaga los fragmentos al cliente: emite la respuesta completa en un único mensaje final.
 - **RAG integrado**: Antes de generar la respuesta, se busca contexto relevante en la base de conocimiento.
 
 ---
@@ -405,7 +406,7 @@ Usuario abre la app
 | **Auth** | `POST /register`, `POST /login`, `GET /me`, `PUT /profile`, `PUT /password` | Autenticación y perfil |
 | **Users** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Gestión de usuarios |
 | **Contacts** | `GET /`, `GET /:id`, `PUT /:id`, `PATCH /:id/archive`, `PATCH /:id/restore` | Gestión de contactos |
-| **Conversations** | `GET /`, `GET /:id`, `GET /:id/messages`, `POST /:id/messages`, `PUT /:id/mode`, `PUT /:id/status`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, guardar contacto e insights |
+| **Conversations** | `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages`, `POST /:id/messages`, `PUT /:id/mode`, `PUT /:id/status`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, resolver conversación por contacto, guardar contacto e insights |
 | **Brain** | `GET /sources`, `POST /upload`, `POST /text`, `DELETE /sources/:id`, `POST /search` | Base de conocimiento RAG |
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
@@ -426,7 +427,7 @@ Usuario abre la app
 |:----------|:-------------|:------|
 | `users` | name, email, password (hash), role, status, avatar, projectIds, activeProjectId | Roles: admin, support, assistant. Pertenencia multi-proyecto |
 | `contacts` | projectId, name, phone, email, platform, status, tags, metadata | Aislado por proyecto. Soft delete (archivar) |
-| `conversations` | contactId, platform, status, mode, clientInfo, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores, summary |
+| `conversations` | contactId, platform, status, mode, clientInfo, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores |
 | `messages` | conversationId, sender, content, contentType, isBot, toolData | Sender: contact, ai_agent, human_agent, tool. contentType: text, tool_call, tool_result, confirmation_request |
 | `agents` | projectId, name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
 | `ai_models` | name, value, provider, category, isActive | Catálogo de modelos (los disponibles se listan dinámicamente desde OpenRouter) |
@@ -457,13 +458,13 @@ Todas las conexiones WebSocket requieren autenticación JWT:
 | Evento | Dirección | Descripción |
 |:-------|:----------|:------------|
 | `chat:message` | Server → Client | Nuevo mensaje recibido |
-| `chat:message_chunk` | Server → Client | Token de streaming (respuesta parcial) |
+| `chat:message_chunk` | Server → Client | Mensaje final del bot (`isDone: true`); ya no se emiten fragmentos parciales |
 | `chat:send` | Client → Server | Enviar mensaje desde el dashboard |
 | `chat:typing` | Bidireccional | Indicador de "escribiendo..." |
 | `chat:status` | Server → Client | Cambio de modo/estado de la conversación (lo consumen Messaging y TestChat sin recargar) |
 | `chat:new_conversation` | Server → Client | Nueva conversación iniciada |
 | `chat:message_updated` | Server → Client | Mensaje actualizado (estado de confirmación de tool) |
-| `chat:insights` | Server → Client | Insights de la conversación recalculados (sentimiento/resumen) |
+| `chat:insights` | Server → Client | Insights de la conversación recalculados (sentimiento y su distribución) |
 | `tool:confirm` | Client → Server | Confirmar / cancelar / modificar una ejecución de herramienta |
 | `tool:confirmed` | Server → Client | Resultado de la confirmación de herramienta |
 | `admin:notification` | Server → Client | Notificación de la tool `send_notification` |

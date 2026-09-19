@@ -63,7 +63,9 @@ function handleSocketMessage(msg: ChatMessage) {
   moveToTop(chat);
 }
 
-function handleSocketChunk(data: { conversationId: string; content: string }) {
+function handleSocketChunk(data: { conversationId: string; content: string; isDone?: boolean }) {
+  // El bot no emite fragmentos parciales: solo se aplica el mensaje final.
+  if (!data.isDone) return;
   const chat = conversations.value.find((c) => c._id === data.conversationId);
   if (!chat || !data.content?.trim()) return;
   chat.message = data.content;

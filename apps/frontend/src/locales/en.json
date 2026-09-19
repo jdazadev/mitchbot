@@ -266,6 +266,9 @@
     },
     "empty": "No clients found",
     "noEmail": "No email",
+    "actions": {
+      "viewConversation": "View conversation"
+    },
     "errors": {
       "update": "Error updating client: {message}",
       "archive": "Error archiving client: {message}",
@@ -400,7 +403,6 @@
       "loading": "Loading insights...",
       "empty": "No insights for this conversation yet.",
       "sentimentLabel": "Sentiment",
-      "summary": "Summary",
       "sentiment": {
         "positive": "Positive",
         "negative": "Negative",

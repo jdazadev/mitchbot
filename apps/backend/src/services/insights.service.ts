@@ -12,7 +12,6 @@ export type InsightSentiment = 'positive' | 'neutral' | 'negative';
 export interface ConversationInsights {
   sentiment: InsightSentiment;
   sentimentScores: { positive: number; neutral: number; negative: number };
-  summary: string;
 }
 
 const SENTIMENTS: InsightSentiment[] = ['positive', 'neutral', 'negative'];
@@ -25,9 +24,8 @@ export const INSIGHTS_MARKER = 'INSIGHTS_JSON';
 const SYSTEM_PROMPT = [
   'Eres un analista de conversaciones de atención al cliente.',
   'Analiza la transcripción y responde EXCLUSIVAMENTE con un objeto JSON válido, sin texto adicional ni bloques de código, con esta forma exacta:',
-  '{"sentiment":"positive|neutral|negative","sentimentScores":{"positive":0,"neutral":0,"negative":0},"summary":"resumen breve en español"}',
+  '{"sentiment":"positive|neutral|negative","sentimentScores":{"positive":0,"neutral":0,"negative":0}}',
   'Los tres valores de sentimentScores deben ser números entre 0 y 1 y sumar 1.',
-  'El summary debe tener como máximo 2 frases.',
   `Marca interna: ${INSIGHTS_MARKER}`,
 ].join('\n');
 
@@ -86,17 +84,11 @@ export const insightsService = {
     const negative = clamp01(Number(scoresRaw.negative));
     const total = positive + neutral + negative;
 
-    const summary = typeof data?.summary === 'string' ? data.summary.trim() : '';
-    if (!summary) {
-      throw new Error('Resumen inválido en el análisis');
-    }
-
     return {
       sentiment,
       sentimentScores: total > 0
         ? { positive: positive / total, neutral: neutral / total, negative: negative / total }
         : { positive: 0, neutral: 1, negative: 0 },
-      summary,
     };
   },
 
@@ -151,9 +143,9 @@ export const insightsService = {
         $set: {
           'aiInsights.sentiment': insights.sentiment,
           'aiInsights.sentimentScores': insights.sentimentScores,
-          'aiInsights.summary': insights.summary,
           updatedAt: new Date(),
         },
+        $unset: { 'aiInsights.summary': '' },
       }
     );
 

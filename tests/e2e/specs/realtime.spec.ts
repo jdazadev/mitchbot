@@ -4,7 +4,7 @@ import { startPublicConversation, sendPublicMessage } from '../helpers/api';
 import { uniqueId, uniqueName } from '../helpers/data';
 
 test.describe('Tiempo real', () => {
-  test('streaming incremental y confirmación/cancelación de herramienta', async ({ page, api }) => {
+  test('respuesta completa como mensaje único y confirmación/cancelación de herramienta', async ({ page, api }) => {
     const id = uniqueId();
     const clientName = uniqueName('Cliente RT');
 
@@ -44,13 +44,18 @@ test.describe('Tiempo real', () => {
     await expect(page.getByText(E2E.stub.reply, { exact: false }).first()).toBeVisible({ timeout: 20_000 });
     chunkFrames.length = 0;
 
-    // --- Streaming incremental (eco único por prueba) ---
+    // --- Respuesta como mensaje completo (eco único por prueba) ---
     const token = `tok${id}`;
     await sendPublicMessage(api, E2E.project.slug, conversationId, `Necesito información [[echo:${token}]]`);
     await expect(page.getByText(`ECO ${token}`, { exact: false }).first()).toBeVisible({ timeout: 20_000 });
+    // La respuesta llega en un único mensaje final con isDone:true, sin fragmentos parciales.
     await expect
-      .poll(() => chunkFrames.filter((f) => f.includes(token)).length, { timeout: 15_000 })
-      .toBeGreaterThan(1);
+      .poll(
+        () => chunkFrames.filter((f) => f.includes(token) && f.includes('"isDone":true')).length,
+        { timeout: 15_000 }
+      )
+      .toBeGreaterThan(0);
+    expect(chunkFrames.filter((f) => f.includes(token) && f.includes('"isDone":false')).length).toBe(0);
 
     // --- Confirmación de herramienta ---
     await sendPublicMessage(api, E2E.project.slug, conversationId, `AGENDAR_CITA ${id}`);
