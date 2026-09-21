@@ -9,6 +9,8 @@ export type ChannelFilter = 'All' | 'WhatsApp' | 'Instagram' | 'Web';
 const conversations = ref<ChatConversation[]>([]);
 const isLoading = ref(false);
 const activeChannel = ref<ChannelFilter>('All');
+/** Conversación actualmente abierta por el agente (para el re-marcado estilo WhatsApp). */
+const openConversationId = ref<string | null>(null);
 
 let hasLoaded = false;
 let boundSocket: Socket | null = null;
@@ -45,6 +47,19 @@ function moveToTop(chat: ChatConversation) {
   conversations.value.unshift(chat);
 }
 
+/** Pone el contador local de una conversación a cero (sin persistir). */
+function setConversationRead(id: string) {
+  const chat = conversations.value.find((c) => c._id === id);
+  if (chat) chat.unreadCount = 0;
+}
+
+/** Persiste la lectura en el servidor en segundo plano (no bloquea ni rompe la UI). */
+function persistConversationRead(id: string) {
+  messagingService.markConversationRead(id).catch((error) => {
+    console.warn('Failed to persist conversation read', error);
+  });
+}
+
 function handleSocketMessage(msg: ChatMessage) {
   const convId = msg.conversationId;
   if (!convId) return;
@@ -58,9 +73,20 @@ function handleSocketMessage(msg: ChatMessage) {
   chat.lastMessageAt = msg.createdAt;
   chat.time = formatConversationTime(msg.createdAt);
   if (msg.sender === 'contact') {
-    chat.unreadCount = (chat.unreadCount || 0) + 1;
+    if (convId === openConversationId.value) {
+      // Mensaje entrante en la conversación abierta: se re-marca como leída (estilo WhatsApp).
+      setConversationRead(convId);
+      persistConversationRead(convId);
+    } else {
+      chat.unreadCount = (chat.unreadCount || 0) + 1;
+    }
   }
   moveToTop(chat);
+}
+
+function handleConversationRead(data: { conversationId: string }) {
+  if (!data?.conversationId) return;
+  setConversationRead(data.conversationId);
 }
 
 function handleSocketChunk(data: { conversationId: string; content: string; isDone?: boolean }) {
@@ -90,6 +116,7 @@ function bindConversationSocket() {
   socket.on('chat:message', handleSocketMessage);
   socket.on('chat:message_chunk', handleSocketChunk);
   socket.on('chat:new_conversation', handleSocketNewConversation);
+  socket.on('chat:read', handleConversationRead);
 }
 
 export function useConversations() {
@@ -110,8 +137,12 @@ export function useConversations() {
   }
 
   function markConversationRead(id: string): void {
-    const chat = conversations.value.find((c) => c._id === id);
-    if (chat) chat.unreadCount = 0;
+    setConversationRead(id);
+    persistConversationRead(id);
+  }
+
+  function setOpenConversation(id: string | null): void {
+    openConversationId.value = id;
   }
 
   function setActiveChannel(channel: ChannelFilter): void {
@@ -122,9 +153,11 @@ export function useConversations() {
     conversations,
     isLoading,
     activeChannel,
+    openConversationId,
     unreadTotal,
     loadConversations,
     markConversationRead,
+    setOpenConversation,
     setActiveChannel,
     bindConversationSocket,
   };

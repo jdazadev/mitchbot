@@ -7,6 +7,7 @@ import {
   sendMessage, 
   updateMode, 
   updateStatus,
+  markConversationRead,
   getInsights,
   analyzeInsights,
   createConversationContact,
@@ -23,6 +24,7 @@ router.get('/:id/messages', authenticate, listMessages);             // Mensajes
 router.post('/:id/messages', authenticate, sendMessage);             // Enviar mensaje como agente (auto-crea contacto)
 router.put('/:id/mode', authenticate, updateMode);                   // Cambiar modo (auto_pilot / human_takeover)
 router.put('/:id/status', authenticate, updateStatus);               // Cambiar estado (active / closed)
+router.put('/:id/read', authenticate, markConversationRead);         // Marcar conversación como leída (persistente)
 router.post('/:id/contact', authenticate, createConversationContact); // Guardar cliente como contacto (idempotente)
 router.get('/:id/insights', authenticate, getInsights);              // AI Insights (lectura)
 router.post('/:id/insights', authenticate, analyzeInsights);         // AI Insights (recálculo manual)

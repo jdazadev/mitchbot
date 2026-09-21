@@ -64,6 +64,11 @@ export const initSocket = (httpServer: HttpServer) => {
     // Unir el socket a la room de su proyecto para eventos scoped por proyecto
     if (socket.data.projectId) {
       socket.join(projectRoom(socket.data.projectId));
+      // Room exclusiva del dashboard (sin clientes públicos) para sincronizar
+      // el sidebar con mensajes de conversaciones no abiertas.
+      if (!socket.data.isPublic) {
+        socket.join(dashboardProjectRoom(socket.data.projectId));
+      }
     }
 
     // Evento: Unirse a una room (conversación)
@@ -213,6 +218,9 @@ export const getIO = () => {
 /** Room lógica asociada a un proyecto */
 export const projectRoom = (projectId: string) => `project:${projectId}`;
 
+/** Room exclusiva de los sockets del dashboard de un proyecto (excluye clientes públicos) */
+export const dashboardProjectRoom = (projectId: string) => `project:${projectId}:dashboard`;
+
 /**
  * Emitir un evento a todos los sockets conectados a un proyecto.
  * Evita que clientes de otros proyectos reciban el evento.
@@ -224,6 +232,31 @@ export const emitToProject = (projectId: string | undefined, event: string, data
     io.to(projectRoom(projectId)).emit(event, data);
   } catch (error: any) {
     logger.error(`[WS] Error emitting to project ${projectId}: ${error.message}`);
+  }
+};
+
+/**
+ * Emitir un evento a los sockets del dashboard de un proyecto.
+ * `exceptRoom` permite omitir sockets ya presentes en una room concreta (p. ej.
+ * la conversación abierta) para no duplicar la entrega.
+ */
+export const emitToProjectDashboard = (
+  projectId: string | undefined,
+  event: string,
+  data: any,
+  exceptRoom?: string
+) => {
+  if (!projectId) return;
+  try {
+    const io = getIO();
+    const target = io.to(dashboardProjectRoom(projectId));
+    if (exceptRoom) {
+      target.except(exceptRoom).emit(event, data);
+    } else {
+      target.emit(event, data);
+    }
+  } catch (error: any) {
+    logger.error(`[WS] Error emitting to dashboard of project ${projectId}: ${error.message}`);
   }
 };
 

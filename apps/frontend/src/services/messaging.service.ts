@@ -104,6 +104,15 @@ export const messagingService = {
     if (!res.ok) throw new Error('Failed to update conversation mode');
   },
 
+  /** Marca la conversación como leída de forma persistente (unreadCount = 0). */
+  async markConversationRead(conversationId: string): Promise<void> {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}/read`, {
+      method: 'PUT',
+      headers: authService.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to mark conversation as read');
+  },
+
   /**
    * Guarda al cliente como contacto de forma explícita e idempotente.
    * Funciona aunque `autoCreateContact` esté deshabilitado.

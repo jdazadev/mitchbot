@@ -5,6 +5,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.0.1 — 2026-09-21
+
+> 🔔 **El contador de no leídos deja de "resucitar": solo suma mensajes del cliente, la lectura se persiste y la bandeja ya no autoselecciona un chat**
+
+---
+
+### ✨ Añadido
+- **Endpoint de lectura** `PUT /api/conversations/:id/read`: persiste `unreadCount = 0` acotado al proyecto (404 si no coincide, 403 si es de otro proyecto) y emite `chat:read` a la room del proyecto para sincronizar el badge entre sesiones.
+- **Evento WebSocket `chat:read`**: una sesión notifica que marcó una conversación como leída y el resto actualiza su badge sin recargar.
+- **Room de dashboard por proyecto** (`project:<id>:dashboard`): los sockets autenticados se unen a ella y los mensajes del cliente se entregan ahí (excluyendo la conversación abierta), de modo que el sidebar incrementa el contador en vivo para conversaciones **no abiertas** sin exponer conversaciones ajenas a los clientes públicos.
+- **Script one-off** `scripts/reset-unread-counts.ts` para resetear los `unreadCount` contaminados existentes.
+
+### 🔄 Cambios
+- **Solo el cliente suma**: el `unreadCount` se incrementa únicamente con mensajes entrantes del cliente (`contact`); las respuestas del bot (directas y tras herramientas) y los mensajes del agente humano ya **no** suman.
+- **Lectura persistente**: abrir una conversación llama a `PUT /:id/read` (además de poner el contador local a cero), así que la lectura sobrevive a recargar la página.
+- **Estilo WhatsApp**: un mensaje entrante en la conversación abierta se re-marca como leída de inmediato, sin que el badge suba.
+- **Sin selección por defecto**: al entrar a Messaging ya no se autoselecciona la primera conversación; se muestra el estado vacío hasta que el agente elija una. Se conserva el deep-link `?conversation=<id>`.
+- **Alta de conversación**: una conversación nueva creada por el cliente nace con 1 no leído (se eliminó el doble conteo del mensaje inicial).
+
+### 🧪 Pruebas
+- `messaging.spec.ts`: casos nuevos que cubren que el mensaje del cliente sube el badge y se persiste al recargar, que un mensaje del bot/agente humano no incrementa, que entrar sin `?conversation=` no selecciona nada y que el deep-link selecciona la conversación correcta.
+
+### 📚 Documentación
+- `AGENTS.md` (regla de no leídos, `PUT /:id/read`, evento `chat:read`, room de dashboard, sin selección por defecto) y `changelog.md` actualizados. Versión del proyecto a **v4.0.1**.
+
+---
+
 ## v4.0.0 — 2026-09-19
 
 > 🎨 **Rediseño visual completo de la plataforma: sistema de diseño cálido con identidad de marca personalizable**

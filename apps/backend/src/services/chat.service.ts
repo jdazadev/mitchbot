@@ -12,7 +12,7 @@ import { toolService, ParsedToolCall } from './tool.service';
 import { toolExecutionService } from './tool-execution.service';
 import { buildSystemPrompt, getDefaultPersonality } from './prompt-builder.service';
 import { insightsService } from './insights.service';
-import { emitToRoom, emitToProject } from '../websocket/socket';
+import { emitToRoom, emitToProject, emitToProjectDashboard } from '../websocket/socket';
 import { ToolContext } from '../tools/types';
 import { logger } from '../utils/logger';
 
@@ -141,7 +141,8 @@ export const chatService = {
       platform: data.platform,
       status: 'active',
       mode: 'auto_pilot',
-      unreadCount: 1,
+      // El primer mensaje del cliente (sendMessage) incrementa a 1.
+      unreadCount: 0,
       clientInfo: {
         name: data.clientName,
         phone: data.clientPhone,
@@ -210,12 +211,15 @@ export const chatService = {
       updateSet.lastBotMessageAt = new Date();
     }
 
+    const conversationUpdate: any = { $set: updateSet };
+    // Solo los mensajes entrantes del cliente suman al contador de no leídos.
+    if (sender === 'contact') {
+      conversationUpdate.$inc = { unreadCount: 1 };
+    }
+
     await conversationsColl.updateOne(
       { _id: new ObjectId(conversationId) },
-      { 
-        $set: updateSet,
-        $inc: { unreadCount: 1 }
-      }
+      conversationUpdate
     );
 
     try {
@@ -230,6 +234,16 @@ export const chatService = {
 
     if (sender === 'contact') {
       const conv = await conversationsColl.findOne({ _id: new ObjectId(conversationId) });
+
+      // Sincroniza el sidebar del dashboard aunque la conversación no esté abierta.
+      // Se excluye la room de la conversación para no duplicar la entrega a los
+      // sockets que ya la tienen abierta (y no exponerla a clientes públicos).
+      try {
+        emitToProjectDashboard(conv?.projectId?.toString(), 'chat:message', newMessage, conversationId);
+      } catch (e) {
+        logger.warn('Socket emit (dashboard) failed', e);
+      }
+
       const agent = await agentService.getActiveAgent(conv?.projectId?.toString());
       const closeAfter = !!agent && this.isGoodbyeMessage(content, agent.config?.goodbyeKeywords || []);
 
@@ -478,8 +492,7 @@ export const chatService = {
             lastMessage: content, 
             lastMessageAt: new Date(),
             updatedAt: new Date(),
-          },
-          $inc: { unreadCount: 1 } // Since bot responded
+          }
         }
       );
 
@@ -704,7 +717,6 @@ export const chatService = {
       { _id: new ObjectId(args.conversationId) },
       {
         $set: { lastMessage: finalText, lastMessageAt: new Date(), updatedAt: new Date() },
-        $inc: { unreadCount: 1 },
       }
     );
 

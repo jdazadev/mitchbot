@@ -161,6 +161,18 @@ export const socketService = {
     }
   },
 
+  /** Escucha cuando una sesión del proyecto marca una conversación como leída (chat:read) */
+  onConversationRead(callback: (data: { conversationId: string }) => void) {
+    if (!this.socket) this.connect();
+    this.socket?.on('chat:read', callback);
+  },
+
+  offConversationRead(callback?: (data: any) => void) {
+    if (this.socket) {
+      this.socket.off('chat:read', callback);
+    }
+  },
+
   /** Confirma, cancela o modifica una ejecución de herramienta */
   confirmTool(payload: {
     conversationId: string;

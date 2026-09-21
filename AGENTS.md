@@ -12,7 +12,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.0.0
+**Versión actual del proyecto:** v4.0.1
 
 ---
 
@@ -169,7 +169,8 @@ apps/frontend/src/
 - **Filtros y búsqueda**: los chips de canal se generan desde `project.config.channels` (solo los habilitados + "Todos"); el filtrado por plataforma y la búsqueda por nombre/último mensaje son en cliente. Los mensajes se agrupan por día con encabezados reales.
 - **Toma de control manual bidireccional**: "Take Over" pasa a `human_takeover` y "Auto-Pilot" devuelve a `auto_pilot` vía `PUT /api/conversations/:id/mode`; el badge se actualiza en vivo con `chat:status` y el bot no responde mientras dure el takeover.
 - **Guardar como contacto**: acción explícita `POST /api/conversations/:id/contact` respaldada por `ensureContactCreated(id, { force: true })`; es idempotente y funciona aunque `autoCreateContact` esté deshabilitado.
-- **No leídos reales**: el badge del sidebar suma los `unreadCount` del proyecto activo mediante el composable `useConversations` (estado de módulo compartido) y se incrementa en vivo con `chat:message` / `chat:new_conversation`.
+- **No leídos reales**: el badge del sidebar suma los `unreadCount` del proyecto activo mediante el composable `useConversations` (estado de módulo compartido). Solo los mensajes entrantes del cliente (`contact`) incrementan el contador; los del bot y del agente humano **no** suman. Al abrir una conversación se persiste la lectura vía `PUT /api/conversations/:id/read` (`unreadCount = 0`) y se emite `chat:read` a la room del proyecto para sincronizar el resto de sesiones; un mensaje entrante en la conversación abierta se re-marca como leída de inmediato (estilo WhatsApp), sin que el badge suba. La actualización en vivo del sidebar llega por `chat:message` (también entregado a la room exclusiva del dashboard `project:<id>:dashboard`) y `chat:new_conversation`. Una conversación nueva creada por el cliente nace con 1 no leído.
+- **Sin selección por defecto**: al entrar a Messaging **no** se autoselecciona ninguna conversación; se muestra el estado vacío hasta que el agente elija una. El deep-link `?conversation=<id>` sigue resolviendo la conversación solicitada (botón "Ver conversación" de Clients).
 - **Compositor honesto**: solo expone acciones funcionales (enviar, tomar control); se retiraron chips de sugerencia, emoji, adjuntos, menú y el indicador "online" simulado.
 - **AI Insights**: análisis de **sentimiento y su distribución** (sin resumen) persistido en `conversation.aiInsights`. `GET /:id/insights` devuelve solo sentimiento y `sentimentScores` (aunque existan resúmenes antiguos en la BD) y `POST /:id/insights` recalcula (el `$set` limpia `aiInsights.summary` con `$unset`); se emite `chat:insights`. El análisis automático corre fire-and-forget tras cada respuesta del bot (un fallo no afecta la respuesta). El modelo se resuelve desde `OPENROUTER_INSIGHTS_MODEL` con fallback a `OPENROUTER_LLM_MODEL`.
 
@@ -414,7 +415,7 @@ Usuario abre la app
 | **Auth** | `POST /register`, `POST /login`, `GET /me`, `PUT /profile`, `PUT /password` | Autenticación y perfil |
 | **Users** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Gestión de usuarios |
 | **Contacts** | `GET /`, `GET /:id`, `PUT /:id`, `PATCH /:id/archive`, `PATCH /:id/restore` | Gestión de contactos |
-| **Conversations** | `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages`, `POST /:id/messages`, `PUT /:id/mode`, `PUT /:id/status`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, resolver conversación por contacto, guardar contacto e insights |
+| **Conversations** | `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages`, `POST /:id/messages`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, resolver conversación por contacto, marcar leída, guardar contacto e insights |
 | **Brain** | `GET /sources`, `POST /upload`, `POST /text`, `DELETE /sources/:id`, `POST /search` | Base de conocimiento RAG |
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
@@ -457,7 +458,7 @@ Usuario abre la app
 Todas las conexiones WebSocket requieren autenticación JWT:
 - **Dashboard**: Token JWT enviado en `socket.handshake.auth.token` y proyecto en `socket.handshake.auth.projectId` (validando pertenencia)
 - **Chat Público (`test-chat`)**: Slug del proyecto enviado en `socket.handshake.query.slug`
-- **Aislamiento por proyecto**: cada socket autenticado entra en la room `project:<id>`; `join:room` valida que la conversación pertenezca a su proyecto
+- **Aislamiento por proyecto**: cada socket autenticado entra en la room `project:<id>`; los del dashboard también entran en `project:<id>:dashboard` (excluye clientes públicos) para sincronizar el sidebar con mensajes de conversaciones no abiertas; `join:room` valida que la conversación pertenezca a su proyecto
 - **Rate Limiting**: 30 mensajes/min y 10 joins/min por usuario (Redis)
 - **CORS**: Restringido a `FRONTEND_URL` en producción
 
@@ -473,6 +474,7 @@ Todas las conexiones WebSocket requieren autenticación JWT:
 | `chat:new_conversation` | Server → Client | Nueva conversación iniciada |
 | `chat:message_updated` | Server → Client | Mensaje actualizado (estado de confirmación de tool) |
 | `chat:insights` | Server → Client | Insights de la conversación recalculados (sentimiento y su distribución) |
+| `chat:read` | Server → Client | Una sesión del proyecto marcó una conversación como leída; el resto actualiza su badge |
 | `tool:confirm` | Client → Server | Confirmar / cancelar / modificar una ejecución de herramienta |
 | `tool:confirmed` | Server → Client | Resultado de la confirmación de herramienta |
 | `admin:notification` | Server → Client | Notificación de la tool `send_notification` |

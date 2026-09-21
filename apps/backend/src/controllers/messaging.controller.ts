@@ -4,7 +4,7 @@ import { agentService } from '../services/agent.service';
 import { insightsService } from '../services/insights.service';
 import { getConversationsCollection } from '../models/conversation.model';
 import { getMessagesCollection } from '../models/message.model';
-import { emitToRoom } from '../websocket/socket';
+import { emitToRoom, emitToProject } from '../websocket/socket';
 import { ObjectId } from 'mongodb';
 
 /**
@@ -215,6 +215,32 @@ export const updateMode = async (req: Request, res: Response, next: NextFunction
       // La propagación en vivo no debe romper la respuesta HTTP
     }
     res.json({ message: `Mode updated to ${mode}` });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Marca una conversación como leída de forma persistente (`unreadCount = 0`) y
+ * notifica al resto de sesiones del proyecto con `chat:read`.
+ */
+export const markConversationRead = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+    if (!ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId inválido' });
+    const query: any = { _id: new ObjectId(req.params.id), projectId: new ObjectId(projectId) };
+    const result = await getConversationsCollection().updateOne(
+      query,
+      { $set: { unreadCount: 0, updatedAt: new Date() } }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Conversation not found' });
+    try {
+      emitToProject(projectId, 'chat:read', { conversationId: req.params.id });
+    } catch (e) {
+      // La propagación en vivo no debe romper la respuesta HTTP
+    }
+    res.json({ message: 'Conversation marked as read' });
   } catch (error) {
     next(error);
   }

@@ -25,6 +25,7 @@ const {
   activeChannel,
   loadConversations,
   markConversationRead,
+  setOpenConversation,
   setActiveChannel,
   bindConversationSocket,
 } = useConversations();
@@ -100,11 +101,8 @@ async function fetchChats() {
       const requested = await resolveRequestedChat(requestedId);
       if (requested) {
         await selectChat(requested);
-        return;
       }
     }
-    const first = filteredChats.value[0] || chats.value[0];
-    if (first) selectChat(first);
   } catch (error) {
     console.error("Failed to fetch chats", error);
   }
@@ -112,6 +110,7 @@ async function fetchChats() {
 
 async function selectChat(chat: ChatConversation) {
   selectedChat.value = chat;
+  setOpenConversation(chat._id);
   socketService.joinRoom(chat._id); // Join room
   markConversationRead(chat._id);
 
@@ -549,6 +548,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  setOpenConversation(null);
   socketService.offMessage(onNewMessage);
   socketService.offMessageChunk(onMessageChunk);
   socketService.offMessageUpdated(onMessageUpdated);

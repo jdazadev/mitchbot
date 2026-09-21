@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures';
+import type { Page } from '@playwright/test';
 import { E2E } from '../helpers/config';
 import {
   startPublicConversation,
@@ -14,6 +15,46 @@ import {
   listContacts,
 } from '../helpers/api';
 import { uniqueId, uniqueName, uniquePhone } from '../helpers/data';
+
+/** Espera a que la conversación tenga al menos `count` respuestas del bot. */
+async function waitForBotReplies(api: any, conversationId: string, count: number, timeoutMs = 25_000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const messages = await getConversationMessages(api, conversationId);
+    const botReplies = messages.filter((m: any) => m.sender === 'ai_agent' && m.content?.trim());
+    if (botReplies.length >= count) return messages;
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  throw new Error(`La conversación no alcanzó ${count} respuesta(s) del bot en ${timeoutMs}ms`);
+}
+
+/** Fila de la bandeja para la conversación identificada por el nombre del cliente. */
+function inboxRow(page: Page, clientName: string) {
+  return page
+    .locator('aside', { has: page.getByRole('heading', { name: 'Bandeja de entrada' }) })
+    .getByText(clientName)
+    .first()
+    .locator('xpath=ancestor::div[contains(@class,"cursor-pointer")][1]');
+}
+
+/** Suma persistida de no leídos de todas las conversaciones del proyecto. */
+async function apiUnreadTotal(api: any): Promise<number> {
+  const conversations = await listConversations(api);
+  return conversations.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0);
+}
+
+/** Espera a que el socket del dashboard complete la conexión (frame `40` de Socket.io). */
+function waitForDashboardSocket(page: Page): Promise<void> {
+  return page.waitForEvent('websocket', (ws) => ws.url().includes('/socket.io/')).then(
+    (ws) =>
+      new Promise<void>((resolve) => {
+        ws.on('framereceived', (frame) => {
+          const payload = typeof frame.payload === 'string' ? frame.payload : frame.payload.toString();
+          if (payload.startsWith('40')) resolve();
+        });
+      })
+  );
+}
 
 test.describe('Mensajería', () => {
   test('lista conversaciones (sin spinner permanente), abre un chat y responde', async ({ page, api }) => {
@@ -228,5 +269,102 @@ test.describe('Mensajería', () => {
     await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
     await page.getByText(clientName).first().click();
     await expect(page.getByText('Positivo').first()).toBeVisible({ timeout: 20_000 });
+  });
+
+  test('el no leído sube con el cliente, baja al abrir y persiste tras recargar', async ({ page, api }) => {
+    const id = uniqueId();
+    const clientName = uniqueName('Cliente NoLeido');
+    const started = await startPublicConversation(api, {
+      slug: E2E.project.slug,
+      clientIdentifier: `unread-${id}`,
+      clientName,
+      initialMessage: `Primer mensaje ${id}`,
+    });
+    const conversationId = started.conversation._id;
+    // Una conversación nueva creada por el cliente nace con 1 no leído.
+    expect((await getConversation(api, conversationId)).unreadCount).toBe(1);
+
+    const socketReady = waitForDashboardSocket(page);
+    await page.goto('/messaging');
+    await socketReady;
+    await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
+
+    const row = inboxRow(page, clientName);
+    await expect(row).toBeVisible({ timeout: 20_000 });
+    await expect(row.locator('span.ml-auto')).toHaveText('1');
+
+    // Mensaje del cliente en vivo (sin recargar): el badge de la conversación sube.
+    await sendPublicMessage(api, E2E.project.slug, conversationId, `Segundo mensaje ${id}`);
+    await expect(row.locator('span.ml-auto')).toHaveText('2', { timeout: 20_000 });
+    expect((await getConversation(api, conversationId)).unreadCount).toBe(2);
+
+    // Abrir la conversación: el badge baja y la lectura se persiste.
+    await row.click();
+    await expect(row.locator('span.ml-auto')).toHaveCount(0);
+    await expect.poll(async () => (await getConversation(api, conversationId)).unreadCount).toBe(0);
+
+    // Recargar: la lectura persiste y el badge no vuelve.
+    await page.reload();
+    await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
+    await expect(inboxRow(page, clientName).locator('span.ml-auto')).toHaveCount(0);
+    expect((await getConversation(api, conversationId)).unreadCount).toBe(0);
+
+    // El badge del sidebar refleja el total persistido del proyecto.
+    await expect
+      .poll(async () => {
+        const total = await apiUnreadTotal(api);
+        const badge = page.getByTestId('nav-conversations').locator('span.ml-auto');
+        const text = (await badge.count()) ? ((await badge.first().textContent()) || '').trim() : '';
+        return Number(text || 0) === total;
+      }, { timeout: 20_000 })
+      .toBe(true);
+  });
+
+  test('un mensaje del bot no incrementa el no leído', async ({ api }) => {
+    const id = uniqueId();
+    const started = await startPublicConversation(api, {
+      slug: E2E.project.slug,
+      clientIdentifier: `botunread-${id}`,
+      clientName: uniqueName('Cliente BotUnread'),
+      initialMessage: `Hola bot ${id}`,
+    });
+    const conversationId = started.conversation._id;
+    expect((await getConversation(api, conversationId)).unreadCount).toBe(1);
+
+    // La respuesta del bot (auto_pilot) no suma al contador.
+    await waitForBotReplies(api, conversationId, 1);
+    expect((await getConversation(api, conversationId)).unreadCount).toBe(1);
+
+    // Un mensaje del agente humano tampoco suma.
+    await sendHumanMessage(api, conversationId, `Respuesta humana ${id}`);
+    expect((await getConversation(api, conversationId)).unreadCount).toBe(1);
+  });
+
+  test('al entrar sin ?conversation= no hay conversación seleccionada', async ({ page }) => {
+    await page.goto('/messaging');
+    await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
+    await expect(page.getByText('Selecciona un chat para empezar a responder')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByPlaceholder('Escribe un mensaje...')).toHaveCount(0);
+  });
+
+  test('el deep-link ?conversation= selecciona la conversación correcta', async ({ page, api }) => {
+    const id = uniqueId();
+    const clientName = uniqueName('Cliente DeepLink');
+    const initial = `Mensaje deep-link ${id}`;
+    const started = await startPublicConversation(api, {
+      slug: E2E.project.slug,
+      clientIdentifier: `deeplink-${id}`,
+      clientName,
+      initialMessage: initial,
+    });
+    const conversationId = started.conversation._id;
+
+    await page.goto(`/messaging?conversation=${conversationId}`);
+    await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
+    await expect(page.getByPlaceholder('Escribe un mensaje...')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(initial).first()).toBeVisible({ timeout: 20_000 });
+
+    // Abrir por deep-link también persiste la lectura.
+    await expect.poll(async () => (await getConversation(api, conversationId)).unreadCount).toBe(0);
   });
 });
