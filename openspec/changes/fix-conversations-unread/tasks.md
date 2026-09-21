@@ -45,4 +45,4 @@
 - [x] 8.1 Actualizar `AGENTS.md` (sección de Mensajería: regla de no leídos, endpoint `PUT /:id/read`, evento `chat:read`, sin selección por defecto) y bump de versión a v4.0.1; verificar coherencia de la tabla de endpoints y eventos WebSocket
 - [x] 8.2 Actualizar `changelog.md` (formato Keep a Changelog, fecha actual) con el fix
 - [x] 8.3 Ejecutar lint/typecheck del monorepo y confirmar que no hay errores
-- [ ] 8.4 Hacer el commit correspondiente del cambio
+- [x] 8.4 Hacer el commit correspondiente del cambio
