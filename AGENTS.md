@@ -12,7 +12,39 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.0.1
+**Versión actual del proyecto:** v4.1.0
+
+---
+
+## Sistema de Diseño (v4.1.0 "Aurora")
+
+- **Mundo adoptado**: **«Aurora»** (antes mock, ahora sistema implementado). Reemplaza a «App Cálida» (v4.0.0, congelado). Norte: *"El Estudio Optimista"* — lienzo de papel cálido `#F7F3EF` con niebla de pasteles en los bordes (`aurora-haze`), tinta negra `#0B0B0C`, tipografía display enorme y una **familia pastel que significa algo**: lila=persona/selección · lima=bot/éxito · cielo=Web · mantequilla=espera.
+- **Tokens** (`apps/frontend/src/style.css` + `tailwind.config.js`): `--canvas/surface/sunken/line/ink-1/2/3`, los cuatro pasteles con `-ink`/`-soft`, radios `--r-card 20px` / `--r-big 28px` / `--r-field 16px` / `--r-bubble 20px`, sombras difusas de dos capas (`--shadow-card`, `--shadow-pop`) y utilidades Tailwind `canvas`, `surface`, `sunken`, `line`, `ink`, `sky/lime/lilac/butter`, `rounded-card/big/field`, `font-display/body`, `shadow-card/pop`.
+- **Tipografía**: **Bricolage Grotesque** (display; ejes `opsz`/`wdth`/`wght`) + **Hanken Grotesk** (cuerpo, cifras tabulares). Ya no se usa Nunito ni la webfont de Material Symbols.
+- **Iconografía**: **Phosphor** (`@phosphor-icons/vue`) envuelto en `src/components/ui/AIcon.vue` (6 pesos, `fill` para el nav activo, mapa de nombres Material heredados). El set es intercambiable desde `AIcon`.
+- **Componentes base** (`apps/frontend/src/components/ui/`): `AIcon`, `AButton`, `APill`, `AChip`, `ACard`, `AStat`, `ATable`, `AAvatar`, `AField`, `ASearch`, `ASwitch`, `ATab`, `ATabs`, `ADropdown`, `AEmptyState`, `ABubble`, `ABand`, `ACallout`, `AKpi`.
+- **Shell** (`apps/frontend/src/components/layout/`): `AuroraRail` (rail flotante con marca centrada sin subtítulo, nav con iconos Phosphor y pie con hora/día/fecha `DD/MM/AAAA`) + `AuroraTopbar` + `TopbarContext` (instrumentos por vista), compuestos dentro de `DashboardLayout`. El **topbar es una fila de cápsulas flotantes** (sin fondo/borde/blur): izquierda = instrumento de la vista (título de página + controles), derecha = invariantes (Proyectos · Idiomas · Notificaciones · **Usuario**, que se movió del pie del rail al topbar).
+- **Acento de marca** (`useBrand.ts`): default `#E2C6FF` (lila). `--brand*` es **identidad y selección** (item activo, avatar, punto de proyecto, foco), **no** primario de acción — el primario es siempre **tinta negra**.
+- **Documentación normativa**: `apps/frontend/DESIGN.md` + `apps/frontend/.impeccable/design.json` (re-documentados para Aurora). Diseñar contra los tokens `--brand*`, nunca contra un hue fijo.
+- **Estado de migración**: el shell Aurora, los componentes base y **todas las vistas del dashboard están migrados** (cero clases `warm-*` en el código). Vistas reales en Aurora: Panel, Conversaciones (con tarjeta de **Sentimiento** y bloque de **Urgencia**), Clientes, Brain, Usuarios, Configuración, Mi Perfil, Login, Setup, TestChat y DevTests. El **Resumen (Dashboard) se conserva tal cual** (datos reales) para refinarlo en una tanda posterior. La persistencia de `project.config.brand` en el backend sigue pendiente.
+- **Urgencia en Conversaciones**: bloque de UI con placeholder (no toca backend); claves en `messaging.urgency.*` (es/en).
+- **Prototipo fiel**: `apps/frontend/.impeccable/mocks/aurora/` (12 vistas con las etiquetas reales del producto, datos marcados como sintéticos; servible con `python3 -m http.server` en esa carpeta).
+
+---
+
+## Documentación de diseño histórica (v4.0.3)
+
+- El mundo "App Cálida" quedó documentado en DESIGN.md desde su adopción (v4.0.0) hasta su reemplazo por Aurora (v4.1.0). Sus clases `warm-*` ya **no existen** en el código (migración completa en v4.1.0).
+
+---
+
+## Rediseño total (v4.0.2 "Mesa de Exposición") — Estado
+
+- **Dirección decidida**: reemplazo completo del mundo visual por la fusión **"Mesa de Exposición"** — topología de tablero de despacho (circuitos de conversación con lámpara: verde=bot, magenta=humano, hueco=cerrado; llave "TOMAR CONTROL") + materialidad de imprenta (papel #F1EDE6/#FBF9F3, tinta #1C1E22, carga por hatching, magenta #C13A7C único acento de acción, regla tachada al cerrar, cruz 90° para conflictos). Tipografía: Barlow Condensed (etiquetas), IBM Plex Mono (datos tabulares), Spline Sans (cuerpo).
+- **Prototipo navegable previo a migrar** en `apps/frontend/.impeccable/mocks/rediseño/` (12 vistas de ejemplo + `style.css` compartido; servible con `python3 -m http.server` en esa carpeta). El código real del frontend AÚN NO ha sido migrado.
+- **Ronda 4 de exploración (v4.0.5)**: dos mundos nuevos con prototipo completo de 12 vistas cada uno — **«Aurora»** (`mocks/aurora/`, del pastel optimista de *orivo.webflow.io*: suelo cálido, tinta negra, tipografía enorme, pasteles con papel semántico) y **«Bóveda»** (`mocks/boveda/`, del cool premium de *per-ment.webflow.io*: blanco frío, azul noche + violeta único, rejilla fina, nav en cápsula flotante, serif itálica). **`mocks/comparador.html`** reúne los 12 mundos de las 4 rondas con su ADN (paleta, tipografía, forma, clima) y enlaces. Ambos son material de comparación, no compromisos.
+- Contrato de dirección en `apps/frontend/.impeccable/surfaces/…` (brief de Messaging). La identidad de marca por proyecto sigue siendo decisión abierta hacia el backend: persistencia en `project.config.brand` pendiente (se resuelve en la migración).
+- El resto del sistema actual "App Cálida" (v4.0.0) queda congelado: no mezclar estilos nuevos con los mapeos `warm-*` existentes hasta la migración completa.
 
 ---
 
@@ -20,7 +52,7 @@
 
 - **Tokens** (`apps/frontend/src/style.css`): paleta CSS con suelo cálido (`--ground` `#fbf7f2`), tinta parda (`--ink-1 #2e2a26`), hairlines cálidas y componentes base (`.card`, `.btn`, `.btn-primary`, `.btn-ghost`, `.field`, `.stamp`). Tipografía Nunito, radios por rol (`--r-card`, `--r-bubble`, `--r-seal`) y sombras difusas.
 - **Identidad de marca por proyecto** (`apps/frontend/src/composables/useBrand.ts`): nombre, color y logo se configuran en **Configuración → Identidad** y persisten en `project.config.brand` (validado con Zod en `project.controller.ts`, logo hasta 200 KB). `useBrand` inyecta las variables `--brand-*` en `:root` (HSL + variantes `hover`/`deep`/`soft`/`softer`/`ink`), calcula `--brand-contrast` según luminancia y teñe el favicon con canvas. Se carga el config del proyecto al iniciar la app, así que cambiar el color re-tematiza la app completa en vivo.
-- **Migración gradual de vistas**: las clases `blue-*` de Tailwind se mapean al acento de marca y las utilidades `warm-*` exponen los tokens (`tailwind.config.js`). Vistas ya migradas al nuevo sistema: Layout (Sidebar/Topbar/DashboardLayout), Messaging y Settings. El resto sigue funcionando vía los mapeos.
+- **Migración gradual de vistas**: las clases `blue-*` de Tailwind se mapean al acento de marca y las utilidades `warm-*` exponían los tokens (`tailwind.config.js`, hoy retirados). En v4.1.0 todas las vistas migraron a Aurora y las clases `warm-*` ya no existen.
 
 ---
 

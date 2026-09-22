@@ -1,8 +1,8 @@
 import { ref, onMounted } from 'vue';
 import { projectService, type Project } from '../services/project.service';
 
-/** Color de actuación por defecto del sistema */
-export const DEFAULT_BRAND_COLOR = '#E86A33';
+/** Color de identidad por defecto del mundo Aurora */
+export const DEFAULT_BRAND_COLOR = '#E2C6FF';
 
 export interface BrandConfig {
   name: string | null;
@@ -71,8 +71,8 @@ export function applyBrand(next: BrandConfig) {
     ctx.lineTo(0, r);
     ctx.arc(r, r, r, Math.PI, Math.PI / 2, true);
     ctx.fill();
-    ctx.fillStyle = isLightColor(hsl) ? '#2e2a26' : '#ffffff';
-    ctx.font = '800 34px Nunito, sans-serif';
+    ctx.fillStyle = isLightColor(hsl) ? '#0b0b0c' : '#ffffff';
+    ctx.font = '800 34px "Bricolage Grotesque", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('M', 32, 34);

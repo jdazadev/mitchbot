@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<title>Mensajería · Mesa de Exposición</title>
+<link rel="stylesheet" href="style.css">
+<style>.work{display:grid;grid-template-columns:minmax(380px,42%) 1fr;min-height:calc(100vh - 74px)}
+.queue{border-right:2px solid var(--ink);overflow-y:auto}
+.qh{padding:11px 18px;font-family:var(--cond);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-soft);border-bottom:2px solid var(--ink);display:flex;gap:10px;align-items:center}
+.qh .filt{margin-left:auto;font-family:var(--mono);font-size:8.5px}
+.tw{display:grid;grid-template-rows:auto 1fr auto;min-height:0}
+.th{padding:12px 18px;border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:10px}
+.thread{padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;background:linear-gradient(180deg,#FBF9F3,var(--paper))}
+.aviso{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--magenta);text-transform:uppercase;border:1px dashed var(--magenta);padding:7px 11px;background:rgba(193,58,124,.05)}</style></head>
+<body>
+<aside class="anden">
+<div class="brand"><div class="n">Estudio Mateo</div><div class="s">POSICIÓN MESA CENTRAL</div></div>
+<div class="hatch-strip"></div>
+<nav>
+<a href="dashboard.html">01 · TABLERO</a>
+  <a href="mensajeria.html" class="on">02 · MENSAJERÍA</a>
+  <a href="clientes.html">03 · CLIENTES</a>
+  <a href="cerebro.html">04 · CEREBRO</a>
+  <a href="agentes.html">05 · AGENTES</a>
+  <a href="ajustes.html">06 · AJUSTES</a>
+  <a href="usuarios.html">07 · USUARIOS</a>
+  <a href="perfil.html">08 · PERFIL</a>
+  <a href="pruebas.html" style='opacity:.5'>09 · BANCO</a>
+  <a href="index.html" style="opacity:.45">← ÍNDICE DEL PROTOTIPO</a>
+
+</nav>
+<div class="foot"><b>09:41</b>JUEVES · TURNO COMPLETO</div>
+</aside>
+<main>
+<div class="marear"><div class="kpi"><b>12</b><span>circuitos</span></div><div class="kpi"><b style="color:var(--magenta)">3</b><span>con carga</span></div><div class="kpi"><b>94%</b><span>despacho bot</span></div><div class="kpi"><b>1m20s</b><span>resp. media</span></div></div><div class="bg-hatchband"></div><div class="work"><div class="queue"><div class="qh">COLA DE REGLETAS · POR CARGA <span class="filt">canal: todos ▾</span></div><div class="regleta sel"><div><span class="dot m"></span></div><div><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:600">María Cano</span><span class="carga"><b>+1⅓</b><span class="hatch" style="background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px)"></span></span></div><div class="r2">WA · ÚLTIMO 2 MIN · 1 HERRAMIENTA SIN CONFIRMAR</div></div></div><div class="regleta"><div><span class="dot g"></span></div><div><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:600">Jorge Rincón</span><span class="carga"><b>+0</b><span class="hatch l1"></span></span></div><div class="r2">IG · BOT EN LÍNEA · RESPUESTA EN BREVE</div></div></div><div class="regleta"><div><span class="dot k"></span></div><div><span style="font-weight:600" class="tag-strike">Laura Pérez</span><div class="r2">WEB · CERRADO 09:12</div></div></div><div class="regleta"><div><span class="dot m"></span></div><div><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:600">Tech Store</span><span style="font-family:var(--mono);font-size:8px;color:var(--magenta);border:1px dashed var(--magenta);padding:2px 6px">CONFLICTO <span class="cruz"></span></span></div><div class="r2">DUELO DE ZONAS · PEDIDOS #1042 Y #1022 · CRUZ 90°</div></div></div><div class="regleta"><div><span class="dot g"></span></div><div><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:600">Andrés Gutiérrez</span><span class="carga"><b>+⅔</b><span class="hatch l1"></span></span></div><div class="r2">WA · BOT RESPONDIENDO · CITA PENDIENTE</div></div></div></div><div class="tw">
+<div class="th"><span style="font-weight:600;font-size:14px">María Cano</span><span class="cond" style="font-size:9px">REGLETA +1⅓ · PENDIENTE</span><button class="btn key" style="margin-left:auto"><i></i>TOMAR CONTROL</button><button class="btn">CERRAR</button></div>
+<div class="thread">
+<span class="nota">· TIRA 1043 · REGISTRO DE DESPACHO ·</span>
+<div class="msg" style="align-self:flex-start;border:1px solid var(--hair);background:#FFF">Hola, ¿el curso de julio entra en el presupuesto que me dijeron?</div>
+<div class="msg" style="align-self:flex-end;background:var(--ink);color:#F3EFE7">Sí María: 480.000 por persona, material incluido. ¿Te separo un cupo?</div>
+<div class="aviso" style="align-self:flex-end">CREATE_ORDER ESPERA CONFIRMACIÓN · 1 PASO <span class="cruz"></span></div>
+<div class="msg" style="align-self:flex-start;border:1px solid var(--hair);background:#FFF">Sí, me parece bien. Deja el pedido en febrero primero... mejor sigue en marzo.</div>
+<span class="nota" style="color:var(--magenta)">· LA REGLETA SIGUE ABIERTA · DESPLEGAD CON LA LLAVE CUANDO DESPEJES ·</span>
+</div>
+<div class="tray"><input placeholder="Anotación de despacho..."><button class="btn fill">DESPACHAR</button><button class="btn">PLANTILLA</button></div>
+</div></div>
+</main>
+</body></html>

@@ -3,6 +3,10 @@ import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { userService, type SystemUser } from '../services/user.service';
 import { projectService, type Project } from '../services/project.service';
+import AIcon from '../components/ui/AIcon.vue';
+import AAvatar from '../components/ui/AAvatar.vue';
+import APill from '../components/ui/APill.vue';
+import AButton from '../components/ui/AButton.vue';
 
 const { t } = useI18n();
 
@@ -118,19 +122,14 @@ async function handleUpdate() {
   }
 }
 
-function getRoleBadgeClass(role: string) {
-  switch (role) {
-    case 'admin': return 'bg-red-50 text-red-700 border-red-100';
-    case 'support': return 'bg-blue-50 text-blue-700 border-blue-100';
-    case 'assistant': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-    default: return 'bg-slate-50 text-slate-500 border-slate-200';
-  }
-}
+const ROLE_TONES: Record<string, 'sky' | 'lilac' | 'lime' | 'ghost'> = {
+  admin: 'sky',
+  support: 'lilac',
+  assistant: 'lime',
+};
 
-function getStatusBadgeClass(status: string) {
-  return status === 'Active'
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-    : 'bg-slate-100 text-slate-500 border-slate-200';
+function roleTone(role: string) {
+  return ROLE_TONES[role] || 'ghost';
 }
 
 function formatDate(dateStr: string) {
@@ -143,223 +142,228 @@ function formatDate(dateStr: string) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
-    <div class="flex justify-between items-center">
+  <div class="flex flex-col gap-3.5">
+    <div class="flex flex-wrap items-center gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ t('users.title') }}</h1>
-        <p class="text-sm text-slate-500 mt-1">{{ t('users.subtitle', { count: totalUsers }) }}</p>
+        <h1 class="font-display text-[22px] font-bold tracking-[-0.02em]">{{ t('users.title') }}</h1>
+        <p class="mt-1 text-[13px] text-ink-3">{{ t('users.subtitle', { count: totalUsers }) }}</p>
       </div>
-      <button
+      <AButton
+        class="ml-auto"
+        variant="primary"
+        icon="UserPlus"
         @click="showCreateModal = true; formError = ''"
-        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-all flex items-center gap-2 uppercase text-sm"
       >
-        <span class="material-symbols-outlined text-[20px]">person_add</span>
         {{ t('users.create.title') }}
-      </button>
+      </AButton>
     </div>
 
-    <!-- Success message -->
-    <div v-if="formSuccess" class="p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-emerald-600 flex items-center gap-2">
-      <span class="material-symbols-outlined text-[18px]">check_circle</span>
+    <div v-if="formSuccess" class="flex items-center gap-2 rounded-card bg-lime-soft p-3.5 text-[13px] text-lime-ink">
+      <AIcon name="CheckCircle" :size="17" />
       {{ formSuccess }}
     </div>
 
-    <!-- Search Bar -->
-    <div class="flex gap-3">
-      <div class="flex-1 relative">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+    <div class="flex gap-2.5">
+      <div class="flex flex-1 items-center gap-2.5 rounded-full bg-surface px-4 py-2.5 shadow-card">
+        <AIcon name="MagnifyingGlass" :size="17" class="shrink-0 text-ink-3" />
         <input
           v-model="searchQuery"
-          @keydown.enter="handleSearch"
           type="text"
           :placeholder="t('users.searchPlaceholder')"
-          class="w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
+          class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3"
+          @keydown.enter="handleSearch"
         />
       </div>
-      <button @click="handleSearch" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">
-        {{ t('common.search') }}
-      </button>
+      <AButton variant="secondary" @click="handleSearch">{{ t('common.search') }}</AButton>
     </div>
 
-    <!-- Loading -->
-    <div v-if="pageLoading" class="flex items-center justify-center p-12">
-      <div class="flex flex-col items-center gap-3">
-        <div class="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-sm text-slate-500">{{ t('users.loading') }}</span>
+    <div v-if="pageLoading" class="flex items-center justify-center gap-3 py-12 text-sm text-ink-3">
+      <span class="animate-spin"><AIcon name="SpinnerGap" :size="20" /></span>
+      {{ t('users.loading') }}
+    </div>
+
+    <div v-else class="overflow-hidden rounded-card bg-surface shadow-card">
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse text-[13px]">
+          <thead>
+            <tr>
+              <th
+                v-for="col in [
+                  t('users.table.user'),
+                  t('users.table.role'),
+                  t('common.status'),
+                  t('users.table.createdAt'),
+                ]"
+                :key="col"
+                class="border-b-[1.5px] border-line px-4.5 py-3 text-left text-[11px] font-semibold text-ink-3"
+              >
+                {{ col }}
+              </th>
+              <th class="border-b-[1.5px] border-line px-4.5 py-3 text-right text-[11px] font-semibold text-ink-3">
+                {{ t('common.actions') }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="users.length === 0">
+              <td colspan="5" class="px-6 py-10 text-center text-sm text-ink-3">{{ t('users.table.empty') }}</td>
+            </tr>
+            <tr
+              v-for="user in users"
+              :key="user._id"
+              class="border-b border-line transition-colors last:border-b-0 hover:bg-canvas"
+            >
+              <td class="px-4.5 py-3.5">
+                <div class="flex items-center gap-2.5">
+                  <AAvatar
+                    :initials="(user.name || 'U').slice(0, 2).toUpperCase()"
+                    :tone="roleTone(user.role) === 'ghost' ? 'sky' : (roleTone(user.role) as any)"
+                  />
+                  <div class="flex flex-col">
+                    <span class="font-semibold">{{ user.name }}</span>
+                    <span class="text-xs text-ink-3">{{ user.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4.5 py-3.5">
+                <APill :tone="roleTone(user.role)" size="sm">{{ t('users.roles.' + user.role) }}</APill>
+              </td>
+              <td class="px-4.5 py-3.5">
+                <APill :tone="user.status === 'Active' ? 'lime' : 'ghost'" size="sm">
+                  {{ user.status === 'Active' ? t('common.active') : t('common.inactive') }}
+                </APill>
+              </td>
+              <td class="px-4.5 py-3.5 text-xs text-ink-3">{{ formatDate(user.createdAt) }}</td>
+              <td class="px-4.5 py-3.5">
+                <div class="flex justify-end">
+                  <button
+                    type="button"
+                    class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+                    :title="t('common.edit')"
+                    @click="openEditModal(user)"
+                  >
+                    <AIcon name="PencilSimple" :size="14" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </div>
 
-    <!-- Table -->
-    <div v-else class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-slate-50/50 dark:bg-slate-700/30 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold tracking-widest">
-            <th class="px-6 py-4">{{ t('users.table.user') }}</th>
-            <th class="px-6 py-4">{{ t('users.table.role') }}</th>
-            <th class="px-6 py-4">{{ t('common.status') }}</th>
-            <th class="px-6 py-4">{{ t('users.table.createdAt') }}</th>
-            <th class="px-6 py-4 text-right">{{ t('common.actions') }}</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-          <tr v-if="users.length === 0">
-            <td colspan="5" class="px-6 py-8 text-center text-sm text-slate-400">{{ t('users.table.empty') }}</td>
-          </tr>
-          <tr v-for="user in users" :key="user._id" class="hover:bg-slate-50/50 transition-colors">
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                  {{ user.name[0] }}
-                </div>
-                <div class="flex flex-col">
-                  <span class="text-sm font-bold text-slate-900 dark:text-white">{{ user.name }}</span>
-                  <span class="text-xs text-slate-400">{{ user.email }}</span>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              <span :class="['px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border', getRoleBadgeClass(user.role)]">
-                {{ t('users.roles.' + user.role) }}
-              </span>
-            </td>
-            <td class="px-6 py-4">
-              <span :class="['px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border', getStatusBadgeClass(user.status)]">
-                {{ user.status === 'Active' ? t('common.active') : t('common.inactive') }}
-              </span>
-            </td>
-            <td class="px-6 py-4 text-xs text-slate-400">{{ formatDate(user.createdAt) }}</td>
-            <td class="px-6 py-4 text-right">
-              <button @click="openEditModal(user)" class="p-2 hover:bg-blue-50 rounded-lg text-slate-400 hover:text-blue-600 transition-colors" :title="t('common.edit')">
-                <span class="material-symbols-outlined text-[18px]">edit</span>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex items-center justify-between px-6 py-3 border-t border-slate-100 dark:border-slate-700">
-        <span class="text-xs text-slate-400">{{ t('common.page') }} {{ currentPage }} {{ t('common.of') }} {{ totalPages }}</span>
+      <div
+        v-if="totalPages > 1"
+        class="flex items-center justify-between border-t border-line px-4.5 py-3"
+      >
+        <span class="text-xs text-ink-3">{{ t('common.page') }} {{ currentPage }} {{ t('common.of') }} {{ totalPages }}</span>
         <div class="flex gap-2">
-          <button
-            @click="loadUsers(currentPage - 1)"
-            :disabled="currentPage <= 1"
-            class="px-3 py-1 text-sm rounded-lg border border-slate-200 disabled:opacity-40 hover:bg-slate-50 transition-colors"
-          >
+          <AButton variant="secondary" size="sm" :disabled="currentPage <= 1" @click="loadUsers(currentPage - 1)">
             {{ t('common.previous') }}
-          </button>
-          <button
-            @click="loadUsers(currentPage + 1)"
-            :disabled="currentPage >= totalPages"
-            class="px-3 py-1 text-sm rounded-lg border border-slate-200 disabled:opacity-40 hover:bg-slate-50 transition-colors"
-          >
+          </AButton>
+          <AButton variant="secondary" size="sm" :disabled="currentPage >= totalPages" @click="loadUsers(currentPage + 1)">
             {{ t('common.next') }}
-          </button>
+          </AButton>
         </div>
       </div>
     </div>
 
     <!-- Modal: Crear Usuario -->
-    <div v-if="showCreateModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center" @click.self="showCreateModal = false">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-lg font-bold text-slate-900">{{ t('users.create.title') }}</h2>
-          <button @click="showCreateModal = false" class="p-1 hover:bg-slate-100 rounded-lg"><span class="material-symbols-outlined text-slate-400">close</span></button>
+    <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showCreateModal = false">
+      <div class="w-full max-w-lg rounded-card bg-surface p-6 shadow-[var(--shadow-pop)]">
+        <div class="flex items-center justify-between">
+          <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('users.create.title') }}</h2>
+          <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas" @click="showCreateModal = false">
+            <AIcon name="X" :size="18" />
+          </button>
         </div>
-        <div v-if="formError" class="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">{{ formError }}</div>
-        <div class="flex flex-col gap-4">
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('users.form.name') }} *</label>
-            <input v-model="createForm.name" :placeholder="t('users.form.namePlaceholder')" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('users.form.email') }} *</label>
-            <input v-model="createForm.email" type="email" :placeholder="t('users.form.emailPlaceholder')" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('users.form.password') }} *</label>
-            <input v-model="createForm.password" type="password" :placeholder="t('users.form.passwordPlaceholder')" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('users.form.role') }}</label>
-            <select v-model="createForm.role" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+        <div v-if="formError" class="mt-4 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]">{{ formError }}</div>
+        <div class="mt-5 flex flex-col gap-4">
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('users.form.name') }} *</span>
+            <input v-model="createForm.name" class="field" :placeholder="t('users.form.namePlaceholder')" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('users.form.email') }} *</span>
+            <input v-model="createForm.email" type="email" class="field" :placeholder="t('users.form.emailPlaceholder')" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('users.form.password') }} *</span>
+            <input v-model="createForm.password" type="password" class="field" :placeholder="t('users.form.passwordPlaceholder')" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('users.form.role') }}</span>
+            <select v-model="createForm.role" class="field appearance-none">
               <option v-for="r in roles" :key="r" :value="r">{{ t('users.roles.' + r) }}</option>
             </select>
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('users.form.projects') }}</label>
-            <div v-if="projects.length === 0" class="text-xs text-slate-400">{{ t('users.noProjects') }}</div>
-            <div v-else class="flex flex-col gap-1.5 max-h-32 overflow-y-auto border border-slate-200 rounded-lg p-2">
-              <label v-for="p in projects" :key="p._id" class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                <input type="checkbox" :checked="createForm.projectIds.includes(p._id)" @change="toggleCreateProject(p._id)" class="h-4 w-4 accent-blue-600" />
+          </label>
+          <div class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('users.form.projects') }}</span>
+            <div v-if="projects.length === 0" class="text-xs text-ink-3">{{ t('users.noProjects') }}</div>
+            <div v-else class="flex max-h-32 flex-col gap-1.5 overflow-y-auto rounded-field bg-canvas p-2.5">
+              <label v-for="p in projects" :key="p._id" class="flex cursor-pointer items-center gap-2 text-sm text-ink-2">
+                <input type="checkbox" class="accent-[color:var(--brand)]" :checked="createForm.projectIds.includes(p._id)" @change="toggleCreateProject(p._id)" />
                 {{ p.name }}
               </label>
             </div>
           </div>
         </div>
-        <div class="flex justify-end gap-3 mt-6">
-          <button @click="showCreateModal = false" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg">{{ t('common.cancel') }}</button>
-          <button
-            @click="handleCreate"
-            :disabled="formLoading"
-            class="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg shadow-sm transition-colors"
-          >
+        <div class="mt-6 flex justify-end gap-3">
+          <AButton variant="ghost" @click="showCreateModal = false">{{ t('common.cancel') }}</AButton>
+          <AButton variant="primary" :loading="formLoading" @click="handleCreate">
             {{ formLoading ? t('users.create.submitting') : t('common.create') }}
-          </button>
+          </AButton>
         </div>
       </div>
     </div>
 
     <!-- Modal: Editar Usuario -->
-    <div v-if="showEditModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center" @click.self="showEditModal = false">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-lg font-bold text-slate-900">{{ t('users.edit.title') }}</h2>
-          <button @click="showEditModal = false" class="p-1 hover:bg-slate-100 rounded-lg"><span class="material-symbols-outlined text-slate-400">close</span></button>
+    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showEditModal = false">
+      <div class="w-full max-w-lg rounded-card bg-surface p-6 shadow-[var(--shadow-pop)]">
+        <div class="flex items-center justify-between">
+          <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('users.edit.title') }}</h2>
+          <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas" @click="showEditModal = false">
+            <AIcon name="X" :size="18" />
+          </button>
         </div>
-        <div v-if="formError" class="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">{{ formError }}</div>
-        <div class="flex flex-col gap-4">
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('users.form.name') }}</label>
-            <input v-model="editForm.name" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('users.form.email') }}</label>
-            <input v-model="editForm.email" type="email" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('users.form.role') }}</label>
-            <select v-model="editForm.role" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+        <div v-if="formError" class="mt-4 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]">{{ formError }}</div>
+        <div class="mt-5 flex flex-col gap-4">
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('users.form.name') }}</span>
+            <input v-model="editForm.name" class="field" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('users.form.email') }}</span>
+            <input v-model="editForm.email" type="email" class="field" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('users.form.role') }}</span>
+            <select v-model="editForm.role" class="field appearance-none">
               <option v-for="r in roles" :key="r" :value="r">{{ t('users.roles.' + r) }}</option>
             </select>
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('common.status') }}</label>
-            <select v-model="editForm.status" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('common.status') }}</span>
+            <select v-model="editForm.status" class="field appearance-none">
               <option value="Active">{{ t('common.active') }}</option>
               <option value="Inactive">{{ t('common.inactive') }}</option>
             </select>
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('users.form.projects') }}</label>
-            <div v-if="projects.length === 0" class="text-xs text-slate-400">{{ t('users.noProjects') }}</div>
-            <div v-else class="flex flex-col gap-1.5 max-h-32 overflow-y-auto border border-slate-200 rounded-lg p-2">
-              <label v-for="p in projects" :key="p._id" class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                <input type="checkbox" :checked="editForm.projectIds.includes(p._id)" @change="toggleEditProject(p._id)" class="h-4 w-4 accent-blue-600" />
+          </label>
+          <div class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('users.form.projects') }}</span>
+            <div v-if="projects.length === 0" class="text-xs text-ink-3">{{ t('users.noProjects') }}</div>
+            <div v-else class="flex max-h-32 flex-col gap-1.5 overflow-y-auto rounded-field bg-canvas p-2.5">
+              <label v-for="p in projects" :key="p._id" class="flex cursor-pointer items-center gap-2 text-sm text-ink-2">
+                <input type="checkbox" class="accent-[color:var(--brand)]" :checked="editForm.projectIds.includes(p._id)" @change="toggleEditProject(p._id)" />
                 {{ p.name }}
               </label>
             </div>
           </div>
         </div>
-        <div class="flex justify-end gap-3 mt-6">
-          <button @click="showEditModal = false" class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg">{{ t('common.cancel') }}</button>
-          <button
-            @click="handleUpdate"
-            :disabled="formLoading"
-            class="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg shadow-sm transition-colors"
-          >
+        <div class="mt-6 flex justify-end gap-3">
+          <AButton variant="ghost" @click="showEditModal = false">{{ t('common.cancel') }}</AButton>
+          <AButton variant="primary" :loading="formLoading" @click="handleUpdate">
             {{ formLoading ? t('common.saving') : t('common.save') }}
-          </button>
+          </AButton>
         </div>
       </div>
     </div>

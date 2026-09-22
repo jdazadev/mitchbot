@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-21T00:00:00Z",
+  "title": "Design System: Mitchbot (\"Aurora\")",
+  "extensions": {
+    "colorMeta": {
+      "brand": {
+        "role": "primary",
+        "displayName": "Lila Aurora",
+        "canonical": "#E2C6FF",
+        "tonalRamp": ["#2b1a44", "#4A2470", "#6f45a0", "#a878d8", "#E2C6FF", "#f3ebff", "#faf6ff", "#ffffff"]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Lienzo Cálido",
+        "canonical": "#f7f3ef",
+        "tonalRamp": ["#0b0b0c", "#56534e", "#6f6960", "#a8a29a", "#ddd5ca", "#eae4dc", "#efebe5", "#f7f3ef"]
+      },
+      "sky": {
+        "role": "tertiary",
+        "displayName": "Cielo Web",
+        "canonical": "#bbecff",
+        "tonalRamp": ["#0f4a64", "#2f7493", "#5aa8c9", "#bbecff", "#e8f8fe", "#f4fcff"]
+      },
+      "lime": {
+        "role": "tertiary",
+        "displayName": "Lima Bot",
+        "canonical": "#dcfebc",
+        "tonalRamp": ["#2c5a15", "#4d8a2c", "#8fc866", "#dcfebc", "#f1fee4", "#f8fff2"]
+      },
+      "lilac": {
+        "role": "tertiary",
+        "displayName": "Lila Persona",
+        "canonical": "#e2c6ff",
+        "tonalRamp": ["#4a2470", "#7a4fb0", "#b48fdc", "#e2c6ff", "#f3ebff", "#faf6ff"]
+      },
+      "butter": {
+        "role": "tertiary",
+        "displayName": "Mantequilla Espera",
+        "canonical": "#f1ee83",
+        "tonalRamp": ["#5e5a00", "#8f8818", "#c9c44a", "#f1ee83", "#fbfae0", "#fdfcf0"]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Rojo Conflicto",
+        "canonical": "#b92f1a",
+        "tonalRamp": ["#4e1710", "#7a2418", "#b92f1a", "#d55f4b", "#fdece9", "#fef5f3"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Titulares, métricas y título de página; Bricolage Grotesque con tracking −0.02 a −0.04em." },
+      "body": { "displayName": "Cuerpo", "purpose": "Texto base de todo el dashboard (14px/1.5) en Hanken Grotesk." },
+      "label": { "displayName": "Sello", "purpose": "Microtexto de estado en pill uppercase 10px/800, tracking +0.08em." }
+    },
+    "shadows": [
+      { "name": "shadow-card", "value": "0 1px 2px rgba(11,11,12,0.04), 0 14px 44px rgba(11,11,12,0.06)", "purpose": "Elevación difusa ambiente de tarjetas y cápsulas en reposo." },
+      { "name": "shadow-pop", "value": "0 2px 4px rgba(11,11,12,0.05), 0 28px 70px rgba(11,11,12,0.12)", "purpose": "Elementos flotantes: dropdowns, modales, menús." }
+    ],
+    "motion": [
+      { "name": "transition-control", "value": "all 150ms ease", "purpose": "Transición estándar de botones, cápsulas y controles." }
+    ],
+    "iconography": {
+      "library": "@phosphor-icons/vue",
+      "wrapper": "src/components/ui/AIcon.vue",
+      "weights": ["thin", "light", "regular", "bold", "fill", "duotone"],
+      "activeWeight": "fill"
+    },
+    "breakpoints": [
+      { "name": "rail-collapse", "value": "1024px" },
+      { "name": "topbar-stack", "value": "640px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal del sistema; siempre tinta negra, nunca el acento de marca.",
+      "html": "<button class=\"ds-btn-primary\">Guardar cambios</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; background: var(--ink-1, #0b0b0c); color:#ffffff; font-weight:600; font-size:13px; padding: 0.6rem 1.25rem; border:none; border-radius:9999px; cursor:pointer; transition: all 150ms; box-sizing:border-box; } .ds-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(11,11,12,.2); } .ds-btn-primary:disabled { opacity:.45; cursor:not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción secundaria sobre fondo hundido.",
+      "html": "<button class=\"ds-btn-secondary\">Cancelar</button>",
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; justify-content:center; gap:8px; background: var(--sunken, #efebe5); color: var(--ink-1, #0b0b0c); font-weight:600; font-size:13px; padding: 0.6rem 1.25rem; border:none; border-radius:9999px; cursor:pointer; }"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Campo base: blanco, hairline, radio 16px, foco con halo del acento.",
+      "html": "<input class=\"ds-field\" placeholder=\"Buscar clientes…\" />",
+      "css": ".ds-field { width:100%; background: var(--surface, #ffffff); color: var(--ink-1, #0b0b0c); border: 1.5px solid var(--line, #eae4dc); border-radius: 16px; padding: 0.7rem 0.95rem; font-size:14px; outline:none; transition: all 150ms; box-sizing:border-box; font-family: inherit; } .ds-field:hover { border-color: var(--line-2, #ddd5ca); } .ds-field:focus { border-color: var(--brand, #E2C6FF); box-shadow: 0 0 0 4px var(--brand-soft, #f3ebff); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Superficie blanca con radio 20px y sombra difusa ambiente.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Conversaciones activas</div><p class=\"ds-card-body\">Contenido sobre papel blanco.</p></div>",
+      "css": ".ds-card { background: var(--surface, #ffffff); border-radius: 20px; box-shadow: 0 1px 2px rgba(11,11,12,0.04), 0 14px 44px rgba(11,11,12,0.06); padding: 20px 22px; box-sizing:border-box; font-family: inherit; color: var(--ink-1, #0b0b0c); } .ds-card-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight:700; letter-spacing:-0.02em; margin:0 0 8px; } .ds-card-body { margin:0; font-size:14px; line-height:1.5; color: var(--ink-2, #56534e); }"
+    },
+    {
+      "name": "Status Stamp",
+      "kind": "chip",
+      "refersTo": "stamp",
+      "description": "Sello de estado en pill con su pastel semántico.",
+      "html": "<span class=\"ds-stamp ds-stamp--lime\">Indexed</span>",
+      "css": ".ds-stamp { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; border-radius:9999px; padding:0.25rem 0.7rem; } .ds-stamp--lime { background: var(--lime-soft, #f1fee4); color: var(--lime-ink, #2c5a15); } .ds-stamp--lilac { background: var(--lilac-soft, #f3ebff); color: var(--lilac-ink, #4a2470); } .ds-stamp--butter { background: var(--butter-soft, #fbfae0); color: var(--butter-ink, #5e5a00); }"
+    },
+    {
+      "name": "Floating Capsule",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "La firma del shell: cada item del topbar es su propia cápsula sobre el lienzo, sin fondo de barra.",
+      "html": "<span class=\"ds-capsule\">Resumen del panel</span>",
+      "css": ".ds-capsule { display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:9999px; background: var(--surface, #ffffff); box-shadow: 0 1px 2px rgba(11,11,12,.04), 0 14px 44px rgba(11,11,12,.06); font-family:'Bricolage Grotesque',sans-serif; font-size:15px; font-weight:700; letter-spacing:-0.02em; }"
+    },
+    {
+      "name": "Chat Bubble",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "La firma de Conversaciones: burbuja de 20px con esquina de hablante recortada.",
+      "html": "<div class=\"ds-bubble\">¡Hola! Sí, quedan dos plazas.</div>",
+      "css": ".ds-bubble { background: var(--ink-1, #0b0b0c); color:#ffffff; border-radius:20px; border-bottom-right-radius:7px; padding:11px 16px; font-size:13.5px; line-height:1.5; max-width:66%; font-family: inherit; box-sizing:border-box; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Estudio Optimista",
+    "overview": "El dashboard de Mitchbot se siente como entrar a un estudio de trabajo a media mañana: un lienzo de papel cálido donde el lila, la lima y el cielo asoman por los bordes como luz de ventana, tinta negra de imprenta y una familia de pasteles que significa algo. Cada color tiene su papel —lila es una persona, lima es el bot, cielo es Web, mantequilla es una espera—. El acento de identidad por proyecto (--brand*) gobierna selección y orientación, nunca las acciones: el primario es siempre tinta negra.",
+    "keyCharacteristics": [
+      "Lienzo de papel cálido con niebla de pasteles en los bordes y tarjetas blancas de radio 20–28px.",
+      "Un acento de identidad por proyecto reservado a item activo, avatar, punto de proyecto y foco.",
+      "Tinta negra de imprenta en tres pasos sobre hairlines cálidas — nunca gris frío.",
+      "Familia pastel semántica: lila=persona, lima=bot, cielo=Web, mantequilla=espera.",
+      "Shell de cápsulas flotantes, sin barras ni fondos: el rail y el topbar son piezas sueltas sobre el lienzo."
+    ],
+    "rules": [
+      { "name": "La Regla del Color que Significa", "body": "Un pastel solo aparece si dice algo: lila es una persona, lima es el bot, cielo es Web, mantequilla es una espera. No se usa como decoración.", "section": "colors" },
+      { "name": "La Regla de la Tinta Primaria", "body": "El primario de acción es tinta negra, no color. El acento de marca no pinta botones: pinta orientación y selección.", "section": "colors" },
+      { "name": "La Regla del Lienzo Cálido", "body": "Toda superficie neutra nace del papel con hairline cálida; prohibido introducir grises fríos o azules de panel administrativo.", "section": "colors" },
+      { "name": "La Regla del Sello", "body": "Todo microtexto de estado va en sello uppercase de 10px peso 800 dentro de una pill; no se improvisan tamaños de badge.", "section": "typography" },
+      { "name": "La Regla del Display", "body": "Los titulares usan Bricolage Grotesque; nunca se sustituye por la fuente de cuerpo ni por una sans del sistema.", "section": "typography" },
+      { "name": "La Regla Sin Halo", "body": "Ninguna sombra lleva tinte del acento; la proyección siempre es tinta neutra.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do diseñar contra las variables --brand* y derivar estados en vivo; nunca asumes el hue del proyecto.",
+      "Do usar cada pastel por su papel semántico.",
+      "Do mantener la tinta negra como primario de acción y el acento para orientación/selección.",
+      "Do construir el topbar como cápsulas flotantes sin fondo de barra."
+    ],
+    "donts": [
+      "Don't reintroducir una barra de shell con fondo, borde y blur en el topbar.",
+      "Don't pintar botones primarios con el acento de marca ni introducir segundas voces de color.",
+      "Don't usar halos de color en sombras, glassmorphism, gradientes chillones ni neón.",
+      "Don't inventar tamaños de badge fuera del sello (10px/800/pill).",
+      "Don't mezclar la webfont de Material Symbols con Phosphor: el set es uno solo."
+    ]
+  }
+}

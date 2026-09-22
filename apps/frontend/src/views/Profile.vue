@@ -3,6 +3,10 @@ import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { authService, type User } from '../services/auth.service';
 import { projectService, type Project } from '../services/project.service';
+import AIcon from '../components/ui/AIcon.vue';
+import AAvatar from '../components/ui/AAvatar.vue';
+import APill from '../components/ui/APill.vue';
+import AButton from '../components/ui/AButton.vue';
 
 const { t } = useI18n();
 
@@ -13,21 +17,28 @@ const profileLoading = ref(false);
 const profileSuccess = ref('');
 const profileError = ref('');
 
+const userInitials = ref('?');
+
 onMounted(async () => {
   try {
-    // Cargar perfil actualizado desde el servidor
     const user = await authService.getProfile();
     currentUser.value = user;
     profileForm.value.name = user.name;
     profileForm.value.email = user.email;
   } catch {
-    // Fallback a datos locales
     currentUser.value = authService.getUser();
     if (currentUser.value) {
       profileForm.value.name = currentUser.value.name;
       profileForm.value.email = currentUser.value.email;
     }
   }
+  userInitials.value =
+    currentUser.value?.name
+      ?.split(' ')
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || '?';
   try {
     projects.value = await projectService.listProjects();
   } catch {
@@ -69,94 +80,86 @@ async function handleUpdateProfile() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
-    <div class="flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ t('profile.title') }}</h1>
-        <p class="text-sm text-slate-500 mt-1">{{ t('profile.subtitle') }}</p>
+  <div class="flex flex-col gap-3.5">
+    <div class="grid grid-cols-1 gap-3.5 lg:grid-cols-[320px_1fr]">
+      <!-- Ficha -->
+      <div class="rounded-card bg-surface p-6 text-center shadow-card">
+        <AAvatar :initials="userInitials" tone="lilac" size="lg" class="mx-auto h-[84px] w-[84px] text-[30px]" />
+        <h2 class="mt-4 font-display text-xl font-bold tracking-[-0.02em]">
+          {{ currentUser?.name || t('common.loading') }}
+        </h2>
+        <p class="mt-1 text-[13px] text-ink-3">{{ currentUser?.email || '' }}</p>
+        <div class="mt-3 flex justify-center">
+          <APill tone="lilac">{{ currentUser?.role || '' }}</APill>
+        </div>
+        <div class="my-4 h-px bg-line" />
+        <div class="text-left text-[13px] text-ink-3">
+          {{ t('profile.projects.title', { count: projects.length }) }}
+        </div>
+        <div v-if="projects.length === 0" class="mt-2 text-xs text-ink-3">{{ t('profile.projects.empty') }}</div>
+        <div v-else class="mt-2 flex flex-wrap justify-center gap-2">
+          <span
+            v-for="p in projects"
+            :key="p._id"
+            class="inline-flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-1 text-[11.5px] font-medium text-ink-2"
+          >
+            <AIcon
+              name="FolderOpen"
+              :size="13"
+              :class="p._id === currentUser?.activeProjectId ? 'text-lilac-ink' : 'text-ink-3'"
+            />
+            {{ p.name }}
+          </span>
+        </div>
       </div>
-    </div>
 
-    <div class="max-w-2xl">
-      <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-        <!-- User avatar & info -->
-        <div class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-700">
-          <div class="h-16 w-16 rounded-full bg-blue-600 flex items-center justify-center ring-4 ring-blue-100 dark:ring-blue-900/30 text-white text-xl font-bold">
-            {{ currentUser?.name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?' }}
-          </div>
-          <div>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ currentUser?.name || t('common.loading') }}</h2>
-            <p class="text-sm text-slate-500">{{ currentUser?.email || '' }}</p>
-            <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-blue-50 text-blue-700 border border-blue-100">
-              {{ currentUser?.role || '' }}
-            </span>
-          </div>
-        </div>
-
-        <div class="mb-6 pb-6 border-b border-slate-100 dark:border-slate-700">
-          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">folder_open</span>
-            {{ t('profile.projects.title', { count: projects.length }) }}
-          </h2>
-          <div v-if="projects.length === 0" class="text-sm text-slate-400">{{ t('profile.projects.empty') }}</div>
-          <div v-else class="flex flex-wrap gap-2">
-            <span
-              v-for="p in projects"
-              :key="p._id"
-              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium"
-            >
-              <span
-                class="material-symbols-outlined text-[14px]"
-                :class="p._id === currentUser?.activeProjectId ? 'text-blue-600' : 'text-slate-400'"
-              >folder</span>
-              {{ p.name }}
-            </span>
-          </div>
-        </div>
-
-        <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-          <span class="material-symbols-outlined text-[18px]">person</span>
+      <!-- Datos -->
+      <div class="rounded-card bg-surface p-6 shadow-card">
+        <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">
           {{ t('profile.info.title') }}
         </h2>
 
-        <!-- Success / Error -->
-        <div v-if="profileSuccess" class="mb-4 p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-emerald-600 flex items-center gap-2">
-          <span class="material-symbols-outlined text-[18px]">check_circle</span>
+        <div
+          v-if="profileSuccess"
+          class="mt-4 flex items-center gap-2 rounded-field bg-lime-soft p-3 text-[13px] text-lime-ink"
+        >
+          <AIcon name="CheckCircle" :size="17" />
           {{ profileSuccess }}
         </div>
-        <div v-if="profileError" class="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center gap-2">
-          <span class="material-symbols-outlined text-[18px]">error</span>
+        <div
+          v-if="profileError"
+          class="mt-4 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]"
+        >
+          <AIcon name="WarningCircle" :size="17" />
           {{ profileError }}
         </div>
 
-        <div class="flex flex-col gap-4">
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('common.name') }}</label>
-            <input v-model="profileForm.name" type="text" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('common.email') }}</label>
-            <input v-model="profileForm.email" type="email" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
-          </div>
+        <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('common.name') }}</span>
+            <input v-model="profileForm.name" type="text" class="field" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('common.email') }}</span>
+            <input v-model="profileForm.email" type="email" class="field" />
+          </label>
+        </div>
 
-          <div class="border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
-            <h3 class="text-xs font-bold text-slate-500 uppercase mb-3">{{ t('profile.password.title') }}</h3>
-            <div class="flex flex-col gap-3">
-              <input v-model="profileForm.currentPassword" type="password" :placeholder="t('profile.password.current')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
-              <input v-model="profileForm.newPassword" type="password" :placeholder="t('profile.password.new')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
-              <input v-model="profileForm.confirmPassword" type="password" :placeholder="t('profile.password.confirm')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
-            </div>
-          </div>
+        <div class="my-5 h-px bg-line" />
 
-          <div class="flex justify-end pt-2">
-            <button
-              @click="handleUpdateProfile"
-              :disabled="profileLoading"
-              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm"
-            >
-              {{ profileLoading ? t('common.saving') : t('common.saveChanges') }}
-            </button>
-          </div>
+        <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">
+          {{ t('profile.password.title') }}
+        </h2>
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <input v-model="profileForm.currentPassword" type="password" class="field" :placeholder="t('profile.password.current')" />
+          <input v-model="profileForm.newPassword" type="password" class="field" :placeholder="t('profile.password.new')" />
+          <input v-model="profileForm.confirmPassword" type="password" class="field" :placeholder="t('profile.password.confirm')" />
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <AButton variant="primary" :loading="profileLoading" @click="handleUpdateProfile">
+            {{ profileLoading ? t('common.saving') : t('common.saveChanges') }}
+          </AButton>
         </div>
       </div>
     </div>

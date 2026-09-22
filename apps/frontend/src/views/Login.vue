@@ -3,6 +3,8 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { authService } from '../services/auth.service';
+import AIcon from '../components/ui/AIcon.vue';
+import AButton from '../components/ui/AButton.vue';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -30,56 +32,68 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 p-4">
-    <div class="w-full max-w-md">
-      <!-- Logo -->
-      <div class="text-center mb-8">
-        <div class="flex items-center justify-center gap-3 mb-2">
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
-            <span class="material-symbols-outlined text-[28px]">smart_toy</span>
-          </div>
+  <div class="relative flex min-h-screen items-center justify-center p-4">
+    <div class="aurora-haze" aria-hidden="true" />
+    <div class="relative z-10 w-full max-w-md">
+      <div class="mb-6 flex items-center gap-3">
+        <div class="grid h-11 w-11 place-items-center rounded-[16px] bg-ink font-display text-xl font-bold tracking-[-0.02em] text-white">
+          M
         </div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">BotMaster</h1>
-        <p class="text-sm text-slate-500">{{ t('login.subtitle') }}</p>
+        <div class="font-display text-xl font-bold tracking-[-0.02em]">Mitchbot</div>
       </div>
 
-      <!-- Card -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-8">
-        <!-- Error -->
-        <div v-if="error" class="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center gap-2">
-          <span class="material-symbols-outlined text-[18px]">error</span>
+      <div class="rounded-big bg-surface p-8 shadow-[var(--shadow-pop)]">
+        <h1 class="font-display text-[34px] font-bold leading-none tracking-[-0.035em]">
+          Hola otra vez.<br />Entra al panel.
+        </h1>
+        <p class="mb-6 mt-2.5 text-[13px] text-ink-3">{{ t('login.subtitle') }}</p>
+
+        <div
+          v-if="error"
+          class="mb-4 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]"
+        >
+          <AIcon name="WarningCircle" :size="17" />
           {{ error }}
         </div>
 
-        <!-- Login Form -->
-        <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('common.email') }}</label>
+        <form class="flex flex-col gap-4" @submit.prevent="handleLogin">
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('common.email') }}</span>
             <input
               v-model="loginForm.email"
               type="email"
+              class="field"
               :placeholder="t('login.form.emailPlaceholder')"
-              class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
             />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('login.form.password') }}</label>
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('login.form.password') }}</span>
             <input
               v-model="loginForm.password"
               type="password"
+              class="field"
               :placeholder="t('login.form.passwordPlaceholder')"
-              class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
             />
-          </div>
-          <button
-            type="submit"
-            :disabled="isLoading"
-            class="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm"
-          >
+          </label>
+          <AButton type="submit" variant="primary" block :loading="isLoading" class="mt-1 py-3">
             {{ isLoading ? t('login.loading') : t('login.submit') }}
-          </button>
+          </AButton>
         </form>
+
+        <div class="mt-5 flex flex-wrap justify-center gap-2">
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-sky-soft px-2.5 py-1 text-[11px] font-semibold text-sky-ink">
+            <span class="h-1.5 w-1.5 rounded-full bg-current" />Sin tarjeta
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-lime-soft px-2.5 py-1 text-[11px] font-semibold text-lime-ink">
+            <span class="h-1.5 w-1.5 rounded-full bg-current" />Listo en minutos
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-lilac-soft px-2.5 py-1 text-[11px] font-semibold text-lilac-ink">
+            <span class="h-1.5 w-1.5 rounded-full bg-current" />Tus datos, cifrados
+          </span>
+        </div>
       </div>
+
+      <p class="mt-4 text-center text-xs text-ink-3">Las cuentas se crean desde el equipo, no desde aquí.</p>
     </div>
   </div>
 </template>

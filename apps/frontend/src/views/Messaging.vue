@@ -15,6 +15,11 @@ import {
   decorateConversation,
   type ChannelFilter,
 } from "../composables/useConversations";
+import AIcon from "../components/ui/AIcon.vue";
+import AAvatar from "../components/ui/AAvatar.vue";
+import APill from "../components/ui/APill.vue";
+import ABubble from "../components/ui/ABubble.vue";
+import AEmptyState from "../components/ui/AEmptyState.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -38,10 +43,10 @@ const newMessage = ref("");
 const searchQuery = ref("");
 
 // === Filtros de canal derivados de la configuración del proyecto ===
-const channelMeta: Record<Exclude<ChannelFilter, "All">, { label: string; dot: string }> = {
-  WhatsApp: { label: "WhatsApp", dot: "bg-green-500" },
-  Instagram: { label: "Instagram", dot: "bg-purple-500" },
-  Web: { label: "Web", dot: "bg-blue-500" },
+const channelMeta: Record<Exclude<ChannelFilter, "All">, { label: string; color: string }> = {
+  WhatsApp: { label: "WhatsApp", color: "var(--lime-ink)" },
+  Instagram: { label: "Instagram", color: "var(--lilac-ink)" },
+  Web: { label: "Web", color: "var(--sky-ink)" },
 };
 const enabledChannels = ref<ChannelFilter[]>(["All"]);
 
@@ -58,6 +63,12 @@ async function loadChannels() {
     console.error("Failed to load project channels", error);
     enabledChannels.value = ["All", "WhatsApp", "Instagram", "Web"];
   }
+}
+
+function platformIcon(platform: string) {
+  if (platform === "WhatsApp") return "Phone";
+  if (platform === "Instagram") return "Image";
+  return "Globe";
 }
 
 const filteredChats = computed(() => {
@@ -111,10 +122,9 @@ async function fetchChats() {
 async function selectChat(chat: ChatConversation) {
   selectedChat.value = chat;
   setOpenConversation(chat._id);
-  socketService.joinRoom(chat._id); // Join room
+  socketService.joinRoom(chat._id);
   markConversationRead(chat._id);
 
-  // Mark as active visually
   chats.value.forEach((c) => (c.active = c._id === chat._id));
 
   await Promise.all([fetchMessages(chat), loadInsights(chat._id)]);
@@ -190,22 +200,17 @@ function formatDayLabel(date: Date) {
 
 function renderMarkdown(content: string) {
   if (!content) return '';
-  // Basic markdown rendering, you could use marked.js here
   return content
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/\n/g, '<br/>');
 }
 
-/**
- * Envía mensaje como agente humano.
- * Si es la primera respuesta, automáticamente se crea el contacto en el backend.
- */
 async function handleSendMessage() {
   if (!newMessage.value.trim() || !selectedChat.value) return;
 
   const content = newMessage.value;
-  newMessage.value = ""; // Optimistic clear
+  newMessage.value = "";
 
   try {
     const sentMsg = await messagingService.sendMessage(
@@ -219,9 +224,8 @@ async function handleSendMessage() {
       scrollToBottom();
     }
 
-    // Si el contacto no estaba creado, refrescar la lista para actualizar los datos
     if (selectedChat.value && !selectedChat.value.isContactCreated) {
-      setTimeout(refreshSelectedConversation, 500); // Pequeño delay para que el backend termine
+      setTimeout(refreshSelectedConversation, 500);
     }
   } catch (error) {
     console.error("Failed to send message", error);
@@ -322,51 +326,57 @@ function onInsights(data: { conversationId: string; insights: ConversationInsigh
   }
 }
 
-const sentimentMeta = computed(() => {
+const sentimentTone = computed<'lime' | 'butter' | 'danger'>(() => {
   const sentiment = insights.value?.sentiment || "neutral";
-  if (sentiment === "positive") {
-    return { label: t("messaging.insights.sentiment.positive"), class: "stamp", style: "color: var(--ok); background: var(--ok-soft)" };
-  }
-  if (sentiment === "negative") {
-    return { label: t("messaging.insights.sentiment.negative"), class: "stamp", style: "color: var(--danger); background: var(--danger-soft)" };
-  }
-  return { label: t("messaging.insights.sentiment.neutral"), class: "stamp", style: "color: var(--warn); background: var(--warn-soft)" };
+  if (sentiment === "positive") return "lime";
+  if (sentiment === "negative") return "danger";
+  return "butter";
+});
+
+const sentimentLabel = computed(() => {
+  const sentiment = insights.value?.sentiment || "neutral";
+  if (sentiment === "positive") return t("messaging.insights.sentiment.positive");
+  if (sentiment === "negative") return t("messaging.insights.sentiment.negative");
+  return t("messaging.insights.sentiment.neutral");
 });
 
 const sentimentBars = computed(() => {
   const scores = insights.value?.sentimentScores;
-  if (!scores) return [] as { key: string; class: string; width: string }[];
+  if (!scores) return [] as { key: string; color: string; width: string; pct: number }[];
   return [
-    { key: "negative", class: "bg-red-300", width: `${Math.round(scores.negative * 100)}%` },
-    { key: "neutral", class: "bg-yellow-300", width: `${Math.round(scores.neutral * 100)}%` },
-    { key: "positive", class: "bg-green-500", width: `${Math.round(scores.positive * 100)}%` },
-  ];
+    { key: "negative", color: "var(--butter)", pct: Math.round(scores.negative * 100) },
+    { key: "neutral", color: "var(--line-2)", pct: Math.round(scores.neutral * 100) },
+    { key: "positive", color: "var(--lime)", pct: Math.round(scores.positive * 100) },
+  ].map((b) => ({ ...b, width: `${b.pct}%` }));
+});
+
+// Urgencia: dato aún no expuesto por el backend — derivado de señales visibles.
+const urgency = computed(() => {
+  const chat = selectedChat.value;
+  if (!chat) return { level: t("messaging.urgency.level.low"), tone: "lime" as const, step: 1, reason: "" };
+  const pending = messages.value.some(
+    (m) => m.contentType === "confirmation_request" && m.toolData?.status === "needs_confirmation",
+  );
+  if (pending) {
+    return { level: t("messaging.urgency.level.medium"), tone: "butter" as const, step: 2, reason: t("messaging.urgency.reasonPending") };
+  }
+  const open = chat.status !== "closed";
+  return {
+    level: t("messaging.urgency.level.low"),
+    tone: "lime" as const,
+    step: 1,
+    reason: open ? t("messaging.urgency.reasonOpen") : t("messaging.urgency.reasonClosed"),
+  };
 });
 
 const details = computed(() => {
   const chat = selectedChat.value;
   if (!chat) return [];
   return [
-    {
-      label: t("common.email"),
-      value: chat.contactEmail || chat.clientInfo?.email || t("messaging.details.notAvailable"),
-      icon: "mail",
-    },
-    {
-      label: t("common.phone"),
-      value: chat.contactPhone || chat.clientInfo?.phone || t("messaging.details.notAvailable"),
-      icon: "smartphone",
-    },
-    {
-      label: t("messaging.details.platform"),
-      value: chat.platform,
-      icon: "language",
-    },
-    {
-      label: t("common.status"),
-      value: chat.status,
-      icon: "info",
-    },
+    { label: t("common.email"), value: chat.contactEmail || chat.clientInfo?.email || t("messaging.details.notAvailable") },
+    { label: t("common.phone"), value: chat.contactPhone || chat.clientInfo?.phone || t("messaging.details.notAvailable") },
+    { label: t("messaging.details.platform"), value: chat.platform },
+    { label: t("common.status"), value: chat.status },
   ];
 });
 
@@ -383,7 +393,6 @@ function formatTime(dateStr: string) {
 function onNewMessage(msg: ChatMessage) {
   const convId = msg.conversationId;
   if (!convId) return;
-  // La lista y el conteo de no leídos los mantiene el composable.
   if (selectedChat.value && selectedChat.value._id === convId) {
     const processed = processMessage(msg, selectedChat.value);
     const existingMsg = messages.value.find((m) => m._id === processed._id);
@@ -391,16 +400,13 @@ function onNewMessage(msg: ChatMessage) {
       messages.value.push(processed);
       scrollToBottom();
     } else {
-      // Update existing message if needed
       existingMsg.content = processed.content;
     }
   }
 }
 
 function onMessageChunk(data: { messageId: string, conversationId: string, content: string, isDone: boolean }) {
-  // El bot no emite fragmentos parciales: solo se aplica el mensaje final.
   if (!data.isDone) return;
-  // Only update UI if we are in the correct chat
   if (selectedChat.value && selectedChat.value._id === data.conversationId) {
     const existingMsg = messages.value.find((m) => m._id === data.messageId);
     if (existingMsg) {
@@ -418,9 +424,9 @@ function isToolMessage(msg: ChatMessage) {
 }
 
 function toolIcon(msg: ChatMessage) {
-  if (msg.contentType === 'confirmation_request') return 'help';
-  if (msg.toolData?.status === 'error') return 'error';
-  return 'build';
+  if (msg.contentType === 'confirmation_request') return 'Question';
+  if (msg.toolData?.status === 'error') return 'WarningCircle';
+  return 'Wrench';
 }
 
 function toolLabel(msg: ChatMessage) {
@@ -439,15 +445,11 @@ function statusLabel(status?: string) {
   return status ? (map[status] || status) : '';
 }
 
-function statusClass(status?: string) {
-  const map: Record<string, string> = {
-    success: 'text-[color:var(--ok)]',
-    error: 'text-[color:var(--danger)]',
-    cancelled: 'text-warm-ink3',
-    needs_confirmation: 'text-[color:var(--warn)]',
-    pending: 'text-[color:var(--warn)]',
-  };
-  return status ? (map[status] || 'text-warm-ink2') : 'text-warm-ink2';
+function toolTone(status?: string) {
+  if (status === 'error') return 'danger';
+  if (status === 'needs_confirmation' || status === 'pending') return 'butter';
+  if (status === 'success') return 'lime';
+  return 'ghost';
 }
 
 function confirmTool(msg: ChatMessage, action: 'confirm' | 'cancel') {
@@ -487,10 +489,6 @@ function onMessageUpdated(data: { messageId: string; status: string; params?: an
   if (data.content) existing.content = data.content;
 }
 
-/**
- * Refleja en vivo los cambios de modo/estado de la conversación (p. ej. la
- * transferencia a un asesor humano) sin recargar la lista.
- */
 function onConversationStatus(data: { mode?: string; status?: string; tag?: string; tagColor?: string }) {
   const target = selectedChat.value;
   if (!target) return;
@@ -518,7 +516,6 @@ function scrollToBottom() {
 
 function onSocketError(error: any) {
   console.error("WebSocket error:", error);
-  // Mostrar toast o notificación de error
 }
 
 function onNotification(data: any) {
@@ -526,7 +523,6 @@ function onNotification(data: any) {
 }
 
 onMounted(async () => {
-  // Conectar el socket y registrar los handlers de lista/no leídos una sola vez.
   try {
     bindConversationSocket();
     socketService.onMessage(onNewMessage);
@@ -543,7 +539,6 @@ onMounted(async () => {
     console.error("Failed to initialize socket service", error);
   }
 
-  // Cargar canales del proyecto y conversaciones (no dependen del socket).
   await Promise.all([loadChannels(), fetchChats()]);
 });
 
@@ -558,525 +553,377 @@ onUnmounted(() => {
     socketService.socket.off('error', onSocketError);
     socketService.socket.off('admin:notification', onNotification);
   }
-  // No desconectar: el sidebar mantiene el socket para el conteo en vivo.
 });
 </script>
 
 <template>
-  <div class="flex h-full overflow-hidden">
-    <!-- Inbox Column -->
-    <aside
-      class="w-80 flex-none bg-warm-surface border-r border-warm-line flex flex-col"
-    >
-      <div class="p-4 border-b border-warm-line">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold tracking-tight text-warm-ink">{{ t("messaging.inbox.title") }}</h2>
-        </div>
-        <div class="relative mb-3 group">
-          <span class="absolute left-3 top-2.5 text-warm-ink3">
-            <span class="material-symbols-outlined text-[18px]">search</span>
-          </span>
+  <div
+    class="grid h-full min-h-0 grid-cols-1 gap-3.5 overflow-hidden"
+    :class="selectedChat ? 'lg:grid-cols-[minmax(320px,30%)_1fr_300px]' : 'lg:grid-cols-[minmax(320px,30%)_1fr]'"
+  >
+    <!-- Bandeja de entrada -->
+    <aside class="flex h-full min-h-0 flex-col overflow-hidden rounded-big bg-surface shadow-card">
+      <div class="px-4.5 pb-2.5 pt-4">
+        <h2 class="font-display text-[15.5px] font-bold tracking-[-0.01em]">
+          {{ t("messaging.inbox.title") }}
+        </h2>
+        <div class="mt-3 flex items-center gap-2.5 rounded-full bg-canvas px-4 py-2.5">
+          <AIcon name="MagnifyingGlass" :size="17" class="shrink-0 text-ink-3" />
           <input
             v-model="searchQuery"
-            class="field pl-9 pr-4 py-2.5 transition-all" style="background: var(--ground)" 
+            class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3"
             :placeholder="t('messaging.inbox.searchPlaceholder')"
             type="text"
           />
         </div>
-        <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+        <div class="mt-3 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           <button
             v-for="channel in enabledChannels"
             :key="channel"
-            @click="setActiveChannel(channel)"
+            type="button"
             :class="[
-              'px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors flex items-center gap-1.5',
+              'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
               activeChannel === channel
-                ? 'bg-[color:var(--brand)] text-[color:var(--brand-contrast)]'
-                : 'bg-warm-surface border border-warm-line text-warm-ink2 hover:bg-warm-deep',
+                ? 'bg-ink text-white'
+                : 'bg-canvas text-ink-2 hover:bg-sunken hover:text-ink',
             ]"
+            @click="setActiveChannel(channel)"
           >
             <span
               v-if="channel !== 'All'"
-              class="w-1.5 h-1.5 rounded-full"
-              :class="channelMeta[channel as Exclude<ChannelFilter, 'All'>].dot"
-            ></span>
+              class="h-1.5 w-1.5 rounded-full bg-current"
+            />
             {{ channel === "All" ? t("messaging.filters.all") : channelMeta[channel as Exclude<ChannelFilter, 'All'>].label }}
           </button>
         </div>
       </div>
-      <div class="flex-1 overflow-y-auto">
-        <div v-if="isLoadingChats" class="p-4 text-center text-warm-ink3 text-sm font-bold">
+
+      <div class="flex-1 overflow-y-auto p-1.5">
+        <div v-if="isLoadingChats" class="px-3 py-8 text-center text-sm font-semibold text-ink-3">
           {{ t("messaging.inbox.loading") }}
         </div>
-        <div v-else-if="chats.length === 0" class="p-4 text-center text-warm-ink3 text-sm font-bold">
-          {{ t("messaging.inbox.empty") }}
-        </div>
-        <div v-else-if="filteredChats.length === 0" class="p-4 text-center text-warm-ink3 text-sm font-bold">
+        <AEmptyState
+          v-else-if="chats.length === 0"
+          icon="ChatCircleDots"
+          :title="t('messaging.inbox.empty')"
+        />
+        <div
+          v-else-if="filteredChats.length === 0"
+          class="px-3 py-8 text-center text-sm font-semibold text-ink-3"
+        >
           {{ t("messaging.inbox.noMatches") }}
         </div>
-        <div
+        <button
           v-for="chat in filteredChats"
+          v-else
           :key="chat._id"
+          type="button"
           :class="[
-            'group flex items-start gap-3 p-4 cursor-pointer transition-colors border-b border-warm-line',
-            chat.active
-              ? 'bg-[color:var(--brand-softer)] active-row'
-              : 'hover:bg-warm-ground',
+            'grid w-full grid-cols-[38px_1fr_auto] items-center gap-3 rounded-card border-[1.5px] border-transparent p-3 text-left transition-colors',
+            chat.active ? 'border-lilac bg-lilac-soft' : 'hover:bg-canvas',
           ]"
           @click="selectChat(chat)"
         >
-          <div class="relative flex-none">
-            <div
-              class="w-10 h-10 rounded-full bg-cover bg-center"
-              :style="{ backgroundImage: `url(${chat.avatar})` }"
-            ></div>
-            <div
-              class="absolute -bottom-1 -right-1 rounded-full p-0.5 border border-warm-line" style="background: var(--surface)"
-            >
-              <span
-                :class="[
-                  'material-symbols-outlined text-[12px] rounded-full p-0.5',
-                  chat.platform === 'WhatsApp'
-                    ? 'text-[color:var(--ok)]'
-                    : chat.platform === 'Instagram'
-                      ? 'text-[color:var(--brand-ink)]'
-                      : 'text-[color:var(--ok)]',
-                ]"
-                >{{
-                  chat.platform === "WhatsApp" ? "call" : chat.platform === "Instagram" ? "photo_camera" : "language"
-                }}</span
-              >
-            </div>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-start mb-0.5">
-              <h3
-                :class="[
-                  'text-sm line-clamp-1',
-                  chat.active
-                    ? 'font-extrabold text-warm-ink'
-                    : 'font-bold text-warm-ink',
-                ]"
-              >
-                {{ chat.name }}
-              </h3>
-              <span
-                :class="[
-                  'text-[11px] whitespace-nowrap',
-                  chat.active ? 'text-warm-ink2 font-bold' : 'text-warm-ink3 font-bold',
-                ]"
-                >{{ chat.time }}</span
-              >
-            </div>
-            <p
-              :class="[
-                'text-xs line-clamp-1',
-                chat.active ? 'text-warm-ink2 font-medium' : 'text-warm-ink2',
-              ]"
-            >
-              {{ chat.message }}
-            </p>
-            <div class="mt-2 flex items-center gap-2">
-              <span
-                v-if="chat.tag"
-                :class="[
-                  'px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide border',
-                  chat.tagColor === 'blue'
-                    ? 'bg-[color:var(--brand-soft)] text-[color:var(--brand-ink)] font-extrabold border-transparent'
-                    : 'bg-warm-deep text-warm-ink2 border-warm-line font-bold',
-                ]"
-                >{{ chat.tag }}</span
-              >
-              <span
-                v-if="!chat.isContactCreated"
-                class="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide bg-[color:var(--warn-soft)] text-[color:var(--warn)] border border-transparent font-extrabold"
-              >
+          <span class="relative flex-none">
+            <AAvatar
+              :initials="(chat.name || 'C').slice(0, 2).toUpperCase()"
+              :tone="chat.platform === 'Instagram' ? 'lilac' : chat.platform === 'Web' ? 'sky' : 'lime'"
+            />
+            <span class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full bg-surface text-ink-3 ring-1 ring-line">
+              <AIcon :name="platformIcon(chat.platform)" :size="10" weight="fill" />
+            </span>
+          </span>
+          <span class="min-w-0">
+            <span class="flex items-center gap-2">
+              <span class="truncate text-[13.5px] font-semibold">{{ chat.name }}</span>
+              <APill v-if="!chat.isContactCreated" tone="butter" size="sm">
                 {{ t("messaging.contact.noContact") }}
-              </span>
-              <span
-                v-if="chat.unreadCount"
-                class="ml-auto text-[10px] font-extrabold px-1.5 py-0.5 rounded-full" :style="{ background: 'var(--brand)', color: 'var(--brand-contrast)' }" 
-              >
-                {{ chat.unreadCount }}
-              </span>
-            </div>
-          </div>
-        </div>
+              </APill>
+            </span>
+            <span class="mt-0.5 block truncate text-xs text-ink-3">{{ chat.message }}</span>
+          </span>
+          <span class="flex flex-col items-end gap-1.5">
+            <span class="text-[11px] text-ink-3">{{ chat.time }}</span>
+            <span
+              v-if="chat.unreadCount"
+              class="grid h-5 min-w-5 place-items-center rounded-full bg-ink px-1.5 text-[11px] font-bold text-white [font-variant-numeric:tabular-nums]"
+            >
+              {{ chat.unreadCount }}
+            </span>
+          </span>
+        </button>
       </div>
     </aside>
 
-    <!-- Chat Main -->
-    <main class="flex-1 flex flex-col min-w-[400px] relative">
+    <!-- Hilo -->
+    <main class="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-big bg-surface shadow-card">
       <div
         v-if="!selectedChat"
-        class="flex-1 flex items-center justify-center text-warm-ink3 font-bold"
+        class="flex flex-1 items-center justify-center"
       >
-        {{ t("messaging.chat.selectPrompt") }}
+        <AEmptyState icon="ChatCircleDots" :title="t('messaging.chat.selectPrompt')" />
       </div>
       <template v-else>
-        <header
-          class="h-16 flex-none border-b border-warm-line flex items-center justify-between px-6 bg-warm-surface z-10 sticky top-0"
-        >
-          <div class="flex items-center gap-3">
-            <div class="flex flex-col">
-              <h1
-                class="text-base font-extrabold text-warm-ink flex items-center gap-2"
-              >
+        <header class="flex flex-none flex-wrap items-center gap-3 border-b-[1.5px] border-line px-5 py-4">
+          <span class="flex items-center gap-3">
+            <AAvatar :initials="(selectedChat.name || 'C').slice(0, 2).toUpperCase()" tone="lilac" />
+            <span class="flex flex-col">
+              <span class="font-display text-base font-semibold tracking-[-0.01em]">
                 {{ selectedChat.name }}
-              </h1>
-              <div class="flex items-center gap-1.5 text-xs text-warm-ink2 font-bold">
-                <span
-                  class="material-symbols-outlined text-[14px]" :style="{ color: 'var(--ok)' }"
-                  >{{
-                    selectedChat.platform === "WhatsApp"
-                      ? "call"
-                      : selectedChat.platform === "Instagram"
-                        ? "photo_camera"
-                        : "language"
-                  }}</span
-                >
-                <span>{{ selectedChat.platform }}</span>
-                <span v-if="!selectedChat.isContactCreated" class="ml-2 font-extrabold" :style="{ color: 'var(--warn)' }">
-                  • {{ t("messaging.contact.noContact") }}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <div
-              v-if="selectedChat.mode === 'auto_pilot'"
-              class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[color:var(--brand-softer)]"
-            >
-              <span class="material-symbols-outlined text-[18px]" :style="{ color: 'var(--brand-ink)' }"
-                >smart_toy</span
-              >
-              <span
-                class="text-xs font-extrabold uppercase tracking-wider" :style="{ color: 'var(--brand-ink)' }"
-                >{{ t("messaging.mode.autoPilotOn") }}</span
-              >
-            </div>
-            <div
-              v-else
-              class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[color:var(--warn-soft)]"
-            >
-              <span class="material-symbols-outlined text-[18px]" :style="{ color: 'var(--warn)' }"
-                >support_agent</span
-              >
-              <span
-                class="text-xs font-extrabold uppercase tracking-wider" :style="{ color: 'var(--warn)' }"
-                >{{ t("messaging.mode.humanTakeover") }}</span
-              >
-            </div>
-          </div>
+              </span>
+              <span class="flex items-center gap-1.5 text-[11.5px] text-ink-3">
+                <AIcon :name="platformIcon(selectedChat.platform)" :size="13" />
+                {{ selectedChat.platform }}
+                <template v-if="!selectedChat.isContactCreated">
+                  · {{ t("messaging.contact.noContact") }}
+                </template>
+              </span>
+            </span>
+          </span>
+          <span class="ml-auto flex items-center gap-2">
+            <APill :tone="selectedChat.mode === 'auto_pilot' ? 'lime' : 'butter'">
+              <AIcon :name="selectedChat.mode === 'auto_pilot' ? 'Robot' : 'Headset'" :size="13" />
+              {{ selectedChat.mode === "auto_pilot" ? t("messaging.mode.autoPilotOn") : t("messaging.mode.humanTakeover") }}
+            </APill>
+          </span>
         </header>
+
         <div
           id="chat-messages-container"
-          class="flex-1 overflow-y-auto p-6 flex flex-col scroll-smooth bg-warm-ground"
+          class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-5 py-5 scroll-smooth"
         >
-          <div v-if="isLoadingMessages" class="text-center text-warm-ink3 font-bold py-4">
+          <div v-if="isLoadingMessages" class="py-4 text-center text-sm font-semibold text-ink-3">
             {{ t("messaging.chat.loadingMessages") }}
           </div>
           <template v-else>
             <div
               v-for="group in messageGroups"
               :key="group.key"
-              class="flex flex-col gap-6 mb-6 last:mb-0"
+              class="flex flex-col gap-2.5"
             >
-              <div class="flex justify-center">
-                <span
-                  class="px-3 py-1 rounded-full bg-warm-deep border border-warm-line text-[10px] font-extrabold text-warm-ink2"
-                  >{{ group.label }}</span
-                >
+              <div class="my-1 flex items-center gap-3 text-[11px] font-semibold text-ink-3">
+                {{ group.label }}
+                <span class="h-px flex-1 bg-line" />
               </div>
-              <div
-                v-for="(msg, i) in group.messages"
-                :key="msg._id || i"
-                :class="[
-                  'flex gap-4 max-w-[85%]',
-                  isToolMessage(msg) ? 'max-w-full !flex-col' : '',
-                  !isToolMessage(msg) && msg.isMe ? 'flex-row-reverse ml-auto' : '',
-                ]"
-              >
-                <template v-if="isToolMessage(msg)">
-                  <div class="w-full flex justify-center">
-                    <div
-                      class="max-w-[560px] w-full rounded-2xl border p-4 shadow-[var(--shadow-card)]"
-                      :class="msg.contentType === 'confirmation_request'
-                        ? 'bg-[color:var(--warn-soft)] border-[color:var(--warn-soft)]'
-                        : (msg.toolData?.status === 'error' ? 'bg-[color:var(--danger-soft)] border-[color:var(--danger-soft)]' : 'bg-warm-deep border-warm-line')"
-                    >
-                      <div class="flex items-center gap-2 mb-1">
-                        <span class="material-symbols-outlined text-[16px] text-warm-ink2">{{ toolIcon(msg) }}</span>
-                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-warm-ink2">{{ toolLabel(msg) }}</span>
-                        <span v-if="msg.toolData?.status" class="ml-auto text-[10px] font-bold uppercase" :class="statusClass(msg.toolData.status)">{{ statusLabel(msg.toolData.status) }}</span>
-                      </div>
-                      <p class="text-sm font-medium text-warm-ink leading-relaxed" v-html="renderMarkdown(msg.content)"></p>
-
-                      <div v-if="msg.contentType === 'confirmation_request' && msg.toolData?.status === 'needs_confirmation'" class="flex flex-wrap gap-2 mt-3">
-                        <button @click="confirmTool(msg, 'confirm')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold transition-colors" style="background: var(--ok); color: #fff">{{ t("common.confirm") }}</button>
-                        <button @click="confirmTool(msg, 'cancel')" class="px-3 py-1.5 rounded-xl border border-warm-line text-warm-ink2 text-xs font-extrabold hover:bg-warm-ground transition-colors">{{ t("common.cancel") }}</button>
-                        <button @click="modifyTool(msg)" class="px-3 py-1.5 rounded-xl border border-warm-line text-warm-ink2 text-xs font-extrabold hover:bg-warm-ground transition-colors">{{ t("messaging.tools.modify") }}</button>
-                      </div>
-                      <div class="text-[10px] text-warm-ink3 mt-2">{{ msg.time }}</div>
-                    </div>
+              <template v-for="(msg, i) in group.messages" :key="msg._id || i">
+                <div v-if="isToolMessage(msg)" class="flex w-full justify-end">
+                  <div
+                    class="flex max-w-[80%] flex-wrap items-center gap-2 rounded-field px-4 py-2.5 text-xs font-semibold"
+                    :class="toolTone(msg.toolData?.status) === 'butter'
+                      ? 'bg-butter-soft text-butter-ink'
+                      : toolTone(msg.toolData?.status) === 'danger'
+                        ? 'bg-[color:var(--danger-soft)] text-[color:var(--danger)]'
+                        : 'bg-canvas text-ink-2'"
+                  >
+                    <APill v-if="msg.toolData?.status" :tone="toolTone(msg.toolData.status) as any" size="sm">
+                      {{ statusLabel(msg.toolData.status) || toolLabel(msg) }}
+                    </APill>
+                    <span>{{ toolLabel(msg) }} · {{ msg.content }}</span>
+                    <span v-if="msg.contentType === 'confirmation_request' && msg.toolData?.status === 'needs_confirmation'" class="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        class="rounded-full bg-lime px-3 py-1 text-[11px] font-bold text-lime-ink"
+                        @click="confirmTool(msg, 'confirm')"
+                      >
+                        {{ t("common.confirm") }}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded-full bg-surface px-3 py-1 text-[11px] font-bold text-ink-2 ring-1 ring-line"
+                        @click="confirmTool(msg, 'cancel')"
+                      >
+                        {{ t("common.cancel") }}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded-full bg-surface px-3 py-1 text-[11px] font-bold text-ink-2 ring-1 ring-line"
+                        @click="modifyTool(msg)"
+                      >
+                        {{ t("messaging.tools.modify") }}
+                      </button>
+                    </span>
                   </div>
-                </template>
+                </div>
+
                 <template v-else>
-                <div
-                  v-if="!msg.isMe"
-                  class="w-8 h-8 flex-none rounded-full bg-cover bg-center mt-auto"
-                  :style="{ backgroundImage: `url(${msg.avatar})` }"
-                ></div>
-                <div
-                  v-else
-                  class="w-8 h-8 flex-none rounded-full flex items-center justify-center border border-warm-line mt-auto" style="background: var(--ground)"
-                >
-                  <span
-                    class="material-symbols-outlined text-[18px]" style="color: var(--ink-2)"
-                    >{{ msg.isBot ? "smart_toy" : "person" }}</span
+                  <ABubble
+                    :variant="!msg.isMe ? 'in' : msg.isBot ? 'bot' : 'human'"
+                    :who="!msg.isMe ? undefined : msg.senderName || msg.sender"
                   >
-                </div>
-
-                <div
-                  :class="[
-                    'flex flex-col gap-1',
-                    msg.isMe ? 'items-end' : 'items-start',
-                  ]"
-                >
-                  <div
-                    :class="[
-                      'rounded-[18px] px-5 py-3 shadow-[var(--shadow-card)] relative',
-                      msg.isMe
-                        ? 'rounded-br-[6px]'
-                        : 'bg-warm-surface rounded-bl-[6px]',
-                    ]"
-                    :style="msg.isMe
-                      ? { background: 'var(--brand)', color: 'var(--brand-contrast)' }
-                      : undefined"
-                  >
-                    <div v-if="!msg.content" class="flex items-center gap-1 h-5">
-                      <div class="w-1.5 h-1.5 bg-current rounded-full dot-pulse" style="animation-delay: 0ms"></div>
-                      <div class="w-1.5 h-1.5 bg-current rounded-full dot-pulse" style="animation-delay: 150ms"></div>
-                      <div class="w-1.5 h-1.5 bg-current rounded-full dot-pulse" style="animation-delay: 300ms"></div>
-                    </div>
-                    <p v-else class="text-sm leading-relaxed" v-html="renderMarkdown(msg.content)"></p>
-                  </div>
-                  <div
-                    :class="[
-                      'flex items-center gap-2 pr-1',
-                      msg.isMe ? 'flex-row-reverse pr-1' : 'pl-1',
-                    ]"
-                  >
-                    <span
-                      :class="[
-                        'text-xs font-semibold',
-                        msg.isMe ? 'text-warm-ink2' : 'text-warm-ink2',
-                      ]"
-                      >{{ msg.senderName || msg.sender }}</span
-                    >
-                    <span class="text-[10px] text-warm-ink3">{{ msg.time }}</span>
-                  </div>
-                </div>
+                    <span v-if="!msg.content" class="flex items-center gap-1 py-1">
+                      <span class="dot-pulse h-1.5 w-1.5 rounded-full bg-current" style="animation-delay: 0ms" />
+                      <span class="dot-pulse h-1.5 w-1.5 rounded-full bg-current" style="animation-delay: 150ms" />
+                      <span class="dot-pulse h-1.5 w-1.5 rounded-full bg-current" style="animation-delay: 300ms" />
+                    </span>
+                    <span v-else v-html="renderMarkdown(msg.content)" />
+                  </ABubble>
                 </template>
-              </div>
+              </template>
             </div>
           </template>
         </div>
 
-        <!-- Input Area -->
-        <footer class="p-6 bg-warm-surface border-t border-warm-line flex-none">
-          <div
-            class="relative rounded-2xl border transition-all p-2" :style="{ background: 'var(--surface)', borderColor: 'var(--hairline)' }"
+        <footer class="flex flex-none items-center gap-2.5 border-t-[1.5px] border-line px-5 py-3.5">
+          <input
+            v-model="newMessage"
+            type="text"
+            class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3"
+            :placeholder="t('messaging.composer.sendPlaceholder')"
+            @keydown.enter.prevent="handleSendMessage"
+          />
+          <button
+            type="button"
+            :disabled="isUpdatingMode"
+            class="inline-flex items-center gap-2 rounded-full bg-canvas px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-50"
+            @click="toggleMode"
           >
-            <textarea
-              v-model="newMessage"
-              @keydown.enter.prevent="handleSendMessage"
-              class="w-full bg-transparent border-none focus:ring-0 resize-none h-14 text-sm font-medium p-2" :style="{ color: 'var(--ink-1)' }"
-              :placeholder="t('messaging.composer.sendPlaceholder')"
-            ></textarea>
-            <div class="flex justify-end items-center mt-1 px-1 pb-1 gap-2">
-              <button
-                @click="toggleMode"
-                :disabled="isUpdatingMode"
-                class="px-3 py-1.5 rounded-xl border border-warm-line text-warm-ink2 text-xs font-extrabold hover:bg-warm-ground transition-colors flex items-center gap-1.5 uppercase disabled:opacity-50"
-              >
-                <span class="material-symbols-outlined text-[16px]">{{
-                  selectedChat.mode === "auto_pilot" ? "person" : "smart_toy"
-                }}</span>
-                {{ selectedChat.mode === "auto_pilot" ? t("messaging.composer.takeOver") : t("messaging.composer.autoPilot") }}
-              </button>
-              <button
-                @click="handleSendMessage"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold hover:bg-[color:var(--brand-hover)] transition-all flex items-center gap-1.5 uppercase disabled:opacity-50" :style="{ background: 'var(--brand)', color: 'var(--brand-contrast)' }"
-              >
-                <span class="material-symbols-outlined text-[16px]"
-                  >send</span
-                >
-                {{ t("common.send") }}
-              </button>
-            </div>
-          </div>
+            <AIcon :name="selectedChat.mode === 'auto_pilot' ? 'User' : 'Robot'" :size="15" />
+            {{ selectedChat.mode === "auto_pilot" ? t("messaging.composer.takeOver") : t("messaging.composer.autoPilot") }}
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white transition-all hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)]"
+            @click="handleSendMessage"
+          >
+            <AIcon name="PaperPlaneTilt" :size="15" />
+            {{ t("common.send") }}
+          </button>
         </footer>
       </template>
     </main>
 
-    <!-- Details Column -->
+    <!-- Detalles -->
     <aside
       v-if="selectedChat"
-      class="hidden lg:flex w-80 flex-none bg-warm-ground border-l border-warm-line flex flex-col overflow-y-auto"
+      class="flex h-full min-h-0 flex-col gap-3.5 overflow-y-auto rounded-big bg-surface p-4.5 shadow-card lg:flex"
     >
-      <div
-        class="p-6 border-b border-warm-line flex flex-col items-center relative overflow-hidden bg-warm-surface"
-      >
-        <div
-          class="absolute inset-0 opacity-5"
-          style="
-            background-image: radial-gradient(var(--brand-soft) 1px, transparent 1px);
-            background-size: 20px 20px;
-          "
-        ></div>
-        <div
-          class="relative z-10 w-20 h-20 rounded-full p-1 mb-3 shadow-[var(--shadow-card)]" style="border: 1px solid var(--hairline); background: var(--surface)"
-        >
-          <div
-            class="w-full h-full rounded-full bg-cover bg-center"
-            :style="{ backgroundImage: `url('${selectedChat.avatar}')` }"
-          ></div>
-          <div
-            class="absolute bottom-0 right-0 p-1 rounded-full border border-warm-line" style="background: var(--surface); box-shadow: var(--shadow-card)"
-          >
-            <div
-              :class="`w-5 h-5 rounded-full bg-${selectedChat.platform === 'WhatsApp' ? 'green' : selectedChat.platform === 'Instagram' ? 'purple' : 'blue'}-500 flex items-center justify-center text-white`"
-            >
-              <span class="material-symbols-outlined text-[12px]">{{
-                selectedChat.platform === "WhatsApp" ? "call" : selectedChat.platform === "Instagram" ? "photo_camera" : "language"
-              }}</span>
-            </div>
+      <div class="flex items-center gap-3">
+        <AAvatar :initials="(selectedChat.name || 'C').slice(0, 2).toUpperCase()" tone="lilac" size="lg" />
+        <div class="min-w-0">
+          <div class="truncate text-[13.5px] font-semibold">{{ selectedChat.name }}</div>
+          <div class="truncate text-xs text-ink-3">
+            {{ selectedChat.clientInfo?.identifier || selectedChat.contactPhone || '' }}
           </div>
-        </div>
-        <h2 class="text-lg font-extrabold text-warm-ink relative z-10">
-          {{ selectedChat.name }}
-        </h2>
-        <p class="text-sm font-bold text-warm-ink2 relative z-10 mb-3">
-          {{ selectedChat.clientInfo?.identifier || selectedChat.contactPhone || '' }}
-        </p>
-        <div class="flex flex-col gap-2 relative z-10 w-full">
-          <div class="flex justify-center">
-            <span
-              v-if="selectedChat.isContactCreated"
-              class="px-2 py-0.5 stamp" style="background: var(--ok-soft); color: var(--ok)"
-            >{{ t("messaging.contact.contactCreated") }}</span>
-            <span
-              v-else
-              class="px-2 py-0.5 stamp" style="background: var(--warn-soft); color: var(--warn)"
-            >{{ t("messaging.contact.noContact") }}</span>
-          </div>
-          <button
-            v-if="!selectedChat.isContactCreated"
-            @click="saveAsContact"
-            :disabled="isSavingContact"
-            class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold hover:bg-[color:var(--brand-hover)] transition-colors disabled:opacity-50" :style="{ background: 'var(--brand)', color: 'var(--brand-contrast)' }" 
-          >
-            <span class="material-symbols-outlined text-[16px]">person_add</span>
-            {{ isSavingContact ? t("common.saving") : t("messaging.contact.saveAsContact") }}
-          </button>
         </div>
       </div>
-      <div class="p-5 border-b border-warm-line">
-        <div class="flex items-center justify-between mb-4">
-          <h3
-            class="text-xs font-extrabold text-warm-ink3 uppercase tracking-[0.14em] flex items-center gap-2"
-          >
-            <span class="material-symbols-outlined text-[16px]">psychology</span>
-            {{ t("messaging.insights.title") }}
-          </h3>
+
+      <div class="flex flex-wrap gap-2">
+        <APill :tone="selectedChat.isContactCreated ? 'lime' : 'butter'">
+          {{ selectedChat.isContactCreated ? t("messaging.contact.contactCreated") : t("messaging.contact.noContact") }}
+        </APill>
+        <button
+          v-if="!selectedChat.isContactCreated"
+          type="button"
+          :disabled="isSavingContact"
+          class="inline-flex items-center gap-1.5 rounded-full bg-lilac px-3.5 py-1 text-[11.5px] font-semibold text-lilac-ink disabled:opacity-50"
+          @click="saveAsContact"
+        >
+          <AIcon name="UserPlus" :size="13" />
+          {{ isSavingContact ? t("common.saving") : t("messaging.contact.saveAsContact") }}
+        </button>
+      </div>
+
+      <div class="h-px bg-line" />
+
+      <!-- Análisis de IA · Sentimiento -->
+      <div>
+        <div class="flex items-center gap-2 text-[14px] font-semibold">
+          <AIcon name="Brain" :size="16" class="text-ink-3" />
+          {{ t("messaging.insights.title") }}
           <button
-            @click="analyzeInsights"
+            type="button"
             :disabled="isAnalyzingInsights"
-            class="text-[10px] font-extrabold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1" style="color: var(--brand-ink)"
+            class="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-lilac-ink disabled:opacity-50"
+            @click="analyzeInsights"
           >
-            <span class="material-symbols-outlined text-[14px]">refresh</span>
+            <AIcon name="ArrowsClockwise" :size="13" />
             {{ isAnalyzingInsights ? t("messaging.insights.analyzing") : t("messaging.insights.analyze") }}
           </button>
         </div>
 
-        <div v-if="isLoadingInsights" class="text-xs text-warm-ink3 font-bold">{{ t("messaging.insights.loading") }}</div>
+        <div v-if="isLoadingInsights" class="mt-3 text-xs font-semibold text-ink-3">
+          {{ t("messaging.insights.loading") }}
+        </div>
         <div
           v-else-if="!insights"
-          class="rounded-2xl p-4 text-center" style="border: 1.5px dashed var(--hairline); background: var(--surface)"
+          class="mt-3 rounded-card border-[1.5px] border-dashed border-line bg-canvas p-4 text-center"
         >
-          <span class="material-symbols-outlined text-[28px]" :style="{ color: 'var(--hairline)' }">psychology_alt</span>
-          <p class="text-xs text-warm-ink3 mt-1">
-            {{ t("messaging.insights.empty") }}
-          </p>
+          <AIcon name="Brain" :size="26" class="mx-auto text-line-strong" />
+          <p class="mt-1 text-xs text-ink-3">{{ t("messaging.insights.empty") }}</p>
         </div>
-        <div v-else class="space-y-3">
-          <div class="rounded-2xl p-4 border border-warm-line shadow-[var(--shadow-card)]" style="background: var(--surface)">
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-xs font-bold text-warm-ink2">{{ t("messaging.insights.sentimentLabel") }}</span>
-              <span
-                class="text-xs font-extrabold px-2 py-0.5 rounded-full"
-                :class="sentimentMeta.class"
-                >{{ sentimentMeta.label }}</span
-              >
-            </div>
-            <div
-              class="h-1.5 w-full rounded-full overflow-hidden flex" style="background: var(--ground-deep)"
-            >
-              <div
-                v-for="bar in sentimentBars"
-                :key="bar.key"
-                class="h-full"
-                :class="bar.class"
-                :style="{ width: bar.width }"
-              ></div>
-            </div>
+        <div v-else class="mt-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10.5px] font-bold uppercase tracking-[0.07em] text-ink-3">
+              {{ t("messaging.insights.sentimentLabel") }}
+            </span>
+            <APill :tone="sentimentTone" class="ml-auto">{{ sentimentLabel }}</APill>
+          </div>
+          <div class="mt-2.5 flex h-2 overflow-hidden rounded-full bg-sunken">
+            <span
+              v-for="bar in sentimentBars"
+              :key="bar.key"
+              class="block h-full"
+              :style="{ width: bar.width, background: bar.color }"
+            />
+          </div>
+          <div class="mt-2 flex flex-wrap gap-3 text-[11px] text-ink-3">
+            <span v-for="bar in sentimentBars" :key="bar.key">
+              <b class="[font-variant-numeric:tabular-nums]">{{ bar.pct }}%</b> {{ bar.key }}
+            </span>
           </div>
         </div>
       </div>
-      <div class="p-5 flex-1">
-        <h3
-          class="text-xs font-extrabold text-warm-ink3 uppercase tracking-[0.14em] mb-4 flex items-center gap-2"
-        >
-          <span class="material-symbols-outlined text-[16px]">database</span>
-          {{ t("messaging.details.title") }}
-        </h3>
-        <div class="grid grid-cols-1 gap-2">
+
+      <div class="h-px bg-line" />
+
+      <!-- Urgencia -->
+      <div>
+        <div class="flex items-center gap-2 text-[14px] font-semibold">
+          <AIcon name="WarningCircle" :size="16" class="text-ink-3" />
+          {{ t("messaging.urgency.title") }}
+        </div>
+        <div class="mt-3 flex items-center gap-2">
+          <APill :tone="urgency.tone">{{ urgency.level }}</APill>
+          <span class="ml-auto text-xs text-ink-3">{{ urgency.reason }}</span>
+        </div>
+        <div class="mt-2.5 flex gap-1">
+          <span
+            v-for="step in 3"
+            :key="step"
+            class="h-2 flex-1 rounded-full"
+            :class="step <= urgency.step
+              ? urgency.step >= 3 ? 'bg-[color:var(--danger)]' : urgency.step === 2 ? 'bg-butter' : 'bg-lime'
+              : 'bg-sunken'"
+          />
+        </div>
+      </div>
+
+      <div class="h-px bg-line" />
+
+      <!-- Detalles -->
+      <div>
+        <div class="text-[14px] font-semibold">{{ t("messaging.details.title") }}</div>
+        <div class="mt-3">
           <div
             v-for="det in details"
             :key="det.label"
-            class="flex items-center gap-3 p-3 rounded-xl border border-warm-line shadow-[var(--shadow-card)]" style="background: var(--surface)"
+            class="flex items-center justify-between gap-3 border-b border-line py-2.5 text-[13px] last:border-b-0"
           >
-            <div
-              class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--ground); color: var(--ink-3)"
-            >
-              <span class="material-symbols-outlined text-[18px]">{{
-                det.icon
-              }}</span>
-            </div>
-            <div class="flex flex-col overflow-hidden">
-              <span class="text-[10px] text-warm-ink3 font-bold uppercase">{{
-                det.label
-              }}</span>
-              <span class="text-sm text-warm-ink truncate font-bold">{{
-                det.value
-              }}</span>
-            </div>
+            <span class="text-ink-3">{{ det.label }}</span>
+            <b class="truncate font-semibold">{{ det.value }}</b>
           </div>
         </div>
       </div>
     </aside>
   </div>
 </template>
-<style>
+
+<style scoped>
 .dot-pulse {
   animation: dotPulse 1.1s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 @keyframes dotPulse {
   0%, 60%, 100% { transform: none; opacity: 0.35; }
   30% { transform: translateY(-3px); opacity: 1; }
-}
-.active-row {
-  box-shadow: inset 3px 0 0 var(--brand);
 }
 </style>

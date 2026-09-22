@@ -5,26 +5,18 @@ primary_target: "apps/frontend/src/views/Messaging.vue"
 related_targets: []
 ---
 
-# Mensajería (Messaging) · prima de todo el sistema Mitchbot
+# Mensajería (Messaging) · superficie primaria del rediseño total
 
-## Scope & visitor mode
-- **Modo: Operate.** La vista Messaging es la primera superficie del rediseño y el escaparate de la App Cálida; Sidebar/Topbar/DashboardLayout heredan el mismo mundo.
-- Superficie primaria: `apps/frontend/src/views/Messaging.vue` + `components/layout/*`.
+- Modo: Operate. Alcance: todas las vistas del dashboard + chat público, en el mundo "Mesa de Exposición".
 
 ## Audience, job, action
-- Operador (PYME / soporte / agencia) certando la cola del día: escanear conversaciones, ver estado (bot/humano/cerrado), responder, tomar control.
-- Restricción dura: solo elementos funcionales (honestidad funcional); realtime (badges, modos, typing) debe seguir reaccionando en vivo.
+- Operador PYME/soporte en escritorio, jornada larga; escanea la cola, atiende o toma control. Realtime vivo (badges, modos, insights, tools). Honestidad funcional.
 
 ## Direction contract
-- THESIS: "Mitchbot es el ayudante diario del negocio": suelo cálido, tarjetas con radio 14-16px y un único color de acción que aparece solo donde hay algo que hacer; el color de la marca del proyecto ES ese acento (variable CSS), rechazando el dashboard azul corporativo.
-- OWN-WORLD: ground tintado cálido `#FBF7F2`, tarjetas blancas con sombra difusa mínima y radio 14px (mensajes 18px), ink `#2E2A26` / `#7A6A5D` (nunca gris puro), acento = variable de marca (semitono pastel para fondos y estados), tipografía humanista redondeada (Nunito 400/600/700/800), sin gradientes decorativos.
-- STORY: el operador entra, ve la cola con sellos de estado claros y badges de no leídos viven, entra al hilo que le importa, responde o toma control; la marca del proyecto da identidad desde la marca lateral.
-- FIRST VIEWPORT: sidebar con marca (logo/nombre por proyecto), lista de conversaciones con avatar "sello" redondeado y badge de contador en acento solo-acción, hilo a la derecha con burbujas en acento (del bot/humano) vs blancas (del cliente), composer siempre visible.
-- FORM: aceite sobre el heredado; parte de la respuesta visual del mock `app-calida.html`.
+- THESIS: "El dashboard es una mesa de señales sobre papel de calco": cada conversación un circuito con su estado en lámpara (verde=bot, magenta=humano, hueco=cerrado), y la carga se lee por hatching, no por color; rechaza el dashboard SaaS azul y toda nostalgia gratuita.
+- OWN-WORLD: papel #F1EDE6 (#FBF9F3 card), tinta #1C1E22, verde #1D7A4F, magenta #C13A7C único acento de acción/humano, hairlines #C7C2B6. Labels Barlow Condensed trailing; datos IBM Plex Mono tabular; cuerpo Spline Sans. Cerrado con regla tachada; conflicto = hatch cruzado 90°; herramientas sin confirmar = tramo punteado magenta.
+- STORY: el operador ve la rampa del día, elige la regleta con más hatching, despacha o despliega la llave magenta de toma de control; la conversación cerrada baja de la cola.
+- FIRST VIEWPORT: rail de andén (tinta) con marca + nav de circuitos; KPIs en sobre-hilera tabular; cola de regletas con lámpara-dot + hatching; a la derecha el hilo-despacho con la llave "TOMAR CONTROL · +1⅓" arriba y el composer (portaminas) abajo.
+- FORM: fusión fijada por el usuario (topología Mesa de Señales + material Ficha de Exposición, seed 5e4a857d/b69db4c6). Code-led.
+- Memorable moment: girar la llave convierte el circuito entero de verde a magenta con el contador "+1⅓" anotado a mano.
 - FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
-
-## Memorable moment
-- El cambio de color del proyecto se replica al instante en toda la interfaz (una sola variable de acento) + sello-avatar con radio bicolor 14/6px.
-
-## Unresolved decisions
-- Persistencia backend de la configuración de marca (nombre/color/logo) por proyecto: el frontend consume `project.config.brand` cuando exista; backend pendiente.

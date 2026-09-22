@@ -2,13 +2,16 @@
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { brainService } from '../services/brain.service';
+import AIcon from '../components/ui/AIcon.vue';
+import ATabs from '../components/ui/ATabs.vue';
+import AButton from '../components/ui/AButton.vue';
 
 const { t } = useI18n();
 
 const tabs = computed(() => [
-  { id: 'extract', label: t('devTests.tabs.extract'), icon: 'description' },
-  { id: 'pdf-preview', label: t('devTests.tabs.pdfPreview'), icon: 'image' },
-  { id: 'placeholder', label: t('devTests.tabs.comingSoon'), icon: 'more_horiz' },
+  { key: 'extract', label: t('devTests.tabs.extract') },
+  { key: 'pdf-preview', label: t('devTests.tabs.pdfPreview') },
+  { key: 'placeholder', label: t('devTests.tabs.comingSoon') },
 ]);
 
 const activeTab = ref('extract');
@@ -139,191 +142,163 @@ function clearResult() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-3.5">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ t('devTests.title') }}</h1>
-      <p class="text-sm text-slate-500 mt-1">{{ t('devTests.subtitle') }}</p>
+      <h1 class="font-display text-[22px] font-bold tracking-[-0.02em]">{{ t('devTests.title') }}</h1>
+      <p class="mt-1 text-[13px] text-ink-3">{{ t('devTests.subtitle') }}</p>
     </div>
 
-    <div class="flex flex-col gap-6">
-      <div class="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 overflow-x-auto">
-        <button
-          v-for="tab in tabs" :key="tab.id"
-          @click="activeTab = tab.id"
-          class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap"
-          :class="activeTab === tab.id
-            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
-            : 'text-slate-500 hover:text-slate-700'"
-        >
-          <span class="material-symbols-outlined text-[18px]">{{ tab.icon }}</span>
-          {{ tab.label }}
-        </button>
-      </div>
+    <div class="flex flex-col gap-3.5">
+      <ATabs :tabs="tabs" :model-value="activeTab" @update:model-value="activeTab = $event" />
 
-      <div v-if="activeTab === 'extract'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ t('devTests.extract.inputTitle') }}</h2>
-          <p class="text-xs text-slate-400 mt-1">{{ t('devTests.extract.inputDescription') }}</p>
+      <div v-if="activeTab === 'extract'" class="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
+        <div class="rounded-card bg-surface p-6 shadow-card">
+          <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('devTests.extract.inputTitle') }}</h2>
+          <p class="mt-1 text-xs text-ink-3">{{ t('devTests.extract.inputDescription') }}</p>
 
-          <div v-if="actionError" class="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">error</span>
-            {{ actionError }}
+          <div v-if="actionError" class="mt-4 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]">
+            <AIcon name="WarningCircle" :size="17" />{{ actionError }}
           </div>
-          <div v-if="actionSuccess" class="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-emerald-600 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">check_circle</span>
-            {{ actionSuccess }}
+          <div v-if="actionSuccess" class="mt-4 flex items-center gap-2 rounded-field bg-lime-soft p-3 text-[13px] text-lime-ink">
+            <AIcon name="CheckCircle" :size="17" />{{ actionSuccess }}
           </div>
 
           <div
-            class="mt-4 border-2 border-dashed rounded-xl p-6 text-center transition-colors"
-            :class="isDragging ? 'border-blue-500 bg-blue-50' : 'border-slate-200'"
+            class="mt-4 rounded-field border-2 border-dashed p-6 text-center transition-colors"
+            :class="isDragging ? 'border-lilac bg-lilac-soft' : 'border-line-strong'"
             @drop="handleDrop"
             @dragover="handleDragOver"
             @dragleave="handleDragLeave"
           >
-            <div class="text-sm text-slate-500">
-              {{ t('devTests.extract.dropHint') }}
-            </div>
+            <p class="text-[13px] text-ink-3">{{ t('devTests.extract.dropHint') }}</p>
             <input
+              id="dev-extract-file"
               type="file"
               accept=".pdf,.txt,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif,.tiff,.tif,.bmp"
               class="hidden"
-              id="dev-extract-file"
               @change="handleFileChange"
             />
-            <label for="dev-extract-file" class="inline-flex mt-3 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
+            <label
+              for="dev-extract-file"
+              class="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white"
+            >
+              <AIcon name="UploadSimple" :size="14" />
               {{ t('devTests.extract.selectFile') }}
             </label>
-            <div v-if="selectedFile" class="mt-3 text-xs text-slate-600">
-              {{ selectedFile.name }}
-            </div>
+            <div v-if="selectedFile" class="mt-3 text-xs text-ink-2">{{ selectedFile.name }}</div>
           </div>
 
-          <div class="flex gap-2 mt-4">
-            <button
-              @click="handleExtract"
-              :disabled="isSubmitting"
-              class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-xs font-bold"
-            >
+          <div class="mt-4 flex gap-2">
+            <AButton variant="primary" :loading="isSubmitting" @click="handleExtract">
               {{ isSubmitting ? t('devTests.extract.submitting') : t('devTests.extract.submit') }}
-            </button>
-            <button
-              @click="clearResult"
-              class="px-4 py-2.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600"
-            >
-              {{ t('common.clear') }}
-            </button>
+            </AButton>
+            <AButton variant="ghost" @click="clearResult">{{ t('common.clear') }}</AButton>
           </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
+        <div class="rounded-card bg-surface p-6 shadow-card">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ t('devTests.extract.outputTitle') }}</h2>
-              <p class="text-xs text-slate-400 mt-1">{{ t('devTests.extract.outputDescription') }}</p>
+              <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('devTests.extract.outputTitle') }}</h2>
+              <p class="mt-1 text-xs text-ink-3">{{ t('devTests.extract.outputDescription') }}</p>
             </div>
-            <div v-if="extractionMeta" class="text-[10px] text-slate-400 uppercase tracking-widest">
+            <div v-if="extractionMeta" class="text-[10px] uppercase tracking-widest text-ink-3">
               {{ extractionMeta.method || 'llm_file' }} · {{ t('devTests.extract.pagesCount', extractionMeta.pages || 0) }}
             </div>
           </div>
 
-          <div class="mt-4 h-[420px] border border-slate-100 dark:border-slate-700 rounded-lg overflow-y-auto bg-slate-50 dark:bg-slate-900/30">
-            <div v-if="!extractedMarkdown" class="h-full flex items-center justify-center text-sm text-slate-400">
+          <div class="mt-4 h-[420px] overflow-y-auto rounded-field bg-canvas">
+            <div v-if="!extractedMarkdown" class="flex h-full items-center justify-center text-sm text-ink-3">
               {{ t('devTests.extract.empty') }}
             </div>
-            <pre v-else class="p-4 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{{ extractedMarkdown }}</pre>
+            <pre v-else class="whitespace-pre-wrap p-4 text-[13px] text-ink-2">{{ extractedMarkdown }}</pre>
           </div>
         </div>
       </div>
 
-      <div v-else-if="activeTab === 'pdf-preview'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ t('devTests.pdfPreview.inputTitle') }}</h2>
-          <p class="text-xs text-slate-400 mt-1">{{ t('devTests.pdfPreview.inputDescription') }}</p>
+      <div v-else-if="activeTab === 'pdf-preview'" class="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
+        <div class="rounded-card bg-surface p-6 shadow-card">
+          <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('devTests.pdfPreview.inputTitle') }}</h2>
+          <p class="mt-1 text-xs text-ink-3">{{ t('devTests.pdfPreview.inputDescription') }}</p>
 
-          <div v-if="actionError" class="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">error</span>
-            {{ actionError }}
+          <div v-if="actionError" class="mt-4 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]">
+            <AIcon name="WarningCircle" :size="17" />{{ actionError }}
           </div>
-          <div v-if="actionSuccess" class="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-emerald-600 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">check_circle</span>
-            {{ actionSuccess }}
+          <div v-if="actionSuccess" class="mt-4 flex items-center gap-2 rounded-field bg-lime-soft p-3 text-[13px] text-lime-ink">
+            <AIcon name="CheckCircle" :size="17" />{{ actionSuccess }}
           </div>
 
           <div
-            class="mt-4 border-2 border-dashed rounded-xl p-6 text-center transition-colors"
-            :class="isDragging ? 'border-blue-500 bg-blue-50' : 'border-slate-200'"
+            class="mt-4 rounded-field border-2 border-dashed p-6 text-center transition-colors"
+            :class="isDragging ? 'border-lilac bg-lilac-soft' : 'border-line-strong'"
             @drop="handleDrop"
             @dragover="handleDragOver"
             @dragleave="handleDragLeave"
           >
-            <div class="text-sm text-slate-500">
-              {{ t('devTests.pdfPreview.dropHint') }}
-            </div>
+            <p class="text-[13px] text-ink-3">{{ t('devTests.pdfPreview.dropHint') }}</p>
             <input
+              id="dev-pdf-preview-file"
               type="file"
               accept=".pdf"
               class="hidden"
-              id="dev-pdf-preview-file"
               @change="handleFileChange"
             />
-            <label for="dev-pdf-preview-file" class="inline-flex mt-3 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
+            <label
+              for="dev-pdf-preview-file"
+              class="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white"
+            >
+              <AIcon name="UploadSimple" :size="14" />
               {{ t('devTests.pdfPreview.selectFile') }}
             </label>
-            <div v-if="selectedFile" class="mt-3 text-xs text-slate-600">
-              {{ selectedFile.name }}
-            </div>
+            <div v-if="selectedFile" class="mt-3 text-xs text-ink-2">{{ selectedFile.name }}</div>
           </div>
 
           <div class="mt-4">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('devTests.pdfPreview.pagesLabel') }}</label>
+            <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('devTests.pdfPreview.pagesLabel') }}</span>
             <div class="flex items-center gap-3">
               <input
                 v-model.number="previewMaxPages"
                 type="number"
                 min="1"
                 max="10"
-                class="w-24 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white"
+                class="field w-24"
               />
-              <span class="text-xs text-slate-400">{{ t('devTests.pdfPreview.pagesHint') }}</span>
+              <span class="text-xs text-ink-3">{{ t('devTests.pdfPreview.pagesHint') }}</span>
             </div>
           </div>
 
-          <div class="flex gap-2 mt-4">
-            <button
-              @click="handlePdfPreview"
-              :disabled="isSubmitting"
-              class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-xs font-bold"
-            >
+          <div class="mt-4 flex gap-2">
+            <AButton variant="primary" :loading="isSubmitting" @click="handlePdfPreview">
               {{ isSubmitting ? t('devTests.pdfPreview.submitting') : t('devTests.pdfPreview.submit') }}
-            </button>
-            <button
-              @click="clearResult"
-              class="px-4 py-2.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600"
-            >
-              {{ t('common.clear') }}
-            </button>
+            </AButton>
+            <AButton variant="ghost" @click="clearResult">{{ t('common.clear') }}</AButton>
           </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
+        <div class="rounded-card bg-surface p-6 shadow-card">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ t('devTests.pdfPreview.outputTitle') }}</h2>
-              <p class="text-xs text-slate-400 mt-1">{{ t('devTests.pdfPreview.outputDescription') }}</p>
+              <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('devTests.pdfPreview.outputTitle') }}</h2>
+              <p class="mt-1 text-xs text-ink-3">{{ t('devTests.pdfPreview.outputDescription') }}</p>
             </div>
-            <div v-if="previewPages" class="text-[10px] text-slate-400 uppercase tracking-widest">
+            <div v-if="previewPages" class="text-[10px] uppercase tracking-widest text-ink-3">
               {{ t('devTests.pdfPreview.pagesCount', previewPages) }}
             </div>
           </div>
 
-          <div class="mt-4 h-[420px] border border-slate-100 dark:border-slate-700 rounded-lg overflow-y-auto bg-slate-50 dark:bg-slate-900/30 p-4">
-            <div v-if="!previewImages.length" class="h-full flex items-center justify-center text-sm text-slate-400">
+          <div class="mt-4 h-[420px] overflow-y-auto rounded-field bg-canvas p-4">
+            <div v-if="!previewImages.length" class="flex h-full items-center justify-center text-sm text-ink-3">
               {{ t('devTests.pdfPreview.empty') }}
             </div>
             <div v-else class="grid grid-cols-1 gap-4">
-              <div v-for="(img, idx) in previewImages" :key="`${idx}-${img.slice(0, 20)}`" class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                <div class="px-3 py-2 text-[10px] uppercase tracking-widest text-slate-400 bg-slate-50">{{ t('devTests.pdfPreview.pageLabel', { page: idx + 1 }) }}</div>
+              <div
+                v-for="(img, idx) in previewImages"
+                :key="`${idx}-${img.slice(0, 20)}`"
+                class="overflow-hidden rounded-field bg-surface shadow-card"
+              >
+                <div class="bg-canvas px-3 py-2 text-[10px] uppercase tracking-widest text-ink-3">
+                  {{ t('devTests.pdfPreview.pageLabel', { page: idx + 1 }) }}
+                </div>
                 <img :src="img" :alt="t('devTests.pdfPreview.pageAlt', { page: idx + 1 })" class="w-full object-contain" />
               </div>
             </div>
@@ -331,9 +306,9 @@ function clearResult() {
         </div>
       </div>
 
-      <div v-else class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-        <div class="flex items-center gap-2 text-slate-400 text-sm">
-          <span class="material-symbols-outlined text-[18px]">science</span>
+      <div v-else class="rounded-card bg-surface p-6 shadow-card">
+        <div class="flex items-center gap-2 text-[13px] text-ink-3">
+          <AIcon name="Flask" :size="18" />
           {{ t('devTests.comingSoon.description') }}
         </div>
       </div>

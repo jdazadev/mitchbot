@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Ficha de Exposición — ejemplo</title>
+<style>
+  :root{
+    --paper:#F1EDE6; --paper-2:#E9E4DA; --ink:#1C1E22; --ink-soft:#6B675E;
+    --hair:#C7C2B6; --filtr:#C13A7C; --zone-hi:#FDFBF6; --zone-lo:#8A8A82;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--paper);color:var(--ink);font-family:'Spline Sans',sans-serif;font-size:13px}
+  .frame{height:100vh;display:flex}
+
+  /* left: zone ramp + legend */
+  .ramp{width:200px;background:#14161A;color:#CFC9BC;display:flex;flex-direction:column;padding:20px 0}
+  .ramp .hdr{font-family:'Barlow Condensed';font-style:normal;font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:0 20px 14px;color:#8E887B}
+  .zone{flex:1;display:grid;place-items:center;border-top:1px solid #2A2E32;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.14em;color:#9E9689}
+  .zone.i{color:var(--ink)}
+  .zone-i .z{background:#FDFBF6;color:#17191D;width:64px;height:20px;border-radius:2px;display:grid;place-items:center;margin:0 auto}
+  .legend{padding:16px 20px 0;font-family:'IBM Plex Mono';font-size:9px;line-height:1.9;letter-spacing:.1em;color:#8E887B;border-top:1px solid #2A2E32;margin-top:16px}
+  .legend b{color:#CFC9BC}
+
+  /* right: record card */
+  .card{flex:1;display:grid;grid-template-columns:minmax(380px,44%) 1fr;background:var(--paper)}
+  .film{border-right:1.5px solid var(--ink);overflow-y:auto;position:relative}
+  .filmhdr{padding:16px 20px 10px;border-bottom:2px solid var(--ink);background:var(--paper)}
+  .filmhdr h1{font-family:'Barlow Condensed';font-weight:600;font-size:17px;letter-spacing:.18em;text-transform:uppercase}
+  .filmhdr p{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.2em;color:var(--ink-soft);margin-top:3px}
+  .sheet{padding:12px 16px;border-bottom:1px solid var(--hair);display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;background:
+    linear-gradient(0deg,var(--paper) 0%,var(--paper-2) 100%);cursor:pointer}
+  .sheet:hover{background:var(--paper-2)}
+  .sheet.sel{background:repeating-linear-gradient(180deg,#F6F2EA 0 7px,#EDE7DA 7px 8px);box-shadow:inset 4px 0 0 var(--filtr)}
+  .zonec{width:36px;height:36px;border-radius:2px;display:grid;place-items:center;font-family:'IBM Plex Mono';font-size:11px;background:var(--zone-hi);border:1px solid var(--hair)}
+  .zn{font-weight:600}
+  .zn2{font-family:'IBM Plex Mono';font-size:9.5px;color:var(--ink-soft);margin-top:3px;letter-spacing:.06em}
+  .load{font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.1em;padding:3px 8px;border:1px solid var(--hair);color:var(--ink-soft)}
+
+  /* thread */
+  .threadwrap{display:grid;grid-template-rows:auto 1fr auto;position:relative}
+  .thread{padding:18px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+  .thw{max-width:65%;padding:10px 14px;line-height:1.5;background:var(--zone-hi);border:1px solid var(--hair);border-radius:2px;align-self:flex-start}
+  .thb{max-width:65%;padding:10px 14px;line-height:1.5;background:var(--ink);color:#F3EFE7;border-radius:2px;align-self:flex-end}
+  .note{align-self:center;font-family:'IBM Plex Mono';font-size:8.5px;letter-spacing:.24em;color:var(--ink-soft);text-transform:uppercase}
+  .mask{margin-top:6px;padding-top:10px;border-top:1px dashed var(--hair);font-family:'IBM Plex Mono';font-size:9px;color:var(--ink-soft);letter-spacing:.16em;display:flex;gap:14px;flex-wrap:wrap}
+  .takeover{background:var(--filtr);color:#fff;padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.18em}
+  .overlay{position:absolute;inset:auto 20px 16px auto;width:46%;filter:drop-shadow(0 2px 6px rgba(0,0,0,.12))}
+  .tray{padding:14px 20px;border-top:2.5px solid var(--ink);display:flex;gap:10px;background:var(--paper)}
+  .tray input{flex:1;background:var(--zone-hi);border:1.5px solid var(--ink);padding:11px 14px;font-family:'Spline Sans',sans-serif;font-size:13px;border-radius:2px}
+  .tray button{background:var(--ink);color:#F3EFE7;border:none;padding:11px 22px;border-radius:2px;font-family:'Barlow Condensed';letter-spacing:.22em;font-size:11px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="frame">
+  <aside class="ramp">
+    <div class="hdr" style="font-family:'Barlow Condensed';font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:0 20px 14px;color:#8E887B">Rampa del día</div>
+    <div class="zone zone-i" style="background:#FDFBF6"><span>−3</span></div>
+    <div class="zone"><span>−2</span></div>
+    <div class="zone"><span>−1</span></div>
+    <div class="zone zone-i" style="background:#E8E4DB"><span>0</span></div>
+    <div class="zone"><span>+1</span></div>
+    <div class="zone zone-i" style="background:#C9C5BC"><span>+2</span></div>
+    <div class="zone"><span>+3</span></div>
+    <div class="zone" style="background:#8A8A82;color:#17191C"><span>VIII</span></div>
+    <div class="legend">
+      <div>HATCH = CARGA (no leídos + avisos)</div>
+      <div>RULE TACHADA = CERRADO</div>
+      <div>CALCO MAGENTA = TOMA HUMANA</div>
+      <div>CRUCE 90° = CONFLICTO</div>
+    </div>
+  </aside>
+  <div class="card">
+    <div class="film">
+      <div class="filmhdr">
+        <h1>Cola de regletas · jueves</h1>
+        <p>12 circuitos en fila · orden por carga</p>
+      </div>
+      <div class="sheet sel">
+        <div class="zonec"><span style="font-family:'IBM Plex Mono'">+1</span></div>
+        <div><div class="zn">María Cano</div><div class="zn2">WA · ULTIMO 2 MIN · SIN CONFIRMAR: 1 HERRAMIENTA</div></div>
+        <div class="load" style="background:repeating-linear-gradient(45deg,transparent 0 4px,rgba(28,28,28,.4) 4px 7px);border:none;color:var(--ink)">+2⅓</div>
+      </div>
+      <div class="sheet">
+        <div class="zonec"><span style="font-family:'IBM Plex Mono';font-size:11px">0</span></div>
+        <div><div class="zn">Jorge Rincón</div><div class="zn2">IG · BOT EN LÍNEA · LIMPIO</div></div>
+        <div class="load">0</div>
+      </div>
+      <div class="sheet" style="position:relative">
+        <div class="zonec" style="background:var(--ink);color:#F3EFE7"><span style="font-family:'IBM Plex Mono';font-size:11px">VIII</span></div>
+        <div style="text-decoration:line-through;color:var(--ink-soft)"><div class="zn">Laura Pérez</div><div class="zn2" style="text-decoration:none">WEB · CERRADO 09:12</div></div>
+        <div class="load" style="text-decoration:line-through">0</div>
+      </div>
+      <div class="sheet">
+        <div class="zonec"><span style="font-family:'IBM Plex Mono';font-size:11px">+1</span></div>
+        <div><div class="zn">Tech Store</div><div class="zn2">WA · MIENTRAS EL BOT RESPONDE</div></div>
+        <div class="load" style="background:repeating-linear-gradient(45deg,transparent 0 4px,rgba(28,28,28,.16) 4px 8px);border:none;color:var(--ink)">+⅔</div>
+      </div>
+    </div>
+    <div class="threadwrap">
+      <div style="padding:14px 20px;border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:10px">
+        <div class="zn" style="font-weight:600;font-size:14px">María Cano</div>
+        <div class="zn2" style="margin:0 0 0 2px">REGLETA +1 · PENDIENTE DE DESPACHO</div>
+        <div style="margin-left:auto" class="takeover">TOMAR · +1⅓</div>
+      </div>
+      <div class="thread">
+        <div class="note">· tiras de contacto ·</div>
+        <div class="thw">¿El calendario del sábado tiene sitio?</div>
+        <div class="thb">Sí, Maria; puedo reservar el sábado a las 10:30. Confirmo con re ders?</div>
+        <div class="note" style="color:var(--filtr);border:1px dashed var(--filtr);padding:6px 10px">· create_appointment ESPERA CONFIRMACIÓN · UNA TRAMA EN CRUZ ·</div>
+        <div class="mask" style="align-self:center;margin:4px 0"><span style="font-family:'IBM Plex Mono';font-size:8.5px;letter-spacing:.2em;color:var(--ink-soft)">TIRA PENDIENTE · NO CERRADA</span></div>
+      </div>
+      <div class="tray">
+        <input placeholder="Anotación de despacho...">
+        <button>Registrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

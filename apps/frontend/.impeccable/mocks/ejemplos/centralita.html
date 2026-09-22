@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Centralita del Operador — ejemplo</title>
+<style>
+  :root{
+    --cream:#F0ECDF; --walnut:#26221E; --panel:#2E2925; --panel-2:#241F1B;
+    --brass:#8A5A2B; --brass-light:#C79A56; --jack:#151210;
+    --cord-r:#7A3418; --cord-b:#33475A; --cord-g:#5C5138;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--cream);color:var(--walnut);font-family:'Archivo Narrow',sans-serif}
+  .frame{height:100vh;display:flex;flex-direction:column}
+
+  /* bar: switchboard console top */
+  .console{background:var(--walnut);display:grid;grid-template-columns:250px 1fr;height:150px;border-bottom:6px solid #171310}
+  .brand{display:flex;flex-direction:column;justify-content:center;align-items:center;border-right:2px solid #171310;padding:0 14px}
+  .brand .name{color:#EFE7D8;font-size:20px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-family:'Archivo Narrow'}
+  .brand .sub{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.3em;color:var(--brass-light);margin-top:5px}
+  .jacks{display:flex;flex-direction:column;justify-content:center;gap:0;padding:0 24px}
+  .row-label{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.3em;color:#8C7F6E;margin:7px 2px}
+  .jacks{display:flex;gap:14px}
+  .jack{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#3B332C,var(--jack));box-shadow:inset 0 -4px 6px rgba(0,0,0,.5), inset 0 3px 4px rgba(255,255,255,.06);display:grid;place-items:center;position:relative}
+  .jack.lock{outline:3px solid var(--jack);outline-offset:-8px}
+  .jack .tag{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono';font-size:8.5px;letter-spacing:.2em;color:#9C948A}
+
+  /* answer board */
+  .board{flex:1;display:grid;grid-template-columns:minmax(360px,420px) 1fr;min-height:0}
+
+  /* lines: cords */
+  .lines{background:linear-gradient(180deg,#E7E1CF,#F0ECDF);border-right:4px solid var(--walnut);overflow-y:auto}
+  .lines h2{font-family:'Archivo Narrow';font-size:11px;letter-spacing:.26em;padding:14px 18px 10px;color:#8A8175;text-transform:uppercase}
+  .line{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid #DCD4BE;cursor:pointer}
+  .line:hover{background:rgba(138,90,43,.06)}
+  .line.active{background:#FFF;box-shadow:inset 4px 0 0 var(--cord-r)}
+  .plug{width:40px;height:40px;background:var(--jack);border-radius:3px;display:grid;place-items:center}
+  .plug span{width:14px;height:14px;border-radius:50%;background:var(--cord-r);box-shadow:0 0 0 3px rgba(122,52,24,.22)}
+  .plug.b span{background:var(--cord-b);box-shadow:0 0 0 3px rgba(51,71,90,.18)}
+  .plug.hold{opacity:.35}
+  .info .n{font-weight:700;font-size:14.5px;color:var(--walnut)}
+  .info .c{font-family:'IBM Plex Mono';font-size:9.5px;color:#8A8172;margin-top:2px}
+  .badge{font-family:'IBM Plex Mono';font-size:10px;color:#F0ECDF;background:var(--cord-r);border-radius:12px;padding:3px 8px}
+  .badge.mute{background:#C9C0AC;color:#7A7263}
+
+  /* attention panel */
+  .attention{background:var(--cream);display:grid;grid-template-rows:auto 1fr auto}
+  .chat-head{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:2px solid var(--walnut);background:#EAE4D2}
+  .chat-av{width:38px;height:38px;border-radius:3px;background:var(--walnut);color:#EFE7D8;display:grid;place-items:center;font-weight:700}
+  .chat-who .n{font-weight:700;font-size:15px}
+  .chat-who .s{font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.18em;color:var(--brass);text-transform:uppercase;margin-top:2px}
+  .hangup{margin-left:auto;background:var(--walnut);color:#EFE7D8;padding:9px 16px;border-radius:3px;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;font-family:'Archivo Narrow'}
+  .hangup small{display:block;font-family:'IBM Plex Mono';font-size:8px;letter-spacing:.24em;color:var(--brass-light);margin-top:3px}
+  .thread{padding:20px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+  .msg{max-width:60%;padding:11px 15px;font-size:14px;line-height:1.5;border-radius:4px}
+  .msg.cust{align-self:flex-start;background:#FFF;border:1px solid #DCD4BE}
+  .msg.bot{align-self:flex-end;background:var(--walnut);color:#EFE7D8}
+  .msg.human{align-self:flex-end;background:var(--brass);color:#FDF8EC}
+  .tag{font-family:'IBM Plex Mono';font-size:8.5px;letter-spacing:.22em;color:#8A8172;text-transform:uppercase;align-self:center;margin-top:4px}
+  .sendarea{padding:16px 20px;border-top:3px solid var(--walnut);background:#EAE4D2;display:flex;gap:10px}
+  .sendarea input{flex:1;background:#FFF;border:2px solid var(--walnut);padding:12px 14px;border-radius:3px;font-family:'Archivo Narrow';font-size:14px}
+  .send{background:var(--cord-r);color:#FDF8EC;border:none;padding:12px 24px;border-radius:3px;font-family:'Archivo Narrow';font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="console">
+    <div class="brand">
+      <div class="name">Estudio Mateo</div>
+      <div class="sub">POSICIÓN 01 · OPERADORA</div>
+    </div>
+    <div class="jacks">
+      <div class="row-label">CONECTA EL CANAL QUE ATIENTAS</div>
+      <div class="jacks">
+        <div class="jack"><span class="tag">WHATSAPP</span></div>
+        <div class="jack"><span class="tag">INSTAGRAM</span></div>
+        <div class="jack"><span class="tag">WEB</span></div>
+        <div class="jack"><span class="tag">TEL / VOZ</span></div>
+      </div>
+      <div class="row-label" style="margin-top:10px">LÍNEAS SONANDO · 3</div>
+      <div class="jacks">
+        <div class="jack lock" style="box-shadow:inset 0 -4px 6px rgba(0,0,0,.4), 0 0 10px rgba(201,138,18,.35)"><span class="tag" style="color:var(--brass-light)">01</span></div>
+        <div class="jack" style="box-shadow:inset 0 -4px 6px rgba(0,0,0,.4), 0 0 10px rgba(201,138,18,.35)"><span class="tag" style="color:var(--brass-light)">02</span></div>
+        <div class="jack" style="box-shadow:inset 0 -4px 6px rgba(0,0,0,.4)"><span class="tag">03</span></div>
+        <div class="jack"><span class="tag">04</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="board">
+    <div class="lines">
+      <h2>Líneas de entrada</h2>
+      <div class="line active">
+        <div class="plug"><span></span></div>
+        <div class="info"><div class="n">María Cano</div><div class="c">WA · SONANDO · 2 NUEVOS</div></div>
+        <div class="badge">2</div>
+      </div>
+      <div class="line">
+        <div class="plug b"><span></span></div>
+        <div class="info"><div class="n">Tech Store</div><div class="c">IG · EN CONVERSACIÓN · BOT</div></div>
+        <div class="badge">3</div>
+      </div>
+      <div class="line">
+        <div class="plug hold"><span></span></div>
+        <div class="info" style="opacity:.5"><div class="n">Laura Pérez</div><div class="c">WEB · CORTADA · CERRADO</div></div>
+        <div class="badge" style="background:#C9C0AC">0</div>
+      </div>
+      <div class="line">
+        <div class="plug b"><span></span></div>
+        <div class="info"><div class="n">Jorge Rincón</div><div class="c">WA · EN CONVERSACIÓN · BOT</div></div>
+        <div class="badge" style="background:#C9C0AC">0</div>
+      </div>
+    </div>
+    <div class="attention">
+      <div class="chathead" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:2px solid var(--walnut);background:#EAE4D2">
+        <div class="chat-av" style="width:38px;height:38px;border-radius:3px;background:var(--walnut);color:#EFE7D8;display:grid;place-items:center;font-weight:700">MC</div>
+        <div class="chat-who"><div class="n">María Cano</div><div class="s">LÍNEA 01 · WHATSAPP</div></div>
+        <div class="hangup" style="text-align:center">Tomar el cordón<small>HUMAN CONTINUOUS</small></div>
+      </div>
+      <div class="thread">
+        <div class="tag">· registro de la línea ·</div>
+        <div class="msg cust">Hola, ¿alguien allí? Tengo una pregunta sobre mi pedido</div>
+        <div class="msg bot">¡Hola María! Claro, dime tu número de pedido y reviso enseguida 📦</div>
+        <div class="msg cust">Es el #1042, sigue en tránsito pero cambiar la dirección</div>
+        <div class="tag">· BOT TRANSFIERE · EL CORDÓN DISPONIBLE PARA TI ·</div>
+      </div>
+      <div class="sendarea">
+        <input placeholder="Habla por la línea 01...">
+        <button class="send">HABLAR</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

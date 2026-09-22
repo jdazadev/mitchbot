@@ -10,6 +10,10 @@ import {
 import { socketService } from "../services/socket.service";
 import es from "../locales/es.json";
 import en from "../locales/en.json";
+import AIcon from "../components/ui/AIcon.vue";
+import AAvatar from "../components/ui/AAvatar.vue";
+import ABubble from "../components/ui/ABubble.vue";
+import APill from "../components/ui/APill.vue";
 
 // El chat público es independiente del idioma del dashboard: usa un
 // composer aislado cuyo locale se fija según el idioma del agente del proyecto.
@@ -245,70 +249,58 @@ function scrollToBottom() {
 </script>
 
 <template>
-  <div class="flex h-full bg-slate-100 p-8 gap-8 overflow-hidden">
-    <!-- Config Panel -->
-    <div
-      class="w-1/3 bg-white rounded-xl shadow-sm overflow-hidden flex flex-col"
-    >
-      <div class="p-4 border-b border-slate-100 bg-slate-50">
-        <h2 class="font-bold text-slate-700">{{ t("publicChat.simulator.title") }}</h2>
-        <p class="text-xs text-slate-500 mt-1">
-          {{ t("publicChat.simulator.subtitle") }}
-        </p>
+  <div class="relative flex h-full gap-8 overflow-hidden bg-canvas p-8">
+    <div class="aurora-haze" aria-hidden="true" />
+
+    <!-- Panel de configuración -->
+    <div class="relative z-10 flex w-1/3 flex-col overflow-hidden rounded-card bg-surface shadow-card">
+      <div class="border-b border-line p-4">
+        <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t("publicChat.simulator.title") }}</h2>
+        <p class="mt-1 text-xs text-ink-3">{{ t("publicChat.simulator.subtitle") }}</p>
       </div>
-      <div class="p-4 flex flex-col gap-4">
-        <div>
-          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("publicChat.client.name") }}</label>
-          <input
-            v-model="clientName"
-            class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            :placeholder="t('publicChat.client.namePlaceholder')"
-          />
-        </div>
-        <div>
-          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("publicChat.client.phone") }}</label>
-          <input
-            v-model="clientPhone"
-            class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            placeholder="+1234567890"
-          />
-        </div>
-        <div>
-          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("publicChat.client.email") }}</label>
-          <input
-            v-model="clientEmail"
-            class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            :placeholder="t('publicChat.client.emailPlaceholder')"
-          />
-        </div>
-        <div>
-          <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("publicChat.client.platform") }}</label>
+      <div class="flex flex-col gap-4 p-4">
+        <label class="flex flex-col gap-1.5">
+          <span class="text-xs font-semibold text-ink-2">{{ t("publicChat.client.name") }}</span>
+          <input v-model="clientName" class="field" :placeholder="t('publicChat.client.namePlaceholder')" />
+        </label>
+        <label class="flex flex-col gap-1.5">
+          <span class="text-xs font-semibold text-ink-2">{{ t("publicChat.client.phone") }}</span>
+          <input v-model="clientPhone" class="field" placeholder="+1234567890" />
+        </label>
+        <label class="flex flex-col gap-1.5">
+          <span class="text-xs font-semibold text-ink-2">{{ t("publicChat.client.email") }}</span>
+          <input v-model="clientEmail" class="field" :placeholder="t('publicChat.client.emailPlaceholder')" />
+        </label>
+        <div class="flex flex-col gap-1.5">
+          <span class="text-xs font-semibold text-ink-2">{{ t("publicChat.client.platform") }}</span>
           <div class="flex gap-2">
             <button
               v-for="p in ['WhatsApp', 'Instagram', 'Web'] as const"
               :key="p"
-              @click="selectedPlatform = p"
+              type="button"
               :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-colors',
+                'rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
                 selectedPlatform === p
-                  ? p === 'WhatsApp' ? 'bg-green-500 text-white' : p === 'Instagram' ? 'bg-purple-500 text-white' : 'bg-blue-500 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-ink text-white'
+                  : 'bg-canvas text-ink-2 hover:bg-sunken',
               ]"
+              @click="selectedPlatform = p"
             >
               {{ p }}
             </button>
           </div>
         </div>
 
-        <div v-if="activeConversation" class="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
-          <div class="text-xs font-bold text-blue-700 mb-1">{{ t("publicChat.active.title") }}</div>
-          <div class="text-xs text-blue-600">{{ t("publicChat.active.idLabel") }} {{ activeConversation._id }}</div>
-          <div class="text-xs text-blue-600">
+        <div v-if="activeConversation" class="mt-2 rounded-field bg-sky-soft p-3.5">
+          <div class="text-xs font-semibold text-sky-ink">{{ t("publicChat.active.title") }}</div>
+          <div class="mt-0.5 text-xs text-sky-ink/80">{{ t("publicChat.active.idLabel") }} {{ activeConversation._id }}</div>
+          <div class="text-xs text-sky-ink/80">
             {{ t("publicChat.active.contactCreated") }} {{ activeConversation.isContactCreated ? t("publicChat.active.contactCreatedYes") : t("publicChat.active.contactPending") }}
           </div>
           <button
+            type="button"
+            class="mt-2 rounded-full bg-[color:var(--danger-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--danger)]"
             @click="resetConversation"
-            class="mt-2 px-3 py-1 bg-red-100 text-red-600 rounded text-xs font-bold hover:bg-red-200 transition-colors"
           >
             {{ t("publicChat.active.reset") }}
           </button>
@@ -316,102 +308,83 @@ function scrollToBottom() {
       </div>
     </div>
 
-    <!-- Chat Simulator -->
-    <div
-      class="flex-1 bg-white rounded-xl shadow-sm overflow-hidden flex flex-col relative"
-    >
-      <div
-        class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50"
-      >
-        <div class="flex items-center gap-3">
-          <div
-            class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold"
-          >
-            {{ clientName?.[0] || '?' }}
+    <!-- Simulador -->
+    <div class="relative z-10 flex flex-1 flex-col overflow-hidden rounded-big bg-surface shadow-card">
+      <div class="flex items-center gap-3 border-b-[1.5px] border-line p-4">
+        <AAvatar :initials="(clientName?.[0] || '?').toUpperCase()" tone="lilac" />
+        <div>
+          <div class="font-display text-[15px] font-semibold tracking-[-0.01em]">
+            {{ clientName || t("publicChat.header.anonymous") }}
           </div>
-          <div>
-            <div class="font-bold text-slate-800">
-              {{ clientName || t("publicChat.header.anonymous") }}
-            </div>
-            <div class="text-xs text-slate-500">
-              {{ activeConversation ? t("publicChat.header.activeWithPlatform", { platform: selectedPlatform }) : t("publicChat.header.startPrompt") }}
-            </div>
+          <div class="text-xs text-ink-3">
+            {{ activeConversation ? t("publicChat.header.activeWithPlatform", { platform: selectedPlatform }) : t("publicChat.header.startPrompt") }}
           </div>
         </div>
+        <APill v-if="activeConversation" tone="lime" class="ml-auto">
+          <AIcon name="Robot" :size="13" />
+          {{ t("publicChat.sender.ai") }}
+        </APill>
       </div>
 
-      <div
-        id="chat-container"
-        class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-slate-100"
-      >
-        <div v-if="messages.length === 0" class="flex-1 flex items-center justify-center text-slate-400 text-sm">
+      <div id="chat-container" class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-5 py-5">
+        <div v-if="messages.length === 0" class="flex flex-1 items-center justify-center text-sm text-ink-3">
           {{ t("publicChat.empty") }}
         </div>
         <template v-for="msg in messages" :key="msg._id">
           <template v-if="!isHiddenToolMessage(msg)">
-          <div v-if="isConfirmationRequest(msg)" class="w-full flex justify-center">
-            <div
-              class="max-w-[520px] w-full rounded-xl border p-3 shadow-sm text-sm"
-              :class="msg.contentType === 'confirmation_request'
-                ? 'bg-amber-50 border-amber-200'
-                : (msg.toolData?.status === 'error' ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200')"
+            <div v-if="isConfirmationRequest(msg)" class="flex w-full justify-end">
+              <div class="w-full max-w-[80%] rounded-field bg-butter-soft px-4 py-3 text-xs font-semibold text-butter-ink">
+                <div class="mb-1 flex flex-wrap items-center gap-2">
+                  <APill tone="butter" size="sm">{{ t('publicChat.tool.confirmationRequired') }}</APill>
+                  <span v-if="msg.toolData?.status" class="ml-auto text-[10px] font-bold uppercase">
+                    {{ toolStatusLabel(msg.toolData.status) }}
+                  </span>
+                </div>
+                <span v-html="renderMarkdown(msg.content)" />
+                <div v-if="msg.toolData?.status === 'needs_confirmation'" class="mt-3 flex flex-wrap gap-2">
+                  <button type="button" class="rounded-full bg-lime px-3 py-1 text-[11px] font-bold text-lime-ink" @click="confirmTool(msg, 'confirm')">
+                    {{ t("publicChat.tool.confirm") }}
+                  </button>
+                  <button type="button" class="rounded-full bg-surface px-3 py-1 text-[11px] font-bold text-ink-2 ring-1 ring-line" @click="confirmTool(msg, 'cancel')">
+                    {{ t("publicChat.tool.cancel") }}
+                  </button>
+                  <button type="button" class="rounded-full bg-surface px-3 py-1 text-[11px] font-bold text-ink-2 ring-1 ring-line" @click="modifyTool(msg)">
+                    {{ t("publicChat.tool.modify") }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <ABubble
+              v-else
+              :variant="msg.sender === 'contact' ? 'bot' : 'in'"
+              :who="senderLabel(msg.sender)"
             >
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {{ msg.contentType === 'confirmation_request' ? t('publicChat.tool.confirmationRequired') : (msg.toolData?.toolName || t('publicChat.tool.tool')) }}
-                </span>
-                <span
-                  v-if="msg.toolData?.status"
-                  class="ml-auto text-[10px] font-bold uppercase"
-                  :class="msg.toolData.status === 'success' ? 'text-emerald-600' : msg.toolData.status === 'error' ? 'text-red-600' : 'text-amber-600'"
-                >
-                  {{ toolStatusLabel(msg.toolData.status) }}
-                </span>
-              </div>
-              <div v-html="renderMarkdown(msg.content)"></div>
-              <div v-if="msg.contentType === 'confirmation_request' && msg.toolData?.status === 'needs_confirmation'" class="flex flex-wrap gap-2 mt-3">
-                <button @click="confirmTool(msg, 'confirm')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">{{ t("publicChat.tool.confirm") }}</button>
-                <button @click="confirmTool(msg, 'cancel')" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold bg-white hover:bg-slate-50">{{ t("publicChat.tool.cancel") }}</button>
-                <button @click="modifyTool(msg)" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold bg-white hover:bg-slate-50">{{ t("publicChat.tool.modify") }}</button>
-              </div>
-            </div>
-          </div>
-          <div
-            v-else
-            :class="[
-              'max-w-[80%] p-3 rounded-xl text-sm shadow-sm',
-              msg.sender === 'contact'
-                ? 'bg-green-100 text-slate-800 self-end rounded-tr-none'
-                : 'bg-white text-slate-800 self-start rounded-tl-none',
-            ]"
-          >
-            <div class="font-bold text-[10px] mb-1 opacity-50">
-              {{ senderLabel(msg.sender) }}
-            </div>
-            <div v-if="!msg.content" class="flex items-center gap-1 h-5 mt-1">
-              <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-              <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-              <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
-            </div>
-            <div v-else v-html="renderMarkdown(msg.content)"></div>
-          </div>
+              <span v-if="!msg.content" class="flex items-center gap-1 py-1">
+                <span class="dot-pulse h-1.5 w-1.5 rounded-full bg-current" style="animation-delay: 0ms" />
+                <span class="dot-pulse h-1.5 w-1.5 rounded-full bg-current" style="animation-delay: 150ms" />
+                <span class="dot-pulse h-1.5 w-1.5 rounded-full bg-current" style="animation-delay: 300ms" />
+              </span>
+              <span v-else v-html="renderMarkdown(msg.content)" />
+            </ABubble>
           </template>
         </template>
       </div>
 
-      <div class="p-4 border-t border-slate-100">
+      <div class="border-t-[1.5px] border-line p-4">
         <div class="flex gap-2">
           <input
             v-model="newMessage"
-            @keydown.enter="handleSend"
+            class="min-w-0 flex-1 rounded-field bg-canvas px-4 py-3 font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3"
             :placeholder="activeConversation ? t('publicChat.input.placeholder') : t('publicChat.input.firstPlaceholder')"
-            class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            @keydown.enter="handleSend"
           />
           <button
-            @click="handleSend"
+            type="button"
             :disabled="!newMessage.trim() || isLoading || !isSlugReady"
-            class="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-slate-300 text-white rounded-lg font-bold transition-colors"
+            class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-[13px] font-semibold text-white transition-all hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)] disabled:opacity-45"
+            @click="handleSend"
           >
+            <AIcon name="PaperPlaneTilt" :size="15" />
             {{ activeConversation ? t("publicChat.input.send") : t("publicChat.input.start") }}
           </button>
         </div>

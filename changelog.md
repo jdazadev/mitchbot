@@ -5,6 +5,101 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.1.0 — 2026-09-21
+
+> 🏛️ **«Aurora» pasa de mock a sistema**: tokens + componentes base + shell de cápsulas flotantes implementados, y el prototipo rehecho a fidelidad real con las etiquetas del producto
+
+---
+
+### ✨ Añadido
+- **Sistema de diseño Aurora implementado** (`apps/frontend/src/style.css` + `tailwind.config.js`): reemplaza a «App Cálida» como mundo del código. Lienzo cálido `#F7F3EF`, tinta negra `#0B0B0C`, familia pastel semántica (cielo=Web, lima=bot, lila=persona, mantequilla=espera), radios 20/28/16px, sombras difusas de dos capas y utilidades nuevas (`canvas`, `surface`, `sunken`, `line`, `ink-1/2/3`, `sky/lime/lilac/butter`, `rounded-card/big/field`, `font-display/body`, `shadow-card/pop`, escala de spacing 4.5/8.5/9.5/10.5/13).
+- **Tipografía propia**: Bricolage Grotesque (display; ejes `opsz`/`wdth`/`wght`) + Hanken Grotesk (cuerpo, cifras tabulares), cargadas en `index.html` en lugar de Nunito y Material Symbols.
+- **Iconografía Phosphor** (`@phosphor-icons/vue`): dependencia nueva, envuelta en `src/components/ui/AIcon.vue` con los 6 pesos, `fill` para el nav activo y un mapa de nombres Material heredados para migrar vistas sin tocar el set. Retira la webfont de Material Symbols (~3 MB).
+- **Componentes base** (`apps/frontend/src/components/ui/`): `AIcon`, `AButton`, `APill`, `AChip`, `ACard`, `AStat`, `ATable`, `AAvatar`, `AField`, `ASearch`, `ASwitch`, `ATab`, `ATabs`, `ADropdown`, `AEmptyState`, `ABubble`, `ABand`, `ACallout`, `AKpi`.
+- **Shell Aurora** (`apps/frontend/src/components/layout/`): `AuroraRail.vue` (rail flotante con marca, nav de dos grupos y tarjeta de turno), `AuroraTopbar.vue`, `TopbarContext.vue` (instrumentos por vista) y `AuroraLayout.vue`, que compone rail + topbar + niebla `aurora-haze`.
+- **Topbar de cápsulas flotantes**: deja de ser barra (sin fondo, borde ni blur); cada item es su propia pieza sobre el lienzo. Izquierda dinámica por vista (título de página + rango/granularidad, contadores y modo, filtros de canal, vectores, roles), derecha invariante (Proyectos · Idiomas ES/EN · Notificaciones · Usuario).
+- **Menú de usuario en el topbar**: se mueve del pie del rail a una cápsula fija a la derecha con dropdown (Mi Perfil / Cerrar sesión). El selector de proyectos y de idiomas viven también en el cluster derecho.
+
+### 🔄 Cambios
+- **`useBrand.ts`**: color por defecto pasa de `#E86A33` a `#E2C6FF` (lila Aurora) y el favicon se dibuja con Bricolage Grotesque. El acento `--brand*` se reinterpreta como **identidad y selección** (item activo, avatar, punto de proyecto, foco), no como primario de acción — el primario es tinta negra.
+- **`DESIGN.md` + `.impeccable/design.json`**: re-documentados para Aurora (tokens, reglas nominadas, iconografía Phosphor, firma de cápsulas y de burbuja).
+- **Prototipo Aurora rehecho a fidelidad real** (`apps/frontend/.impeccable/mocks/aurora/`): 12 vistas con las etiquetas reales del producto (Panel · Conversaciones · Clientes · Brain · Usuarios · Configuración · Mi Perfil) y datos marcados como sintéticos; se elimina `agentes.html` porque Agents no está ruteado. Corrige fabricaciones del mock anterior (rail «Agente», etiquetas inventadas, topbar con fondo).
+- **Responsive del prototipo**: por debajo de 1024px el rail se oculta y las rejillas colapsan; por debajo de 640px el topbar apila su cluster, el hilo envuelve sus acciones y las burbujas de herramienta no desbordan.
+
+### ✨ Añadido (migración de vistas reales — 2ª tanda)
+- **Migración completa de las vistas del dashboard a Aurora**: `Dashboard.vue` (stats, rango 7/30/90, volumen SVG, canales, actividad), `Messaging.vue` (3 columnas bandeja/hilo/detalles, `ABubble`, tarjeta de **Sentimiento**, bloque de **Urgencia**, mensajes de herramienta), `Clients.vue` (tabla, filtros, orden, paginación y modales), `Brain.vue` (stats, tabla de fuentes, dropzone y modales), `Users.vue`, `Profile.vue`, `Settings.vue` (tabs Agente IA · Información · Canales · Opciones + identidad de marca con swatches Aurora), `Login.vue`, `ProjectSetup.vue` (3 pasos), `TestChat.vue` y `DevTests.vue`. **Cero clases `warm-*`** restantes en el código.
+- **Tarjeta de Urgencia en Conversaciones**: UI con placeholder (sin tocar backend), traducida en `messaging.urgency.*` (es/en).
+- **Ajustes finos del shell**: marca centrada en el rail **sin subtítulo**, **iconos Phosphor** en el nav, y **pie del rail** con hora, día de la semana y fecha `DD/MM/AAAA` (reactivo con `setInterval`). El contenedor de contenido deja de centrarse con `max-w-[1400px]` y el `md:pl-[242px]` se aplica siempre para que nada quede bajo el rail flotante.
+- **`Messaging.vue`**: layout `h-full min-h-0` con grid condicional de 3 columnas (con chat) vs 2 columnas (estado vacío).
+
+### 🔄 Cambios (migración de vistas reales)
+- Se eliminan `Sidebar.vue`, `Topbar.vue` y `Agents.vue` (sin uso/ruta); `AuroraLayout.vue` no se reintroduce (el shell vive en `DashboardLayout.vue`).
+
+### ✅ Verificado
+- `vue-tsc --noEmit` y `pnpm --filter @mitchbot/frontend build` en verde; bundle bajó de **6 MB a 559 KB** tras los imports explícitos de iconos en `AIcon.vue`.
+- Detector mecánico Impeccable sobre `ui/` y el shell: 0 hallazgos no-advisory (los `design-system-font-size` son advisory y quedan cubiertos por la rampa documentada en `DESIGN.md`).
+- Capturas e2e sobre las vistas reales (stub IA `:4010`, backend `:3100`, frontend `:5174`, seed `e2e@mitchbot.test`): Panel, Conversaciones, Clientes, Brain, Usuarios, Configuración y Mi Perfil sin desbordes, sin contenido bajo el rail flotante y con el topbar cambiando de items por vista.
+
+### 📝 Notas
+- El **Resumen (Dashboard) se conserva tal cual** (datos reales del backend) para adaptarlo con más fidelidad en una tanda posterior. La persistencia de `project.config.brand` sigue como decisión abierta hacia el backend.
+
+## v4.0.5 — 2026-09-21
+
+> 🎨 **Dos mundos nuevos de exploración («Aurora» y «Bóveda») con prototipo completo de 12 vistas, y un comparador que reúne todos los mundos**
+
+---
+
+### ✨ Añadido
+- **Mundo «Aurora»** (`apps/frontend/.impeccable/mocks/aurora/`): reconstrucción del mundo pastel optimista de **orivo.webflow.io** — suelo cálido `#F7F3EF`, tinta negra, tipografía enorme (Instrument Sans + Inter), tarjetas de 20px sin borde y todo en píldora. Familia de pasteles con papel semántico (azul = canal Web, lima = bot, lila = persona, mantequilla = algo que espera). Prototipo navegable de las 12 vistas (`_gen.py` + `style.css` + `_shell.html` + `index.html`).
+- **Mundo «Bóveda»** (`apps/frontend/.impeccable/mocks/boveda/`): reconstrucción del mundo cool premium de **per-ment.webflow.io** — blanco frío `#F9F7FE`, azul noche `#181D2A`, violeta único `#6638ED`, rejilla vertical fina sobre el fondo, navegación en cápsula flotante y serif itálica (Playfair Display) para el énfasis de los titulares. Prototipo navegable de las 12 vistas.
+- **Comparador de mundos** (`apps/frontend/.impeccable/mocks/comparador.html`): tablero que reúne los 12 mundos de las 4 rondas con su ADN (paleta, tipografía, forma, clima), su origen y el enlace a cada prototipo; señala en qué ronda está cada uno y cuál está fijada.
+
+### 🔄 Cambios
+- Se conservan intactos `mocks/ejemplos/` (rondas 1–3) y `mocks/rediseño/` (Mesa de Exposición, fijada).
+
+### ✅ Verificado
+- Detector mecánico Impeccable sobre los dos mundos y el comparador: contraste del texto secundario corregido (de 234 avisos `low-contrast` a 7, de los que 6 son falsos positivos por gradientes/variables no resolubles) y tamaños del comparador subidos al suelo de 11px.
+- Capturas de escritorio (1440×900) de dashboard, mensajería, clientes, conocimiento, ajustes, usuarios, alta, login y chat público de ambos mundos: sin desbordes ni vistas en blanco.
+
+### 📝 Notas
+- Ninguno de los dos mundos nuevos es un compromiso: son material de comparación. «Mesa de Exposición» sigue fijada y **aún no migrada** al código del frontend.
+
+## v4.0.4 — 2026-09-21
+
+### 🔄 Verificado
+- **Re-ejecución de `$impeccable document` (modo scan, refresh)** sobre el mundo "App Cálida": los tokens de `apps/frontend/src/style.css`, `tailwind.config.js` y `useBrand.ts` coinciden 1:1 con el frontmatter de `DESIGN.md` y el sidecar `.impeccable/design.json` (sin drift). El sistema congelado se mantiene intacto; se refrescó el `generatedAt` del sidecar. Sin cambios de valores ni de estilos.
+
+## v4.0.3 — 2026-09-21
+
+> 📐 **El sistema "App Cálida" queda documentado**: `DESIGN.md` + sidecar de tokens para que cualquier agente genere pantallas on-brand
+
+---
+
+### ✨ Añadido
+- **`apps/frontend/DESIGN.md`**: documentación del mundo visual "App Cálida" extraída en modo scan del código real (`style.css`, `tailwind.config.js`, `useBrand.ts`) — tokens normativos en frontmatter YML, colores con carácter ("Naranja Mandarina", "Suelo Papel"), reglas nominadas (La Regla de una Voz, La Regla del Suelo Cálido, La Regla del Sello, La Regla Sin Halo), componentes y Do's/Don'ts. Incluye nota de dirección: el sucesor "Mesa de Exposición" (v4.0.2) está decidido pero no migrado.
+- **`apps/frontend/.impeccable/design.json`** (sidecar schemaVersion 2): tonal ramps por color, sombras/motion/breakpoints y 6 componentes autocontenidos (botón primario, ghost, campo, tarjeta, sello de estado y burbuja de chat) renderizables en shadow DOM.
+- No se modificó ningún estilo ni componente: es documentación del sistema congelado.
+
+---
+
+## v4.0.2 — 2026-09-21
+
+> 🎨 **Rediseño total decidido: mundo "Mesa de Exposición"** (estructura de Mesa de Señales + material de Ficha de Exposición), con prototipo navegable de todas las vistas antes de migrar
+
+---
+
+### ✨ Añadido
+- **Decisión visual del rediseño total**: después de 4 rondas de tiradas Impeccable (y ejemplos HTML servidos en local), el usuario fijó la fusión **Mesa de Exposición**: topología de tablero de despacho (circuitos, lámparas de estado, llave de toma de control) + materialidad de ficha de imprenta (papel de calco, carga por hatching, magenta como único acento de acción/humano, regla tachada al cerrar, cruz 90° para conflictos).
+- **Contrato de dirección** persistido en `.agents/skills/impeccable` surface brief (`apps/frontend/.impeccable/surfaces/…`) + `PRODUCT.md` mantenido.
+- **Prototipo completo navegable en `apps/frontend/.impeccable/mocks/rediseño/`**: 12 vistas de ejemplo (login, setup 3 pasos, tablero, mensajería, clientes, cerebro/RAG, agentes, ajustes, usuarios, perfil, chat público, banco de pruebas) con sistema compartido `style.css`. **No toca el código real del frontend**: es material de decisión previo a la migración.
+- **Ejemplos de rondas anteriores** conservados en `mocks/ejemplos/` (mesa-senales, centralita, ficha-exposicion, libro-mayor, periodico, grafita, cabina, horario, secuenciador) para trazabilidad del proceso.
+
+### 🗺️ Decisiones abiertas (para la migración)
+- La identidad de marca por proyecto (nombre, color, logo) aún requiere backend: persistencia en `project.config.brand` pendiente de diseño.
+- El reemplazo de vistas se aplicará por vista en la migración real; Messaging es la superficie primaria.
+
+---
+
 ## v4.0.1 — 2026-09-21
 
 > 🔔 **El contador de no leídos deja de "resucitar": solo suma mensajes del cliente, la lectura se persiste y la bandeja ya no autoselecciona un chat**
@@ -1015,7 +1110,7 @@ docker compose up -d --remove-orphans
 - **Manejo Sensato de Errores de LLMs**: Ahora, cuando falla un proveedor externo o interno, el bot envía al chat un mensaje de sistema claro y fácil de entender (ej: "Error de OpenRouter: Missing Credentials. Revisa Settings") para el usuario en vez de quedarse callado sin responder la petición inicial por web-socket. Se introdujo también un timeout general de 60s preventivo para LLMs que se queden en estado "zombie".
 
 ---
-## v1.3.0 — 2026-03-10
+
 
 > 🔄 **Refactor: Proveedores `local` → `ollama` + Modal de selección de modelos**
 

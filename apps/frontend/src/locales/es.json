@@ -413,6 +413,15 @@
       "title": "Detalles",
       "platform": "Plataforma",
       "notAvailable": "No disponible"
+    },
+    "urgency": {
+      "title": "Urgencia",
+      "level.low": "Baja",
+      "level.medium": "Media",
+      "level.high": "Alta",
+      "reasonPending": "espera visto bueno",
+      "reasonOpen": "conversación abierta",
+      "reasonClosed": "conversación cerrada"
     }
   },
   "profile": {

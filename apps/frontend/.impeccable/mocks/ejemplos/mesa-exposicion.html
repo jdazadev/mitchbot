@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Mesa de Exposición (fusión) — ejemplo</title>
+<style>
+  :root{
+    --paper:#F1EDE6; --paper-2:#E9E4DA; --ink:#1C1E22; --ink-soft:#6B675E;
+    --hair:#C7C2B6; --magenta:#C13A7C; --green:#1D7A4F; --calco:#FBF9F3;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--paper);color:var(--ink);font-family:'Spline Sans',sans-serif;font-size:13px}
+  .frame{height:100vh;display:grid;grid-template-columns:216px 1fr}
+
+  /* rail calco: rampa + nav */
+  .rail{background:#17191C;color:#CFC9BC;display:flex;flex-direction:column}
+  .brand{padding:18px 16px;border-bottom:1px solid #2A2E32}
+  .brand .n{font-family:'Spectral',serif;font-size:17px;color:#F3EFE7;font-weight:600}
+  .brand .s{font-family:'IBM Plex Mono';font-size:8.5px;letter-spacing:.24em;color:#8E887B;text-transform:uppercase;margin-top:4px}
+  .hatch-strip{height:26px;margin-top:16px;background:repeating-linear-gradient(45deg,transparent 0 4px,rgba(193,58,124,.55) 4px 7px);border-top:1px solid #2A2E32;border-bottom:1px solid #2A2E32}
+  .nav{padding:10px 0;flex:1}
+  .nav div{padding:9px 18px;font-family:'Barlow Condensed';font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#9E9689;border-bottom:1px solid #22262A}
+  .nav div.on{background:#22262A;color:#F3EFE7;box-shadow:inset 3px 0 0 var(--magenta)}
+  .clockzone{padding:16px;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.18em;color:#8E887B;border-top:1px solid #2A2E32}
+  .clockzone b{display:block;font-size:19px;color:#E8DFC9;margin-bottom:2px}
+
+  /* desk */
+  .desk{display:grid;grid-template-rows:46px 1fr}
+  .toprow{display:flex;align-items:center;gap:18px;padding:0 18px;border-bottom:2px solid var(--ink)}
+  .kpi{display:flex;align-items:baseline;gap:8px}
+  .kpi b{font-family:'IBM Plex Mono';font-size:16px;font-weight:500}
+  .kpi span{font-family:'Barlow Condensed';font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
+  .work{display:grid;grid-template-columns:minmax(380px,42%) 1fr;min-height:0}
+
+  .queue{border-right:2px solid var(--ink);overflow-y:auto}
+  .qh{padding:12px 18px 8px;font-family:'Barlow Condensed';font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-soft);border-bottom:2px solid var(--ink)}
+  .circ{padding:11px 16px;border-bottom:1px solid var(--hair);cursor:pointer;background:var(--calco)}
+  .circ:hover{background:#FDFBF2}
+  .circ.sel{background:repeating-linear-gradient(180deg,#F8F4EB 0 7px,#EFE9DC 7px 8px);box-shadow:inset 4px 0 0 var(--magenta)}
+  .circ .r1{display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .dot.g{background:var(--green)} .dot.m{background:var(--magenta)} .dot.k{background:var(--ink-soft)}
+  .n{font-weight:600;margin-left:2px}
+  .load{margin-left:auto;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.1em;color:var(--ink)}
+  .hload{display:inline-block;margin-left:6px;width:34px;height:7px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 5px)}
+  .hload.x2{width:44px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px)}
+  .r2{font-family:'IBM Plex Mono';font-size:9.5px;color:var(--ink-soft);letter-spacing:.06em;margin-top:3px}
+  .closed .n{color:var(--ink-soft)}
+  .stroke{display:inline-block;width:120px;height:1px;background:var(--ink);position:relative;top:-3px;left:4px}
+  .cruz{border:1px dashed var(--magenta);color:var(--magenta);font-family:'IBM Plex Mono';font-size:8.5px;letter-spacing:.2em;padding:2px 6px;margin-left:6px}
+
+  /* thread */
+  .tw{display:grid;grid-template-rows:auto 1fr auto;min-height:0}
+  .th{padding:12px 18px;border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:10px}
+  .th .n{font-weight:600;font-size:14px}
+  .th .st{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.18em;color:var(--green);text-transform:uppercase;margin-left:6px}
+  .take{margin-left:auto;background:var(--magenta);color:#fff;padding:8px 14px;border-radius:2px;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.2em;text-transform:uppercase}
+  .thread{padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;background:
+    linear-gradient(180deg,var(--calco),var(--paper))}
+  .l{max-width:64%;padding:10px 14px;background:#FFF;border:1px solid var(--hair);border-radius:2px;align-self:flex-start;line-height:1.5}
+  .b{max-width:64%;padding:10px 14px;background:var(--ink);color:#F3EFE7;border-radius:2px;align-self:flex-end;line-height:1.5}
+  .tool{align-self:flex-end;max-width:64%;border:1px dashed var(--magenta);padding:8px 12px;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.14em;color:var(--magenta);text-transform:uppercase;background:rgba(193,58,124,.05)}
+  .stampline{align-self:center;font-family:'IBM Plex Mono';font-size:8.5px;letter-spacing:.24em;color:var(--ink-soft);text-transform:uppercase}
+  .tray{padding:13px 18px;border-top:2px solid var(--ink);display:flex;gap:10px}
+  .tray input{flex:1;background:#FFF;border:1.5px solid var(--ink);padding:11px 14px;font-family:'Spline Sans',sans-serif;font-size:13px;border-radius:2px}
+  .tray button{background:var(--ink);color:#F3EFE7;border:none;padding:11px 22px;border-radius:2px;font-family:'Barlow Condensed';letter-spacing:.24em;font-size:11px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="frame">
+  <aside class="rail">
+    <div class="brand"><div class="n">Estudio Mateo</div><div class="s">posición de despacho</div></div>
+    <div class="hatch-strip"></div>
+    <nav class="nav"><div class="on">Mensajería</div><div>Clientes</div><div>Cerebro</div><div>Agentes</div><div>Ajustes</div></nav>
+    <div class="clockzone"><b>09:41</b>thurs · turno completo</div>
+  </aside>
+  <section class="desk">
+    <div class="toprow">
+      <div class="kpi"><b>12</b><span>circuitos</span></div>
+      <div class="kpi"><b style="color:var(--magenta)">3</b><span>con carga</span></div>
+      <div class="kpi"><b>94%</b><span>despacho bot</span></div>
+      <div class="kpi"><b>1m20s</b><span>resp. media</span></div>
+      <div style="margin-left:auto" class="kpi"><b>07:12:04</b><span>sesión</span></div>
+    </div>
+    <div class="work">
+      <div class="queue">
+        <div class="qh">Cola de regletas · por carga</div>
+        <div class="circ sel">
+          <div class="r1"><span class="dot m"></span><span class="n">María Cano</span><span class="load"><b>+1⅓</b><span class="hload x2" style="background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px)"></span></span></div>
+          <div class="r2">WA · ÚLTIMO 2 MIN · 1 HERRAMIENTA SIN CONFIRMAR</div>
+        </div>
+        <div class="circ">
+          <div class="r1"><span class="dot g"></span><span class="n">Jorge Rincón</span><span class="load">+0<span class="hload"></span></span></div>
+          <div class="r2">IG · BOT EN LÍNEA · RESPUESTA EN CAMINO</div>
+        </div>
+        <div class="circ closed">
+          <div class="r1"><span class="dot k"></span><span class="n">Laura Pérez</span><span class="load"><span class="stroke"></span></span></div>
+          <div class="r2">WEB · CERRADO 09:12 · REGULAR</div>
+        </div>
+        <div class="circ">
+          <div class="r1"><span class="dot m"></span><span class="n">Tech Store</span><span class="load" style="border:1px solid var(--magenta);color:var(--magenta);font-size:8px;padding:2px 5px">CONFLICTO</span></div>
+          <div class="r2">WA · PEDIDO #1042 DUELO DE ZONAS · CRUZ 90°<span style="display:inline-block;width:12px;height:12px;background:repeating-linear-gradient(45deg,transparent 0 3px,var(--magenta) 3px 5px);position:relative;top:2px"></span></div>
+        </div>
+      </div>
+      <div class="tw">
+        <div class="th"><span class="n">María Cano</span><span class="st">+1⅓ · PENDIENTE DESPACHO</span>
+          <span class="take">DESPLEGAR · +1⅓</span></div>
+        <div class="thread">
+          <div class="stampline">tira 1043 · este registro</div>
+          <div class="l">¿El curso de julio entra en el presupuesto que me dijeron?</div>
+          <div class="b">Sí María, es exactamente 480.000 por persona, incluye material.</div>
+          <div class="tool">· create_order ESPERA CONFIRMACIÓN · 1 paso ·</div>
+          <div class="stampline" style="color:var(--magenta)">la regleta sigue abierta — despegar cuando despejes</div>
+        </div>
+        <div class="tray">
+          <input placeholder="Anotación...">
+          <button>Despachar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

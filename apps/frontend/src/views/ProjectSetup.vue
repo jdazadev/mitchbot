@@ -4,6 +4,9 @@ import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { projectService, SessionInvalidError } from '../services/project.service';
 import { authService } from '../services/auth.service';
+import AIcon from '../components/ui/AIcon.vue';
+import AButton from '../components/ui/AButton.vue';
+import ASwitch from '../components/ui/ASwitch.vue';
 
 const { t } = useI18n();
 
@@ -55,17 +58,17 @@ function removeGoodbyeKeyword(keyword: string) {
 }
 
 const setupRoleOptions = computed(() => [
-  { id: 'assistant', label: t('setup.agent.roles.assistant.label'), icon: 'support_agent', desc: t('setup.agent.roles.assistant.desc') },
-  { id: 'teacher', label: t('setup.agent.roles.teacher.label'), icon: 'school', desc: t('setup.agent.roles.teacher.desc') },
-  { id: 'seller', label: t('setup.agent.roles.seller.label'), icon: 'storefront', desc: t('setup.agent.roles.seller.desc') },
-  { id: 'support', label: t('setup.agent.roles.support.label'), icon: 'build', desc: t('setup.agent.roles.support.desc') },
-  { id: 'customer_service', label: t('setup.agent.roles.customer_service.label'), icon: 'headset_mic', desc: t('setup.agent.roles.customer_service.desc') },
+  { id: 'assistant', label: t('setup.agent.roles.assistant.label'), icon: 'Headset', desc: t('setup.agent.roles.assistant.desc') },
+  { id: 'teacher', label: t('setup.agent.roles.teacher.label'), icon: 'GraduationCap', desc: t('setup.agent.roles.teacher.desc') },
+  { id: 'seller', label: t('setup.agent.roles.seller.label'), icon: 'Storefront', desc: t('setup.agent.roles.seller.desc') },
+  { id: 'support', label: t('setup.agent.roles.support.label'), icon: 'Wrench', desc: t('setup.agent.roles.support.desc') },
+  { id: 'customer_service', label: t('setup.agent.roles.customer_service.label'), icon: 'Headphones', desc: t('setup.agent.roles.customer_service.desc') },
 ]);
 
 const setupChannels = computed(() => [
-  { key: 'whatsapp', name: t('setup.channels.whatsapp'), icon: 'call', color: 'green' },
-  { key: 'instagram', name: t('setup.channels.instagram'), icon: 'photo_camera', color: 'purple' },
-  { key: 'web', name: t('setup.channels.web'), icon: 'language', color: 'blue' },
+  { key: 'whatsapp', name: t('setup.channels.whatsapp'), icon: 'Phone' },
+  { key: 'instagram', name: t('setup.channels.instagram'), icon: 'Image' },
+  { key: 'web', name: t('setup.channels.web'), icon: 'Globe' },
 ]);
 
 // Step 3: Canales
@@ -179,223 +182,201 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <!-- Verificando si el setup ya fue realizado -->
-  <div v-if="checking" class="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-    <div class="flex flex-col items-center gap-3 text-slate-500">
-      <span class="material-symbols-outlined text-[32px] animate-spin">progress_activity</span>
+  <div class="relative flex min-h-screen items-center justify-center p-4">
+    <div class="aurora-haze" aria-hidden="true" />
+
+    <div v-if="checking" class="relative z-10 flex flex-col items-center gap-3 text-ink-3">
+      <span class="animate-spin"><AIcon name="SpinnerGap" :size="32" /></span>
       <p class="text-sm">{{ t('setup.checking') }}</p>
     </div>
-  </div>
 
-  <div v-else class="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-    <div class="w-full max-w-2xl">
-
+    <div v-else class="relative z-10 w-full max-w-2xl">
       <!-- Header -->
-      <div class="text-center mb-8">
-        <div class="flex items-center justify-center gap-3 mb-3">
-          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
-            <span class="material-symbols-outlined text-[32px]">rocket_launch</span>
-          </div>
+      <div class="mb-5 flex items-center gap-3">
+        <div class="grid h-10 w-10 place-items-center rounded-[14px] bg-ink font-display text-lg font-bold tracking-[-0.02em] text-white">
+          M
         </div>
-        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{{ t('setup.title') }}</h1>
-        <p class="text-sm text-slate-500 mt-2">{{ t('setup.subtitle') }}</p>
+        <p class="text-[12.5px] font-semibold text-ink-3">{{ t('setup.subtitle') }}</p>
       </div>
 
-      <!-- Progress Steps -->
-      <div class="flex items-center justify-center gap-2 mb-8">
+      <!-- Progress -->
+      <div class="mb-5 flex items-center gap-2">
         <template v-for="step in totalSteps" :key="step">
           <div
-            class="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold transition-all"
-            :class="step <= currentStep
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-              : 'bg-slate-200 dark:bg-slate-700 text-slate-400'"
+            class="grid h-8 w-8 place-items-center rounded-full text-sm font-bold transition-all"
+            :class="step <= currentStep ? 'bg-lilac text-lilac-ink' : 'bg-sunken text-ink-3'"
           >
-            <span v-if="step < currentStep" class="material-symbols-outlined text-[18px]">check</span>
+            <AIcon v-if="step < currentStep" name="Check" :size="16" weight="bold" />
             <span v-else>{{ step }}</span>
           </div>
-          <div v-if="step < totalSteps" class="w-16 h-0.5 rounded-full transition-all" :class="step < currentStep ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'"></div>
+          <div
+            v-if="step < totalSteps"
+            class="h-1 flex-1 rounded-full transition-all"
+            :class="step < currentStep ? 'bg-lilac' : 'bg-sunken'"
+          />
         </template>
       </div>
 
-      <!-- Card -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-8">
-
-        <!-- Error -->
-        <div v-if="error" class="mb-6 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center gap-2">
-          <span class="material-symbols-outlined text-[18px]">error</span>
+      <div class="rounded-big bg-surface p-7 shadow-[var(--shadow-pop)]">
+        <div v-if="error" class="mb-5 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]">
+          <AIcon name="WarningCircle" :size="17" />
           {{ error }}
         </div>
 
-        <!-- Step 1: Proyecto -->
+        <!-- Paso 1: Proyecto -->
         <div v-if="currentStep === 1" class="flex flex-col gap-5">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
-              <span class="material-symbols-outlined text-blue-600 text-[22px]">folder_open</span>
-            </div>
+          <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-[13px] bg-sky text-sky-ink">
+              <AIcon name="FolderOpen" :size="20" />
+            </span>
             <div>
-              <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ t('setup.project.title') }}</h2>
-              <p class="text-xs text-slate-500">{{ t('setup.project.subtitle') }}</p>
+              <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('setup.project.title') }}</h2>
+              <p class="text-xs text-ink-3">{{ t('setup.project.subtitle') }}</p>
             </div>
           </div>
-
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">{{ t('setup.project.name') }}</label>
-            <input
-              v-model="projectForm.name"
-              type="text"
-              :placeholder="t('setup.project.namePlaceholder')"
-              class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
-            />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">{{ t('setup.project.description') }}</label>
-            <textarea
-              v-model="projectForm.description"
-              :placeholder="t('setup.project.descriptionPlaceholder')"
-              class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
-            ></textarea>
-          </div>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('setup.project.name') }}</span>
+            <input v-model="projectForm.name" type="text" class="field" :placeholder="t('setup.project.namePlaceholder')" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('setup.project.description') }}</span>
+            <textarea v-model="projectForm.description" class="field h-24 resize-none" :placeholder="t('setup.project.descriptionPlaceholder')" />
+          </label>
         </div>
 
-        <!-- Step 2: Agente IA -->
+        <!-- Paso 2: Agente -->
         <div v-if="currentStep === 2" class="flex flex-col gap-5">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
-              <span class="material-symbols-outlined text-purple-600 text-[22px]">smart_toy</span>
-            </div>
+          <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-[13px] bg-lilac text-lilac-ink">
+              <AIcon name="Robot" :size="20" />
+            </span>
             <div>
-              <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ t('setup.agent.title') }}</h2>
-              <p class="text-xs text-slate-500">{{ t('setup.agent.subtitle') }}</p>
+              <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('setup.agent.title') }}</h2>
+              <p class="text-xs text-ink-3">{{ t('setup.agent.subtitle') }}</p>
             </div>
           </div>
 
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">{{ t('setup.agent.name') }}</label>
-            <input
-              v-model="agentForm.name"
-              type="text"
-              :placeholder="t('setup.agent.namePlaceholder')"
-              class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
-            />
-          </div>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('setup.agent.name') }}</span>
+            <input v-model="agentForm.name" type="text" class="field" :placeholder="t('setup.agent.namePlaceholder')" />
+          </label>
 
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1.5 block">{{ t('setup.agent.roleLabel') }}</label>
-            <p class="text-[10px] text-slate-400 mb-2">{{ t('setup.agent.roleHelp') }}</p>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <span class="block text-xs font-semibold text-ink-2">{{ t('setup.agent.roleLabel') }}</span>
+            <p class="mb-2 mt-1 text-[10px] text-ink-3">{{ t('setup.agent.roleHelp') }}</p>
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <button
-                v-for="r in setupRoleOptions" :key="r.id"
+                v-for="r in setupRoleOptions"
+                :key="r.id"
                 type="button"
+                class="flex flex-col items-start rounded-field border-[1.5px] p-3 text-left transition-colors"
+                :class="agentForm.role === r.id ? 'border-lilac bg-lilac-soft' : 'border-line hover:border-line-strong'"
                 @click="agentForm.role = r.id as typeof agentForm.role"
-                class="flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all"
-                :class="agentForm.role === r.id
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'"
               >
-                <span class="material-symbols-outlined text-[20px] mb-1" :class="agentForm.role === r.id ? 'text-blue-600' : 'text-slate-400'">{{ r.icon }}</span>
-                <span class="text-sm font-medium" :class="agentForm.role === r.id ? 'text-blue-700' : 'text-slate-700 dark:text-white'">{{ r.label }}</span>
-                <span class="text-[10px] text-slate-400">{{ r.desc }}</span>
+                <AIcon :name="r.icon" :size="18" :class="agentForm.role === r.id ? 'text-lilac-ink' : 'text-ink-3'" />
+                <span class="mt-1.5 text-[13px] font-semibold">{{ r.label }}</span>
+                <span class="text-[10px] text-ink-3">{{ r.desc }}</span>
               </button>
             </div>
           </div>
 
-          <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">{{ t('setup.agent.autoMessages') }}</label>
+          <div class="border-t border-line pt-4">
+            <span class="mb-3 block text-xs font-semibold text-ink-2">{{ t('setup.agent.autoMessages') }}</span>
             <div class="flex flex-col gap-3">
-              <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
+              <div class="flex items-center justify-between rounded-field border border-line p-3">
                 <div>
-                  <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('setup.agent.welcomeGreeting') }}</span>
-                  <p class="text-xs text-slate-400 mt-0.5">{{ t('setup.agent.welcomeGreetingHelp') }}</p>
+                  <span class="text-[13px] font-medium">{{ t('setup.agent.welcomeGreeting') }}</span>
+                  <p class="mt-0.5 text-xs text-ink-3">{{ t('setup.agent.welcomeGreetingHelp') }}</p>
                 </div>
-                <input type="checkbox" v-model="agentForm.enableWelcomeGreeting" class="h-4 w-4 accent-blue-600" />
-              </label>
-              <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
+                <ASwitch v-model="agentForm.enableWelcomeGreeting" />
+              </div>
+              <div class="flex items-center justify-between rounded-field border border-line p-3">
                 <div>
-                  <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('setup.agent.goodbyeMessage') }}</span>
-                  <p class="text-xs text-slate-400 mt-0.5">{{ t('setup.agent.goodbyeMessageHelp') }}</p>
+                  <span class="text-[13px] font-medium">{{ t('setup.agent.goodbyeMessage') }}</span>
+                  <p class="mt-0.5 text-xs text-ink-3">{{ t('setup.agent.goodbyeMessageHelp') }}</p>
                 </div>
-                <input type="checkbox" v-model="agentForm.enableGoodbyeMessage" class="h-4 w-4 accent-blue-600" />
-              </label>
-              <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
+                <ASwitch v-model="agentForm.enableGoodbyeMessage" />
+              </div>
+              <div class="flex items-center justify-between rounded-field border border-line p-3">
                 <div>
-                  <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('setup.agent.fallbackAdvisor') }}</span>
-                  <p class="text-xs text-slate-400 mt-0.5">{{ t('setup.agent.fallbackAdvisorHelp') }}</p>
+                  <span class="text-[13px] font-medium">{{ t('setup.agent.fallbackAdvisor') }}</span>
+                  <p class="mt-0.5 text-xs text-ink-3">{{ t('setup.agent.fallbackAdvisorHelp') }}</p>
                 </div>
-                <input type="checkbox" v-model="agentForm.enableFallbackAdvisor" class="h-4 w-4 accent-blue-600" />
-              </label>
+                <ASwitch v-model="agentForm.enableFallbackAdvisor" />
+              </div>
             </div>
+
             <div class="mt-4">
-              <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('setup.agent.goodbyeKeywords') }}</label>
-              <div class="flex flex-wrap gap-2 mb-2">
-                <span v-for="keyword in agentForm.goodbyeKeywords" :key="keyword" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs">
+              <span class="block text-xs font-semibold text-ink-2">{{ t('setup.agent.goodbyeKeywords') }}</span>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <span
+                  v-for="keyword in agentForm.goodbyeKeywords"
+                  :key="keyword"
+                  class="inline-flex items-center gap-1 rounded-full bg-canvas px-2.5 py-1 text-xs text-ink-2"
+                >
                   {{ keyword }}
-                  <button type="button" class="text-slate-400 hover:text-slate-600" @click="removeGoodbyeKeyword(keyword)">
-                    <span class="material-symbols-outlined text-[14px]">close</span>
+                  <button type="button" class="text-ink-3 hover:text-ink" @click="removeGoodbyeKeyword(keyword)">
+                    <AIcon name="X" :size="12" />
                   </button>
                 </span>
               </div>
-              <div class="flex gap-2">
+              <div class="mt-2 flex gap-2">
                 <input
                   v-model="goodbyeKeywordInput"
-                  @keydown.enter.prevent="addGoodbyeKeyword"
+                  class="field flex-1"
                   :placeholder="t('setup.agent.goodbyeKeywordPlaceholder')"
-                  class="flex-1 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
+                  @keydown.enter.prevent="addGoodbyeKeyword"
                 />
-                <button type="button" class="px-3 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg" @click="addGoodbyeKeyword">
-                  {{ t('setup.agent.addKeyword') }}
-                </button>
+                <AButton variant="secondary" size="sm" @click="addGoodbyeKeyword">{{ t('setup.agent.addKeyword') }}</AButton>
               </div>
-              <p class="text-[10px] text-slate-400 mt-1">{{ t('setup.agent.goodbyeKeywordsHelp') }}</p>
+              <p class="mt-1 text-[10px] text-ink-3">{{ t('setup.agent.goodbyeKeywordsHelp') }}</p>
             </div>
           </div>
         </div>
 
-        <!-- Step 3: Canales y Opciones -->
+        <!-- Paso 3: Canales y opciones -->
         <div v-if="currentStep === 3" class="flex flex-col gap-5">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-              <span class="material-symbols-outlined text-emerald-600 text-[22px]">settings</span>
-            </div>
+          <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-[13px] bg-lime text-lime-ink">
+              <AIcon name="GearSix" :size="20" />
+            </span>
             <div>
-              <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ t('setup.channels.title') }}</h2>
-              <p class="text-xs text-slate-500">{{ t('setup.channels.subtitle') }}</p>
+              <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('setup.channels.title') }}</h2>
+              <p class="text-xs text-ink-3">{{ t('setup.channels.subtitle') }}</p>
             </div>
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">{{ t('setup.channels.channelsLabel') }}</label>
+            <span class="mb-3 block text-xs font-semibold text-ink-2">{{ t('setup.channels.channelsLabel') }}</span>
             <div class="flex flex-col gap-3">
-              <div v-for="ch in setupChannels" :key="ch.key" class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
+              <div
+                v-for="ch in setupChannels"
+                :key="ch.key"
+                class="flex items-center justify-between rounded-field border border-line p-3"
+              >
                 <div class="flex items-center gap-3">
-                  <span class="material-symbols-outlined text-slate-500 text-[20px]">{{ ch.icon }}</span>
-                  <span class="text-sm font-medium text-slate-800 dark:text-white">{{ ch.name }}</span>
+                  <AIcon :name="ch.icon" :size="20" class="text-ink-3" />
+                  <span class="text-[13px] font-medium">{{ ch.name }}</span>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" v-model="(configForm.channels as any)[ch.key]" class="sr-only peer">
-                  <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
+                <ASwitch v-model="(configForm.channels as any)[ch.key]" />
               </div>
             </div>
           </div>
 
-          <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">{{ t('setup.channels.optionsLabel') }}</label>
-            <div class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
+          <div class="border-t border-line pt-4">
+            <span class="mb-3 block text-xs font-semibold text-ink-2">{{ t('setup.channels.optionsLabel') }}</span>
+            <div class="flex items-center justify-between rounded-field border border-line p-3">
               <div>
-                <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('setup.channels.autoCreateContact') }}</span>
-                <p class="text-xs text-slate-400 mt-0.5">{{ t('setup.channels.autoCreateContactHelp') }}</p>
+                <span class="text-[13px] font-medium">{{ t('setup.channels.autoCreateContact') }}</span>
+                <p class="mt-0.5 text-xs text-ink-3">{{ t('setup.channels.autoCreateContactHelp') }}</p>
               </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="configForm.options.autoCreateContact" class="sr-only peer">
-                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
+              <ASwitch v-model="configForm.options.autoCreateContact" />
             </div>
           </div>
 
-          <!-- Resumen -->
-          <div class="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-4 mt-2">
-            <h3 class="text-xs font-bold text-slate-500 uppercase mb-2">{{ t('setup.summary.title') }}</h3>
-            <div class="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-300">
+          <div class="rounded-field bg-canvas p-4">
+            <h3 class="text-xs font-semibold text-ink-2">{{ t('setup.summary.title') }}</h3>
+            <div class="mt-2 flex flex-col gap-1 text-[13px] text-ink-2">
               <p>📁 <strong>{{ t('setup.summary.project') }}:</strong> {{ projectForm.name }}</p>
               <p>🤖 <strong>{{ t('setup.summary.agent') }}:</strong> {{ agentForm.name }}</p>
               <p>📡 <strong>{{ t('setup.summary.channels') }}:</strong>
@@ -409,35 +390,19 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="flex justify-between items-center mt-8 pt-6 border-t border-slate-100 dark:border-slate-700">
-          <button
-            v-if="currentStep > 1"
-            @click="prevStep"
-            class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+        <!-- Acciones -->
+        <div class="mt-7 flex items-center justify-between border-t border-line pt-6">
+          <AButton v-if="currentStep > 1" variant="ghost" icon="ArrowLeft" @click="prevStep">
             {{ t('common.previous') }}
-          </button>
+          </AButton>
           <div v-else></div>
 
-          <button
-            v-if="currentStep < totalSteps"
-            @click="nextStep"
-            class="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-all text-sm"
-          >
+          <AButton v-if="currentStep < totalSteps" variant="primary" trailing-icon="ArrowRight" @click="nextStep">
             {{ t('common.next') }}
-            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-          </button>
-          <button
-            v-else
-            @click="handleSubmit"
-            :disabled="isLoading"
-            class="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm"
-          >
-            <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+          </AButton>
+          <AButton v-else variant="primary" icon="RocketLaunch" :loading="isLoading" @click="handleSubmit">
             {{ isLoading ? t('setup.actions.creating') : t('setup.actions.createProject') }}
-          </button>
+          </AButton>
         </div>
       </div>
     </div>

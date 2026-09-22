@@ -413,6 +413,15 @@
       "title": "Details",
       "platform": "Platform",
       "notAvailable": "Not available"
+    },
+    "urgency": {
+      "title": "Urgency",
+      "level.low": "Low",
+      "level.medium": "Medium",
+      "level.high": "High",
+      "reasonPending": "awaiting approval",
+      "reasonOpen": "open conversation",
+      "reasonClosed": "conversation closed"
     }
   },
   "profile": {

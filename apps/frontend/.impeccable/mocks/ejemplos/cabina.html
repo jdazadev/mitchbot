@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Instrumento de Cabina — ejemplo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  :root{
+    --glass:#0E1316; --glass-2:#131A1E; --ink:#E7EEF0; --soft:#7E8C92; --hair:#232E33;
+    --trace:#3FA9A0; --green:#59C98E; --amber:#E9A24B; --red:#E2574B; --panel:#0A0F11;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--panel);color:var(--ink);font-family:'Archivo',sans-serif}
+  .frame{height:100vh;display:grid;grid-template-columns:216px 1fr}
+  .rail{background:linear-gradient(180deg,#10161A,#0B1114);border-right:1px solid var(--hair);display:flex;flex-direction:column;padding:16px 0}
+  .brand{padding:0 16px 14px;display:flex;flex-direction:column;gap:3px;border-bottom:1px solid var(--hair)}
+  .brand .n{font-weight:700;font-size:15px;letter-spacing:.06em}
+  .brand .s{font-family:'IBM Plex Mono';font-size:8px;letter-spacing:.28em;color:var(--soft);text-transform:uppercase}
+  .nav{padding:10px 12px;flex:1;display:flex;flex-direction:column;gap:2px}
+  .nav div{display:flex;align-items:center;gap:10px;padding:9px 10px;font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--soft);border-radius:4px}
+  .nav div .ind{width:5px;height:5px;border-radius:50%;background:#2C383D}
+  .nav div.on{background:#16242A;color:var(--ink)}
+  .nav div.on .ind{background:var(--amber);box-shadow:0 0 7px rgba(233,162,75,.6)}
+  .pfd{margin-top:auto;padding:12px 16px;border-top:1px solid var(--hair);font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.16em;color:var(--soft)}
+  .pfd b{display:block;color:var(--ink);font-size:14px;letter-spacing:.1em;margin-bottom:2px}
+
+  .main{display:grid;grid-template-columns:minmax(400px,42%) 1fr;min-height:0}
+  .listpane{border-right:1px solid var(--hair);display:grid;grid-template-rows:auto 1fr;background:var(--glass)}
+  .stratoc{padding:12px 16px;border-bottom:1px solid var(--hair);display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .gauge{border:1px solid var(--hair);border-radius:6px;background:#111A1E;padding:8px 10px;position:relative;overflow:hidden}
+  .gauge b{font-family:'IBM Plex Mono';font-weight:500;font-size:16px}
+  .gauge span{display:block;font-family:'IBM Plex Mono';font-size:7px;letter-spacing:.2em;color:var(--soft);text-transform:uppercase;margin-top:2px}
+  .gauge i{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--hair)}
+  .gauge i.f{background:var(--green)}
+
+  .list{overflow-y:auto}
+  .sector{padding:10px 16px;border-bottom:1px solid var(--hair);display:grid;grid-template-columns:10px 1fr auto;gap:12px;align-items:center;cursor:pointer}
+  .sector:hover{background:#101A1E}
+  .sector.sel{background:#152227;box-shadow:inset 3px 0 0 var(--amber)}
+  .sl{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--soft)}
+  .sl.g{border-color:var(--green);background:rgba(89,201,142,.4)}
+  .sl.a{border-color:var(--amber);background:var(--amber);box-shadow:0 0 10px rgba(233,162,75,.55)}
+  .sl.k{border-color:var(--red)}
+  .sec-n{font-weight:600;font-size:13.5px}
+  .sec-t{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.16em;color:var(--soft);margin-top:3px;text-transform:uppercase}
+  .rd{font-family:'IBM Plex Mono';font-size:10px;text-align:right;color:var(--soft)}
+  .rd b{color:var(--ink);display:block;font-size:11px}
+  .sect off{opacity:.4}
+
+  /* right PFD */
+  .pfdpane{background:linear-gradient(180deg,#0B1215,#0E1619);border-left:1px solid var(--hair);display:grid;grid-template-rows:auto 1fr auto}
+  .pfdhead{padding:10px 18px;border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:12px}
+  .pf{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.22em;color:var(--soft);text-transform:uppercase}
+  .apbanner{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .apchip{font-family:'IBM Plex Mono';font-size:8.5px;letter-spacing:.2em;padding:4px 9px;border-radius:3px;border:1px solid var(--hair);color:var(--green)}
+  .takeover{background:var(--amber);color:#0E1316;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.2em;font-weight:600;padding:8px 14px;border-radius:3px;border:none}
+  .pfd{margin:14px 18px;flex:1;display:flex;flex-direction:column;gap:10px;font-family:'IBM Plex Mono';font-size:11px}
+  .msgrow{max-width:70%;padding:9px 13px;border-radius:6px;line-height:1.5;font-family:'Archivo'}
+  .mr.co{align-self:flex-start;background:#131E23;border:1px solid var(--hair)}
+  .mr.ai{align-self:flex-end;background:#123024;border:1px solid rgba(89,201,142,.45)}
+  .mr.an{align-self:flex-end;background:#33260F;border:1px solid rgba(233,162,75,.5)}
+  .ann{align-self:center;color:var(--soft);font-size:8.5px;letter-spacing:.24em;text-transform:uppercase}
+  .kbd{padding:12px 18px;border-top:1px solid var(--hair);display:flex;gap:10px;background:#0B1215}
+  .kbd input{flex:1;background:#101A1E;border:1px solid var(--hair);border-radius:4px;padding:11px 14px;color:var(--ink);font-family:'IBM Plex Mono';font-size:11px}
+  .kbd button{background:var(--amber);color:#0E1316;border:none;border-radius:4px;padding:12px 20px;font-family:'IBM Plex Mono';font-weight:600;font-size:10px;letter-spacing:.2em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="frame">
+  <aside class="rail">
+    <div class="brand">
+      <div class="n">ESTUDIO MATEO</div>
+      <div class="s">panel de vuelo</div>
+    </div>
+    <nav class="nav">
+      <div><span class="ind"></span>Fuel → Conver</div>
+      <div><span class="ind"></span>Paneles → Clientes</div>
+      <div><span class="ind"></span>Cerebro</div>
+      <div><span class="ind"></span>Agentes</div>
+      <div><span class="ind"></span>Ajustes</div>
+    </nav>
+    <div class="pfd">SESIÓN<b>07:12:04</b></div>
+  </aside>
+  <div class="main">
+    <div class="listpane">
+      <div class="stratoco">
+        <div class="gauge"><b>12</b><span>a bordo</span><i style="width:80%"></i></div>
+        <div class="gauge"><b style="color:var(--amber)">3</b><span>pendiente</span><i style="width:34%;background:var(--amber)"></i></div>
+        <div class="gauge"><b>94%</b><span>auto</span><i style="width:94%;background:var(--green)"></i></div>
+        <div class="gauge"><b>1m20</b><span>resp. med.</span><i style="width:40%;background:var(--green)"></i></div>
+      </div>
+      <div class="list">
+        <div class="sector sel">
+          <span class="sl a"></span>
+          <div><div class="sec-n">María Cano</div><div class="sec-t">WA · AP UNSETTED · 2 NUEVOS</div></div>
+          <div class="rd"><b>2</b>NUEVOS</div>
+        </div>
+        <div class="sector">
+          <span class="sl g"></span>
+          <div><div class="sec-n">Jorge Rincón</div><div class="sec-t">IG · PILOT AUTO · RESPUESTA EN CURSO</div></div>
+          <div class="rd"><b>0</b>·</div>
+        </div>
+        <div class="sector off" style="opacity:.4">
+          <span class="sl k"></span>
+          <div><div class="sec-n">Laura Pérez</div><div class="sec-t">WEB · CERRADO · 09:12</div></div>
+          <div class="rd"><b>0</b>·</div>
+        </div>
+        <div class="sector">
+          <span class="sl g"></span>
+          <div><div class="sec-n">Tech Store</div><div class="sec-t">WA · AP ENGAGED</div></div>
+          <div class="rd"><b>3</b>NUEVOS</div>
+        </div>
+      </div>
+    </div>
+    <div class="pfdpane">
+      <div class="pfdhead">
+        <div><div style="font-weight:700;font-size:14px">María Cano</div><div class="pf">seg 02 · w · métodos: manual</div></div>
+        <div class="apbanner" style="margin-left:auto">
+          <span class="apchip">AP ENG</span>
+          <button class="takeover">MANUAL → Tomar control</button>
+        </div>
+      </div>
+      <div class="pfd">
+        <div class="ann" style="border-top:1px solid var(--hair);padding-top:8px">transcripción · canal w</div>
+        <div class="msgrow mr co">¿Sale del control le llegué la actualización 2?</div>
+        <div class="msgrow mr ai">Confirmado AP: La cita del jueves 10:00 quedó agendada en la agenda 2 del estándar.</div>
+        <div class="msgrow mr an">STATUS: AP DISENGAGED — SIN HERRAMIENTAS PENDIENTES · LA LECTURA SIGUE EN SU MARCO</div>
+      </div>
+      <div class="kbd">
+        <input placeholder="Pilotear la respuesta...">
+        <button>Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

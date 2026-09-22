@@ -10,6 +10,11 @@ import {
 } from '../services/settings.service';
 import { projectService, type Project } from '../services/project.service';
 import { useBrand, applyBrand } from '../composables/useBrand';
+import AIcon from '../components/ui/AIcon.vue';
+import AButton from '../components/ui/AButton.vue';
+import APill from '../components/ui/APill.vue';
+import ASwitch from '../components/ui/ASwitch.vue';
+import ATabs from '../components/ui/ATabs.vue';
 
 // ===================== TABS =====================
 type TabId = 'agent' | 'info' | 'channels' | 'options';
@@ -20,11 +25,13 @@ const route = useRoute();
 const { t } = useI18n();
 
 const tabs = computed<{ id: TabId; name: string; icon: string }[]>(() => [
-  { id: 'agent', name: t('settings.tabs.agent'), icon: 'smart_toy' },
-  { id: 'info', name: t('settings.tabs.info'), icon: 'info' },
-  { id: 'channels', name: t('settings.tabs.channels'), icon: 'language' },
-  { id: 'options', name: t('settings.tabs.options'), icon: 'tune' },
+  { id: 'agent', name: t('settings.tabs.agent'), icon: 'Robot' },
+  { id: 'info', name: t('settings.tabs.info'), icon: 'Info' },
+  { id: 'channels', name: t('settings.tabs.channels'), icon: 'Globe' },
+  { id: 'options', name: t('settings.tabs.options'), icon: 'SlidersHorizontal' },
 ]);
+
+const tabItems = computed(() => tabs.value.map((tab) => ({ key: tab.id, label: tab.name })));
 
 function isValidTab(tab: string): tab is TabId {
   return tabs.value.some(t => t.id === tab);
@@ -75,11 +82,11 @@ const agentForm = ref({
 
 // ===================== PERSONALITY OPTIONS =====================
 const roleOptions = computed(() => [
-  { id: 'assistant', label: t('settings.agent.roles.assistant'), icon: 'support_agent', desc: t('settings.agent.roles.assistantDesc') },
-  { id: 'teacher', label: t('settings.agent.roles.teacher'), icon: 'school', desc: t('settings.agent.roles.teacherDesc') },
-  { id: 'seller', label: t('settings.agent.roles.seller'), icon: 'storefront', desc: t('settings.agent.roles.sellerDesc') },
-  { id: 'support', label: t('settings.agent.roles.support'), icon: 'build', desc: t('settings.agent.roles.supportDesc') },
-  { id: 'customer_service', label: t('settings.agent.roles.customerService'), icon: 'headset_mic', desc: t('settings.agent.roles.customerServiceDesc') },
+  { id: 'assistant', label: t('settings.agent.roles.assistant'), icon: 'Headset', desc: t('settings.agent.roles.assistantDesc') },
+  { id: 'teacher', label: t('settings.agent.roles.teacher'), icon: 'GraduationCap', desc: t('settings.agent.roles.teacherDesc') },
+  { id: 'seller', label: t('settings.agent.roles.seller'), icon: 'Storefront', desc: t('settings.agent.roles.sellerDesc') },
+  { id: 'support', label: t('settings.agent.roles.support'), icon: 'Wrench', desc: t('settings.agent.roles.supportDesc') },
+  { id: 'customer_service', label: t('settings.agent.roles.customerService'), icon: 'Headphones', desc: t('settings.agent.roles.customerServiceDesc') },
 ]);
 
 const traitOptions = computed(() => [
@@ -147,9 +154,9 @@ function removeGoodbyeKeyword(keyword: string) {
 }
 
 const ragOptions = computed(() => [
-  { id: 'strict', label: t('settings.agent.rag.strict'), desc: t('settings.agent.rag.strictDesc'), icon: 'lock' },
-  { id: 'hybrid', label: t('settings.agent.rag.hybrid'), desc: t('settings.agent.rag.hybridDesc'), icon: 'tune' },
-  { id: 'general', label: t('settings.agent.rag.general'), desc: t('settings.agent.rag.generalDesc'), icon: 'public' },
+  { id: 'strict', label: t('settings.agent.rag.strict'), desc: t('settings.agent.rag.strictDesc'), icon: 'Lock' },
+  { id: 'hybrid', label: t('settings.agent.rag.hybrid'), desc: t('settings.agent.rag.hybridDesc'), icon: 'SlidersHorizontal' },
+  { id: 'general', label: t('settings.agent.rag.general'), desc: t('settings.agent.rag.generalDesc'), icon: 'Globe' },
 ]);
 
 function toggleTrait(trait: string) {
@@ -179,9 +186,9 @@ const showTemperatureWarning = computed(() => agentForm.value.temperature > 0.6)
 
 // ===================== CHANNELS =====================
 const channels = ref([
-  { key: 'whatsapp', name: 'WhatsApp', icon: 'call', color: 'green', enabled: true },
-  { key: 'instagram', name: 'Instagram', icon: 'photo_camera', color: 'purple', enabled: false },
-  { key: 'web', name: 'Web', icon: 'language', color: 'blue', enabled: true },
+  { key: 'whatsapp', name: 'WhatsApp', icon: 'Phone', enabled: true },
+  { key: 'instagram', name: 'Instagram', icon: 'Image', enabled: false },
+  { key: 'web', name: 'Web', icon: 'Globe', enabled: true },
 ]);
 
 
@@ -215,7 +222,7 @@ onMounted(async () => {
       project.value = projectData;
   const brandColor = projectData?.config?.brand?.color;
   brandForm.value = {
-    color: brandColor || '#E86A33',
+    color: brandColor || '#E2C6FF',
     name: projectData.name || '',
     logo: projectData.config?.brand?.logo || projectData.logo || null,
   };
@@ -344,12 +351,12 @@ function applyAgent(data: AgentData) {
 
 // ===================== IDENTIDAD DEL PROYECTO =====================
 const brandForm = ref<{ color: string; name: string; logo: string | null }>({
-  color: '#E86A33',
+  color: '#E2C6FF',
   name: '',
   logo: null,
 });
 const hasBrand = ref(false);
-const brandSwatches = ['#E86A33', '#2563EB', '#1F8A60', '#7B2FF2', '#C23823', '#0E7490', '#B07314', '#2E2A26'];
+const brandSwatches = ['#E2C6FF', '#DCFEBC', '#BBECFF', '#F1EE83', '#7B2FF2', '#1F8A60', '#0E7490', '#0B0B0C'];
 
 const brandLogoInput = ref<HTMLInputElement | null>(null);
 
@@ -447,368 +454,326 @@ async function handleSaveOptions() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
-    <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ t('settings.title') }}</h1>
-      <p class="text-sm text-slate-500 mt-1">{{ t('settings.subtitle') }}</p>
+  <div class="flex flex-col gap-3.5">
+    <div class="flex flex-wrap items-center gap-3">
+      <div>
+        <h1 class="font-display text-[22px] font-bold tracking-[-0.02em]">{{ t('settings.title') }}</h1>
+        <p class="mt-1 text-[13px] text-ink-3">{{ t('settings.subtitle') }}</p>
+      </div>
     </div>
 
-    <!-- Global feedback -->
-    <div v-if="saveSuccess" class="p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-emerald-600 flex items-center gap-2 max-w-3xl">
-      <span class="material-symbols-outlined text-[18px]">check_circle</span>
+    <div v-if="saveSuccess" class="flex max-w-3xl items-center gap-2 rounded-card bg-lime-soft p-3.5 text-[13px] text-lime-ink">
+      <AIcon name="CheckCircle" :size="17" />
       {{ saveSuccess }}
     </div>
-    <div v-if="saveError" class="p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center gap-2 max-w-3xl">
-      <span class="material-symbols-outlined text-[18px]">error</span>
+    <div v-if="saveError" class="flex max-w-3xl items-center gap-2 rounded-card bg-[color:var(--danger-soft)] p-3.5 text-[13px] text-[color:var(--danger)]">
+      <AIcon name="WarningCircle" :size="17" />
       {{ saveError }}
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center p-12">
-      <div class="flex flex-col items-center gap-3">
-        <div class="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-sm text-slate-500">{{ t('common.loading') }}</span>
-      </div>
+    <div v-if="loading" class="flex items-center justify-center gap-3 py-12 text-sm text-ink-3">
+      <span class="animate-spin"><AIcon name="SpinnerGap" :size="20" /></span>
+      {{ t('common.loading') }}
     </div>
 
     <template v-else>
-      <!-- Tabs -->
-      <div class="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 overflow-x-auto">
-        <button
-          v-for="tab in tabs" :key="tab.id"
-          @click="activeTab = tab.id"
-          class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap"
-          :class="activeTab === tab.id
-            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
-            : 'text-slate-500 hover:text-slate-700'"
-        >
-          <span class="material-symbols-outlined text-[18px]">{{ tab.icon }}</span>
-          {{ tab.name }}
-        </button>
-      </div>
+      <ATabs :tabs="tabItems" :model-value="activeTab" @update:model-value="activeTab = $event as TabId" />
 
-      <!-- ============== TAB: INFORMACION ============== -->
+      <!-- ============== TAB: INFORMACIÓN ============== -->
       <div v-if="activeTab === 'info'" class="max-w-3xl">
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">info</span>
-            {{ t('settings.info.title') }}
-          </h2>
-          <p class="text-xs text-slate-400 mb-6">{{ t('settings.info.subtitle') }}</p>
+        <div class="rounded-card bg-surface p-6 shadow-card">
+          <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.info.title') }}</h2>
+          <p class="mt-1 text-xs text-ink-3">{{ t('settings.info.subtitle') }}</p>
 
-          <div class="flex items-center justify-between mb-3">
+          <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest">{{ t('settings.info.slugLabel') }}</h3>
-              <p class="text-xs text-slate-400 mt-1">{{ t('settings.info.slugHint') }}</p>
+              <h3 class="text-xs font-semibold text-ink-2">{{ t('settings.info.slugLabel') }}</h3>
+              <p class="mt-1 text-xs text-ink-3">{{ t('settings.info.slugHint') }}</p>
             </div>
-            <div class="text-[10px] text-slate-400">/test-chat/<span class="font-mono">{{ project?.slug || t('settings.info.slugFallback') }}</span></div>
+            <span class="text-[11px] text-ink-3">/test-chat/<b class="font-mono">{{ project?.slug || t('settings.info.slugFallback') }}</b></span>
           </div>
 
-          <div class="flex items-center gap-3">
-            <input
-              v-model="projectSlugDraft"
-              class="flex-1 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
-              :placeholder="t('settings.info.slugPlaceholder')"
-            />
-            <button
-              @click="handleSaveProjectSlug"
-              :disabled="saving"
-              class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm"
-            >
-              {{ t('common.save') }}
-            </button>
-            <button
-              @click="copyTestChatLink"
-              :disabled="saving || !projectSlugDraft.trim()"
-              class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-bold text-slate-600 transition-all"
-            >
+          <div class="mt-3 flex flex-wrap items-center gap-2.5">
+            <input v-model="projectSlugDraft" class="field flex-1" :placeholder="t('settings.info.slugPlaceholder')" />
+            <AButton variant="primary" :loading="saving" @click="handleSaveProjectSlug">{{ t('common.save') }}</AButton>
+            <AButton variant="ghost" :disabled="saving || !projectSlugDraft.trim()" @click="copyTestChatLink">
               {{ t('settings.info.copyLink') }}
-            </button>
+            </AButton>
           </div>
 
-          <!-- Identidad del proyecto (nombre, color, logo) -->
-          <div class="mt-8 pt-6 border-t" style="border-color: var(--hairline)">
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <h3 class="text-sm font-extrabold uppercase tracking-[0.14em]" style="color: var(--ink-2)">{{ t('settings.brand.title') }}</h3>
-                <p class="text-xs font-bold" style="color: var(--ink-3)">{{ t('settings.brand.subtitle') }}</p>
+          <div class="my-6 h-px bg-line" />
+
+          <h3 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.brand.title') }}</h3>
+          <p class="mt-1 text-xs text-ink-3">{{ t('settings.brand.subtitle') }}</p>
+
+          <div class="mt-5 flex flex-col gap-5">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-semibold text-ink-2">{{ t('settings.brand.nameLabel') }}</span>
+              <input v-model="brandForm.name" class="field" data-testid="brand-name" :placeholder="t('settings.brand.namePlaceholder')" />
+            </label>
+
+            <div class="flex flex-col gap-1.5">
+              <span class="text-xs font-semibold text-ink-2">{{ t('settings.brand.colorLabel') }}</span>
+              <div class="flex flex-wrap items-center gap-3">
+                <label
+                  class="relative h-11 w-11 cursor-pointer overflow-hidden rounded-field shadow-card"
+                  :style="{ background: brandForm.color }"
+                  :aria-label="t('settings.brand.colorLabel')"
+                >
+                  <input v-model="brandForm.color" type="color" class="absolute inset-0 cursor-pointer opacity-0" data-testid="brand-color" />
+                </label>
+                <input v-model="brandForm.color" class="field w-32 font-mono uppercase" maxlength="7" data-testid="brand-color-hex" />
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="swatch in brandSwatches"
+                    :key="swatch"
+                    type="button"
+                    class="h-7 w-7 rounded-[9px] transition-transform hover:scale-110"
+                    :class="brandForm.color.toLowerCase() === swatch ? 'ring-2 ring-offset-2 ring-ink' : ''"
+                    :style="{ background: swatch }"
+                    :aria-label="`Color ${swatch}`"
+                    @click="brandForm.color = swatch"
+                  />
+                </div>
               </div>
             </div>
 
-            <div class="flex flex-col gap-5 mt-5">
-              <!-- Nombre -->
-              <div>
-                <label class="text-xs font-extrabold uppercase mb-1.5 block" style="color: var(--ink-2)">{{ t('settings.brand.nameLabel') }}</label>
-                <input v-model="brandForm.name" :placeholder="t('settings.brand.namePlaceholder')" class="field w-full py-3" data-testid="brand-name" />
-              </div>
-
-              <!-- Color -->
-              <div>
-                <label class="text-xs font-extrabold uppercase mb-1.5 block" style="color: var(--ink-2)">{{ t('settings.brand.colorLabel') }}</label>
-                <div class="flex items-center gap-3 flex-wrap">
-                  <label
-                    class="relative w-11 h-11 rounded-xl cursor-pointer overflow-hidden"
-                    :style="{ background: brandForm.color, boxShadow: 'var(--shadow-card)' }"
-                    :aria-label="t('settings.brand.colorLabel')"
-                  >
-                    <input type="color" v-model="brandForm.color" class="absolute inset-0 opacity-0 cursor-pointer" data-testid="brand-color" />
-                  </label>
-                  <input
-                    v-model="brandForm.color"
-                    class="field w-32 font-mono uppercase"
-                    maxlength="7"
-                    data-testid="brand-color-hex"
-                  />
-                  <div class="flex gap-1.5 flex-wrap">
+            <div class="flex flex-col gap-1.5">
+              <span class="text-xs font-semibold text-ink-2">{{ t('settings.brand.logoLabel') }}</span>
+              <div class="flex flex-wrap items-center gap-4">
+                <div
+                  class="grid h-16 w-16 place-items-center overflow-hidden rounded-[16px]"
+                  :style="brandForm.logo ? { background: 'var(--surface)' } : { background: brandForm.color }"
+                >
+                  <img v-if="brandForm.logo" :src="brandForm.logo" alt="" class="h-full w-full object-cover" />
+                  <span v-else class="text-lg font-bold" :style="{ color: 'var(--brand-contrast)' }">
+                    {{ (brandForm.name || 'M').charAt(0).toUpperCase() }}
+                  </span>
+                </div>
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-center gap-2">
+                    <AButton variant="ghost" size="sm" icon="UploadSimple" @click="pickBrandLogo">
+                      {{ t('settings.brand.uploadLogo') }}
+                    </AButton>
                     <button
-                      v-for="swatch in brandSwatches"
-                      :key="swatch"
+                      v-if="brandForm.logo"
                       type="button"
-                      @click="brandForm.color = swatch"
-                      class="w-7 h-7 rounded-lg transition-transform hover:scale-110"
-                      :class="brandForm.color.toLowerCase() === swatch ? 'ring-2 ring-offset-2' : ''"
-                      :style="{ background: swatch, borderColor: swatch, '--tw-ring-color': swatch }"
-                      :aria-label="`Color ${swatch}`"
-                    ></button>
+                      class="text-xs font-semibold text-[color:var(--danger)]"
+                      @click="brandForm.logo = null"
+                    >
+                      {{ t('settings.brand.removeLogo') }}
+                    </button>
                   </div>
+                  <p class="text-[11px] text-ink-3">{{ t('settings.brand.logoHint') }}</p>
                 </div>
+                <input
+                  ref="brandLogoInput"
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  class="hidden"
+                  @change="onBrandLogoChange"
+                />
               </div>
-
-              <!-- Logo -->
-              <div>
-                <label class="text-xs font-extrabold uppercase mb-1.5 block" style="color: var(--ink-2)">{{ t('settings.brand.logoLabel') }}</label>
-                <div class="flex items-center gap-4">
-                  <div
-                    class="w-16 h-16 rounded-[12px_6px_12px_6px] flex items-center justify-center overflow-hidden"
-                    :style="brandForm.logo ? { background: 'var(--surface)' } : { background: brandForm.color }"
-                    style-fallback=""
-                  >
-                    <img v-if="brandForm.logo" :src="brandForm.logo" alt="" class="w-full h-full object-cover" />
-                    <span v-else class="text-lg font-extrabold" :style="{ color: 'var(--brand-contrast)' }">
-                      {{ (brandForm.name || 'M').charAt(0).toUpperCase() }}
-                    </span>
-                  </div>
-                  <div class="flex flex-col gap-2">
-                    <div class="flex items-center gap-2">
-                      <button type="button" @click="pickBrandLogo" class="btn btn-ghost text-xs">
-                        <span class="material-symbols-outlined text-[16px]">upload</span>
-                        {{ t('settings.brand.uploadLogo') }}
-                      </button>
-                      <button v-if="brandForm.logo" type="button" @click="brandForm.logo = null" class="btn btn-ghost text-xs" :style="{ color: 'var(--danger)' }">
-                        {{ t('settings.brand.removeLogo') }}
-                      </button>
-                    </div>
-                    <p class="text-[11px] font-bold" style="color: var(--ink-3)">{{ t('settings.brand.logoHint') }}</p>
-                  </div>
-                  <input
-                    ref="brandLogoInput"
-                    type="file"
-                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                    class="hidden"
-                    @change="onBrandLogoChange"
-                  />
-                </div>
-              </div>
-
-              <button @click="handleSaveBrand" :disabled="saving" class="btn btn-primary self-start" data-testid="brand-save">
-                {{ t('common.save') }}
-              </button>
             </div>
+
+            <AButton variant="primary" class="self-start" :loading="saving" data-testid="brand-save" @click="handleSaveBrand">
+              {{ t('common.save') }}
+            </AButton>
           </div>
         </div>
       </div>
 
       <!-- ============== TAB: AGENTE IA ============== -->
       <div v-if="activeTab === 'agent'" class="max-w-3xl">
-        <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-3.5">
+          <!-- Info básica -->
+          <div class="rounded-card bg-surface p-6 shadow-card">
+            <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.basicTitle') }}</h2>
+            <div class="mt-5 flex flex-col gap-4">
+              <label class="flex flex-col gap-1.5">
+                <span class="text-xs font-semibold text-ink-2">{{ t('settings.agent.nameLabel') }}</span>
+                <input v-model="agentForm.name" class="field" :placeholder="t('settings.agent.namePlaceholder')" />
+              </label>
+              <label class="flex flex-col gap-1.5">
+                <span class="text-xs font-semibold text-ink-2">{{ t('settings.agent.descriptionLabel') }}</span>
+                <textarea v-model="agentForm.description" class="field h-20 resize-none" :placeholder="t('settings.agent.descriptionPlaceholder')" />
+              </label>
+            </div>
+          </div>
 
-          <!-- Card: Info básica -->
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-            <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-5 flex items-center gap-2">
-              <span class="material-symbols-outlined text-[18px]">smart_toy</span>
-              {{ t('settings.agent.basicTitle') }}
-            </h2>
-            <div class="flex flex-col gap-4">
-              <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.nameLabel') }}</label>
-                <input v-model="agentForm.name" :placeholder="t('settings.agent.namePlaceholder')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white" />
-              </div>
-              <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.descriptionLabel') }}</label>
-                <textarea v-model="agentForm.description" :placeholder="t('settings.agent.descriptionPlaceholder')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"></textarea>
+          <!-- Modelos (solo lectura) -->
+          <div class="rounded-card bg-surface p-6 shadow-card">
+            <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.modelsTitle') }}</h2>
+            <p class="mt-1 text-xs text-ink-3">{{ t('settings.agent.modelsHint') }}</p>
+            <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div
+                v-for="m in [
+                  { label: t('settings.agent.modelChat'), value: resolvedModels.llm?.selectedModel },
+                  { label: t('settings.agent.modelEmbeddings'), value: resolvedModels.embedding?.selectedModel },
+                  { label: t('settings.agent.modelOcr'), value: resolvedModels.ocr?.selectedModel },
+                ]"
+                :key="m.label"
+                class="rounded-field bg-canvas p-3.5"
+              >
+                <span class="text-[10px] font-bold uppercase text-ink-3">{{ m.label }}</span>
+                <div class="mt-1 break-all font-mono text-[13px] text-ink-2">
+                  {{ m.value || t('settings.agent.notConfigured') }}
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Card: Modelos de IA (solo lectura) -->
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-            <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
-              <span class="material-symbols-outlined text-[18px]">memory</span>
-              {{ t('settings.agent.modelsTitle') }}
-            </h2>
-            <p class="text-xs text-slate-400 mb-5">{{ t('settings.agent.modelsHint') }}</p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">{{ t('settings.agent.modelChat') }}</span>
-                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.llm?.selectedModel || t('settings.agent.notConfigured') }}</span>
-              </div>
-              <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">{{ t('settings.agent.modelEmbeddings') }}</span>
-                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.embedding?.selectedModel || t('settings.agent.notConfigured') }}</span>
-              </div>
-              <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">{{ t('settings.agent.modelOcr') }}</span>
-                <span class="text-sm font-mono text-slate-700 dark:text-slate-200 break-all">{{ resolvedModels.ocr?.selectedModel || t('settings.agent.notConfigured') }}</span>
-              </div>
-            </div>
-          </div>
+          <!-- Personalidad -->
+          <div class="rounded-card bg-surface p-6 shadow-card">
+            <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.personalityTitle') }}</h2>
+            <p class="mt-1 text-xs text-ink-3">{{ t('settings.agent.personalityHint') }}</p>
 
-          <!-- Card: Personalidad -->
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-            <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
-              <span class="material-symbols-outlined text-[18px]">psychology</span>
-              {{ t('settings.agent.personalityTitle') }}
-            </h2>
-            <p class="text-xs text-slate-400 mb-5">{{ t('settings.agent.personalityHint') }}</p>
-
-            <div class="flex flex-col gap-6">
-              <!-- ROL -->
+            <div class="mt-5 flex flex-col gap-6">
+              <!-- Rol -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('settings.agent.roleLabel') }}</label>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.roleLabel') }}</span>
+                <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   <button
-                    v-for="r in roleOptions" :key="r.id"
+                    v-for="r in roleOptions"
+                    :key="r.id"
+                    type="button"
+                    class="flex flex-col items-start rounded-field border-[1.5px] p-3 text-left transition-colors"
+                    :class="agentForm.personality.role === r.id ? 'border-lilac bg-lilac-soft' : 'border-line hover:border-line-strong'"
                     @click="agentForm.personality.role = r.id as AgentPersonality['role']"
-                    class="flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all"
-                    :class="agentForm.personality.role === r.id
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'"
                   >
-                    <span class="material-symbols-outlined text-[20px] mb-1" :class="agentForm.personality.role === r.id ? 'text-blue-600' : 'text-slate-400'">{{ r.icon }}</span>
-                    <span class="text-sm font-medium" :class="agentForm.personality.role === r.id ? 'text-blue-700' : 'text-slate-700 dark:text-white'">{{ r.label }}</span>
-                    <span class="text-[10px] text-slate-400">{{ r.desc }}</span>
+                    <AIcon :name="r.icon" :size="18" :class="agentForm.personality.role === r.id ? 'text-lilac-ink' : 'text-ink-3'" />
+                    <span class="mt-1.5 text-[13px] font-semibold">{{ r.label }}</span>
+                    <span class="text-[10px] text-ink-3">{{ r.desc }}</span>
                   </button>
                 </div>
               </div>
 
-              <!-- RASGOS -->
+              <!-- Rasgos -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.traitsLabel') }} <span class="text-slate-400 font-normal">{{ t('settings.agent.traitsMax') }}</span></label>
-                <p class="text-[10px] text-slate-400 mb-2">{{ t('settings.agent.traitsHint') }}</p>
+                <span class="block text-xs font-semibold text-ink-2">
+                  {{ t('settings.agent.traitsLabel') }} <span class="font-normal text-ink-3">{{ t('settings.agent.traitsMax') }}</span>
+                </span>
+                <p class="mb-2 mt-1 text-[10px] text-ink-3">{{ t('settings.agent.traitsHint') }}</p>
                 <div class="flex flex-wrap gap-2">
                   <button
-                    v-for="trait in traitOptions" :key="trait.value"
-                    @click="toggleTrait(trait.value)"
-                    class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
+                    v-for="trait in traitOptions"
+                    :key="trait.value"
+                    type="button"
+                    class="rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
                     :class="isTraitSelected(trait.value)
-                      ? 'bg-[color:var(--brand-soft)] text-[color:var(--brand-ink)]'
+                      ? 'bg-lilac-soft text-lilac-ink'
                       : agentForm.personality.traits.length >= 3
-                        ? 'bg-warm-ground border-warm-line text-warm-ink3 cursor-not-allowed'
-                        : 'bg-warm-ground border-warm-line text-warm-ink2 hover:border-[color:var(--brand-soft)] hover:bg-[color:var(--brand-softer)]'"
+                        ? 'cursor-not-allowed bg-canvas text-ink-3'
+                        : 'bg-canvas text-ink-2 hover:bg-sunken'"
+                    @click="toggleTrait(trait.value)"
                   >
                     {{ trait.label }}
                   </button>
                 </div>
               </div>
 
-              <!-- EMOJIS -->
+              <!-- Emojis -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('settings.agent.emojiLabel') }}</label>
+                <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.emojiLabel') }}</span>
                 <div class="grid grid-cols-3 gap-2">
                   <button
-                    v-for="e in emojiOptions" :key="e.id"
+                    v-for="e in emojiOptions"
+                    :key="e.id"
+                    type="button"
+                    class="flex items-center justify-center gap-2 rounded-field border-[1.5px] p-3 text-[13px] font-semibold transition-colors"
+                    :class="agentForm.personality.emojiUsage === e.id ? 'border-lilac bg-lilac-soft text-lilac-ink' : 'border-line text-ink-2 hover:border-line-strong'"
                     @click="agentForm.personality.emojiUsage = e.id as AgentPersonality['emojiUsage']"
-                    class="flex items-center justify-center gap-2 p-3 rounded-lg border-2 text-sm font-medium transition-all"
-                    :class="agentForm.personality.emojiUsage === e.id
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-slate-200 text-slate-600 hover:border-slate-300'"
                   >
                     <span>{{ e.icon }}</span> {{ e.label }}
                   </button>
                 </div>
               </div>
 
-              <!-- IDIOMA -->
+              <!-- Idioma -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('common.language') }}</label>
-                <div class="grid grid-cols-4 gap-2">
+                <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('common.language') }}</span>
+                <div class="grid grid-cols-2 gap-2">
                   <button
-                    v-for="l in languageOptions" :key="l.id"
+                    v-for="l in languageOptions"
+                    :key="l.id"
+                    type="button"
+                    class="flex items-center justify-center gap-1.5 rounded-field border-[1.5px] p-3 text-[13px] font-semibold transition-colors"
+                    :class="agentForm.personality.language === l.id ? 'border-lilac bg-lilac-soft text-lilac-ink' : 'border-line text-ink-2 hover:border-line-strong'"
                     @click="agentForm.personality.language = l.id as AgentPersonality['language']"
-                    class="flex items-center justify-center gap-1.5 p-3 rounded-lg border-2 text-sm font-medium transition-all"
-                    :class="agentForm.personality.language === l.id
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-slate-200 text-slate-600 hover:border-slate-300'"
                   >
                     <span>{{ l.flag }}</span> {{ l.label }}
                   </button>
                 </div>
               </div>
 
-              <!-- LONGITUD -->
+              <!-- Longitud -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('settings.agent.responseLengthLabel') }}</label>
+                <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.responseLengthLabel') }}</span>
                 <div class="grid grid-cols-3 gap-2">
                   <button
-                    v-for="rl in responseLengthOptions" :key="rl.id"
+                    v-for="rl in responseLengthOptions"
+                    :key="rl.id"
+                    type="button"
+                    class="flex flex-col items-center rounded-field border-[1.5px] p-3 transition-colors"
+                    :class="agentForm.personality.responseLength === rl.id ? 'border-lilac bg-lilac-soft' : 'border-line hover:border-line-strong'"
                     @click="agentForm.personality.responseLength = rl.id as AgentPersonality['responseLength']"
-                    class="flex flex-col items-center p-3 rounded-lg border-2 transition-all"
-                    :class="agentForm.personality.responseLength === rl.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 hover:border-slate-300'"
                   >
-                    <span class="text-sm font-medium" :class="agentForm.personality.responseLength === rl.id ? 'text-blue-700' : 'text-slate-700'">{{ rl.label }}</span>
-                    <span class="text-[10px] text-slate-400">{{ rl.desc }}</span>
+                    <span class="text-[13px] font-semibold" :class="agentForm.personality.responseLength === rl.id ? 'text-lilac-ink' : 'text-ink'">{{ rl.label }}</span>
+                    <span class="text-[10px] text-ink-3">{{ rl.desc }}</span>
                   </button>
                 </div>
               </div>
 
-              <!-- COMPORTAMIENTO RAG -->
+              <!-- RAG -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">{{ t('settings.agent.ragBehaviorLabel') }}</label>
+                <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.ragBehaviorLabel') }}</span>
                 <div class="grid grid-cols-3 gap-2">
                   <button
-                    v-for="rg in ragOptions" :key="rg.id"
+                    v-for="rg in ragOptions"
+                    :key="rg.id"
+                    type="button"
+                    class="flex flex-col items-center gap-1 rounded-field border-[1.5px] p-3 transition-colors"
+                    :class="agentForm.personality.ragBehavior === rg.id ? 'border-lilac bg-lilac-soft' : 'border-line hover:border-line-strong'"
                     @click="agentForm.personality.ragBehavior = rg.id as AgentPersonality['ragBehavior']"
-                    class="flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all"
-                    :class="agentForm.personality.ragBehavior === rg.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 hover:border-slate-300'"
                   >
-                    <span class="material-symbols-outlined text-[20px]" :class="agentForm.personality.ragBehavior === rg.id ? 'text-blue-600' : 'text-slate-400'">{{ rg.icon }}</span>
-                    <span class="text-sm font-medium" :class="agentForm.personality.ragBehavior === rg.id ? 'text-blue-700' : 'text-slate-700'">{{ rg.label }}</span>
-                    <span class="text-[10px] text-slate-400 text-center">{{ rg.desc }}</span>
+                    <AIcon :name="rg.icon" :size="18" :class="agentForm.personality.ragBehavior === rg.id ? 'text-lilac-ink' : 'text-ink-3'" />
+                    <span class="text-[13px] font-semibold" :class="agentForm.personality.ragBehavior === rg.id ? 'text-lilac-ink' : 'text-ink'">{{ rg.label }}</span>
+                    <span class="text-center text-[10px] text-ink-3">{{ rg.desc }}</span>
                   </button>
                 </div>
               </div>
 
-              <!-- TEMPERATURA -->
+              <!-- Creatividad -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.temperatureLabel', { level: temperatureLabel, value: agentForm.temperature }) }}</label>
-                <input v-model.number="agentForm.temperature" type="range" min="0" max="1" step="0.1" class="w-full accent-blue-600" />
-                <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                <span class="block text-xs font-semibold text-ink-2">
+                  {{ t('settings.agent.temperatureLabel', { level: temperatureLabel, value: agentForm.temperature }) }}
+                </span>
+                <input v-model.number="agentForm.temperature" type="range" min="0" max="1" step="0.1" class="mt-2 w-full accent-[color:var(--brand)]" />
+                <div class="mt-1 flex justify-between text-[10px] text-ink-3">
                   <span>🎯 {{ t('settings.agent.temperaturePrecise') }}</span>
                   <span>🎨 {{ t('settings.agent.temperatureCreative') }}</span>
                 </div>
-                <div v-if="showTemperatureWarning" class="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
-                  <span class="material-symbols-outlined text-[16px]">warning</span>
+                <div v-if="showTemperatureWarning" class="mt-2 flex items-center gap-2 rounded-field bg-butter-soft p-2.5 text-xs text-butter-ink">
+                  <AIcon name="Warning" :size="15" />
                   {{ t('settings.agent.temperatureWarning') }}
                 </div>
               </div>
 
-              <!-- MAX TOKENS -->
+              <!-- Max tokens -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.maxTokensLabel', { level: maxTokensLabel, value: agentForm.maxTokens }) }}</label>
+                <span class="block text-xs font-semibold text-ink-2">
+                  {{ t('settings.agent.maxTokensLabel', { level: maxTokensLabel, value: agentForm.maxTokens }) }}
+                </span>
                 <input
                   type="range"
                   min="0"
                   max="3"
                   step="1"
-                  class="w-full accent-blue-600"
+                  class="mt-2 w-full accent-[color:var(--brand)]"
                   :value="maxTokensIndex"
                   @input="agentForm.maxTokens = maxTokenOptions[Number(($event.target as HTMLInputElement).value)]?.value || 300"
                 />
-                <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                <div class="mt-1 flex justify-between text-[10px] text-ink-3">
                   <span>{{ t('settings.agent.maxTokensOption.veryShort') }}</span>
                   <span>{{ t('settings.agent.maxTokensOption.medium') }}</span>
                   <span>{{ t('settings.agent.maxTokensOption.long') }}</span>
@@ -816,124 +781,122 @@ async function handleSaveOptions() {
                 </div>
               </div>
 
-              <!-- MENSAJES AUTOMÁTICOS -->
+              <!-- Mensajes automáticos -->
               <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-3 block">{{ t('settings.agent.autoMessagesTitle') }}</label>
+                <span class="mb-3 block text-xs font-semibold text-ink-2">{{ t('settings.agent.autoMessagesTitle') }}</span>
                 <div class="flex flex-col gap-3">
-                  <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
+                  <div class="flex items-center justify-between rounded-field border border-line p-3">
                     <div>
-                      <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('settings.agent.welcome') }}</span>
-                      <p class="text-xs text-slate-400 mt-0.5">{{ t('settings.agent.welcomeHint') }}</p>
+                      <span class="text-[13px] font-medium">{{ t('settings.agent.welcome') }}</span>
+                      <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.welcomeHint') }}</p>
                     </div>
-                    <input type="checkbox" v-model="agentForm.enableWelcomeGreeting" class="h-4 w-4 accent-blue-600" />
-                  </label>
-                  <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
+                    <ASwitch v-model="agentForm.enableWelcomeGreeting" />
+                  </div>
+                  <div class="flex items-center justify-between rounded-field border border-line p-3">
                     <div>
-                      <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('settings.agent.goodbye') }}</span>
-                      <p class="text-xs text-slate-400 mt-0.5">{{ t('settings.agent.goodbyeHint') }}</p>
+                      <span class="text-[13px] font-medium">{{ t('settings.agent.goodbye') }}</span>
+                      <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.goodbyeHint') }}</p>
                     </div>
-                    <input type="checkbox" v-model="agentForm.enableGoodbyeMessage" class="h-4 w-4 accent-blue-600" />
-                  </label>
-                  <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-600">
+                    <ASwitch v-model="agentForm.enableGoodbyeMessage" />
+                  </div>
+                  <div class="flex items-center justify-between rounded-field border border-line p-3">
                     <div>
-                      <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('settings.agent.fallbackAdvisor') }}</span>
-                      <p class="text-xs text-slate-400 mt-0.5">{{ t('settings.agent.fallbackAdvisorHint') }}</p>
+                      <span class="text-[13px] font-medium">{{ t('settings.agent.fallbackAdvisor') }}</span>
+                      <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.fallbackAdvisorHint') }}</p>
                     </div>
-                    <input type="checkbox" v-model="agentForm.enableFallbackAdvisor" class="h-4 w-4 accent-blue-600" />
-                  </label>
+                    <ASwitch v-model="agentForm.enableFallbackAdvisor" />
+                  </div>
                 </div>
+
                 <div class="mt-4">
-                  <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.goodbyeKeywordsLabel') }}</label>
-                  <div class="flex flex-wrap gap-2 mb-2">
-                    <span v-for="keyword in agentForm.goodbyeKeywords" :key="keyword" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs">
+                  <span class="block text-xs font-semibold text-ink-2">{{ t('settings.agent.goodbyeKeywordsLabel') }}</span>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <span
+                      v-for="keyword in agentForm.goodbyeKeywords"
+                      :key="keyword"
+                      class="inline-flex items-center gap-1 rounded-full bg-canvas px-2.5 py-1 text-xs text-ink-2"
+                    >
                       {{ keyword }}
-                      <button type="button" class="text-slate-400 hover:text-slate-600" @click="removeGoodbyeKeyword(keyword)">
-                        <span class="material-symbols-outlined text-[14px]">close</span>
+                      <button type="button" class="text-ink-3 hover:text-ink" @click="removeGoodbyeKeyword(keyword)">
+                        <AIcon name="X" :size="12" />
                       </button>
                     </span>
                   </div>
-                  <div class="flex gap-2">
+                  <div class="mt-2 flex gap-2">
                     <input
                       v-model="goodbyeKeywordInput"
-                      @keydown.enter.prevent="addGoodbyeKeyword"
+                      class="field flex-1"
                       :placeholder="t('settings.agent.goodbyeKeywordPlaceholder')"
-                      class="flex-1 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"
+                      @keydown.enter.prevent="addGoodbyeKeyword"
                     />
-                    <button type="button" class="px-3 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg" @click="addGoodbyeKeyword">
-                      {{ t('common.add') }}
-                    </button>
+                    <AButton variant="secondary" size="sm" @click="addGoodbyeKeyword">{{ t('common.add') }}</AButton>
                   </div>
-                  <p class="text-[10px] text-slate-400 mt-1">{{ t('settings.agent.goodbyeKeywordsHint') }}</p>
+                  <p class="mt-1 text-[10px] text-ink-3">{{ t('settings.agent.goodbyeKeywordsHint') }}</p>
                 </div>
               </div>
 
-              <!-- INSTRUCCIONES ADICIONALES -->
-              <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t('settings.agent.additionalInstructionsLabel') }} <span class="text-slate-400 font-normal">({{ t('common.optional') }})</span></label>
-                <textarea v-model="agentForm.personality.additionalInstructions" :placeholder="t('settings.agent.additionalInstructionsPlaceholder')" class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white dark:bg-slate-700 dark:text-white"></textarea>
-              </div>
+              <!-- Instrucciones adicionales -->
+              <label class="flex flex-col gap-1.5">
+                <span class="text-xs font-semibold text-ink-2">
+                  {{ t('settings.agent.additionalInstructionsLabel') }} <span class="font-normal text-ink-3">({{ t('common.optional') }})</span>
+                </span>
+                <textarea
+                  v-model="agentForm.personality.additionalInstructions"
+                  class="field h-24 resize-none"
+                  :placeholder="t('settings.agent.additionalInstructionsPlaceholder')"
+                />
+              </label>
             </div>
           </div>
 
-          <!-- Guardar -->
           <div class="flex justify-end">
-            <button @click="handleSaveAgent" :disabled="saving" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm">
+            <AButton variant="primary" :loading="saving" @click="handleSaveAgent">
               {{ saving ? t('common.saving') : t('settings.agent.save') }}
-            </button>
+            </AButton>
           </div>
-
         </div>
       </div>
 
       <!-- ============== TAB: CANALES ============== -->
       <div v-if="activeTab === 'channels'" class="max-w-2xl">
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">language</span>
-            {{ t('settings.channels.title') }}
-          </h2>
-          <div class="flex flex-col gap-4">
-            <div v-for="channel in channels" :key="channel.key" class="flex items-center justify-between p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+        <div class="rounded-card bg-surface p-6 shadow-card">
+          <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.channels.title') }}</h2>
+          <div class="mt-4 flex flex-col gap-4">
+            <div
+              v-for="channel in channels"
+              :key="channel.key"
+              class="flex items-center justify-between rounded-field border border-line p-4"
+            >
               <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-[20px] text-slate-500">{{ channel.icon }}</span>
-                <span class="text-sm font-medium text-slate-800 dark:text-white">{{ channel.name }}</span>
+                <AIcon :name="channel.icon" :size="20" class="text-ink-3" />
+                <span class="text-[13px] font-medium">{{ channel.name }}</span>
               </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="channel.enabled" class="sr-only peer">
-                <div class="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
+              <ASwitch v-model="channel.enabled" />
             </div>
           </div>
           <div class="flex justify-end pt-4">
-            <button @click="handleSaveChannels" :disabled="saving" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm">
+            <AButton variant="primary" :loading="saving" @click="handleSaveChannels">
               {{ saving ? t('common.saving') : t('settings.channels.save') }}
-            </button>
+            </AButton>
           </div>
         </div>
       </div>
 
-
       <!-- ============== TAB: OPCIONES ============== -->
       <div v-if="activeTab === 'options'" class="max-w-2xl">
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
-          <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">tune</span>
-            {{ t('settings.options.title') }}
-          </h2>
-          <div class="flex items-center justify-between p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+        <div class="rounded-card bg-surface p-6 shadow-card">
+          <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.options.title') }}</h2>
+          <div class="mt-4 flex items-center justify-between rounded-field border border-line p-4">
             <div>
-              <span class="text-sm font-medium text-slate-800 dark:text-white">{{ t('settings.options.autoCreateContact') }}</span>
-              <p class="text-xs text-slate-400 mt-0.5">{{ t('settings.options.autoCreateContactHint') }}</p>
+              <span class="text-[13px] font-medium">{{ t('settings.options.autoCreateContact') }}</span>
+              <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.options.autoCreateContactHint') }}</p>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" v-model="optionsForm.autoCreateContact" class="sr-only peer">
-              <div class="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
+            <ASwitch v-model="optionsForm.autoCreateContact" />
           </div>
           <div class="flex justify-end pt-4">
-            <button @click="handleSaveOptions" :disabled="saving" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-sm transition-all text-sm">
+            <AButton variant="primary" :loading="saving" @click="handleSaveOptions">
               {{ saving ? t('common.saving') : t('common.save') }}
-            </button>
+            </AButton>
           </div>
         </div>
       </div>

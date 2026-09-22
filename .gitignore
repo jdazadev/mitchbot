@@ -108,6 +108,7 @@ coverage/
 .agents/
 .opencode/
 .codex/
+.impeccable/questions/
 
 # ================================
 # OCR / Model binaries

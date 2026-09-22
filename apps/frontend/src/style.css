@@ -3,85 +3,101 @@
 @tailwind utilities;
 
 /*
- * === Sistema de diseño Mitchbot — mundo "App Cálida" ===
- * Suelo cálido, tinta parda, un único acento de acción (variable --brand-*)
- * personalizeable por proyecto desde Configuración → Identidad.
+ * === Sistema de diseño Mitchbot — mundo "Aurora" ===
+ * Suelo cálido, tinta negra, tipografía display enorme y una familia de pasteles
+ * con papel semántico. El acento de identidad (--brand-*) se inyecta por proyecto
+ * desde Configuración → Identidad y gobierna selección y orientación, no las acciones.
  */
 :root {
-  /* Suelo calendado del mundo */
-  --ground: #fbf7f2;
-  --ground-deep: #f4ede4;
+  /* Suelo y superficies del mundo */
+  --canvas: #f7f3ef;
   --surface: #ffffff;
-  --hairline: #f0e7dd;
-  --ink-1: #2e2a26;
-  --ink-2: #7a6a5d;
-  --ink-3: #a99a8c;
+  --sunken: #efebe5;
+  --line: #eae4dc;
+  --line-2: #ddd5ca;
 
-  /* Acento por proyecto: componentes HSL inyectados por composables/useBrand */
-  --brand-h: 20;
-  --brand-s: 79%;
-  --brand-l: 57%;
+  /* Tinta en tres pasos */
+  --ink-1: #0b0b0c;
+  --ink-2: #56534e;
+  --ink-3: #6f6960;
+  --ink: #0b0b0c;
+
+  /* Familia pastel con papel semántico */
+  --sky: #bbecff;
+  --sky-ink: #0f4a64;
+  --sky-soft: #e8f8fe;
+  --lime: #dcfebc;
+  --lime-ink: #2c5a15;
+  --lime-soft: #f1fee4;
+  --lilac: #e2c6ff;
+  --lilac-ink: #4a2470;
+  --lilac-soft: #f3ebff;
+  --butter: #f1ee83;
+  --butter-ink: #5e5a00;
+  --butter-soft: #fbfae0;
+
+  /* Acento de identidad por proyecto: componentes HSL inyectados por useBrand */
+  --brand-h: 280;
+  --brand-s: 100%;
+  --brand-l: 89%;
   --brand: hsl(var(--brand-h) var(--brand-s) var(--brand-l));
   --brand-hover: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 6%));
   --brand-deep: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 14%));
   --brand-soft: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) + 32%));
-  --brand-softer: hsl(var(--brand-h) 79% 96%);
+  --brand-softer: hsl(var(--brand-h) 100% 96%);
   --brand-ink: hsl(var(--brand-h) calc(var(--brand-s) - 30%) calc(var(--brand-l) - 32%));
-  --brand-contrast: #ffffff;
+  --brand-contrast: var(--ink-1);
 
   /* Estados */
-  --ok: #1f8a60;
-  --ok-soft: rgba(31, 138, 96, 0.11);
-  --warn: #b07314;
-  --warn-soft: rgba(176, 115, 20, 0.1);
-  --danger: #c23823;
-  --danger-soft: rgba(194, 56, 35, 0.09);
+  --ok: #2c5a15;
+  --ok-soft: var(--lime-soft);
+  --warn: #5e5a00;
+  --warn-soft: var(--butter-soft);
+  --danger: #b92f1a;
+  --danger-soft: #fdece9;
 
   /* Radios del mundo */
-  --r-card: 16px;
-  --r-bubble: 18px;
+  --r-card: 20px;
+  --r-big: 28px;
+  --r-bubble: 20px;
+  --r-field: 16px;
+  --r-pill: 999px;
   --r-seal: 14px 6px 14px 6px;
 
   /* Sombras difusas (offset + blur, sin halo de color) */
-  --shadow-card: 0 1px 2px rgba(46, 42, 38, 0.05), 0 4px 16px rgba(46, 42, 38, 0.05);
-  --shadow-pop: 0 8px 30px rgba(46, 42, 38, 0.12);
+  --shadow-card: 0 1px 2px rgba(11, 11, 12, 0.04), 0 14px 44px rgba(11, 11, 12, 0.06);
+  --shadow: var(--shadow-card);
+  --shadow-pop: 0 2px 4px rgba(11, 11, 12, 0.05), 0 28px 70px rgba(11, 11, 12, 0.12);
+  --shadow-lift: var(--shadow-pop);
 
-  /* Compat con las variables previas del proyecto */
-  --primary: var(--brand);
-  --primary-hover: var(--brand-hover);
-  --primary-light: var(--brand-softer);
-  --background-light: var(--ground);
-  --background-dark: #17130f;
-  --surface-light: var(--surface);
-  --surface-dark: #231d18;
+  /* Tipografía */
+  --display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
   html {
-    caret-color: var(--brand-deep);
+    caret-color: var(--ink);
   }
   body {
     @apply text-[color:var(--ink-1)] antialiased;
-    background: var(--ground);
-    font-family: "Nunito", ui-sans-serif, system-ui, sans-serif;
-    font-size: 15px;
+    background: var(--canvas);
+    font-family: var(--body);
+    font-size: 14px;
     line-height: 1.5;
   }
   ::selection {
-    background: var(--brand-soft);
-    color: var(--brand-ink);
+    background: var(--lilac);
+    color: var(--lilac-ink);
   }
   :focus-visible {
     outline: 2px solid var(--brand);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
   input::placeholder,
   textarea::placeholder {
     color: var(--ink-3);
-  }
-  h1, h2, h3 {
-    letter-spacing: -0.02em;
   }
   input[type="number"] {
     font-variant-numeric: tabular-nums;
@@ -99,21 +115,35 @@
 
   /* Scrollbar de navegador templada al mundo */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #ded2c3;
-    border-radius: 8px;
-    border: 2px solid transparent;
+    background: var(--line-2);
+    border-radius: 999px;
+    border: 3px solid transparent;
     background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--brand-soft);
+    background: var(--lilac);
     background-clip: content-box;
+  }
+
+  /* Niebla de aurora: los tres pasteles asoman por los bordes del lienzo */
+  .aurora-haze {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(46rem 30rem at 88% -6%, rgba(226, 198, 255, 0.62), transparent 62%),
+      radial-gradient(38rem 26rem at -8% 8%, rgba(220, 254, 188, 0.55), transparent 60%),
+      radial-gradient(40rem 28rem at 50% 108%, rgba(187, 236, 255, 0.5), transparent 62%);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 100%);
   }
 
   /* Componentes base del sistema */
@@ -123,45 +153,47 @@
     box-shadow: var(--shadow-card);
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 text-sm font-bold rounded-xl cursor-pointer transition-all duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed;
-    padding: 0.55rem 1.15rem;
+    @apply inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-full cursor-pointer transition-all duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed;
+    padding: 0.6rem 1.25rem;
   }
   .btn-primary {
-    background: var(--brand);
-    color: var(--brand-contrast);
+    background: var(--ink);
+    color: #ffffff;
   }
   .btn-primary:hover:not(:disabled) {
-    background: var(--brand-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(11, 11, 12, 0.2);
+  }
+  .btn-secondary {
+    background: var(--sunken);
+    color: var(--ink);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    box-shadow: 0 8px 18px rgba(11, 11, 12, 0.1);
   }
   .btn-ghost {
     background: transparent;
     color: var(--ink-2);
-    border: 1px solid var(--hairline);
   }
   .btn-ghost:hover:not(:disabled) {
-    background: var(--ground);
-    color: var(--ink-1);
+    background: var(--canvas);
+    color: var(--ink);
   }
   .field {
-    @apply w-full text-sm rounded-xl border transition-all duration-200 outline-none;
+    @apply w-full text-sm rounded-2xl border transition-all duration-200 outline-none;
     background: var(--surface);
-    border-color: var(--hairline);
+    border-color: var(--line);
     color: var(--ink-1);
-    padding: 0.6rem 0.9rem;
+    padding: 0.7rem 0.95rem;
   }
   .field:hover:not(:disabled) {
-    border-color: #dccfbd;
+    border-color: var(--line-2);
   }
   .field:focus {
     border-color: var(--brand);
-    box-shadow: 0 0 0 3px var(--brand-soft);
+    box-shadow: 0 0 0 4px var(--brand-soft);
   }
   .stamp {
-    @apply inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider rounded-full px-2.5 py-1;
+    @apply inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] rounded-full px-2.5 py-1;
   }
-}
-
-/* Material Symbols Fill State */
-.material-symbols-outlined.filled {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }

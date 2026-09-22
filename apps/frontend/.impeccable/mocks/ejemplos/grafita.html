@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Consola Grafita — ejemplo</title>
+<style>
+  :root{
+    --bg:#141518; --panel:#1B1D21; --panel-2:#22252A; --ink:#E9E7E2; --soft:#8C8F94;
+    --hair:#2C2F34; --hair-2:#26282C; --amber:#E8B24A; --green:#5FB98A; --red:#D86055;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:13px;-webkit-font-smoothing:antialiased}
+  .frame{height:100vh;display:grid;grid-template-columns:224px 1fr}
+  .rail{background:var(--panel);border-right:1px solid var(--hair);display:flex;flex-direction:column}
+  .brand{padding:16px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--hair)}
+  .logo{width:26px;height:26px;border-radius:6px;background:var(--amber);display:grid;place-items:center;color:#141518;font-weight:700;font-size:13px}
+  .brand .n{font-weight:600;font-size:13.5px}
+  .brand .s{font-family:'IBM Plex Mono';font-size:8px;letter-spacing:.2em;color:var(--soft);text-transform:uppercase}
+  .nav{padding:10px 8px;flex:1}
+  .nav div{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;font-size:13px;color:var(--soft);letter-spacing:.01em}
+  .nav div:hover{background:var(--panel-2)}
+  .nav div.on{background:var(--panel-2);color:var(--ink);font-weight:500;box-shadow:inset 1px 0 0 var(--amber)}
+  .nav .ic{width:14px;height:14px;border:1.5px solid var(--soft);border-radius:3px;opacity:.6}
+  .nav .ic.on{border-color:var(--amber)}
+  .session{padding:14px 16px;border-top:1px solid var(--hair);font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.16em;color:var(--soft)}
+  .session b{display:block;font-size:13px;color:var(--ink);letter-spacing:.08em;margin-bottom:2px}
+
+  .main{display:grid;grid-template-rows:56px 1fr;min-height:0}
+  .meter{display:flex;align-items:center;gap:24px;padding:0 20px;border-bottom:1px solid var(--hair);background:var(--panel)}
+  .meter .g{display:flex;align-items:baseline;gap:8px}
+  .meter b{font-family:'IBM Plex Mono';font-weight:500;font-size:15px}
+  .meter span{font-family:'IBM Plex Mono';font-size:8px;letter-spacing:.18em;color:var(--soft);text-transform:uppercase}
+  .meter .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(95,185,138,.5)}
+
+  .work{display:grid;grid-template-columns:minmax(400px,42%) 1fr;min-height:0}
+  .queue{border-right:1px solid var(--hair);display:flex;flex-direction:column;min-height:0}
+  .qh{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--hair);font-family:'IBM Plex Mono';font-size:8.5px;letter-spacing:.2em;color:var(--soft);text-transform:uppercase}
+  .qh .f{margin-left:auto;border:1px solid var(--hair);padding:3px 8px;border-radius:4px}
+  .rows{overflow-y:auto;flex:1}
+  .row{padding:12px 16px;border-bottom:1px solid var(--hair-2);cursor:pointer;display:grid;grid-template-columns:26px 1fr auto;gap:12px;align-items:center}
+  .row:hover{background:var(--panel)}
+  .row.sel{background:var(--panel-2);box-shadow:inset 2px 0 0 var(--amber)}
+  .st{width:9px;height:9px;border-radius:50%;background:var(--soft)}
+  .st.bot{background:var(--green)} .st.hum{background:var(--amber);box-shadow:0 0 8px rgba(232,178,74,.5)}
+  .nm{font-size:13px;font-weight:500}
+  .mt{font-size:11px;color:var(--soft);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cnt{font-family:'IBM Plex Mono';font-size:9px;color:var(--soft)}
+  .cnt.hot{color:var(--bg);background:var(--amber);border-radius:6px;padding:2px 7px;font-weight:600}
+  .row.off .nm,.row.off .mt{color:#565B61}
+  .row.off .nm{text-decoration:line-through}
+
+  .threadwrap{display:grid;grid-template-rows:auto 1fr auto;min-height:0}
+  .th{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid var(--hair);background:var(--panel)}
+  .av{width:26px;height:26px;border-radius:6px;background:var(--panel-2);border:1px solid var(--hair);display:grid;place-items:center;font-size:10px;font-weight:600;color:var(--soft)}
+  .th .nm{font-weight:600;font-size:13px}
+  .th .st{font-family:'IBM Plex Mono';font-size:8px;letter-spacing:.2em;color:var(--soft);text-transform:uppercase}
+  .take{margin-left:auto;background:var(--amber);color:#141518;font-weight:600;font-size:11.5px;padding:7px 14px;border-radius:6px;border:none;box-shadow:0 1px 0 #A67B2B}
+  .thread{padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:9px}
+  .c{max-width:66%;align-self:flex-start;background:var(--panel);border:1px solid var(--hair);border-radius:10px 10px 10px 3px;padding:9px 13px;font-size:12.5px;line-height:1.5}
+  .b{max-width:66%;align-self:flex-end;background:var(--panel-2);border:1px solid var(--hair);border-radius:10px 10px 3px 10px;padding:9px 13px;font-size:12.5px;line-height:1.5}
+  .b.hi{background:rgba(232,178,74,.14);border-color:rgba(232,178,74,.5)}
+  .tick{align-self:center;font-family:'IBM Plex Mono';font-size:8px;letter-spacing:.24em;color:var(--soft);text-transform:uppercase}
+  .com{display:flex;gap:10px;padding:13px 18px;border-top:1px solid var(--hair);background:var(--panel)}
+  .com input{flex:1;background:var(--bg);border:1px solid var(--hair);border-radius:8px;padding:11px 14px;color:var(--ink);font-size:12.5px;font-family:'Inter'}
+  .com input:focus{outline:1.5px solid var(--amber)}
+  .com button{background:var(--ink);color:var(--bg);font-weight:600;font-size:12px;border:none;padding:12px 20px;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="frame">
+  <aside class="rail">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div><div class="n" style="font-weight:600;font-size:13px">Estudio Mateo</div><div class="s"> unimaginable - n/a</div></div>
+    </div>
+    <div class="nav">
+      <div class="on"><span class="ic on"></span> Conversaciones <span style="margin-left:auto;font-family:'IBM Plex Mono';font-size:9px;color:var(--amber)">12</span></div>
+      <div><span class="ic"></span> Clientes</div>
+      <div><span class="ic"></span> Cerebro</div>
+      <div><span class="ic"></span> Agentes</div>
+      <div><span class="ic"></span> Ajustes</div>
+    </div>
+    <div class="session">turno 09–17<b>07:12:04</b>jornada continua</div>
+  </aside>
+  <div class="main">
+    <div class="meter">
+      <span class="dot"></span>
+      <div class="g-kpi"><b>12</b><span>activos</span></div>
+      <div class="g-kpi"><b style="color:var(--amber)">3</b><span>a resolución</span></div>
+      <div class="g-kpi"><b>94%</b><span>auto</span></div>
+      <div class="g-kpi"><b>1m20s</b><span>resp. media</span></div>
+      <div style="margin-left:auto" class="g-kpi"><b>13:41</b><span>reloj</span></div>
+    </div>
+    <div class="work">
+      <div class="queue">
+        <div class="qh"><span>cola de trabajo</span><span class="f">filtro: canal w ▾</span></div>
+        <div class="rows">
+          <div class="row sel">
+            <span class="st hum"></span>
+            <div><div class="nm">María Cano</div><div class="mt">«¿El curso de julio entra en mi presupuesto?»</div></div>
+            <span class="cnt hot">2</span>
+          </div>
+          <div class="row">
+            <span class="st bot"></span>
+            <div><div class="nm">Jorge Rincón</div><div class="mt">El bot está generando respuesta</div></div>
+            <span class="cnt" style="opacity:.35">0</span>
+          </div>
+          <div class="row off">
+            <span class="st"></span>
+            <div><div class="nm">Laura Pérez</div><div class="mt">Cerrado a las 09:12 · web</div></div>
+            <span class="cnt" style="opacity:.35">0</span>
+          </div>
+          <div class="row">
+            <span class="st bot"></span>
+            <div><div class="nm">Tech Store</div><div class="mt">3 mensajes nuevos esperan lectura</div></div>
+            <span class="cnt" style="opacity:.55">3</span>
+          </div>
+        </div>
+      </div>
+      <div class="threadwrap">
+        <div class="th">
+          <span class="av">MC</span>
+          <div><div class="nm">María Cano</div><div class="st"> Wash · auto_pilot · herramienta esperando</div></div>
+          <button class="take">Tomar control</button>
+        </div>
+        <div class="thread ff" style="background:var(--bg)">
+          <div class="c">Buenos días, llegan a mi email ¿el comprobante con IVA?</div>
+          <div class="b">»Adj Secretar», María: la facturous <b>№1042</b> salió con IVA aplicado y ya está en tu correo de contacto</div>
+          <div class="b hi">Tengo con tu cita el jueves 10:00 en tu agenda. ¿La necesitas para pre-completer el registro del canal?</div>
+          <div class="tick">· q4 abajo: los duplicados desaparecen al confirmar ·</div>
+        </div>
+        <div class="com">
+          <input placeholder="Respondiendo como María...">
+          <button>Enviar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

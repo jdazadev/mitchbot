@@ -20,7 +20,7 @@ export default {
     },
     extend: {
       colors: {
-        /* El azul heredado de las vistas se mapea al acento de marca del proyecto */
+        /* El azul heredado de componentes puntuales se mapea al acento de marca */
         brand: "hsl(var(--brand) 0 0)",
         blue: {
           50: "var(--brand-softer)",
@@ -35,14 +35,39 @@ export default {
           900: "var(--brand-deep)",
           950: "var(--brand-deep)",
         },
-        warm: {
-          ground: "var(--ground)",
-          deep: "var(--ground-deep)",
-          surface: "var(--surface)",
-          line: "var(--hairline)",
-          ink: "var(--ink-1)",
-          ink2: "var(--ink-2)",
-          ink3: "var(--ink-3)",
+        /* Tokens del mundo Aurora */
+        canvas: "var(--canvas)",
+        surface: "var(--surface)",
+        sunken: "var(--sunken)",
+        line: {
+          DEFAULT: "var(--line)",
+          strong: "var(--line-2)",
+        },
+        ink: {
+          DEFAULT: "var(--ink-1)",
+          1: "var(--ink-1)",
+          2: "var(--ink-2)",
+          3: "var(--ink-3)",
+        },
+        sky: {
+          DEFAULT: "var(--sky)",
+          ink: "var(--sky-ink)",
+          soft: "var(--sky-soft)",
+        },
+        lime: {
+          DEFAULT: "var(--lime)",
+          ink: "var(--lime-ink)",
+          soft: "var(--lime-soft)",
+        },
+        lilac: {
+          DEFAULT: "var(--lilac)",
+          ink: "var(--lilac-ink)",
+          soft: "var(--lilac-soft)",
+        },
+        butter: {
+          DEFAULT: "var(--butter)",
+          ink: "var(--butter-ink)",
+          soft: "var(--butter-soft)",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -82,6 +107,24 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        card: "var(--r-card)",
+        big: "var(--r-big)",
+        field: "var(--r-field)",
+      },
+      fontFamily: {
+        display: ['"Bricolage Grotesque"', "ui-sans-serif", "system-ui", "sans-serif"],
+        body: ['"Hanken Grotesk"', "ui-sans-serif", "system-ui", "sans-serif"],
+      },
+      spacing: {
+        4.5: "1.125rem",
+        8.5: "2.125rem",
+        9.5: "2.375rem",
+        10.5: "2.625rem",
+        13: "3.25rem",
+      },
+      boxShadow: {
+        card: "var(--shadow-card)",
+        pop: "var(--shadow-pop)",
       },
       keyframes: {
         "accordion-down": {

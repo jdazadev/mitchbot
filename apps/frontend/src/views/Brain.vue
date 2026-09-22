@@ -6,6 +6,9 @@ import {
   type KnowledgeSource,
   type BrainStats,
 } from "../services/brain.service";
+import AIcon from "../components/ui/AIcon.vue";
+import APill from "../components/ui/APill.vue";
+import AButton from "../components/ui/AButton.vue";
 
 const { t } = useI18n();
 
@@ -41,7 +44,7 @@ const brainStats = ref<BrainStats>({
 
 const sources = computed(() =>
   sourceList.value.map((s) => {
-    const { icon, color } = getTypeMetadata(s.type);
+    const { icon, tone, soft, ink } = getTypeMetadata(s.type);
     const progress = typeof s.progress === 'number' ? s.progress : s.status === 'Indexed' ? 100 : s.status === 'Failed' ? 100 : s.status === 'Processing' ? 40 : 0;
     const stageLabel = s.stage
       ? s.stage === 'queued'
@@ -62,6 +65,9 @@ const sources = computed(() =>
           : s.status === 'Failed'
             ? t('brain.status.failed')
             : t('brain.status.ready');
+    const statusTone: 'lime' | 'butter' | 'danger' | 'ghost' =
+      s.status === "Indexed" ? "lime" : s.status === "Processing" ? "butter" : s.status === "Failed" ? "danger" : "ghost";
+    const progressColor = s.status === "Failed" ? "var(--danger)" : s.status === "Indexed" ? "var(--lime)" : "var(--butter)";
     return {
       ...s,
       date: new Date(s.createdAt).toLocaleDateString("en-US", {
@@ -70,15 +76,13 @@ const sources = computed(() =>
         year: "numeric",
       }),
       icon,
-      color,
+      tone,
+      soft,
+      ink,
       progress,
       stageLabel,
-      statusColor:
-        s.status === "Indexed"
-          ? "emerald"
-          : s.status === "Processing"
-            ? "amber"
-            : "slate", // Simplified logic
+      statusTone,
+      progressColor,
     };
   }),
 );
@@ -87,28 +91,30 @@ const stats = computed(() => [
   {
     label: t("brain.stats.totalDocuments"),
     value: brainStats.value.totalDocs.toString(),
-    icon: "folder_open",
+    icon: "FolderOpen",
+    tone: "sky" as const,
   },
   {
     label: t("brain.stats.totalVectors"),
     value: new Intl.NumberFormat().format(brainStats.value.totalVectors),
-    icon: "account_tree",
+    icon: "TreeStructure",
+    tone: "lilac" as const,
   },
-  { label: t("brain.stats.syncStatus"), value: brainStats.value.syncStatus, icon: "sync" },
+  { label: t("brain.stats.syncStatus"), value: brainStats.value.syncStatus, icon: "ArrowsClockwise", tone: "lime" as const },
 ]);
 
 function getTypeMetadata(type: string) {
   switch (type) {
     case "PDF":
-      return { icon: "description", color: "blue" };
+      return { icon: "FileText", tone: "sky", soft: "bg-sky-soft", ink: "text-sky-ink" };
     case "TXT":
-      return { icon: "text_snippet", color: "slate" };
+      return { icon: "TextAa", tone: "ghost", soft: "bg-canvas", ink: "text-ink-2" };
     case "CSV":
-      return { icon: "table", color: "amber" };
+      return { icon: "Table", tone: "butter", soft: "bg-butter-soft", ink: "text-butter-ink" };
     case "IMAGE":
-      return { icon: "photo", color: "emerald" };
+      return { icon: "Image", tone: "lime", soft: "bg-lime-soft", ink: "text-lime-ink" };
     default:
-      return { icon: "description", color: "gray" };
+      return { icon: "FileText", tone: "ghost", soft: "bg-canvas", ink: "text-ink-2" };
   }
 }
 
@@ -325,182 +331,165 @@ function startPolling() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-8">
-    <!-- Header with Action -->
-    <div class="flex flex-wrap justify-between items-center gap-4">
-      <div>
-        <p class="text-sm text-slate-500 dark:text-slate-400">
-          {{ t("brain.subtitle") }}
-        </p>
-      </div>
-      <button
-        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:text-slate-500 text-white rounded-lg font-bold shadow-sm transition-all flex items-center gap-2 uppercase text-sm"
-        @click="openAddModal"
+  <div class="flex flex-col gap-3.5">
+    <div class="flex flex-wrap items-center gap-3">
+      <p class="max-w-[52ch] text-[13px] text-ink-2">{{ t("brain.subtitle") }}</p>
+      <AButton
+        class="ml-auto"
+        variant="primary"
+        icon="Plus"
         :disabled="!ragAvailable"
+        @click="openAddModal"
       >
-        <span class="material-symbols-outlined text-[20px]">add</span> {{ t("brain.addSource") }}
-      </button>
+        {{ t("brain.addSource") }}
+      </AButton>
     </div>
 
-    <div v-if="ragAlert" class="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700 flex items-center gap-3">
-      <span class="material-symbols-outlined text-[18px]">warning</span>
+    <div
+      v-if="ragAlert"
+      class="flex items-center gap-3 rounded-card bg-butter-soft p-4 text-[13px] text-butter-ink"
+    >
+      <AIcon name="Warning" :size="18" />
       {{ ragAlert }}
     </div>
-
-    <div v-if="fileAlert" class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-600 flex items-center gap-3">
-      <span class="material-symbols-outlined text-[18px]">info</span>
+    <div
+      v-if="fileAlert"
+      class="flex items-center gap-3 rounded-card bg-canvas p-4 text-[13px] text-ink-2"
+    >
+      <AIcon name="Info" :size="18" />
       {{ fileAlert }}
     </div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+    <!-- Stats -->
+    <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
       <div
         v-for="stat in stats"
         :key="stat.label"
-        class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm"
+        class="rounded-card bg-surface p-5 px-6 shadow-card"
       >
-        <div class="flex items-center gap-4">
-          <div
-            class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-slate-400"
+        <div class="flex items-center gap-2.5">
+          <span
+            :class="[
+              'grid h-8 w-8 place-items-center rounded-[11px]',
+              stat.tone === 'sky' ? 'bg-sky text-sky-ink' : stat.tone === 'lilac' ? 'bg-lilac text-lilac-ink' : 'bg-lime text-lime-ink',
+            ]"
           >
-            <span class="material-symbols-outlined text-[24px]">{{
-              stat.icon
-            }}</span>
-          </div>
-          <div>
-            <p
-              class="text-xs font-bold text-slate-400 uppercase tracking-wider"
-            >
-              {{ stat.label }}
-            </p>
-            <p class="text-2xl font-bold text-slate-900 dark:text-white">
-              {{ stat.value }}
-            </p>
-          </div>
+            <AIcon :name="stat.icon" :size="16" weight="bold" />
+          </span>
+          <span class="text-xs font-semibold text-ink-3">{{ stat.label }}</span>
+        </div>
+        <div class="mt-3 font-display text-[32px] font-bold leading-none tracking-[-0.04em] [font-variant-numeric:tabular-nums]">
+          {{ stat.value }}
         </div>
       </div>
     </div>
 
-    <!-- Knowledge Sources Table -->
-    <div
-      class="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden"
-    >
-      <div class="p-6 border-b border-slate-100 dark:border-slate-700">
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+    <!-- Fuentes de conocimiento -->
+    <div class="overflow-hidden rounded-card bg-surface shadow-card">
+      <div class="px-5 pb-1 pt-4">
+        <h3 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">
           {{ t("brain.sources.title") }}
         </h3>
       </div>
 
-      <div v-if="isLoading" class="p-8 text-center text-slate-500">
+      <div v-if="isLoading" class="px-6 py-10 text-center text-sm font-semibold text-ink-3">
         {{ t("brain.sources.loading") }}
       </div>
-      <div v-else-if="error" class="p-8 text-center text-red-500">
+      <div v-else-if="error" class="px-6 py-10 text-center text-sm font-semibold text-[color:var(--danger)]">
         {{ error }}
       </div>
       <div v-else class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+        <table class="w-full border-collapse text-[13px]">
           <thead>
-            <tr
-              class="bg-slate-50/50 dark:bg-slate-700/30 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold tracking-widest"
-            >
-              <th class="px-6 py-4">{{ t("brain.sources.table.sourceName") }}</th>
-              <th class="px-6 py-4">{{ t("brain.sources.table.sizePages") }}</th>
-              <th class="px-6 py-4">{{ t("common.status") }}</th>
-              <th class="px-6 py-4">{{ t("brain.sources.table.progress") }}</th>
-              <th class="px-6 py-4">{{ t("brain.sources.table.lastSynced") }}</th>
-              <th class="px-6 py-4 text-right">{{ t("common.actions") }}</th>
+            <tr>
+              <th
+                v-for="col in [
+                  t('brain.sources.table.sourceName'),
+                  t('brain.sources.table.sizePages'),
+                  t('common.status'),
+                  t('brain.sources.table.progress'),
+                  t('brain.sources.table.lastSynced'),
+                ]"
+                :key="col"
+                class="border-b-[1.5px] border-line px-4.5 py-3 text-left text-[11px] font-semibold text-ink-3"
+              >
+                {{ col }}
+              </th>
+              <th class="border-b-[1.5px] border-line px-4.5 py-3 text-right text-[11px] font-semibold text-ink-3">
+                {{ t("common.actions") }}
+              </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+          <tbody>
             <tr v-if="sources.length === 0">
-              <td
-                colspan="6"
-                class="px-6 py-8 text-center text-slate-500 text-sm"
-              >
+              <td colspan="6" class="px-6 py-10 text-center text-sm text-ink-3">
                 {{ t("brain.sources.empty") }}
               </td>
             </tr>
             <template v-else v-for="source in sources" :key="source._id">
-              <tr
-                class="hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-colors"
-              >
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div
-                    :class="`p-2 rounded bg-${source.color}-50 dark:bg-${source.color}-900/30 text-${source.color}-600 dark:text-${source.color}-400`"
-                  >
-                    <span class="material-symbols-outlined text-[20px]">{{
-                      source.icon
-                    }}</span>
+              <tr class="border-b border-line transition-colors last:border-b-0 hover:bg-canvas">
+                <td class="px-4.5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <span :class="['grid h-9 w-9 place-items-center rounded-[12px]', source.soft, source.ink]">
+                      <AIcon :name="source.icon" :size="18" />
+                    </span>
+                    <div class="flex flex-col">
+                      <span class="font-semibold">{{ source.name }}</span>
+                      <span class="text-[11px] text-ink-3">{{ source.type }}</span>
+                    </div>
                   </div>
-                  <div class="flex flex-col">
-                    <span
-                      class="text-sm font-bold text-slate-900 dark:text-white"
-                      >{{ source.name }}</span
+                </td>
+                <td class="px-4.5 py-3.5 text-ink-2">{{ source.size }}</td>
+                <td class="px-4.5 py-3.5">
+                  <APill :tone="source.statusTone" size="sm">{{ source.status }}</APill>
+                  <div class="mt-1 text-[11px] text-ink-3">{{ source.stageLabel }}</div>
+                </td>
+                <td class="px-4.5 py-3.5">
+                  <div class="h-2.5 w-full overflow-hidden rounded-full bg-sunken">
+                    <span class="block h-full rounded-full" :style="{ width: source.progress + '%', background: source.progressColor }" />
+                  </div>
+                  <div class="mt-1 text-[11px] text-ink-3 [font-variant-numeric:tabular-nums]">{{ source.progress }}%</div>
+                </td>
+                <td class="px-4.5 py-3.5 text-xs text-ink-3">{{ source.date }}</td>
+                <td class="px-4.5 py-3.5">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+                      :title="t('brain.sources.viewExtracted')"
+                      @click="openExtractedText(source._id)"
                     >
-                    <span class="text-[11px] text-slate-400">{{ source.type }}</span>
+                      <AIcon name="FileText" :size="14" />
+                    </button>
+                    <button
+                      type="button"
+                      class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+                      :title="t('brain.sources.viewLogs')"
+                      @click="toggleLogs(source._id)"
+                    >
+                      <AIcon name="NotePencil" :size="14" />
+                    </button>
+                    <button
+                      type="button"
+                      class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-[color:var(--danger-soft)] hover:text-[color:var(--danger)]"
+                      :title="t('brain.sources.delete')"
+                      @click="handleDeleteSource(source._id)"
+                    >
+                      <AIcon name="Trash" :size="14" />
+                    </button>
                   </div>
-                </div>
-              </td>
-              <td
-                class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium"
-              >
-                {{ source.size }}
-              </td>
-              <td class="px-6 py-4">
-                <span
-                  :class="`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border bg-${source.statusColor}-50 text-${source.statusColor}-700 border-${source.statusColor}-100`"
-                >
-                  {{ source.status }}
-                </span>
-                <div class="text-[11px] text-slate-400 mt-1">{{ source.stageLabel }}</div>
-              </td>
-              <td class="px-6 py-4">
-                <div class="flex flex-col gap-2">
-                  <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      class="h-2 bg-blue-500"
-                      :style="`width: ${source.progress}%`"
-                    ></div>
-                  </div>
-                  <div class="text-[11px] text-slate-400">{{ source.progress }}%</div>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                {{ source.date }}
-              </td>
-              <td class="px-6 py-4 text-right">
-                <button
-                  class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-colors"
-                  @click="openExtractedText(source._id)"
-                  :title="t('brain.sources.viewExtracted')"
-                >
-                  <span class="material-symbols-outlined text-[20px]">description</span>
-                </button>
-                <button
-                  class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-colors"
-                  @click="toggleLogs(source._id)"
-                  :title="t('brain.sources.viewLogs')"
-                >
-                  <span class="material-symbols-outlined text-[20px]">receipt_long</span>
-                </button>
-                <button
-                  class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-colors"
-                  @click="handleDeleteSource(source._id)"
-                  :title="t('brain.sources.delete')"
-                >
-                  <span class="material-symbols-outlined text-[20px]">delete</span>
-                </button>
-              </td>
+                </td>
               </tr>
               <tr v-if="expandedLogs[source._id]">
-                <td colspan="6" class="px-6 pb-6">
-                  <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-600 space-y-2">
-                    <div v-if="!logsBySource[source._id]?.length" class="text-slate-400">{{ t("brain.logs.empty") }}</div>
+                <td colspan="6" class="px-4.5 pb-4">
+                  <div class="space-y-2 rounded-field bg-canvas p-4 text-xs text-ink-2">
+                    <div v-if="!logsBySource[source._id]?.length" class="text-ink-3">{{ t("brain.logs.empty") }}</div>
                     <div v-else v-for="log in logsBySource[source._id]" :key="log.timestamp">
                       <span class="font-bold">{{ new Date(log.timestamp).toLocaleTimeString() }}</span>
-                      <span class="uppercase text-[10px]">{{ log.level }}</span>
-                      <span class="text-slate-400">{{ log.stage || t('brain.logs.general') }}</span>
+                      <span class="text-[10px] uppercase">{{
+                        log.level
+                      }}</span>
+                      <span class="text-ink-3">{{ log.stage || t('brain.logs.general') }}</span>
                       — {{ log.message }}
                     </div>
                   </div>
@@ -514,126 +503,134 @@ function startPolling() {
 
     <Teleport to="body">
       <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="closeAddModal">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-        <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
-          <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        <div class="relative w-full max-w-2xl overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]">
+          <div class="flex items-center justify-between border-b border-line p-5">
             <div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ t("brain.modal.title") }}</h3>
-              <p class="text-xs text-slate-400 mt-0.5">{{ t("brain.modal.subtitle") }}</p>
+              <h3 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t("brain.modal.title") }}</h3>
+              <p class="mt-0.5 text-xs text-ink-3">{{ t("brain.modal.subtitle") }}</p>
             </div>
-            <button @click="closeAddModal" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
-              <span class="material-symbols-outlined text-slate-400">close</span>
+            <button
+              type="button"
+              class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas"
+              @click="closeAddModal"
+            >
+              <AIcon name="X" :size="18" />
             </button>
           </div>
 
-          <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex gap-2">
+          <div class="flex gap-1.5 border-b border-line p-4">
             <button
+              type="button"
+              :class="[
+                'rounded-full px-4 py-2 text-[13px] font-semibold transition-colors',
+                uploadMode === 'file' ? 'bg-ink text-white' : 'bg-canvas text-ink-2',
+              ]"
               @click="uploadMode = 'file'"
-              class="px-4 py-2 rounded-lg text-sm font-medium"
-              :class="uploadMode === 'file' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'"
             >
               {{ t("brain.modal.tabFile") }}
             </button>
             <button
+              type="button"
+              :class="[
+                'rounded-full px-4 py-2 text-[13px] font-semibold transition-colors',
+                uploadMode === 'text' ? 'bg-ink text-white' : 'bg-canvas text-ink-2',
+              ]"
               @click="uploadMode = 'text'"
-              class="px-4 py-2 rounded-lg text-sm font-medium"
-              :class="uploadMode === 'text' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'"
             >
               {{ t("brain.modal.tabText") }}
             </button>
           </div>
 
           <div class="p-5">
-            <div v-if="actionError" class="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600 flex items-center gap-2">
-              <span class="material-symbols-outlined text-[18px]">error</span>
+            <div v-if="actionError" class="mb-4 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]">
+              <AIcon name="WarningCircle" :size="17" />
               {{ actionError }}
             </div>
-            <div v-if="actionSuccess" class="mb-4 p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-emerald-600 flex items-center gap-2">
-              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <div v-if="actionSuccess" class="mb-4 flex items-center gap-2 rounded-field bg-lime-soft p-3 text-[13px] text-lime-ink">
+              <AIcon name="CheckCircle" :size="17" />
               {{ actionSuccess }}
             </div>
-            <div v-if="uploadMode === 'file'" class="space-y-4">
+
+            <div v-if="uploadMode === 'file'">
               <div
-                class="border-2 border-dashed rounded-xl p-6 text-center transition-colors"
-                :class="isDragging ? 'border-blue-500 bg-blue-50' : 'border-slate-200'"
+                class="rounded-field border-2 border-dashed p-6 text-center transition-colors"
+                :class="isDragging ? 'border-lilac bg-lilac-soft' : 'border-line-strong'"
                 @drop="handleDrop"
                 @dragover="handleDragOver"
                 @dragleave="handleDragLeave"
               >
-                <div class="text-sm text-slate-500">
-                  {{ t("brain.modal.dropzone") }}
-                </div>
+                <p class="text-[13px] text-ink-3">{{ t("brain.modal.dropzone") }}</p>
                 <input
+                  id="brain-file"
                   type="file"
                   accept=".pdf,.txt,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif,.tiff,.tif,.bmp"
                   class="hidden"
-                  id="brain-file"
                   @change="handleFileChange"
                 />
-                <label for="brain-file" class="inline-flex mt-3 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
+                <label
+                  for="brain-file"
+                  class="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white"
+                >
+                  <AIcon name="UploadSimple" :size="14" />
                   {{ t("brain.modal.selectFile") }}
                 </label>
-                <div v-if="selectedFile" class="mt-3 text-xs text-slate-600">
-                  {{ selectedFile.name }}
-                </div>
+                <div v-if="selectedFile" class="mt-3 text-xs text-ink-2">{{ selectedFile.name }}</div>
               </div>
             </div>
 
-            <div v-else class="space-y-4">
-              <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("brain.modal.titleLabel") }}</label>
-                <input
-                  v-model="textTitle"
-                  class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  :placeholder="t('brain.modal.titlePlaceholder')"
-                />
-              </div>
-              <div>
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">{{ t("brain.modal.contentLabel") }}</label>
+            <div v-else class="flex flex-col gap-4">
+              <label class="flex flex-col gap-1.5">
+                <span class="text-xs font-semibold text-ink-2">{{ t("brain.modal.titleLabel") }}</span>
+                <input v-model="textTitle" class="field" :placeholder="t('brain.modal.titlePlaceholder')" />
+              </label>
+              <label class="flex flex-col gap-1.5">
+                <span class="text-xs font-semibold text-ink-2">{{ t("brain.modal.contentLabel") }}</span>
                 <textarea
                   v-model="textContent"
-                  class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm h-36 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  class="field h-36 resize-none"
                   :placeholder="t('brain.modal.contentPlaceholder')"
-                ></textarea>
-              </div>
+                />
+              </label>
             </div>
           </div>
 
-          <div class="p-5 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-2">
-            <button @click="closeAddModal" class="px-4 py-2.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600">
-              {{ t("common.cancel") }}
-            </button>
-            <button
-              @click="handleSubmit"
-              :disabled="isSubmitting"
-              class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-xs font-bold"
-            >
+          <div class="flex justify-end gap-2 border-t border-line p-5">
+            <AButton variant="ghost" @click="closeAddModal">{{ t("common.cancel") }}</AButton>
+            <AButton variant="primary" :loading="isSubmitting" @click="handleSubmit">
               {{ isSubmitting ? t("brain.modal.processing") : t("common.save") }}
-            </button>
+            </AButton>
           </div>
         </div>
       </div>
     </Teleport>
+
     <Teleport to="body">
       <div v-if="extractedModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="closeExtractedText">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-        <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
-          <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        <div class="relative w-full max-w-3xl overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]">
+          <div class="flex items-center justify-between border-b border-line p-5">
             <div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ t("brain.extracted.title") }}</h3>
-              <p class="text-xs text-slate-400 mt-0.5">
+              <h3 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t("brain.extracted.title") }}</h3>
+              <p class="mt-0.5 text-xs text-ink-3">
                 {{ t("brain.extracted.method", { method: extractedModalSourceId ? extractedTextBySource[extractedModalSourceId]?.method || 'llm' : 'llm' }) }}
               </p>
             </div>
-            <button @click="closeExtractedText" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
-              <span class="material-symbols-outlined text-slate-400">close</span>
+            <button
+              type="button"
+              class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas"
+              @click="closeExtractedText"
+            >
+              <AIcon name="X" :size="18" />
             </button>
           </div>
-          <div class="p-5 max-h-[70vh] overflow-y-auto">
-            <div v-if="extractedModalSourceId && !extractedTextBySource[extractedModalSourceId]?.markdown" class="text-sm text-slate-400">
+          <div class="max-h-[70vh] overflow-y-auto p-5">
+            <div v-if="extractedModalSourceId && !extractedTextBySource[extractedModalSourceId]?.markdown" class="text-sm text-ink-3">
               {{ t("brain.extracted.empty") }}
             </div>
-            <pre v-else class="text-sm text-slate-700 whitespace-pre-wrap">{{ extractedModalSourceId ? extractedTextBySource[extractedModalSourceId]?.markdown : '' }}</pre>
+            <pre v-else class="whitespace-pre-wrap text-sm text-ink-2">{{
+              extractedModalSourceId ? extractedTextBySource[extractedModalSourceId]?.markdown : ''
+            }}</pre>
           </div>
         </div>
       </div>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Libro Mayor de Rúbricas — ejemplo</title>
+<style>
+  :root{
+    --paper:#F3EEE3; --rule-red:#A33228; --ink:#232323; --faint:#6E6252;
+    --col:#D8D2C4; --paper-lo:#ECE6D9;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--paper);color:var(--ink);font-family:'Spectral',serif}
+  .frame{height:100vh;display:flex;flex-direction:column}
+
+  /* spine header */
+  .head{display:grid;grid-template-columns:230px 1fr;border-bottom:3px double var(--ink);background:var(--paper)}
+  .engrave{border-right:3px double var(--ink);padding:18px 20px;display:flex;flex-direction:column;gap:4px}
+  .engrave .t{font-size:21px;font-weight:600;letter-spacing:.01em}
+  .engrave .s{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase}
+  .cols{display:grid;grid-template-columns:96px 1fr 150px 130px;gap:0}
+  .colh{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);padding:9px 12px;border-right:1px solid var(--rule-red);border-bottom:1px solid var(--rule-red)}
+  .colh:last-child{border-right:none;text-align:right}
+  .stats{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.16em;color:var(--faint)}
+
+  /* ledger body */
+  .book{flex:1;display:grid;grid-template-columns:minmax(400px,46%) 1fr;min-height:0}
+  .folio{border-right:3px double var(--ink);position:relative;overflow:hidden}
+  .line-rule{position:absolute;top:0;bottom:0;width:1px;background:var(--rule-red);opacity:.55}
+  .rows{height:100%;overflow-y:auto}
+  .entry{display:grid;grid-template-columns:96px 1fr 150px 130px;padding:12px 0;border-bottom:1px solid #DACFB8;position:relative}
+  .entry:hover{background:var(--paper-lo)}
+  .entry .c1{padding-left:16px;font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.14em;color:var(--faint)}
+  .entry .c2{font-size:14.5px}
+  .entry .c2 small{display:block;font-family:'IBM Plex Mono';font-size:9px;color:var(--faint);margin-top:2px;letter-spacing:.08em}
+  .entry .c3{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--faint);display:flex;flex-direction:column;gap:2px}
+  .entry .c4{font-family:'IBM Plex Mono';font-size:11px;text-align:right;padding-right:18px}
+  .entry.signed .c4{color:var(--faint)}
+  .rubric{font-family:'Spectral';font-style:italic;color:var(--rule-red)}
+  .entry.open{background:#FBF8F0;box-shadow:inset 4px 0 0 var(--rule-red)}
+  .entry.closed{color:var(--faint)}
+  .entry .stroke{position:absolute;left:96px;right:12px;top:50%;height:1.5px;background:var(--rule-red)}
+
+  /* the open account page */
+  .page{display:grid;grid-template-rows:auto 1fr auto;min-height:0}
+  .acchead{padding:16px 22px 10px;border-bottom:2px solid var(--ink)}
+  .acchead .who{font-size:17px;font-weight:600}
+  .acchead .meta{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.2em;color:var(--faint);text-transform:uppercase;margin-top:3px}
+  .thread{padding:18px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;position:relative}
+  .left{max-width:62%;padding:10px 15px;background:#FFF9EE;border:1px solid #D9CFBC;border-radius:2px;font-size:14px;line-height:1.55}
+  .right{max-width:62%;align-self:flex-end;padding:10px 15px;background:var(--ink);color:#F5F0E4;border-radius:2px;font-size:14px;line-height:1.55}
+  .rowlabel{align-self:center;font-family:'IBM Plex Mono';font-size:8.5px;letter-spacing:.22em;color:var(--faint);text-transform:uppercase;margin:5px 0}
+  .pen{padding:14px 22px;border-top:3px double var(--ink);display:flex;gap:10px}
+  .pen input{flex:1;background:#FFF9EE;border:1.5px solid var(--ink);padding:11px 15px;font-family:'Spectral',serif;font-size:14px}
+  .pen button{background:var(--rule-red);color:#F8F2E4;border:none;padding:12px 24px;font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.2em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="head">
+    <div class="engrave">
+      <div class="t">Estudio Mateo</div>
+      <div class="s">libro mayor · folio 214</div>
+    </div>
+    <div class="cols">
+      <div class="colh">Cta.</div><div class="colh">Nombre · canal</div><div class="colh">Estado</div><div class="colh">Nº leídos</div>
+    </div>
+  </div>
+  <div class="book">
+    <div class="folio">
+      <div class="line-rule" style="left:96px"></div>
+      <div class="line-rule" style="right:150px"></div>
+      <div class="rows">
+        <div class="entry open">
+          <div class="c1">1043</div>
+          <div class="c2">María Cano<small>WhatsApp · sin cerrar</small></div>
+          <div class="c3"><span class="rubric">abierto</span></div>
+          <div class="c4">2</div>
+        </div>
+        <div class="entry signed">
+          <div class="c1">1042</div>
+          <div class="c2">Jorge Rincón<small>Instagram · bot despachó</small></div>
+          <div class="c3">bot en línea</div>
+          <div class="c4">0</div>
+        </div>
+        <div class="entry signed closed">
+          <div class="c1">1041</div>
+          <div class="c2">Laura Pérez<small>Web · 09:12</small></div>
+          <div class="c3" style="position:relative">cerrado<div class="stroke"></div></div>
+          <div class="c4">0</div>
+        </div>
+        <div class="entry">
+          <div class="c1">1040</div>
+          <div class="c2">Tech Store<small>WhatsApp · pedido</small></div>
+          <div class="c3">bot en línea</div>
+          <div class="c4">3</div>
+        </div>
+        <div class="entry">
+          <div class="c1">1039</div>
+          <div class="c2">Andrés Gutiérrez<small>WhatsApp · cita</small></div>
+          <div class="c3">rubric<span class="rubric" style="font-size:15px"> ✓</span></div>
+          <div class="c4">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="page">
+      <div class="acchead">
+        <div class="who">María Cano — cta. 1043</div>
+        <div class="meta">WhatsApp · partida abierta · 2 vencimientos</div>
+      </div>
+      <div class="thread">
+        <div class="rowlabel">· anotación de hoy ·</div>
+        <div class="left">¿Me confirmas la cita del viernes?</div>
+        <div class="right"><b>Confirmada</b>: viernes 10:00, sala B. Llegas 10 min antes.</div>
+        <div class="left">¿Se puede reprogramar en la tarde?</div>
+        <div class="rowlabel">· sin rúbrica · pendiente de firma ·</div>
+      </div>
+      <div class="pen">
+        <input placeholder="Anotar en la partida...">
+        <button>RÚBRICA</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
