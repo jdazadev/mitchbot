@@ -69,19 +69,13 @@
   /* Radios del mundo */
   --r-card: 20px;
   --r-big: 28px;
-  --r-bubble: 20px;
   --r-field: 16px;
-  --r-pill: 999px;
-  --r-seal: 14px 6px 14px 6px;
 
   /* Sombras difusas (offset + blur, sin halo de color) */
   --shadow-card: 0 1px 2px rgba(11, 11, 12, 0.04), 0 14px 44px rgba(11, 11, 12, 0.06);
-  --shadow: var(--shadow-card);
   --shadow-pop: 0 2px 4px rgba(11, 11, 12, 0.05), 0 28px 70px rgba(11, 11, 12, 0.12);
-  --shadow-lift: var(--shadow-pop);
 
   /* Tipografía */
-  --display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
   --body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -235,38 +229,6 @@
   }
 
   /* Componentes base del sistema */
-  .card {
-    background: var(--surface);
-    border-radius: var(--r-card);
-    box-shadow: var(--shadow-card);
-  }
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-full cursor-pointer transition-[color,background-color,border-color,box-shadow,transform] duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed;
-    padding: 0.6rem 1.25rem;
-  }
-  .btn-primary {
-    background: var(--ink-solid);
-    color: var(--ink-solid-contrast);
-  }
-  .btn-primary:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(11, 11, 12, 0.2);
-  }
-  .btn-secondary {
-    background: var(--sunken);
-    color: var(--ink);
-  }
-  .btn-secondary:hover:not(:disabled) {
-    box-shadow: 0 8px 18px rgba(11, 11, 12, 0.1);
-  }
-  .btn-ghost {
-    background: transparent;
-    color: var(--ink-2);
-  }
-  .btn-ghost:hover:not(:disabled) {
-    background: var(--canvas);
-    color: var(--ink);
-  }
   .field {
     @apply w-full text-sm rounded-2xl border transition-[color,background-color,border-color,box-shadow] duration-200;
     background: var(--surface);
@@ -282,8 +244,5 @@
     outline: none;
     border-color: var(--focus);
     box-shadow: 0 0 0 4px var(--focus-halo);
-  }
-  .stamp {
-    @apply inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] rounded-full px-2.5 py-1;
   }
 }

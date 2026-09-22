@@ -5,6 +5,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.7.1 — 2026-09-22
+
+> 🧹 **Limpieza**: fuera dependencias, tipos, iconos, tokens, clases y claves i18n sin uso
+
+### 🗑️ Eliminado
+- **Dependencias del backend sin uso**: `@langchain/textsplitters` y `cheerio` (0 importaciones). El fallback OCR `pdf-parse` se conserva por su `import()` dinámico.
+- **Tipo muerto** `apps/backend/src/types/index.ts` (`AppResponse`, sin referencias); se elimina la carpeta `types/` (el `types/` de `tools/` se mantiene).
+- **`AIcon.vue`**: el `LEGACY_MAP` de Material Symbols (92 entradas) y 30 iconos Phosphor sin uso (`DotsThreeVertical`, `Buildings`, `ClockCounterClockwise`, `CalendarBlank`, `CurrencyDollar`, `Package`, `EnvelopeSimple`, `Play`, `Eye`, `DownloadSimple`, `TreeStructure`, `Paperclip`, `Smiley`, `Waves`, `ShieldCheck`, `Tag`, `Hash`, `Database`, `Cpu`, `Kanban`, `Megaphone`, `Sparkle`, `Funnel`, `ArrowUp`, `ArrowDown`, `ChartLine`, `TrendUp`, `Desktop`, `Palette`, `Circle`), junto con sus imports. `AButton` pasa de `progress_activity` a `SpinnerGap` (único uso heredado).
+- **`style.css`**: clases de componente muertas `.card`, `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-ghost` y `.stamp` (migradas a los primitivos `A*`), y tokens muertos `--display`, `--shadow`, `--shadow-lift`, `--r-bubble`, `--r-pill`, `--r-seal`.
+- **i18n**: 68 claves sin uso por catálogo (namespace `agents.*` completo, `sidebar.*`, `app.name/tagline`, buena parte de `common.*`, `brain.stats.*`, `dashboard.stats.live`, `dashboard.channels.traffic`, `settings.agent.*` obsoletas, `publicChat.tool.tool`, etc.) y el duplicado `common.clear`.
+- **Basura local**: `.DS_Store`, `spa.traineddata` (3.3 MB, sin referencias), `playwright-report/` y `test-results/`.
+
+### ✅ Verificación
+- `vue-tsc --noEmit`, `build` (frontend) y `tsc --noEmit` (backend) en verde; paridad es/en **567/567**; sin claves i18n huérfanas en las llamadas `t(...)`.
+
+---
+
 ## v4.7.0 — 2026-09-22
 
 > 🧩 **Shell consistente**: modal de proyecto, idioma como el de proyecto, Memoria y tooltips

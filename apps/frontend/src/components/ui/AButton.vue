@@ -45,7 +45,7 @@ const classes = computed(() => [
 
 <template>
   <button :type="type" :disabled="disabled || loading" :class="classes">
-    <span v-if="loading" class="animate-spin"><AIcon name="progress_activity" :size="iconSize" /></span>
+    <span v-if="loading" class="animate-spin"><AIcon name="SpinnerGap" :size="iconSize" /></span>
     <AIcon v-else-if="icon" :name="icon" :size="iconSize" :weight="iconWeight" />
     <slot />
     <AIcon v-if="trailingIcon" :name="trailingIcon" :size="iconSize" />

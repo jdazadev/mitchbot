@@ -1,8 +1,4 @@
 {
-  "app": {
-    "name": "Mitchbot",
-    "tagline": "Analytics Panel"
-  },
   "nav": {
     "dashboard": "Dashboard",
     "conversations": "Conversations",
@@ -66,7 +62,6 @@
     "create": "Create",
     "add": "Add",
     "remove": "Remove",
-    "search": "Search",
     "loading": "Loading...",
     "error": "Error",
     "close": "Close",
@@ -77,58 +72,28 @@
     "previous": "Previous",
     "firstPage": "First page",
     "lastPage": "Last page",
-    "all": "All",
     "active": "Active",
     "inactive": "Inactive",
-    "new": "New",
     "status": "Status",
     "actions": "Actions",
     "name": "Name",
     "email": "Email",
     "phone": "Phone",
-    "date": "Date",
-    "time": "Time",
-    "type": "Type",
-    "yes": "Yes",
-    "no": "No",
     "retry": "Retry",
-    "viewAll": "View All",
-    "noData": "No data",
     "saving": "Saving...",
     "send": "Send",
     "saveChanges": "Save changes",
     "optional": "optional",
-    "required": "required",
-    "archived": "Archived",
     "restore": "Restore",
     "archive": "Archive",
-    "filter": "Filter",
-    "sort": "Sort",
     "page": "Page",
     "of": "of",
-    "results": "results",
-    "showing": "Showing",
-    "enabled": "Enabled",
-    "disabled": "Disabled",
-    "copy": "Copy",
-    "copied": "Copied",
-    "upload": "Upload",
-    "download": "Download",
-    "refresh": "Refresh",
-    "submit": "Submit",
-    "select": "Select",
     "language": "Language",
     "spanish": "Spanish",
     "english": "English",
-    "clear": "Clear",
-    "apply": "Apply",
-    "open": "Open",
     "none": "None",
-    "unknown": "Unknown",
-    "you": "You",
     "today": "Today",
     "yesterday": "Yesterday",
-    "and": "and",
     "expand": "Expand",
     "collapse": "Collapse"
   },
@@ -136,8 +101,7 @@
     "stats": {
       "totalConversations": "Total Conversations",
       "activeChats": "Active Chats",
-      "responseRate": "Response Rate",
-      "live": "Live"
+      "responseRate": "Response Rate"
     },
     "volume": {
       "title": "Conversation Volume",
@@ -145,14 +109,13 @@
       "lastDays": "Last {days} Days",
       "daily": "Daily",
       "weekly": "Weekly",
-    "monthly": "Monthly",
-    "noData": "No data in this range",
-    "tableDate": "Date",
-    "tableCount": "Conversations"
+      "monthly": "Monthly",
+      "noData": "No data in this range",
+      "tableDate": "Date",
+      "tableCount": "Conversations"
     },
     "channels": {
-      "title": "Channel Distribution",
-      "traffic": "Traffic"
+      "title": "Channel Distribution"
     },
     "activity": {
       "title": "Recent Activity",
@@ -165,41 +128,9 @@
       "daysAgo": "{count} days ago"
     }
   },
-  "agents": {
-    "title": "Agents",
-    "subtitle": "Create and configure AI agents",
-    "createButton": "Create Agent",
-    "createFirst": "Create your first agent",
-    "deleteConfirm": "Delete agent \"{name}\"?",
-    "createModal": {
-      "title": "Create Agent"
-    },
-    "editModal": {
-      "title": "Edit Agent"
-    },
-    "form": {
-      "name": "Name",
-      "nameRequired": "Name *",
-      "namePlaceholder": "E.g.: Sales Assistant",
-      "description": "Description",
-      "descriptionPlaceholder": "What does it do?"
-    },
-    "actions": {
-      "cancel": "Cancel",
-      "create": "Create",
-      "creating": "Creating...",
-      "save": "Save",
-      "saving": "Saving..."
-    }
-  },
   "brain": {
     "subtitle": "Manage and train your AI with custom knowledge sources.",
     "addSource": "Add source",
-    "stats": {
-      "totalDocuments": "Total documents",
-      "totalVectors": "Total vectors",
-      "syncStatus": "Sync status"
-    },
     "knowledge": {
       "title": "Indexed knowledge",
       "subtitle": "{vectors} vectors · {docs} sources · {sync}",
@@ -290,8 +221,7 @@
     },
     "filters": {
       "allPlatforms": "All platforms",
-      "allStatuses": "All statuses",
-      "archived": "Archived"
+      "allStatuses": "All statuses"
     },
     "hint": {
       "autoCreated": "Clients are created automatically when replying to messages"
@@ -300,7 +230,6 @@
       "found": "No clients found | {count} client found | {count} clients found"
     },
     "pagination": {
-      "show": "Show",
       "perPage": "per page"
     },
     "loading": "Loading clients...",
@@ -492,10 +421,10 @@
       "level.low": "Low",
       "level.medium": "Medium",
       "level.high": "High",
-    "reasonPending": "awaiting approval",
-    "reasonOpen": "open conversation",
-    "reasonClosed": "conversation closed",
-    "reasonEscalated": "negative sentiment unanswered"
+      "reasonPending": "awaiting approval",
+      "reasonOpen": "open conversation",
+      "reasonClosed": "conversation closed",
+      "reasonEscalated": "negative sentiment unanswered"
     },
     "errors": {
       "send": "Couldn't send the message. Your draft was kept; try again.",
@@ -508,8 +437,6 @@
     }
   },
   "profile": {
-    "title": "My Profile",
-    "subtitle": "Manage your personal information and password",
     "projects": {
       "title": "My Projects ({count})",
       "empty": "No projects assigned"
@@ -531,7 +458,6 @@
     }
   },
   "settings": {
-    "title": "Settings",
     "subtitle": "Manage the agent, channels and settings",
     "tabs": {
       "agent": "AI Agent",
@@ -549,7 +475,6 @@
       "copyLink": "Copy link"
     },
     "agent": {
-      "basicTitle": "Agent Information",
       "nameLabel": "Name *",
       "namePlaceholder": "e.g. Sales Assistant",
       "descriptionLabel": "Description",
@@ -560,8 +485,6 @@
       "modelEmbeddings": "Embeddings",
       "modelOcr": "OCR",
       "notConfigured": "Not configured",
-      "personalityTitle": "Bot Personality",
-      "personalityHint": "Configure how the chatbot behaves and responds",
       "section": {
         "identity": "Identity",
         "identityHint": "Bot name, description, role and character",
@@ -648,7 +571,6 @@
         "long": "Long",
         "max": "Maximum"
       },
-      "autoMessagesTitle": "Automatic messages",
       "welcome": "Always greet",
       "welcomeHint": "Greets at the start or when resuming after 6 hours",
       "goodbye": "Always say goodbye",
@@ -703,7 +625,6 @@
     }
   },
   "setup": {
-    "title": "Configure Project",
     "subtitle": "Set up your project and agent to start working",
     "checking": "Checking configuration...",
     "errors": {
@@ -782,7 +703,6 @@
     }
   },
   "users": {
-    "title": "System Users",
     "subtitle": "Manage the users who can access the panel ({count} total)",
     "searchPlaceholder": "Search by name or email...",
     "loading": "Loading users...",
@@ -865,7 +785,6 @@
     },
     "tool": {
       "confirmationRequired": "Confirmation required",
-      "tool": "Tool",
       "confirm": "Confirm",
       "cancel": "Cancel",
       "modify": "Modify",
@@ -890,9 +809,5 @@
       "send": "Send",
       "start": "Start Chat"
     }
-  },
-  "sidebar": {
-    "operation": "Operations",
-    "organization": "Organization"
   }
 }

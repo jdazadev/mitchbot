@@ -1,8 +1,4 @@
 {
-  "app": {
-    "name": "Mitchbot",
-    "tagline": "Panel de analítica"
-  },
   "nav": {
     "dashboard": "Panel",
     "conversations": "Conversaciones",
@@ -66,7 +62,6 @@
     "create": "Crear",
     "add": "Añadir",
     "remove": "Quitar",
-    "search": "Buscar",
     "loading": "Cargando...",
     "error": "Error",
     "close": "Cerrar",
@@ -77,58 +72,28 @@
     "previous": "Anterior",
     "firstPage": "Primera página",
     "lastPage": "Última página",
-    "all": "Todos",
     "active": "Activo",
     "inactive": "Inactivo",
-    "new": "Nuevo",
     "status": "Estado",
     "actions": "Acciones",
     "name": "Nombre",
     "email": "Correo",
     "phone": "Teléfono",
-    "date": "Fecha",
-    "time": "Hora",
-    "type": "Tipo",
-    "yes": "Sí",
-    "no": "No",
     "retry": "Reintentar",
-    "viewAll": "Ver todo",
-    "noData": "Sin datos",
     "saving": "Guardando...",
     "send": "Enviar",
     "saveChanges": "Guardar cambios",
     "optional": "opcional",
-    "required": "requerido",
-    "archived": "Archivado",
     "restore": "Restaurar",
     "archive": "Archivar",
-    "filter": "Filtrar",
-    "sort": "Ordenar",
     "page": "Página",
     "of": "de",
-    "results": "resultados",
-    "showing": "Mostrando",
-    "enabled": "Habilitado",
-    "disabled": "Deshabilitado",
-    "copy": "Copiar",
-    "copied": "Copiado",
-    "upload": "Subir",
-    "download": "Descargar",
-    "refresh": "Actualizar",
-    "submit": "Enviar",
-    "select": "Seleccionar",
     "language": "Idioma",
     "spanish": "Español",
     "english": "Inglés",
-    "clear": "Limpiar",
-    "apply": "Aplicar",
-    "open": "Abrir",
     "none": "Ninguno",
-    "unknown": "Desconocido",
-    "you": "Tú",
     "today": "Hoy",
     "yesterday": "Ayer",
-    "and": "y",
     "expand": "Expandir",
     "collapse": "Contraer"
   },
@@ -136,8 +101,7 @@
     "stats": {
       "totalConversations": "Conversaciones totales",
       "activeChats": "Conversaciones activas",
-      "responseRate": "Tasa de respuesta",
-      "live": "En vivo"
+      "responseRate": "Tasa de respuesta"
     },
     "volume": {
       "title": "Volumen de conversaciones",
@@ -145,14 +109,13 @@
       "lastDays": "Últimos {days} días",
       "daily": "Diaria",
       "weekly": "Semanal",
-    "monthly": "Mensual",
-    "noData": "Sin datos en este rango",
-    "tableDate": "Fecha",
-    "tableCount": "Conversaciones"
+      "monthly": "Mensual",
+      "noData": "Sin datos en este rango",
+      "tableDate": "Fecha",
+      "tableCount": "Conversaciones"
     },
     "channels": {
-      "title": "Distribución por canal",
-      "traffic": "Tráfico"
+      "title": "Distribución por canal"
     },
     "activity": {
       "title": "Actividad reciente",
@@ -165,41 +128,9 @@
       "daysAgo": "hace {count} días"
     }
   },
-  "agents": {
-    "title": "Agentes",
-    "subtitle": "Crea y configura los agentes de IA",
-    "createButton": "Crear Agente",
-    "createFirst": "Crear tu primer agente",
-    "deleteConfirm": "¿Eliminar el agente \"{name}\"?",
-    "createModal": {
-      "title": "Crear Agente"
-    },
-    "editModal": {
-      "title": "Editar Agente"
-    },
-    "form": {
-      "name": "Nombre",
-      "nameRequired": "Nombre *",
-      "namePlaceholder": "Ej: Asistente de Ventas",
-      "description": "Descripción",
-      "descriptionPlaceholder": "¿Qué hace?"
-    },
-    "actions": {
-      "cancel": "Cancelar",
-      "create": "Crear",
-      "creating": "Creando...",
-      "save": "Guardar",
-      "saving": "Guardando..."
-    }
-  },
   "brain": {
     "subtitle": "Gestiona y entrena tu IA con fuentes de conocimiento personalizadas.",
     "addSource": "Añadir fuente",
-    "stats": {
-      "totalDocuments": "Documentos totales",
-      "totalVectors": "Vectores totales",
-      "syncStatus": "Estado de sincronización"
-    },
     "knowledge": {
       "title": "Conocimiento indexado",
       "subtitle": "{vectors} vectores · {docs} fuentes · {sync}",
@@ -290,8 +221,7 @@
     },
     "filters": {
       "allPlatforms": "Todas las plataformas",
-      "allStatuses": "Todos los estados",
-      "archived": "Archivados"
+      "allStatuses": "Todos los estados"
     },
     "hint": {
       "autoCreated": "Los clientes se crean automáticamente al responder mensajes"
@@ -300,7 +230,6 @@
       "found": "No se encontró ningún cliente | {count} cliente encontrado | {count} clientes encontrados"
     },
     "pagination": {
-      "show": "Mostrar",
       "perPage": "por página"
     },
     "loading": "Cargando clientes...",
@@ -492,10 +421,10 @@
       "level.low": "Baja",
       "level.medium": "Media",
       "level.high": "Alta",
-    "reasonPending": "espera visto bueno",
-    "reasonOpen": "conversación abierta",
-    "reasonClosed": "conversación cerrada",
-    "reasonEscalated": "sentimiento negativo sin responder"
+      "reasonPending": "espera visto bueno",
+      "reasonOpen": "conversación abierta",
+      "reasonClosed": "conversación cerrada",
+      "reasonEscalated": "sentimiento negativo sin responder"
     },
     "errors": {
       "send": "No se pudo enviar el mensaje. Conservamos tu borrador; inténtalo de nuevo.",
@@ -508,8 +437,6 @@
     }
   },
   "profile": {
-    "title": "Mi Perfil",
-    "subtitle": "Gestiona tu información personal y contraseña",
     "projects": {
       "title": "Mis Proyectos ({count})",
       "empty": "Sin proyectos asignados"
@@ -531,7 +458,6 @@
     }
   },
   "settings": {
-    "title": "Configuración",
     "subtitle": "Gestiona agente, canales y configuración",
     "tabs": {
       "agent": "Agente IA",
@@ -549,7 +475,6 @@
       "copyLink": "Copiar enlace"
     },
     "agent": {
-      "basicTitle": "Información del Agente",
       "nameLabel": "Nombre *",
       "namePlaceholder": "Ej: Asistente de Ventas",
       "descriptionLabel": "Descripción",
@@ -560,8 +485,6 @@
       "modelEmbeddings": "Embeddings",
       "modelOcr": "OCR",
       "notConfigured": "No configurado",
-      "personalityTitle": "Personalidad del Bot",
-      "personalityHint": "Configura cómo se comporta y responde el chatbot",
       "section": {
         "identity": "Identidad",
         "identityHint": "Nombre, descripción, rol y carácter del bot",
@@ -648,7 +571,6 @@
         "long": "Larga",
         "max": "Máximo"
       },
-      "autoMessagesTitle": "Mensajes automáticos",
       "welcome": "Saludar siempre",
       "welcomeHint": "Saluda al iniciar o retomar tras 6 horas",
       "goodbye": "Despedir siempre",
@@ -703,7 +625,6 @@
     }
   },
   "setup": {
-    "title": "Configurar Proyecto",
     "subtitle": "Configura tu proyecto y agente para empezar a trabajar",
     "checking": "Verificando configuración...",
     "errors": {
@@ -782,7 +703,6 @@
     }
   },
   "users": {
-    "title": "Usuarios del Sistema",
     "subtitle": "Administra los usuarios que pueden acceder al panel ({count} total)",
     "searchPlaceholder": "Buscar por nombre o email...",
     "loading": "Cargando usuarios...",
@@ -865,7 +785,6 @@
     },
     "tool": {
       "confirmationRequired": "Confirmación requerida",
-      "tool": "Herramienta",
       "confirm": "Confirmar",
       "cancel": "Cancelar",
       "modify": "Modificar",
@@ -890,9 +809,5 @@
       "send": "Enviar",
       "start": "Iniciar Chat"
     }
-  },
-  "sidebar": {
-    "operation": "Operación",
-    "organization": "Organización"
   }
 }

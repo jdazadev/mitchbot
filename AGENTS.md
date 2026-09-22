@@ -13,7 +13,21 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.7.0
+**Versión actual del proyecto:** v4.7.1
+
+---
+
+## Limpieza de código muerto (v4.7.1)
+
+Tanda de destilado sin cambios de comportamiento: se retira todo lo que no se estaba usando.
+
+- **Backend**: dependencias `@langchain/textsplitters` y `cheerio` (0 importaciones); se elimina el tipo muerto `AppResponse` (`src/types/index.ts`). `pdf-parse` se conserva (fallback OCR vía `import()` dinámico).
+- **`AIcon.vue`**: fuera el `LEGACY_MAP` de Material Symbols y **30 iconos Phosphor** sin uso, con sus imports; `AButton` usa `SpinnerGap` en vez del nombre heredado `progress_activity`.
+- **`style.css`**: fuera las clases de componente muertas `.card`/`.btn*`/`.stamp` (ya migradas a los primitivos `A*`) y los tokens muertos `--display`, `--shadow`, `--shadow-lift`, `--r-bubble`, `--r-pill`, `--r-seal`.
+- **i18n**: **68 claves muertas** por catálogo (namespace `agents.*` completo, `sidebar.*`, `app.*`, parte de `common.*`, `brain.stats.*`, etc.) y el duplicado `common.clear`.
+- **Basura local**: `.DS_Store`, `spa.traineddata` (3.3 MB) y los reportes de Playwright.
+- **Verificación**: `vue-tsc --noEmit` + `build` (frontend) y `tsc --noEmit` (backend) en verde; paridad es/en **567/567**.
+
 
 ---
 
@@ -197,7 +211,7 @@ Tras la auditoría Impeccable (`audit`) sobre Aurora se cerraron los hallazgos P
 - **Tokens** (`apps/frontend/src/style.css` + `tailwind.config.js`): `--canvas/surface/sunken/line/ink-1/2/3`, los cuatro pasteles con `-ink`/`-soft`, radios `--r-card 20px` / `--r-big 28px` / `--r-field 16px` / `--r-bubble 20px`, sombras difusas de dos capas (`--shadow-card`, `--shadow-pop`) y utilidades Tailwind `canvas`, `surface`, `sunken`, `line`, `ink`, `sky/lime/lilac/butter`, `rounded-card/big/field`, `font-display/body`, `shadow-card/pop`.
 - **Tipografía**: **Bricolage Grotesque** (display; ejes `opsz`/`wdth`/`wght`) + **Hanken Grotesk** (cuerpo, cifras tabulares). Ya no se usa Nunito ni la webfont de Material Symbols.
 - **Iconografía**: **Phosphor** (`@phosphor-icons/vue`) envuelto en `src/components/ui/AIcon.vue` (6 pesos, `fill` para el nav activo, mapa de nombres Material heredados). El set es intercambiable desde `AIcon`.
-- **Componentes base** (`apps/frontend/src/components/ui/`): `AIcon`, `AButton`, `APill`, `AChip`, `ACard`, `AStat`, `ATable`, `AAvatar`, `AField`, `ASearch`, `ASwitch`, `ATab`, `ATabs`, `ADropdown`, `AModal`, `AEmptyState`, `ABubble`, `ABand`, `ACallout`, `AKpi`.
+- **Componentes base** (`apps/frontend/src/components/ui/`): `AIcon`, `AButton`, `APill`, `AAvatar`, `ASwitch`, `ATabs`, `ADropdown`, `AModal`, `AEmptyState`, `ABubble`.
 - **Shell** (`apps/frontend/src/components/layout/`): `AuroraRail` (rail flotante con marca centrada sin subtítulo y nav con iconos Phosphor) + `AuroraTopbar`, compuestos dentro de `DashboardLayout`. El **topbar es una fila de cápsulas flotantes** (sin fondo/borde/blur): izquierda = título de página en **texto plano** (Bricolage 19px, ya no cápsula) + **reloj centrado** en el hueco (visible desde 1360px), derecha = invariantes (Proyectos · Idiomas · Tema · Notificaciones · **Usuario**, cuyo dropdown reúne **Configuración / Mi Perfil / Cerrar sesión**). Por debajo de 768px el rail se abre como **drawer** desde una cápsula de menú del topbar.
 - **Acento de marca** (`useBrand.ts`): default `#E2C6FF` (lila). `--brand*` es **identidad y selección** (item activo, avatar, punto de proyecto, foco), **no** primario de acción — el primario es siempre **tinta negra**.
 - **Documentación normativa**: `apps/frontend/DESIGN.md` + `apps/frontend/.impeccable/design.json` (re-documentados para Aurora). Diseñar contra los tokens `--brand*`, nunca contra un hue fijo.
