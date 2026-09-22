@@ -36,7 +36,7 @@ test.describe('Autenticación', () => {
     await page.getByRole('button', { name: /Iniciar Sesión/ }).click();
 
     await page.waitForURL((url) => url.pathname === '/setup', { timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: 'Configurar Proyecto' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Datos del Proyecto' })).toBeVisible();
   });
 
   test('cierre de sesión vuelve al login', async ({ page }) => {
@@ -46,11 +46,11 @@ test.describe('Autenticación', () => {
     await page.getByRole('button', { name: /Iniciar Sesión/ }).click();
     await page.waitForURL((url) => url.pathname === '/', { timeout: 30_000 });
 
-    // Abre el menú del usuario en el sidebar y cierra sesión.
-    await page.getByText(E2E.user.email).first().click();
-    await page.getByRole('button', { name: /Cerrar Sesión/ }).click();
+    // Abre el menú del usuario en el topbar y cierra sesión.
+    await page.getByRole('button', { name: 'Mi Perfil' }).click();
+    await page.getByRole('menuitem', { name: /Cerrar Sesión/ }).click();
 
     await page.waitForURL((url) => url.pathname === '/login', { timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: 'BotMaster' })).toBeVisible();
+    await expect(page.getByPlaceholder('tu@email.com')).toBeVisible();
   });
 });

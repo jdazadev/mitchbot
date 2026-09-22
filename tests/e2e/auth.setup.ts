@@ -10,7 +10,7 @@ setup('autenticar usuario e2e', async ({ page }) => {
   await assertE2EServers();
 
   await page.goto('/login');
-  await expect(page.getByRole('heading', { name: 'BotMaster' })).toBeVisible();
+  await expect(page.getByPlaceholder('tu@email.com')).toBeVisible();
 
   await page.getByPlaceholder('tu@email.com').fill(E2E.user.email);
   await page.getByPlaceholder('••••••••').fill(E2E.user.password);

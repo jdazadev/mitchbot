@@ -80,6 +80,22 @@ const agentForm = ref({
   },
 });
 
+// ===================== AGENT SECTION (divulgación progresiva) =====================
+type AgentSectionId = 'identity' | 'voice' | 'knowledge' | 'generation' | 'messages' | 'instructions';
+
+const expandedSections = ref<Record<AgentSectionId, boolean>>({
+  identity: true,
+  voice: true,
+  knowledge: false,
+  generation: false,
+  messages: false,
+  instructions: false,
+});
+
+function toggleSection(id: AgentSectionId) {
+  expandedSections.value[id] = !expandedSections.value[id];
+}
+
 // ===================== PERSONALITY OPTIONS =====================
 const roleOptions = computed(() => [
   { id: 'assistant', label: t('settings.agent.roles.assistant'), icon: 'Headset', desc: t('settings.agent.roles.assistantDesc') },
@@ -139,6 +155,14 @@ const maxTokensIndex = computed(() => {
 });
 
 const goodbyeKeywordInput = ref('');
+
+/** Snapshot serializado del agente cargado/guardado, para detectar cambios sin guardar. */
+const savedAgentJson = ref('');
+
+const isAgentDirty = computed(() => {
+  if (!agent.value?._id) return false;
+  return JSON.stringify(agentForm.value) !== savedAgentJson.value;
+});
 
 function addGoodbyeKeyword() {
   const value = goodbyeKeywordInput.value.trim();
@@ -226,7 +250,6 @@ onMounted(async () => {
     name: projectData.name || '',
     logo: projectData.config?.brand?.logo || projectData.logo || null,
   };
-  hasBrand.value = Boolean(brandColor || projectData.logo);
       projectSlugDraft.value = projectData.slug || '';
       if (projectData.config?.channels) {
         channels.value[0].enabled = projectData.config.channels.whatsapp ?? true;
@@ -316,6 +339,7 @@ async function handleSaveAgent() {
         goodbyeKeywords: agentForm.value.goodbyeKeywords,
       },
     } as any);
+    savedAgentJson.value = JSON.stringify(agentForm.value);
     showSuccessMsg(t('settings.toasts.agentUpdated'));
   } catch (err: any) {
     showErrorMsg(err.message || t('settings.errors.agentSave'));
@@ -347,6 +371,7 @@ function applyAgent(data: AgentData) {
       additionalInstructions: p?.additionalInstructions || '',
     },
   };
+  savedAgentJson.value = JSON.stringify(agentForm.value);
 }
 
 // ===================== IDENTIDAD DEL PROYECTO =====================
@@ -355,7 +380,6 @@ const brandForm = ref<{ color: string; name: string; logo: string | null }>({
   name: '',
   logo: null,
 });
-const hasBrand = ref(false);
 const brandSwatches = ['#E2C6FF', '#DCFEBC', '#BBECFF', '#F1EE83', '#7B2FF2', '#1F8A60', '#0E7490', '#0B0B0C'];
 
 const brandLogoInput = ref<HTMLInputElement | null>(null);
@@ -454,19 +478,14 @@ async function handleSaveOptions() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3.5">
-    <div class="flex flex-wrap items-center gap-3">
-      <div>
-        <h1 class="font-display text-[22px] font-bold tracking-[-0.02em]">{{ t('settings.title') }}</h1>
-        <p class="mt-1 text-[13px] text-ink-3">{{ t('settings.subtitle') }}</p>
-      </div>
-    </div>
+  <div class="mx-auto flex w-full max-w-3xl flex-col gap-3.5">
+    <p class="text-[13px] text-ink-3">{{ t('settings.subtitle') }}</p>
 
-    <div v-if="saveSuccess" class="flex max-w-3xl items-center gap-2 rounded-card bg-lime-soft p-3.5 text-[13px] text-lime-ink">
+    <div v-if="saveSuccess" class="flex items-center gap-2 rounded-card bg-lime-soft p-3.5 text-[13px] text-lime-ink">
       <AIcon name="CheckCircle" :size="17" />
       {{ saveSuccess }}
     </div>
-    <div v-if="saveError" class="flex max-w-3xl items-center gap-2 rounded-card bg-[color:var(--danger-soft)] p-3.5 text-[13px] text-[color:var(--danger)]">
+    <div v-if="saveError" class="flex items-center gap-2 rounded-card bg-[color:var(--danger-soft)] p-3.5 text-[13px] text-[color:var(--danger)]">
       <AIcon name="WarningCircle" :size="17" />
       {{ saveError }}
     </div>
@@ -480,7 +499,7 @@ async function handleSaveOptions() {
       <ATabs :tabs="tabItems" :model-value="activeTab" @update:model-value="activeTab = $event as TabId" />
 
       <!-- ============== TAB: INFORMACIÓN ============== -->
-      <div v-if="activeTab === 'info'" class="max-w-3xl">
+      <div v-if="activeTab === 'info'">
         <div class="rounded-card bg-surface p-6 shadow-card">
           <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.info.title') }}</h2>
           <p class="mt-1 text-xs text-ink-3">{{ t('settings.info.subtitle') }}</p>
@@ -584,23 +603,8 @@ async function handleSaveOptions() {
       </div>
 
       <!-- ============== TAB: AGENTE IA ============== -->
-      <div v-if="activeTab === 'agent'" class="max-w-3xl">
+      <div v-if="activeTab === 'agent'">
         <div class="flex flex-col gap-3.5">
-          <!-- Info básica -->
-          <div class="rounded-card bg-surface p-6 shadow-card">
-            <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.basicTitle') }}</h2>
-            <div class="mt-5 flex flex-col gap-4">
-              <label class="flex flex-col gap-1.5">
-                <span class="text-xs font-semibold text-ink-2">{{ t('settings.agent.nameLabel') }}</span>
-                <input v-model="agentForm.name" class="field" :placeholder="t('settings.agent.namePlaceholder')" />
-              </label>
-              <label class="flex flex-col gap-1.5">
-                <span class="text-xs font-semibold text-ink-2">{{ t('settings.agent.descriptionLabel') }}</span>
-                <textarea v-model="agentForm.description" class="field h-20 resize-none" :placeholder="t('settings.agent.descriptionPlaceholder')" />
-              </label>
-            </div>
-          </div>
-
           <!-- Modelos (solo lectura) -->
           <div class="rounded-card bg-surface p-6 shadow-card">
             <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.modelsTitle') }}</h2>
@@ -623,14 +627,36 @@ async function handleSaveOptions() {
             </div>
           </div>
 
-          <!-- Personalidad -->
-          <div class="rounded-card bg-surface p-6 shadow-card">
-            <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.personalityTitle') }}</h2>
-            <p class="mt-1 text-xs text-ink-3">{{ t('settings.agent.personalityHint') }}</p>
-
-            <div class="mt-5 flex flex-col gap-6">
-              <!-- Rol -->
-              <div>
+          <!-- Identidad -->
+          <section class="rounded-card bg-surface shadow-card">
+            <div class="flex items-center gap-3 p-6">
+              <div class="min-w-0 flex-1">
+                <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.section.identity') }}</h2>
+                <p class="mt-1 text-xs text-ink-3">{{ t('settings.agent.section.identityHint') }}</p>
+              </div>
+              <button
+                type="button"
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
+                :aria-label="t('settings.agent.section.identity')"
+                :aria-expanded="expandedSections.identity"
+                aria-controls="agent-section-identity"
+                @click="toggleSection('identity')"
+              >
+                <AIcon :name="expandedSections.identity ? 'CaretUpDown' : 'CaretDown'" :size="16" />
+              </button>
+            </div>
+            <div v-show="expandedSections.identity" id="agent-section-identity" class="px-6 pb-6">
+              <div class="flex flex-col gap-4">
+                <label class="flex flex-col gap-1.5">
+                  <span class="text-xs font-semibold text-ink-2">{{ t('settings.agent.nameLabel') }}</span>
+                  <input v-model="agentForm.name" class="field" :placeholder="t('settings.agent.namePlaceholder')" />
+                </label>
+                <label class="flex flex-col gap-1.5">
+                  <span class="text-xs font-semibold text-ink-2">{{ t('settings.agent.descriptionLabel') }}</span>
+                  <textarea v-model="agentForm.description" class="field h-20 resize-none" :placeholder="t('settings.agent.descriptionPlaceholder')" />
+                </label>
+              </div>
+              <div class="mt-6">
                 <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.roleLabel') }}</span>
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   <button
@@ -647,9 +673,7 @@ async function handleSaveOptions() {
                   </button>
                 </div>
               </div>
-
-              <!-- Rasgos -->
-              <div>
+              <div class="mt-6">
                 <span class="block text-xs font-semibold text-ink-2">
                   {{ t('settings.agent.traitsLabel') }} <span class="font-normal text-ink-3">{{ t('settings.agent.traitsMax') }}</span>
                 </span>
@@ -671,9 +695,7 @@ async function handleSaveOptions() {
                   </button>
                 </div>
               </div>
-
-              <!-- Emojis -->
-              <div>
+              <div class="mt-6">
                 <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.emojiLabel') }}</span>
                 <div class="grid grid-cols-3 gap-2">
                   <button
@@ -688,8 +710,28 @@ async function handleSaveOptions() {
                   </button>
                 </div>
               </div>
+            </div>
+          </section>
 
-              <!-- Idioma -->
+          <!-- Voz y tono -->
+          <section class="rounded-card bg-surface shadow-card">
+            <div class="flex items-center gap-3 p-6">
+              <div class="min-w-0 flex-1">
+                <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.section.voice') }}</h2>
+                <p class="mt-1 text-xs text-ink-3">{{ t('settings.agent.section.voiceHint') }}</p>
+              </div>
+              <button
+                type="button"
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
+                :aria-label="t('settings.agent.section.voice')"
+                :aria-expanded="expandedSections.voice"
+                aria-controls="agent-section-voice"
+                @click="toggleSection('voice')"
+              >
+                <AIcon :name="expandedSections.voice ? 'CaretUpDown' : 'CaretDown'" :size="16" />
+              </button>
+            </div>
+            <div v-show="expandedSections.voice" id="agent-section-voice" class="flex flex-col gap-6 px-6 pb-6">
               <div>
                 <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('common.language') }}</span>
                 <div class="grid grid-cols-2 gap-2">
@@ -705,8 +747,6 @@ async function handleSaveOptions() {
                   </button>
                 </div>
               </div>
-
-              <!-- Longitud -->
               <div>
                 <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.responseLengthLabel') }}</span>
                 <div class="grid grid-cols-3 gap-2">
@@ -723,27 +763,65 @@ async function handleSaveOptions() {
                   </button>
                 </div>
               </div>
+            </div>
+          </section>
 
-              <!-- RAG -->
-              <div>
-                <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.ragBehaviorLabel') }}</span>
-                <div class="grid grid-cols-3 gap-2">
-                  <button
-                    v-for="rg in ragOptions"
-                    :key="rg.id"
-                    type="button"
-                    class="flex flex-col items-center gap-1 rounded-field border-[1.5px] p-3 transition-colors"
-                    :class="agentForm.personality.ragBehavior === rg.id ? 'border-lilac bg-lilac-soft' : 'border-line hover:border-line-strong'"
-                    @click="agentForm.personality.ragBehavior = rg.id as AgentPersonality['ragBehavior']"
-                  >
-                    <AIcon :name="rg.icon" :size="18" :class="agentForm.personality.ragBehavior === rg.id ? 'text-lilac-ink' : 'text-ink-3'" />
-                    <span class="text-[13px] font-semibold" :class="agentForm.personality.ragBehavior === rg.id ? 'text-lilac-ink' : 'text-ink'">{{ rg.label }}</span>
-                    <span class="text-center text-[10px] text-ink-3">{{ rg.desc }}</span>
-                  </button>
-                </div>
+          <!-- Conocimiento -->
+          <section class="rounded-card bg-surface shadow-card">
+            <div class="flex items-center gap-3 p-6">
+              <div class="min-w-0 flex-1">
+                <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.section.knowledge') }}</h2>
+                <p class="mt-1 text-xs text-ink-3">{{ t('settings.agent.section.knowledgeHint') }}</p>
               </div>
+              <button
+                type="button"
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
+                :aria-label="t('settings.agent.section.knowledge')"
+                :aria-expanded="expandedSections.knowledge"
+                aria-controls="agent-section-knowledge"
+                @click="toggleSection('knowledge')"
+              >
+                <AIcon :name="expandedSections.knowledge ? 'CaretUpDown' : 'CaretDown'" :size="16" />
+              </button>
+            </div>
+            <div v-show="expandedSections.knowledge" id="agent-section-knowledge" class="px-6 pb-6">
+              <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.ragBehaviorLabel') }}</span>
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  v-for="rg in ragOptions"
+                  :key="rg.id"
+                  type="button"
+                  class="flex flex-col items-center gap-1 rounded-field border-[1.5px] p-3 transition-colors"
+                  :class="agentForm.personality.ragBehavior === rg.id ? 'border-lilac bg-lilac-soft' : 'border-line hover:border-line-strong'"
+                  @click="agentForm.personality.ragBehavior = rg.id as AgentPersonality['ragBehavior']"
+                >
+                  <AIcon :name="rg.icon" :size="18" :class="agentForm.personality.ragBehavior === rg.id ? 'text-lilac-ink' : 'text-ink-3'" />
+                  <span class="text-[13px] font-semibold" :class="agentForm.personality.ragBehavior === rg.id ? 'text-lilac-ink' : 'text-ink'">{{ rg.label }}</span>
+                  <span class="text-center text-[10px] text-ink-3">{{ rg.desc }}</span>
+                </button>
+              </div>
+            </div>
+          </section>
 
-              <!-- Creatividad -->
+          <!-- Generación -->
+          <section class="rounded-card bg-surface shadow-card">
+            <div class="flex items-center gap-3 p-6">
+              <div class="min-w-0 flex-1">
+                <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.section.generation') }}</h2>
+                <p class="mt-1 text-xs text-ink-3">{{ t('settings.agent.section.generationHint') }}</p>
+              </div>
+              <button
+                type="button"
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
+                :aria-label="t('settings.agent.section.generation')"
+                :aria-expanded="expandedSections.generation"
+                aria-controls="agent-section-generation"
+                @click="toggleSection('generation')"
+              >
+                <AIcon :name="expandedSections.generation ? 'CaretUpDown' : 'CaretDown'" :size="16" />
+              </button>
+            </div>
+            <div v-show="expandedSections.generation" id="agent-section-generation" class="flex flex-col gap-6 px-6 pb-6">
               <div>
                 <span class="block text-xs font-semibold text-ink-2">
                   {{ t('settings.agent.temperatureLabel', { level: temperatureLabel, value: agentForm.temperature }) }}
@@ -758,8 +836,6 @@ async function handleSaveOptions() {
                   {{ t('settings.agent.temperatureWarning') }}
                 </div>
               </div>
-
-              <!-- Max tokens -->
               <div>
                 <span class="block text-xs font-semibold text-ink-2">
                   {{ t('settings.agent.maxTokensLabel', { level: maxTokensLabel, value: agentForm.maxTokens }) }}
@@ -780,62 +856,99 @@ async function handleSaveOptions() {
                   <span>{{ t('settings.agent.maxTokensOption.max') }}</span>
                 </div>
               </div>
+            </div>
+          </section>
 
-              <!-- Mensajes automáticos -->
-              <div>
-                <span class="mb-3 block text-xs font-semibold text-ink-2">{{ t('settings.agent.autoMessagesTitle') }}</span>
-                <div class="flex flex-col gap-3">
-                  <div class="flex items-center justify-between rounded-field border border-line p-3">
-                    <div>
-                      <span class="text-[13px] font-medium">{{ t('settings.agent.welcome') }}</span>
-                      <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.welcomeHint') }}</p>
-                    </div>
-                    <ASwitch v-model="agentForm.enableWelcomeGreeting" />
+          <!-- Mensajes automáticos -->
+          <section class="rounded-card bg-surface shadow-card">
+            <div class="flex items-center gap-3 p-6">
+              <div class="min-w-0 flex-1">
+                <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.section.messages') }}</h2>
+                <p class="mt-1 text-xs text-ink-3">{{ t('settings.agent.section.messagesHint') }}</p>
+              </div>
+              <button
+                type="button"
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
+                :aria-label="t('settings.agent.section.messages')"
+                :aria-expanded="expandedSections.messages"
+                aria-controls="agent-section-messages"
+                @click="toggleSection('messages')"
+              >
+                <AIcon :name="expandedSections.messages ? 'CaretUpDown' : 'CaretDown'" :size="16" />
+              </button>
+            </div>
+            <div v-show="expandedSections.messages" id="agent-section-messages" class="px-6 pb-6">
+              <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between rounded-field border border-line p-3">
+                  <div>
+                    <span class="text-[13px] font-medium">{{ t('settings.agent.welcome') }}</span>
+                    <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.welcomeHint') }}</p>
                   </div>
-                  <div class="flex items-center justify-between rounded-field border border-line p-3">
-                    <div>
-                      <span class="text-[13px] font-medium">{{ t('settings.agent.goodbye') }}</span>
-                      <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.goodbyeHint') }}</p>
-                    </div>
-                    <ASwitch v-model="agentForm.enableGoodbyeMessage" />
-                  </div>
-                  <div class="flex items-center justify-between rounded-field border border-line p-3">
-                    <div>
-                      <span class="text-[13px] font-medium">{{ t('settings.agent.fallbackAdvisor') }}</span>
-                      <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.fallbackAdvisorHint') }}</p>
-                    </div>
-                    <ASwitch v-model="agentForm.enableFallbackAdvisor" />
-                  </div>
+                  <ASwitch v-model="agentForm.enableWelcomeGreeting" />
                 </div>
-
-                <div class="mt-4">
-                  <span class="block text-xs font-semibold text-ink-2">{{ t('settings.agent.goodbyeKeywordsLabel') }}</span>
-                  <div class="mt-2 flex flex-wrap gap-2">
-                    <span
-                      v-for="keyword in agentForm.goodbyeKeywords"
-                      :key="keyword"
-                      class="inline-flex items-center gap-1 rounded-full bg-canvas px-2.5 py-1 text-xs text-ink-2"
-                    >
-                      {{ keyword }}
-                      <button type="button" class="text-ink-3 hover:text-ink" @click="removeGoodbyeKeyword(keyword)">
-                        <AIcon name="X" :size="12" />
-                      </button>
-                    </span>
+                <div class="flex items-center justify-between rounded-field border border-line p-3">
+                  <div>
+                    <span class="text-[13px] font-medium">{{ t('settings.agent.goodbye') }}</span>
+                    <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.goodbyeHint') }}</p>
                   </div>
-                  <div class="mt-2 flex gap-2">
-                    <input
-                      v-model="goodbyeKeywordInput"
-                      class="field flex-1"
-                      :placeholder="t('settings.agent.goodbyeKeywordPlaceholder')"
-                      @keydown.enter.prevent="addGoodbyeKeyword"
-                    />
-                    <AButton variant="secondary" size="sm" @click="addGoodbyeKeyword">{{ t('common.add') }}</AButton>
+                  <ASwitch v-model="agentForm.enableGoodbyeMessage" />
+                </div>
+                <div class="flex items-center justify-between rounded-field border border-line p-3">
+                  <div>
+                    <span class="text-[13px] font-medium">{{ t('settings.agent.fallbackAdvisor') }}</span>
+                    <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.fallbackAdvisorHint') }}</p>
                   </div>
-                  <p class="mt-1 text-[10px] text-ink-3">{{ t('settings.agent.goodbyeKeywordsHint') }}</p>
+                  <ASwitch v-model="agentForm.enableFallbackAdvisor" />
                 </div>
               </div>
 
-              <!-- Instrucciones adicionales -->
+              <div class="mt-4">
+                <span class="block text-xs font-semibold text-ink-2">{{ t('settings.agent.goodbyeKeywordsLabel') }}</span>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span
+                    v-for="keyword in agentForm.goodbyeKeywords"
+                    :key="keyword"
+                    class="inline-flex items-center gap-1 rounded-full bg-canvas px-2.5 py-1 text-xs text-ink-2"
+                  >
+                    {{ keyword }}
+                    <button type="button" class="text-ink-3 hover:text-ink" @click="removeGoodbyeKeyword(keyword)">
+                      <AIcon name="X" :size="12" />
+                    </button>
+                  </span>
+                </div>
+                <div class="mt-2 flex gap-2">
+                  <input
+                    v-model="goodbyeKeywordInput"
+                    class="field flex-1"
+                    :placeholder="t('settings.agent.goodbyeKeywordPlaceholder')"
+                    @keydown.enter.prevent="addGoodbyeKeyword"
+                  />
+                  <AButton variant="secondary" size="sm" @click="addGoodbyeKeyword">{{ t('common.add') }}</AButton>
+                </div>
+                <p class="mt-1 text-[10px] text-ink-3">{{ t('settings.agent.goodbyeKeywordsHint') }}</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Instrucciones adicionales -->
+          <section class="rounded-card bg-surface shadow-card">
+            <div class="flex items-center gap-3 p-6">
+              <div class="min-w-0 flex-1">
+                <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.agent.section.instructions') }}</h2>
+                <p class="mt-1 text-xs text-ink-3">{{ t('settings.agent.section.instructionsHint') }}</p>
+              </div>
+              <button
+                type="button"
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
+                :aria-label="t('settings.agent.section.instructions')"
+                :aria-expanded="expandedSections.instructions"
+                aria-controls="agent-section-instructions"
+                @click="toggleSection('instructions')"
+              >
+                <AIcon :name="expandedSections.instructions ? 'CaretUpDown' : 'CaretDown'" :size="16" />
+              </button>
+            </div>
+            <div v-show="expandedSections.instructions" id="agent-section-instructions" class="px-6 pb-6">
               <label class="flex flex-col gap-1.5">
                 <span class="text-xs font-semibold text-ink-2">
                   {{ t('settings.agent.additionalInstructionsLabel') }} <span class="font-normal text-ink-3">({{ t('common.optional') }})</span>
@@ -847,10 +960,15 @@ async function handleSaveOptions() {
                 />
               </label>
             </div>
-          </div>
+          </section>
 
-          <div class="flex justify-end">
-            <AButton variant="primary" :loading="saving" @click="handleSaveAgent">
+          <!-- Guardado pegajoso -->
+          <div class="sticky bottom-3.5 z-10 flex flex-wrap items-center gap-3 rounded-card bg-surface p-3 shadow-card">
+            <span v-if="isAgentDirty" class="inline-flex items-center gap-1.5 text-xs font-semibold text-butter-ink">
+              <span class="h-1.5 w-1.5 rounded-full bg-butter-ink" />
+              {{ t('settings.agent.unsaved') }}
+            </span>
+            <AButton variant="primary" class="ml-auto" :loading="saving" @click="handleSaveAgent">
               {{ saving ? t('common.saving') : t('settings.agent.save') }}
             </AButton>
           </div>
@@ -858,7 +976,7 @@ async function handleSaveOptions() {
       </div>
 
       <!-- ============== TAB: CANALES ============== -->
-      <div v-if="activeTab === 'channels'" class="max-w-2xl">
+      <div v-if="activeTab === 'channels'">
         <div class="rounded-card bg-surface p-6 shadow-card">
           <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.channels.title') }}</h2>
           <div class="mt-4 flex flex-col gap-4">
@@ -883,7 +1001,7 @@ async function handleSaveOptions() {
       </div>
 
       <!-- ============== TAB: OPCIONES ============== -->
-      <div v-if="activeTab === 'options'" class="max-w-2xl">
+      <div v-if="activeTab === 'options'">
         <div class="rounded-card bg-surface p-6 shadow-card">
           <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.options.title') }}</h2>
           <div class="mt-4 flex items-center justify-between rounded-field border border-line p-4">

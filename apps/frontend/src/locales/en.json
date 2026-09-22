@@ -117,7 +117,6 @@
       "totalConversations": "Total Conversations",
       "activeChats": "Active Chats",
       "responseRate": "Response Rate",
-      "leadConversion": "Lead Conversion",
       "live": "Live"
     },
     "volume": {
@@ -135,7 +134,6 @@
     },
     "activity": {
       "title": "Recent Activity",
-      "viewAll": "View All",
       "empty": "No recent activity"
     },
     "time": {
@@ -181,9 +179,11 @@
       "syncStatus": "Sync status"
     },
     "status": {
+      "queued": "Queued",
       "processing": "Processing",
       "failed": "Error",
-      "ready": "Ready"
+      "ready": "Ready",
+      "indexed": "Indexed"
     },
     "stage": {
       "queued": "Queued",
@@ -244,6 +244,11 @@
       "title": "Extracted text",
       "method": "Method: {method}",
       "empty": "No extracted text."
+    },
+    "deleteModal": {
+      "title": "Delete source",
+      "confirm": "Are you sure you want to delete {name}? Its vectors will be removed and this cannot be undone.",
+      "hint": "This action cannot be undone."
     }
   },
   "clients": {
@@ -351,6 +356,16 @@
   },
   "login": {
     "subtitle": "Sign in to your account",
+    "headline": {
+      "line1": "Welcome back.",
+      "line2": "Enter the panel."
+    },
+    "badges": {
+      "noCard": "No card required",
+      "readyInMinutes": "Ready in minutes",
+      "encrypted": "Your data, encrypted"
+    },
+    "accountsNote": "Accounts are created by the team, not from here.",
     "submit": "Sign In",
     "loading": "Signing in...",
     "form": {
@@ -395,6 +410,7 @@
       "confirmationRequired": "Confirmation required",
       "defaultName": "Tool",
       "modify": "Modify",
+      "modifyTitle": "Modify action",
       "modifyPrompt": "Edit the action data (JSON):",
       "invalidJson": "Invalid JSON",
       "status": {
@@ -419,7 +435,12 @@
     "details": {
       "title": "Details",
       "platform": "Platform",
-      "notAvailable": "Not available"
+      "notAvailable": "Not available",
+      "status": {
+        "active": "Active",
+        "closed": "Closed",
+        "pendingHuman": "Pending human"
+      }
     },
     "urgency": {
       "title": "Urgency",
@@ -486,6 +507,21 @@
       "notConfigured": "Not configured",
       "personalityTitle": "Bot Personality",
       "personalityHint": "Configure how the chatbot behaves and responds",
+      "section": {
+        "identity": "Identity",
+        "identityHint": "Bot name, description, role and character",
+        "voice": "Voice and tone",
+        "voiceHint": "Language and response length",
+        "knowledge": "Knowledge",
+        "knowledgeHint": "How it uses the knowledge base (RAG)",
+        "generation": "Generation",
+        "generationHint": "Creativity and maximum response length",
+        "messages": "Automatic messages",
+        "messagesHint": "Greeting, goodbye and fallback reply",
+        "instructions": "Additional instructions",
+        "instructionsHint": "Extra rules for the bot's behavior"
+      },
+      "unsaved": "Unsaved changes",
       "roleLabel": "Role",
       "roles": {
         "assistant": "Assistant",

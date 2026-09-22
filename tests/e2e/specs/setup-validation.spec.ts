@@ -21,12 +21,12 @@ test.describe('Validación del setup', () => {
     await expect(page.getByTestId('page-title')).toHaveText('Resumen del panel');
 
     await page.locator('button').filter({ hasText: E2E.project.name }).first().click();
-    await page.getByRole('button', { name: 'Crear nuevo proyecto' }).click();
+    await page.getByRole('menuitem', { name: 'Crear nuevo proyecto' }).click();
 
     await page.waitForURL((url) => url.pathname === '/setup' && url.searchParams.get('mode') === 'new', {
       timeout: 30_000,
     });
-    await expect(page.getByRole('heading', { name: 'Configurar Proyecto' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Datos del Proyecto' })).toBeVisible();
     await expect(page.getByText('Datos del Proyecto')).toBeVisible();
   });
 
@@ -50,6 +50,6 @@ test.describe('Validación del setup', () => {
     await page.goto('/');
 
     await page.waitForURL((url) => url.pathname === '/login', { timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: 'BotMaster' })).toBeVisible();
+    await expect(page.getByPlaceholder('tu@email.com')).toBeVisible();
   });
 });

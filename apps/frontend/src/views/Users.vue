@@ -145,10 +145,7 @@ function formatDate(dateStr: string) {
 <template>
   <div class="flex flex-col gap-3.5">
     <div class="flex flex-wrap items-center gap-3">
-      <div>
-        <h1 class="font-display text-[22px] font-bold tracking-[-0.02em]">{{ t('users.title') }}</h1>
-        <p class="mt-1 text-[13px] text-ink-3">{{ t('users.subtitle', { count: totalUsers }) }}</p>
-      </div>
+      <p class="text-[13px] text-ink-3">{{ t('users.subtitle', { count: totalUsers }) }}</p>
       <AButton
         class="ml-auto"
         variant="primary"

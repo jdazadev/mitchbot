@@ -34,9 +34,12 @@ const mobileNavOpen = ref(false);
       @click="mobileNavOpen = false"
     />
     <main id="main-content" class="relative z-10 flex h-full flex-1 flex-col overflow-hidden">
-      <AuroraTopbar @toggle-nav="mobileNavOpen = !mobileNavOpen" />
+      <AuroraTopbar :nav-open="mobileNavOpen" @toggle-nav="mobileNavOpen = !mobileNavOpen" />
       <div class="flex-1 overflow-y-auto px-3.5 pb-3.5 md:pl-[242px]">
-        <div :class="{ 'h-full': noPadding }">
+        <div
+          class="mx-auto w-full max-w-[1400px]"
+          :class="{ 'h-full': noPadding }"
+        >
           <slot />
         </div>
       </div>

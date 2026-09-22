@@ -16,7 +16,7 @@ test.describe('Onboarding / setup', () => {
     await page.waitForURL((url) => url.pathname === '/setup', { timeout: 30_000 });
 
     // Paso 1: datos del proyecto
-    await expect(page.getByRole('heading', { name: 'Configurar Proyecto' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Datos del Proyecto' })).toBeVisible();
     await expect(page.getByText('Datos del Proyecto')).toBeVisible();
     const projectName = uniqueName('Proyecto E2E');
     await page.getByPlaceholder(/Mi Tienda Online/).fill(projectName);

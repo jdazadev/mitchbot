@@ -14,6 +14,8 @@ import AIcon from "../components/ui/AIcon.vue";
 import AAvatar from "../components/ui/AAvatar.vue";
 import ABubble from "../components/ui/ABubble.vue";
 import APill from "../components/ui/APill.vue";
+import AButton from "../components/ui/AButton.vue";
+import AModal from "../components/ui/AModal.vue";
 import { renderMarkdown } from "../lib/markdown";
 
 // El chat público es independiente del idioma del dashboard: usa un
@@ -179,21 +181,38 @@ function confirmTool(msg: ChatMessage, action: 'confirm' | 'cancel') {
   });
 }
 
+// === Edición de parámetros de una herramienta (reemplaza window.prompt) ===
+const modifyTarget = ref<ChatMessage | null>(null);
+const modifyInput = ref("");
+const modifyError = ref<string | null>(null);
+
 function modifyTool(msg: ChatMessage) {
   if (!activeConversation.value || !msg.toolData?.executionId) return;
-  const current = JSON.stringify(msg.toolData.params || {}, null, 0);
-  const input = window.prompt(t("publicChat.tool.modifyPrompt"), current);
-  if (!input) return;
+  modifyTarget.value = msg;
+  modifyInput.value = JSON.stringify(msg.toolData.params || {}, null, 2);
+  modifyError.value = null;
+}
+
+function closeModifyModal() {
+  modifyTarget.value = null;
+  modifyInput.value = "";
+  modifyError.value = null;
+}
+
+function confirmModifyTool() {
+  const msg = modifyTarget.value;
+  if (!activeConversation.value || !msg?.toolData?.executionId) return;
   try {
-    const params = JSON.parse(input);
+    const params = JSON.parse(modifyInput.value);
     socketService.confirmTool({
       conversationId: activeConversation.value._id,
       executionId: msg.toolData.executionId,
-      action: 'modify',
+      action: "modify",
       params,
     });
+    closeModifyModal();
   } catch {
-    window.alert(t("publicChat.tool.invalidJson"));
+    modifyError.value = t("publicChat.tool.invalidJson");
   }
 }
 
@@ -383,5 +402,43 @@ function scrollToBottom() {
         </div>
       </div>
     </div>
+
+    <!-- Modal: modificar parámetros de la herramienta -->
+    <AModal
+      :open="!!modifyTarget"
+      :label="t('publicChat.tool.modifyPrompt')"
+      size="lg"
+      @close="closeModifyModal"
+    >
+      <div class="p-6">
+        <div class="flex items-center justify-between">
+          <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('publicChat.tool.modify') }}</h2>
+          <button
+            type="button"
+            class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas"
+            @click="closeModifyModal"
+          >
+            <AIcon name="X" :size="18" />
+          </button>
+        </div>
+        <p class="mt-2 text-xs text-ink-3">{{ t('publicChat.tool.modifyPrompt') }}</p>
+        <div
+          v-if="modifyError"
+          class="mt-3 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]"
+        >
+          <AIcon name="WarningCircle" :size="17" />
+          {{ modifyError }}
+        </div>
+        <textarea
+          v-model="modifyInput"
+          class="field mt-3 h-48 resize-none font-mono text-[13px]"
+          spellcheck="false"
+        />
+        <div class="mt-6 flex justify-end gap-3">
+          <AButton variant="ghost" @click="closeModifyModal">{{ t('publicChat.tool.cancel') }}</AButton>
+          <AButton variant="primary" @click="confirmModifyTool">{{ t('publicChat.tool.confirm') }}</AButton>
+        </div>
+      </div>
+    </AModal>
   </div>
 </template>

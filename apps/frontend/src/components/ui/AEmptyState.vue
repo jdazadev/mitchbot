@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AIcon from './AIcon.vue';
+import AButton from './AButton.vue';
 
 withDefaults(
   defineProps<{ icon?: string; title: string; description?: string; actionLabel?: string }>(),
@@ -21,13 +22,13 @@ const emit = defineEmits<{ action: [] }>();
     <p v-if="description" class="max-w-[38ch] text-[13px] leading-relaxed text-ink-3">
       {{ description }}
     </p>
-    <button
+    <AButton
       v-if="actionLabel"
-      type="button"
-      class="mt-1 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-white transition-all duration-150 hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)]"
+      variant="primary"
+      class="mt-1"
       @click="emit('action')"
     >
       {{ actionLabel }}
-    </button>
+    </AButton>
   </div>
 </template>

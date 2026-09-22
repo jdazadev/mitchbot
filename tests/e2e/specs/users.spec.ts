@@ -13,7 +13,7 @@ test.describe('Usuarios del sistema', () => {
     const email = uniqueEmail('usuario');
 
     await page.goto('/users');
-    await expect(page.getByRole('heading', { name: 'Usuarios del Sistema' })).toBeVisible();
+    await expect(page.getByTestId('page-title')).toHaveText('Usuarios');
 
     // Crear usuario.
     await page.getByRole('button', { name: /Crear Usuario/ }).click();

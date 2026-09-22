@@ -15,6 +15,8 @@ const { t, locale } = useI18n();
 
 const emit = defineEmits<{ (e: 'toggle-nav'): void }>();
 
+withDefaults(defineProps<{ navOpen?: boolean }>(), { navOpen: false });
+
 function closeMenus() {
   projectOpen.value = false;
   notificationsOpen.value = false;
@@ -193,233 +195,237 @@ onMounted(async () => {
 </script>
 
 <template>
-  <header class="relative z-20 flex flex-wrap items-center gap-2.5 px-3.5 pb-3.5 pt-3.5 md:pl-[242px]">
-    <button
-      type="button"
-      :aria-label="t('nav.primary')"
-      :aria-expanded="false"
-      class="grid h-10 w-10 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink md:hidden"
-      @click="emit('toggle-nav')"
-    >
-      <AIcon name="List" :size="19" />
-    </button>
+  <header class="relative z-20 px-3.5 pb-3.5 pt-3.5 md:pl-[242px]">
+    <div class="mx-auto flex w-full max-w-[1400px] flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        data-testid="nav-toggle"
+        :aria-label="t('nav.primary')"
+        :aria-expanded="navOpen"
+        class="grid h-10 w-10 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink md:hidden"
+        @click="emit('toggle-nav')"
+      >
+        <AIcon name="List" :size="19" />
+      </button>
 
-    <h2
-      data-testid="page-title"
-      class="rounded-full bg-surface px-4 py-2 font-display text-[15px] font-bold tracking-[-0.02em] shadow-card"
-    >
-      {{ pageTitle }}
-    </h2>
+      <h2
+        data-testid="page-title"
+        class="rounded-full bg-surface px-4 py-2 font-display text-[15px] font-bold tracking-[-0.02em] shadow-card"
+      >
+        {{ pageTitle }}
+      </h2>
 
-    <TopbarContext />
+      <TopbarContext />
 
-    <div class="ml-auto flex items-center gap-2">
-      <!-- Proyectos -->
-      <div class="relative" @keydown.escape="projectOpen = false">
-        <button
-          type="button"
-          :disabled="switching"
-          aria-haspopup="menu"
-          :aria-expanded="projectOpen"
-          class="flex items-center gap-2 rounded-full bg-surface px-3.5 py-2 text-[13px] font-semibold shadow-card transition-colors hover:bg-canvas disabled:opacity-60"
-          @click="toggleMenu('project')"
-        >
-          <span class="h-2 w-2 rounded-full" :style="{ background: 'var(--brand)' }" />
-          <span class="max-w-[150px] truncate">
-            {{ activeProject?.name || t('topbar.selectProject') }}
-          </span>
-          <AIcon name="CaretDown" :size="15" class="text-ink-3" />
-        </button>
+      <div class="ml-auto flex items-center gap-2">
+        <!-- Proyectos -->
+        <div class="relative" @keydown.escape="projectOpen = false">
+          <button
+            type="button"
+            :disabled="switching"
+            aria-haspopup="menu"
+            :aria-expanded="projectOpen"
+            class="flex items-center gap-2 rounded-full bg-surface px-3.5 py-2 text-[13px] font-semibold shadow-card transition-colors hover:bg-canvas disabled:opacity-60"
+            @click="toggleMenu('project')"
+          >
+            <span class="h-2 w-2 rounded-full" :style="{ background: 'var(--brand)' }" />
+            <span class="max-w-[150px] truncate">
+              {{ activeProject?.name || t('topbar.selectProject') }}
+            </span>
+            <AIcon name="CaretDown" :size="15" class="text-ink-3" />
+          </button>
 
-        <div v-if="projectOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="projectOpen = false" />
-        <div
-          v-if="projectOpen"
-          role="menu"
-          class="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
-        >
-          <div class="max-h-64 overflow-y-auto py-1">
+          <div v-if="projectOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="projectOpen = false" />
+          <div
+            v-if="projectOpen"
+            role="menu"
+            class="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
+          >
+            <div class="max-h-64 overflow-y-auto py-1">
+              <button
+                v-for="project in projects"
+                :key="project._id"
+                type="button"
+                role="menuitem"
+                class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+                @click="selectProject(project)"
+              >
+                <span
+                  class="truncate"
+                  :class="project._id === activeProjectId ? 'text-lilac-ink' : 'text-ink-2'"
+                >
+                  {{ project.name }}
+                </span>
+                <AIcon
+                  v-if="project._id === activeProjectId"
+                  name="Check"
+                  :size="16"
+                  class="text-lilac-ink"
+                />
+              </button>
+              <p v-if="projects.length === 0" class="px-4 py-3 text-sm font-semibold text-ink-3">
+                {{ t('topbar.noProjects') }}
+              </p>
+            </div>
             <button
-              v-for="project in projects"
-              :key="project._id"
               type="button"
               role="menuitem"
-              class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
-              @click="selectProject(project)"
+              class="flex w-full items-center gap-2 border-t border-line px-4 py-2.5 text-sm font-semibold text-lilac-ink hover:bg-canvas"
+              @click="createProject"
             >
-              <span
-                class="truncate"
-                :class="project._id === activeProjectId ? 'text-lilac-ink' : 'text-ink-2'"
-              >
-                {{ project.name }}
-              </span>
-              <AIcon
-                v-if="project._id === activeProjectId"
-                name="Check"
-                :size="16"
-                class="text-lilac-ink"
-              />
+              <AIcon name="Plus" :size="16" />
+              {{ t('topbar.createProject') }}
             </button>
-            <p v-if="projects.length === 0" class="px-4 py-3 text-sm font-semibold text-ink-3">
-              {{ t('topbar.noProjects') }}
-            </p>
           </div>
+        </div>
+
+        <!-- Idiomas -->
+        <div class="relative flex items-center">
+          <AIcon
+            name="Translate"
+            :size="16"
+            class="pointer-events-none absolute left-3 text-ink-3"
+          />
+          <select
+            v-model="locale"
+            :aria-label="t('topbar.language')"
+            data-testid="language-selector"
+            class="appearance-none rounded-full bg-surface py-2 pl-9 pr-7 text-[13px] font-semibold text-ink-2 shadow-card transition-colors hover:bg-canvas focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
+          >
+            <option value="es">{{ t('common.spanish') }}</option>
+            <option value="en">{{ t('common.english') }}</option>
+          </select>
+          <AIcon
+            name="CaretDown"
+            :size="15"
+            class="pointer-events-none absolute right-2.5 text-ink-3"
+          />
+        </div>
+
+        <!-- Notificaciones -->
+        <div class="relative" @keydown.escape="notificationsOpen = false">
           <button
             type="button"
-            role="menuitem"
-            class="flex w-full items-center gap-2 border-t border-line px-4 py-2.5 text-sm font-semibold text-lilac-ink hover:bg-canvas"
-            @click="createProject"
+            :aria-label="t('topbar.notifications')"
+            aria-haspopup="dialog"
+            :aria-expanded="notificationsOpen"
+            class="relative grid h-9.5 w-9.5 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink"
+            @click="toggleMenu('notifications')"
           >
-            <AIcon name="Plus" :size="16" />
-            {{ t('topbar.createProject') }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Idiomas -->
-      <div class="relative flex items-center">
-        <AIcon
-          name="Translate"
-          :size="16"
-          class="pointer-events-none absolute left-3 text-ink-3"
-        />
-        <select
-          v-model="locale"
-          :aria-label="t('topbar.language')"
-          data-testid="language-selector"
-          class="appearance-none rounded-full bg-surface py-2 pl-9 pr-7 text-[13px] font-semibold text-ink-2 shadow-card transition-colors hover:bg-canvas"
-        >
-          <option value="es">{{ t('common.spanish') }}</option>
-          <option value="en">{{ t('common.english') }}</option>
-        </select>
-        <AIcon
-          name="CaretDown"
-          :size="15"
-          class="pointer-events-none absolute right-2.5 text-ink-3"
-        />
-      </div>
-
-      <!-- Notificaciones -->
-      <div class="relative" @keydown.escape="notificationsOpen = false">
-        <button
-          type="button"
-          :aria-label="t('topbar.notifications')"
-          aria-haspopup="dialog"
-          :aria-expanded="notificationsOpen"
-          class="relative grid h-9.5 w-9.5 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink"
-          @click="toggleMenu('notifications')"
-        >
-          <AIcon name="Bell" :size="18" />
-          <span
-            v-if="unreadCount > 0"
-            class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full"
-            :style="{ background: 'var(--brand)', boxShadow: '0 0 0 2px var(--surface)' }"
-          />
-        </button>
-
-        <div v-if="notificationsOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="notificationsOpen = false" />
-        <div
-          v-if="notificationsOpen"
-          role="dialog"
-          :aria-label="t('topbar.notifications')"
-          class="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
-        >
-          <div class="flex items-center justify-between border-b border-line px-4 py-3">
-            <span class="text-sm font-bold">{{ t('topbar.notifications') }}</span>
-            <button
+            <AIcon name="Bell" :size="18" />
+            <span
               v-if="unreadCount > 0"
-              type="button"
-              class="text-xs font-bold text-lilac-ink hover:opacity-80"
-              @click="markAllRead"
-            >
-              {{ t('topbar.markAllRead') }}
-            </button>
-          </div>
-          <div class="max-h-80 overflow-y-auto">
-            <p
-              v-if="notifications.length === 0"
-              class="px-4 py-8 text-center text-sm font-semibold text-ink-3"
-            >
-              {{ t('topbar.noNotifications') }}
-            </p>
-            <div
-              v-for="n in notifications"
-              v-else
-              :key="n.id"
-              :class="['flex gap-3 border-b border-line px-4 py-3 last:border-0', n.read ? 'opacity-60' : '']"
-            >
-              <div
-                :class="[
-                  'grid h-8 w-8 shrink-0 place-items-center rounded-full',
-                  levelTone(n.level),
-                ]"
+              data-testid="notification-dot"
+              class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full"
+              :style="{ background: 'var(--brand)', boxShadow: '0 0 0 2px var(--surface)' }"
+            />
+          </button>
+
+          <div v-if="notificationsOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="notificationsOpen = false" />
+          <div
+            v-if="notificationsOpen"
+            role="dialog"
+            :aria-label="t('topbar.notifications')"
+            class="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
+          >
+            <div class="flex items-center justify-between border-b border-line px-4 py-3">
+              <span class="text-sm font-bold">{{ t('topbar.notifications') }}</span>
+              <button
+                v-if="unreadCount > 0"
+                type="button"
+                class="text-xs font-bold text-lilac-ink hover:opacity-80"
+                @click="markAllRead"
               >
-                <AIcon :name="levelIcon(n.level)" :size="16" weight="bold" />
-              </div>
-              <div class="flex min-w-0 flex-col">
-                <p class="break-words text-sm">{{ n.message }}</p>
-                <span class="mt-0.5 text-[10px] font-semibold text-ink-3">
-                  {{ formatNotificationTime(n.createdAt) }}
-                </span>
+                {{ t('topbar.markAllRead') }}
+              </button>
+            </div>
+            <div class="max-h-80 overflow-y-auto">
+              <p
+                v-if="notifications.length === 0"
+                class="px-4 py-8 text-center text-sm font-semibold text-ink-3"
+              >
+                {{ t('topbar.noNotifications') }}
+              </p>
+              <div
+                v-for="n in notifications"
+                v-else
+                :key="n.id"
+                :class="['flex gap-3 border-b border-line px-4 py-3 last:border-0', n.read ? 'opacity-60' : '']"
+              >
+                <div
+                  :class="[
+                    'grid h-8 w-8 shrink-0 place-items-center rounded-full',
+                    levelTone(n.level),
+                  ]"
+                >
+                  <AIcon :name="levelIcon(n.level)" :size="16" weight="bold" />
+                </div>
+                <div class="flex min-w-0 flex-col">
+                  <p class="break-words text-sm">{{ n.message }}</p>
+                  <span class="mt-0.5 text-[10px] font-semibold text-ink-3">
+                    {{ formatNotificationTime(n.createdAt) }}
+                  </span>
+                </div>
               </div>
             </div>
+            <button
+              v-if="notifications.length > 0"
+              type="button"
+              class="w-full border-t border-line px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-canvas"
+              @click="notifications = []"
+            >
+              {{ t('topbar.clearAll') }}
+            </button>
           </div>
-          <button
-            v-if="notifications.length > 0"
-            type="button"
-            class="w-full border-t border-line px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-canvas"
-            @click="notifications = []"
-          >
-            {{ t('topbar.clearAll') }}
-          </button>
         </div>
-      </div>
 
-      <!-- Usuario -->
-      <div class="relative" @keydown.escape="userOpen = false">
-        <button
-          type="button"
-          aria-haspopup="menu"
-          :aria-expanded="userOpen"
-          :aria-label="t('nav.profile')"
-          class="flex items-center gap-2 rounded-full bg-surface py-1 pl-1 pr-3 shadow-card transition-colors hover:bg-canvas"
-          @click="toggleMenu('user')"
-        >
-          <AAvatar :initials="userInitials" tone="lilac" size="sm" />
-          <span class="max-w-[110px] truncate text-[13px] font-semibold">
-            {{ currentUser?.name || t('nav.userPlaceholder') }}
-          </span>
-          <AIcon name="CaretDown" :size="15" class="text-ink-3" />
-        </button>
-
-        <div v-if="userOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="userOpen = false" />
-        <div
-          v-if="userOpen"
-          role="menu"
-          class="absolute right-0 z-40 mt-2 w-56 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
-        >
-          <div class="border-b border-line px-4 py-3">
-            <p class="truncate text-sm font-bold">{{ currentUser?.name }}</p>
-            <p class="truncate text-[11px] font-semibold text-ink-3">{{ currentUser?.email }}</p>
-          </div>
-          <router-link
-            to="/profile"
-            role="menuitem"
-            class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-ink-2 hover:bg-canvas hover:text-ink"
-            @click="userOpen = false"
-          >
-            <AIcon name="User" :size="16" />
-            {{ t('nav.profile') }}
-          </router-link>
-          <div class="h-px bg-line" />
+        <!-- Usuario -->
+        <div class="relative" @keydown.escape="userOpen = false">
           <button
             type="button"
-            role="menuitem"
-            class="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-[color:var(--danger)] hover:bg-[color:var(--danger-soft)]"
-            @click="handleLogout"
+            aria-haspopup="menu"
+            :aria-expanded="userOpen"
+            :aria-label="t('nav.profile')"
+            class="flex items-center gap-2 rounded-full bg-surface py-1 pl-1 pr-3 shadow-card transition-colors hover:bg-canvas"
+            @click="toggleMenu('user')"
           >
-            <AIcon name="SignOut" :size="16" />
-            {{ t('nav.logout') }}
+            <AAvatar :initials="userInitials" tone="lilac" size="sm" />
+            <span class="max-w-[110px] truncate text-[13px] font-semibold">
+              {{ currentUser?.name || t('nav.userPlaceholder') }}
+            </span>
+            <AIcon name="CaretDown" :size="15" class="text-ink-3" />
           </button>
+
+          <div v-if="userOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="userOpen = false" />
+          <div
+            v-if="userOpen"
+            role="menu"
+            class="absolute right-0 z-40 mt-2 w-56 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
+          >
+            <div class="border-b border-line px-4 py-3">
+              <p class="truncate text-sm font-bold">{{ currentUser?.name }}</p>
+              <p class="truncate text-[11px] font-semibold text-ink-3">{{ currentUser?.email }}</p>
+            </div>
+            <router-link
+              to="/profile"
+              role="menuitem"
+              class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-ink-2 hover:bg-canvas hover:text-ink"
+              @click="userOpen = false"
+            >
+              <AIcon name="User" :size="16" />
+              {{ t('nav.profile') }}
+            </router-link>
+            <div class="h-px bg-line" />
+            <button
+              type="button"
+              role="menuitem"
+              class="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-[color:var(--danger)] hover:bg-[color:var(--danger-soft)]"
+              @click="handleLogout"
+            >
+              <AIcon name="SignOut" :size="16" />
+              {{ t('nav.logout') }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

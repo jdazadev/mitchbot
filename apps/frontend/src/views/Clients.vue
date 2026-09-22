@@ -14,6 +14,7 @@ import AAvatar from "../components/ui/AAvatar.vue";
 import APill from "../components/ui/APill.vue";
 import AButton from "../components/ui/AButton.vue";
 import AModal from "../components/ui/AModal.vue";
+import { channelInk, channelTone } from "../lib/channels";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -42,9 +43,7 @@ function statusTone(status: string) {
 }
 
 function platformColor(platform: string) {
-  if (platform === "WhatsApp") return "var(--lime-ink)";
-  if (platform === "Instagram") return "var(--lilac-ink)";
-  return "var(--sky-ink)";
+  return channelInk(platform);
 }
 
 // Estado
@@ -57,6 +56,7 @@ const contactsData = ref<ContactsResponse>({
 });
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const actionError = ref<string | null>(null);
 
 // Filtros
 const searchQuery = ref("");
@@ -71,6 +71,7 @@ const pageSize = ref(10);
 const showEditModal = ref(false);
 const editingContact = ref<Contact | null>(null);
 const editForm = ref<Partial<Contact>>({});
+const editError = ref<string | null>(null);
 
 // Modal de confirmación de archivar
 const showArchiveModal = ref(false);
@@ -208,18 +209,20 @@ function openEditModal(contact: Contact) {
     tags: [...(contact.tags || [])],
     metadata: { ...contact.metadata },
   };
+  editError.value = null;
   showEditModal.value = true;
 }
 
 async function saveEdit() {
   if (!editingContact.value) return;
+  editError.value = null;
   try {
     await clientService.updateContact(editingContact.value._id, editForm.value);
     showEditModal.value = false;
     editingContact.value = null;
     fetchContacts();
   } catch (err: any) {
-    alert(t("clients.errors.update", { message: err.message }));
+    editError.value = t("clients.errors.update", { message: err.message });
   }
 }
 
@@ -231,23 +234,26 @@ function openArchiveModal(contact: Contact) {
 
 async function confirmArchive() {
   if (!archivingContact.value) return;
+  actionError.value = null;
   try {
     await clientService.archiveContact(archivingContact.value._id);
     showArchiveModal.value = false;
     archivingContact.value = null;
     fetchContacts();
   } catch (err: any) {
-    alert(t("clients.errors.archive", { message: err.message }));
+    showArchiveModal.value = false;
+    actionError.value = t("clients.errors.archive", { message: err.message });
   }
 }
 
 // === Restaurar ===
 async function restoreContact(contact: Contact) {
+  actionError.value = null;
   try {
     await clientService.restoreContact(contact._id);
     fetchContacts();
   } catch (err: any) {
-    alert(t("clients.errors.restore", { message: err.message }));
+    actionError.value = t("clients.errors.restore", { message: err.message });
   }
 }
 </script>
@@ -268,7 +274,7 @@ async function restoreContact(contact: Contact) {
       <select
         v-model="filterPlatform"
         data-testid="clients-platform-filter"
-        class="appearance-none rounded-full bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink-2 shadow-card outline-none"
+        class="appearance-none rounded-full bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink-2 shadow-card outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
       >
         <option value="All">{{ t('clients.filters.allPlatforms') }}</option>
         <option value="WhatsApp">WhatsApp</option>
@@ -278,7 +284,7 @@ async function restoreContact(contact: Contact) {
       <select
         v-model="filterStatus"
         data-testid="clients-status-filter"
-        class="appearance-none rounded-full bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink-2 shadow-card outline-none"
+        class="appearance-none rounded-full bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink-2 shadow-card outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
       >
         <option value="All">{{ t('clients.filters.allStatuses') }}</option>
         <option value="Active">{{ statusLabel('Active') }}</option>
@@ -295,7 +301,7 @@ async function restoreContact(contact: Contact) {
         {{ t('clients.results.found', totalContacts) }}
         <select
           v-model="pageSize"
-          class="appearance-none rounded-full bg-canvas px-3 py-1 text-xs font-semibold text-ink-2 outline-none"
+          class="appearance-none rounded-full bg-canvas px-3 py-1 text-xs font-semibold text-ink-2 outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
         >
           <option :value="5">5</option>
           <option :value="10">10</option>
@@ -304,6 +310,17 @@ async function restoreContact(contact: Contact) {
         </select>
         {{ t('clients.pagination.perPage') }}
       </span>
+    </div>
+
+    <div
+      v-if="actionError"
+      class="flex items-center gap-3 rounded-card bg-[color:var(--danger-soft)] p-4 text-[13px] text-[color:var(--danger)]"
+    >
+      <AIcon name="WarningCircle" :size="18" />
+      <span class="flex-1">{{ actionError }}</span>
+      <button type="button" class="shrink-0" :aria-label="t('common.close')" @click="actionError = null">
+        <AIcon name="X" :size="16" />
+      </button>
     </div>
 
     <!-- Tabla -->
@@ -356,7 +373,7 @@ async function restoreContact(contact: Contact) {
                 <div class="flex items-center gap-2.5">
                   <AAvatar
                     :initials="(contact.name || 'C').slice(0, 2).toUpperCase()"
-                    :tone="contact.platform === 'Instagram' ? 'lilac' : contact.platform === 'Web' ? 'sky' : 'lime'"
+                    :tone="channelTone(contact.platform)"
                   />
                   <div class="flex flex-col">
                     <span class="font-semibold">{{ contact.name }}</span>
@@ -510,6 +527,14 @@ async function restoreContact(contact: Contact) {
           >
             <AIcon name="X" :size="18" />
           </button>
+        </div>
+
+        <div
+          v-if="editError"
+          class="mt-4 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]"
+        >
+          <AIcon name="WarningCircle" :size="17" />
+          {{ editError }}
         </div>
 
         <div class="mt-5 flex flex-col gap-4">

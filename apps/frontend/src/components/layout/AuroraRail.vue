@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{ variant?: 'desktop' | 'mobile' }>(), {
 
 const emit = defineEmits<{ (e: 'navigate'): void }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const { unreadTotal } = useConversations();
 const { brand } = useBrand();
@@ -42,9 +42,9 @@ const clock = ref(new Date());
 let clockTimer: ReturnType<typeof setInterval> | undefined;
 
 const timeLabel = computed(() =>
-  clock.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  clock.value.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
 );
-const weekdayLabel = computed(() => clock.value.toLocaleDateString([], { weekday: 'long' }));
+const weekdayLabel = computed(() => clock.value.toLocaleDateString(locale.value, { weekday: 'long' }));
 const dateLabel = computed(() => {
   const d = clock.value;
   const dd = String(d.getDate()).padStart(2, '0');

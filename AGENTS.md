@@ -12,7 +12,34 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.2.0
+**Versión actual del proyecto:** v4.3.0
+
+---
+
+## Cierre del critique Impeccable (v4.3.0)
+
+Tras el critique (`/impeccable critique`, 24/40) sobre Aurora se implementaron los 8 arreglos priorizados:
+
+- **Panel honesto**: se eliminan los **deltas inventados** (`+12%`, `+1.2%`, `+0.5%`) y la tarjeta **"Conversión de leads"** con valor fijo; se retira la affordance muerta "Ver todo" de Actividad. El `error` capturado ahora se muestra con botón **Reintentar** y las métricas muestran **skeleton** mientras cargan (nunca ceros falsos).
+- **Semántica de canal unificada** (`src/lib/channels.ts`): un único `CHANNEL_META` (WhatsApp=lima, Instagram=lila, Web=cielo) con helpers `channelMeta/channelTone/channelFill/channelInk/channelIcon`, consumido por Panel, Conversaciones y Clientes. Elimina la contradicción Panel vs resto.
+- **Conversaciones en móvil**: bandeja **o** hilo (con botón de regreso), Detalles solo en `lg+`; el grid multi-columna queda para escritorio.
+- **Confirmaciones y diálogos del mundo**: borrado de fuentes en Brain con `AModal`; "Modificar" herramienta en Conversaciones y TestChat con editor JSON en `AModal`; errores de Clientes en banner inline. Ya no hay `alert()`/`window.prompt`.
+- **Configuración → Agente IA por tareas**: 6 subsecciones plegables (Identidad, Voz y tono, Conocimiento, Generación, Mensajes, Instrucciones) con `aria-expanded`/`aria-controls` y **guardado pegajoso** con estado **sucio** (`isAgentDirty`).
+- **Copy/i18n**: Login traducido (`login.headline.*`, `login.badges.*`, `login.accountsNote`); estados legibles (`messaging.details.status.*`, `brain.status.*`); sin títulos duplicados en Users/Configuración/DevTests (el título vive en el topbar).
+- **Foco visible**: selects de Clientes y selector de idioma del topbar con anillo `focus-visible`; `AuroraTopbar` recibe `navOpen` para `aria-expanded` real; el rail usa el locale de la app.
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde; detector Impeccable sobre `src/` en **0 hallazgos**; paridad `es.json`/`en.json`.
+
+---
+
+## Layout de contenido centrado (v4.2.1)
+
+La estructura del dashboard no tenía ancho máximo: en pantallas ultrawide el contenido se estiraba de borde a borde (tarjetas/gráficos enormes, tablas con columnas separadísimas) y en Configuración el formulario quedaba pegado a la izquierda. Se implementa la norma de `DESIGN.md` (contenido a **1400px centrado**):
+
+- **`DashboardLayout`**: el `<main>` envuelve el slot en `mx-auto w-full max-w-[1400px]`. Aplica a **todas las vistas actuales y futuras** (Panel, Conversaciones, Clientes, Brain, Usuarios, Configuración, Mi Perfil, DevTests).
+- **`AuroraTopbar`**: la fila de cápsulas se envuelve en el mismo contenedor (`max-w-[1400px]`) para que título, instrumentos e invariantes queden alineados con el contenido.
+- **Configuración**: la columna (título, banners, tabs y paneles) se centra en `max-w-3xl`; se retiran los `max-w-*` internos para que todo comparta el mismo ancho. Los tabs se estrechan o envuelven al añadir items.
+- **Panel**: la rejilla de métricas pasa a `repeat(auto-fit, minmax(240px, 1fr))`: al añadir métricas se agregan columnas (o se estrechan) en vez de fijarse en cuatro.
+- **Verificación**: capturas en 3440/1440/820/390; `vue-tsc --noEmit` y `build` en verde; detector Impeccable sobre los archivos tocados en 0 hallazgos.
 
 ---
 

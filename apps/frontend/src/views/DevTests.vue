@@ -143,10 +143,7 @@ function clearResult() {
 
 <template>
   <div class="flex flex-col gap-3.5">
-    <div>
-      <h1 class="font-display text-[22px] font-bold tracking-[-0.02em]">{{ t('devTests.title') }}</h1>
-      <p class="mt-1 text-[13px] text-ink-3">{{ t('devTests.subtitle') }}</p>
-    </div>
+    <p class="text-[13px] text-ink-3">{{ t('devTests.subtitle') }}</p>
 
     <div class="flex flex-col gap-3.5">
       <ATabs :tabs="tabs" :model-value="activeTab" @update:model-value="activeTab = $event" />

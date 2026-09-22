@@ -5,6 +5,65 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.3.0 — 2026-09-22
+
+> 🔍 **Cierre del critique Impeccable**: Panel honesto, semántica de canal unificada, Conversaciones móviles y Configuración por tareas
+
+Se implementan, en orden de impacto, los 8 arreglos del critique (`/impeccable critique`, 24/40) sobre Aurora. El foco: alinear la interfaz con su propio principio de **honestidad funcional** y unificar decisiones que el sistema ya había tomado.
+
+### ✨ Añadido
+- **`lib/channels.ts`**: mapeo único canal → pastel (`CHANNEL_META`) con helpers `channelMeta/channelTone/channelFill/channelInk/channelIcon`. WhatsApp=lima, Instagram=lila, Web=cielo en **Panel, Conversaciones y Clientes**.
+- **Panel**: estado de error real con **Reintentar** (antes el `error` se capturaba y nunca se mostraba) y **skeleton** en las métricas mientras carga (ya no enseña ceros).
+- **Confirmación de borrado en Brain** con `AModal` (antes era inmediato y destructivo), con nombre de la fuente e hint de irreversibilidad.
+- **Editor JSON con `AModal`** para "Modificar" una herramienta en Conversaciones y en el chat público (reemplaza `window.prompt`/`window.alert`).
+- **Banner inline de error** en Clientes (actualizar/archivar/restaurar) en lugar de `alert()`.
+- **Configuración → Agente IA por tareas**: 6 subsecciones plegables (Identidad, Voz y tono, Conocimiento, Generación, Mensajes, Instrucciones) con `aria-expanded`/`aria-controls` y **barra de guardado pegajosa** con aviso de **cambios sin guardar**.
+
+### 🔄 Cambios
+- **Conversaciones en móvil**: se muestra bandeja **o** hilo (no ambos apilados) con **botón de regreso**; el panel de Detalles solo aparece en `lg+`. El grid de 2/3 columnas queda reservado para escritorio.
+- **Títulos sin duplicar**: Users, Configuración y DevTests dejan de repetir un `<h1>` interno; el título vive solo en la cápsula del topbar (se conserva el subtítulo).
+- **i18n**: Login traducido por completo (`login.headline.*`, `login.badges.*`, `login.accountsNote`); estados de conversación legibles (`messaging.details.status.*`) y estado de fuente en Brain traducido (`brain.status.*`).
+- **Foco visible**: selects de filtros de Clientes y selector de idioma del topbar con anillo `focus-visible` de marca (ya no quedan sin indicador por `outline-none`).
+- **Topbar**: el botón de menú móvil expone `aria-expanded` real (recibe `navOpen` desde `DashboardLayout`); se añade `data-testid="nav-toggle"`.
+- **Rail**: la hora y el día usan el locale de la app (no el del navegador).
+- **`AEmptyState`**: el CTA usa `AButton` (elimina estilos duplicados).
+
+### 🗑️ Eliminado
+- **Deltas inventados del Panel** (`+12%`, `+1.2%`, `+0.5%`) y la tarjeta **"Conversión de leads"** con valor fijo, hasta que el backend los provea.
+- **Affordance muerta "Ver todo"** en Actividad reciente (sin handler).
+- Claves i18n asociadas (`dashboard.stats.leadConversion`, `dashboard.activity.viewAll`) y la variable muerta `hasBrand` en Configuración.
+
+### 🧪 Pruebas
+- **Suite e2e al día**: se corrigen selectores que quedaron obsoletos tras refactors previos de Aurora y que mantenían la suite en rojo (título `BotMaster` en login, `role="tab"` en los tabs de Configuración, título del wizard, logout desde el menú del topbar, filas de la bandeja como `button`, indicador de notificaciones). Se añaden `data-testid="nav-toggle"`, `data-testid="conversation-unread"` y `data-testid="notification-dot"` para aserciones estables.
+- **41/41 pruebas e2e en verde** (`pnpm test:e2e`).
+
+### ✅ Verificado
+- `pnpm --filter @mitchbot/frontend exec vue-tsc --noEmit` y `pnpm --filter @mitchbot/frontend build` en verde.
+- Detector Impeccable sobre `apps/frontend/src`: **0 hallazgos** (exit 0).
+- Suite e2e completa: **41/41** en verde.
+- Paridad de claves `es.json`/`en.json` (586/586).
+
+---
+
+## v4.2.1 — 2026-09-22
+
+> 📐 **Contenedor de contenido centrado**: el área principal se acota y centra en pantallas ultrawide
+
+La estructura del dashboard no tenía ancho máximo: en monitores ultrawide el contenido se estiraba de borde a borde (tarjetas y gráficos enormes, tablas con columnas separadísimas) y en Configuración el formulario quedaba pegado a la izquierda con la mitad derecha vacía. Se implementa la norma de `DESIGN.md` (contenido a **1400px centrado**) en la estructura general, de modo que aplica a todas las vistas actuales y futuras.
+
+### 🔄 Cambios
+- **`DashboardLayout`**: el `<main>` envuelve el slot en `mx-auto w-full max-w-[1400px]`. Centra y acota Panel, Conversaciones, Clientes, Brain, Usuarios, Configuración, Mi Perfil y DevTests (y cualquier vista futura).
+- **`AuroraTopbar`**: la fila de cápsulas se envuelve en el mismo contenedor (`max-w-[1400px]`), de forma que el título de página, los instrumentos de la vista y los invariantes quedan alineados con el contenido centrado.
+- **Configuración**: la columna (título, banners, tabs y paneles) se centra en `max-w-3xl`; se retiran los `max-w-*` internos para que todo comparta el mismo ancho centrado. Los tabs se estrechan o envuelven a medida que se añaden items.
+- **Panel**: la rejilla de métricas pasa de `lg:grid-cols-4` a `repeat(auto-fit, minmax(240px, 1fr))`: al añadir métricas se agregan columnas (o se estrechan las tarjetas) en vez de fijarse en cuatro.
+
+### ✅ Verificado
+- Capturas en 3440 (ultrawide), 1440, 820 y 390: contenedor centrado y alineado con el topbar; tabs, tabla y métricas correctas.
+- `vue-tsc --noEmit` y `pnpm --filter @mitchbot/frontend build` en verde.
+- Detector Impeccable sobre los archivos tocados (`DashboardLayout.vue`, `AuroraTopbar.vue`, `Settings.vue`, `Dashboard.vue`): **0 hallazgos**.
+
+---
+
 ## v4.2.0 — 2026-09-22
 
 > ♿ **Endurecimiento de Aurora**: foco visible, navegación móvil, diálogos accesibles, i18n del rail y limpieza de deuda del sistema

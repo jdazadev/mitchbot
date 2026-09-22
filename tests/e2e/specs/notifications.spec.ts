@@ -18,7 +18,7 @@ test.describe('Centro de notificaciones', () => {
     const bell = page.getByRole('button', { name: 'Notificaciones' });
     await expect(bell).toBeVisible();
     // Sin notificaciones no hay indicador de no leídas.
-    await expect(bell.locator('span.bg-red-500')).toHaveCount(0);
+    await expect(bell.getByTestId('notification-dot')).toHaveCount(0);
 
     // El cliente pide notificar al equipo (la tool no requiere confirmación).
     const id = uniqueId();
@@ -30,7 +30,7 @@ test.describe('Centro de notificaciones', () => {
     });
 
     // Aparece el indicador de no leídas.
-    await expect(bell.locator('span.bg-red-500')).toBeVisible({ timeout: 25_000 });
+    await expect(bell.getByTestId('notification-dot')).toBeVisible({ timeout: 25_000 });
 
     // Abrir el panel muestra la notificación recibida.
     await bell.click();
@@ -38,6 +38,6 @@ test.describe('Centro de notificaciones', () => {
 
     // Marcar como leídas oculta el indicador.
     await page.getByRole('button', { name: 'Marcar como leídas' }).click();
-    await expect(bell.locator('span.bg-red-500')).toHaveCount(0);
+    await expect(bell.getByTestId('notification-dot')).toHaveCount(0);
   });
 });

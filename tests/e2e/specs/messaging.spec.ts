@@ -34,7 +34,7 @@ function inboxRow(page: Page, clientName: string) {
     .locator('aside', { has: page.getByRole('heading', { name: 'Bandeja de entrada' }) })
     .getByText(clientName)
     .first()
-    .locator('xpath=ancestor::div[contains(@class,"cursor-pointer")][1]');
+    .locator('xpath=ancestor::button[1]');
 }
 
 /** Suma persistida de no leídos de todas las conversaciones del proyecto. */
@@ -139,18 +139,18 @@ test.describe('Mensajería', () => {
     const inbox = page.locator('aside', { has: page.getByRole('heading', { name: 'Bandeja de entrada' }) });
 
     // Chips derivados de la config del proyecto: Instagram está deshabilitado.
-    await expect(inbox.getByRole('button', { name: 'Todos' })).toBeVisible();
-    await expect(inbox.getByRole('button', { name: 'WhatsApp' })).toBeVisible();
-    await expect(inbox.getByRole('button', { name: 'Web' })).toBeVisible();
-    await expect(inbox.getByRole('button', { name: 'Instagram' })).toHaveCount(0);
+    await expect(inbox.getByRole('button', { name: 'Todos', exact: true })).toBeVisible();
+    await expect(inbox.getByRole('button', { name: 'WhatsApp', exact: true })).toBeVisible();
+    await expect(inbox.getByRole('button', { name: 'Web', exact: true })).toBeVisible();
+    await expect(inbox.getByRole('button', { name: 'Instagram', exact: true })).toHaveCount(0);
 
     // Filtrado real por canal.
-    await inbox.getByRole('button', { name: 'WhatsApp' }).click();
+    await inbox.getByRole('button', { name: 'WhatsApp', exact: true }).click();
     await expect(inbox.getByText(waName).first()).toBeVisible({ timeout: 15_000 });
     await expect(inbox.getByText(webName)).toHaveCount(0);
 
     // Búsqueda por nombre (canal "Todos").
-    await inbox.getByRole('button', { name: 'Todos' }).click();
+    await inbox.getByRole('button', { name: 'Todos', exact: true }).click();
     await inbox.getByPlaceholder('Buscar chats...').fill(webName);
     await expect(inbox.getByText(webName).first()).toBeVisible();
     await expect(inbox.getByText(waName)).toHaveCount(0);
@@ -291,22 +291,22 @@ test.describe('Mensajería', () => {
 
     const row = inboxRow(page, clientName);
     await expect(row).toBeVisible({ timeout: 20_000 });
-    await expect(row.locator('span.ml-auto')).toHaveText('1');
+    await expect(row.getByTestId('conversation-unread')).toHaveText('1');
 
     // Mensaje del cliente en vivo (sin recargar): el badge de la conversación sube.
     await sendPublicMessage(api, E2E.project.slug, conversationId, `Segundo mensaje ${id}`);
-    await expect(row.locator('span.ml-auto')).toHaveText('2', { timeout: 20_000 });
+    await expect(row.getByTestId('conversation-unread')).toHaveText('2', { timeout: 20_000 });
     expect((await getConversation(api, conversationId)).unreadCount).toBe(2);
 
     // Abrir la conversación: el badge baja y la lectura se persiste.
     await row.click();
-    await expect(row.locator('span.ml-auto')).toHaveCount(0);
+    await expect(row.getByTestId('conversation-unread')).toHaveCount(0);
     await expect.poll(async () => (await getConversation(api, conversationId)).unreadCount).toBe(0);
 
     // Recargar: la lectura persiste y el badge no vuelve.
     await page.reload();
     await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
-    await expect(inboxRow(page, clientName).locator('span.ml-auto')).toHaveCount(0);
+    await expect(inboxRow(page, clientName).getByTestId('conversation-unread')).toHaveCount(0);
     expect((await getConversation(api, conversationId)).unreadCount).toBe(0);
 
     // El badge del sidebar refleja el total persistido del proyecto.

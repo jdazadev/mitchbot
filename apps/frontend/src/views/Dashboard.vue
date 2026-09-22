@@ -10,6 +10,8 @@ import {
   type VolumePeriod,
 } from "../services/dashboard.service";
 import AIcon from "../components/ui/AIcon.vue";
+import AButton from "../components/ui/AButton.vue";
+import { CHANNEL_META, channelFill } from "../lib/channels";
 
 const { t } = useI18n();
 const isLoading = ref(true);
@@ -46,37 +48,25 @@ const stats = computed(() => [
     label: t("dashboard.stats.totalConversations"),
     testId: "total-conversations",
     value: new Intl.NumberFormat().format(dashboardStats.value.total),
-    delta: "+12%",
-    up: true,
     icon: "ChatTeardropText",
     tone: "sky" as const,
+    live: false,
   },
   {
     label: t("dashboard.stats.activeChats"),
     testId: "active-chats",
     value: dashboardStats.value.active.toString(),
-    delta: t("dashboard.stats.live"),
-    up: true,
     icon: "ChatsCircle",
     tone: "lilac" as const,
+    live: true,
   },
   {
     label: t("dashboard.stats.responseRate"),
     testId: "response-rate",
     value: dashboardStats.value.responseRate,
-    delta: "+1.2%",
-    up: true,
     icon: "Lightning",
     tone: "lime" as const,
-  },
-  {
-    label: t("dashboard.stats.leadConversion"),
-    testId: "lead-conversion",
-    value: "14.0%",
-    delta: "+0.5%",
-    up: true,
-    icon: "Funnel",
-    tone: "butter" as const,
+    live: false,
   },
 ]);
 
@@ -109,9 +99,9 @@ const instagramPercent = computed(() => channelData.value.instagram);
 const webPercent = computed(() => channelData.value.web);
 
 const channelBars = computed(() => [
-  { key: "whatsapp", label: "WhatsApp", pct: whatsappPercent.value, color: "var(--sky)" },
-  { key: "instagram", label: "Instagram", pct: instagramPercent.value, color: "var(--lilac)" },
-  { key: "web", label: "Web", pct: webPercent.value, color: "var(--lime)" },
+  { key: "whatsapp", label: CHANNEL_META.WhatsApp.label, pct: whatsappPercent.value, color: channelFill("WhatsApp") },
+  { key: "instagram", label: CHANNEL_META.Instagram.label, pct: instagramPercent.value, color: channelFill("Instagram") },
+  { key: "web", label: CHANNEL_META.Web.label, pct: webPercent.value, color: channelFill("Web") },
 ]);
 
 // === Gráfico de volumen (a partir de los datos del rango/periodo) ===
@@ -194,33 +184,54 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col gap-3.5">
-    <!-- Stats -->
-    <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-      <div
-        v-for="stat in stats"
-        :key="stat.label"
-        :data-testid="'stat-' + stat.testId"
-        class="rounded-card bg-surface p-5 px-6 shadow-card"
-      >
-        <div class="flex items-center gap-2.5">
-          <span
-            :class="[
-              'grid h-8 w-8 place-items-center rounded-[11px]',
-              stat.tone === 'sky' ? 'bg-sky text-sky-ink' : stat.tone === 'lilac' ? 'bg-lilac text-lilac-ink' : stat.tone === 'lime' ? 'bg-lime text-lime-ink' : 'bg-butter text-butter-ink',
-            ]"
+    <div
+      v-if="error"
+      class="flex flex-wrap items-center gap-3 rounded-card bg-[color:var(--danger-soft)] p-5 text-[13px] text-[color:var(--danger)]"
+    >
+      <AIcon name="WarningCircle" :size="20" />
+      <span class="min-w-[200px] flex-1">{{ error }}</span>
+      <AButton variant="primary" icon="ArrowsClockwise" @click="loadDashboard">
+        {{ t("common.retry") }}
+      </AButton>
+    </div>
+
+    <template v-else>
+      <!-- Stats -->
+      <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:[grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
+        <div
+          v-for="stat in stats"
+          :key="stat.label"
+          :data-testid="'stat-' + stat.testId"
+          class="rounded-card bg-surface p-5 px-6 shadow-card"
+        >
+          <div class="flex items-center gap-2.5">
+            <span
+              :class="[
+                'grid h-8 w-8 place-items-center rounded-[11px]',
+                stat.tone === 'sky' ? 'bg-sky text-sky-ink' : stat.tone === 'lilac' ? 'bg-lilac text-lilac-ink' : 'bg-lime text-lime-ink',
+              ]"
+            >
+              <AIcon :name="stat.icon" :size="16" weight="bold" />
+            </span>
+            <span class="text-xs font-semibold text-ink-3">{{ stat.label }}</span>
+          </div>
+          <div
+            v-if="isLoading"
+            class="mt-3 h-9 w-24 animate-pulse rounded-lg bg-sunken"
+            aria-hidden="true"
+          />
+          <div
+            v-else
+            class="mt-3 font-display text-[38px] font-bold leading-none tracking-[-0.04em] [font-variant-numeric:tabular-nums]"
           >
-            <AIcon :name="stat.icon" :size="16" weight="bold" />
-          </span>
-          <span class="text-xs font-semibold text-ink-3">{{ stat.label }}</span>
-        </div>
-        <div class="mt-3 font-display text-[38px] font-bold leading-none tracking-[-0.04em] [font-variant-numeric:tabular-nums]">
-          {{ stat.value }}
-        </div>
-        <div class="mt-2 text-xs font-semibold" :class="stat.up ? 'text-lime-ink' : 'text-ink-3'">
-          {{ stat.delta }}
+            {{ stat.value }}
+          </div>
+          <div v-if="stat.live && !isLoading" class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-lime-ink">
+            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-lime-ink" />
+            {{ t("dashboard.stats.live") }}
+          </div>
         </div>
       </div>
-    </div>
 
     <!-- Charts -->
     <div class="grid grid-cols-1 gap-3.5 xl:grid-cols-[1.7fr_1fr]">
@@ -311,7 +322,7 @@ onMounted(() => {
               stroke-width="2"
             />
             <text
-              v-if="volumePoints.length === 0"
+              v-if="!isLoading && volumePoints.length === 0"
               fill="var(--ink-3)"
               font-size="16"
               text-anchor="middle"
@@ -351,14 +362,9 @@ onMounted(() => {
 
         <!-- Recent activity -->
         <div class="flex-1 rounded-card bg-surface p-5 px-6 shadow-card">
-          <div class="flex items-center justify-between">
-            <h3 data-testid="activity-title" class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">
-              {{ t("dashboard.activity.title") }}
-            </h3>
-            <button type="button" class="text-xs font-semibold text-lilac-ink hover:opacity-80">
-              {{ t("dashboard.activity.viewAll") }}
-            </button>
-          </div>
+          <h3 data-testid="activity-title" class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">
+            {{ t("dashboard.activity.title") }}
+          </h3>
           <p v-if="activities.length === 0" class="mt-4 text-sm text-ink-3">
             {{ t("dashboard.activity.empty") }}
           </p>
@@ -381,5 +387,6 @@ onMounted(() => {
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>

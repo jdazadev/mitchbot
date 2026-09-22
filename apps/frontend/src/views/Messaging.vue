@@ -19,8 +19,11 @@ import AIcon from "../components/ui/AIcon.vue";
 import AAvatar from "../components/ui/AAvatar.vue";
 import APill from "../components/ui/APill.vue";
 import ABubble from "../components/ui/ABubble.vue";
+import AButton from "../components/ui/AButton.vue";
+import AModal from "../components/ui/AModal.vue";
 import AEmptyState from "../components/ui/AEmptyState.vue";
 import { renderMarkdown } from "../lib/markdown";
+import { channelMeta, channelIcon, channelTone } from "../lib/channels";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -44,11 +47,6 @@ const newMessage = ref("");
 const searchQuery = ref("");
 
 // === Filtros de canal derivados de la configuración del proyecto ===
-const channelMeta: Record<Exclude<ChannelFilter, "All">, { label: string; color: string }> = {
-  WhatsApp: { label: "WhatsApp", color: "var(--lime-ink)" },
-  Instagram: { label: "Instagram", color: "var(--lilac-ink)" },
-  Web: { label: "Web", color: "var(--sky-ink)" },
-};
 const enabledChannels = ref<ChannelFilter[]>(["All"]);
 
 async function loadChannels() {
@@ -64,12 +62,6 @@ async function loadChannels() {
     console.error("Failed to load project channels", error);
     enabledChannels.value = ["All", "WhatsApp", "Instagram", "Web"];
   }
-}
-
-function platformIcon(platform: string) {
-  if (platform === "WhatsApp") return "Phone";
-  if (platform === "Instagram") return "Image";
-  return "Globe";
 }
 
 const filteredChats = computed(() => {
@@ -129,6 +121,13 @@ async function selectChat(chat: ChatConversation) {
   chats.value.forEach((c) => (c.active = c._id === chat._id));
 
   await Promise.all([fetchMessages(chat), loadInsights(chat._id)]);
+}
+
+/** En móvil vuelve de la conversación a la bandeja (sin selección). */
+function closeChat() {
+  selectedChat.value = null;
+  setOpenConversation(null);
+  chats.value.forEach((c) => (c.active = false));
 }
 
 async function fetchMessages(chat: ChatConversation) {
@@ -362,6 +361,15 @@ const urgency = computed(() => {
   };
 });
 
+function conversationStatusLabel(status: ChatConversation["status"]) {
+  const map: Record<string, string> = {
+    active: t("messaging.details.status.active"),
+    closed: t("messaging.details.status.closed"),
+    pending_human: t("messaging.details.status.pendingHuman"),
+  };
+  return map[status] || status;
+}
+
 const details = computed(() => {
   const chat = selectedChat.value;
   if (!chat) return [];
@@ -369,7 +377,7 @@ const details = computed(() => {
     { label: t("common.email"), value: chat.contactEmail || chat.clientInfo?.email || t("messaging.details.notAvailable") },
     { label: t("common.phone"), value: chat.contactPhone || chat.clientInfo?.phone || t("messaging.details.notAvailable") },
     { label: t("messaging.details.platform"), value: chat.platform },
-    { label: t("common.status"), value: chat.status },
+    { label: t("common.status"), value: conversationStatusLabel(chat.status) },
   ];
 });
 
@@ -454,21 +462,38 @@ function confirmTool(msg: ChatMessage, action: 'confirm' | 'cancel') {
   });
 }
 
+// === Edición de parámetros de una herramienta (reemplaza window.prompt) ===
+const modifyTarget = ref<ChatMessage | null>(null);
+const modifyInput = ref("");
+const modifyError = ref<string | null>(null);
+
 function modifyTool(msg: ChatMessage) {
   if (!selectedChat.value || !msg.toolData?.executionId) return;
-  const current = JSON.stringify(msg.toolData.params || {}, null, 0);
-  const input = window.prompt(t('messaging.tools.modifyPrompt'), current);
-  if (!input) return;
+  modifyTarget.value = msg;
+  modifyInput.value = JSON.stringify(msg.toolData.params || {}, null, 2);
+  modifyError.value = null;
+}
+
+function closeModifyModal() {
+  modifyTarget.value = null;
+  modifyInput.value = "";
+  modifyError.value = null;
+}
+
+function confirmModifyTool() {
+  const msg = modifyTarget.value;
+  if (!msg?.toolData?.executionId) return;
   try {
-    const params = JSON.parse(input);
+    const params = JSON.parse(modifyInput.value);
     socketService.confirmTool({
-      conversationId: selectedChat.value._id,
+      conversationId: selectedChat.value!._id,
       executionId: msg.toolData.executionId,
-      action: 'modify',
+      action: "modify",
       params,
     });
+    closeModifyModal();
   } catch {
-    window.alert(t('messaging.tools.invalidJson'));
+    modifyError.value = t("messaging.tools.invalidJson");
   }
 }
 
@@ -555,7 +580,10 @@ onUnmounted(() => {
     :class="selectedChat ? 'lg:grid-cols-[minmax(320px,30%)_1fr_300px]' : 'lg:grid-cols-[minmax(320px,30%)_1fr]'"
   >
     <!-- Bandeja de entrada -->
-    <aside class="flex h-full min-h-0 flex-col overflow-hidden rounded-big bg-surface shadow-card">
+    <aside
+      class="h-full min-h-0 flex-col overflow-hidden rounded-big bg-surface shadow-card"
+      :class="selectedChat ? 'hidden lg:flex' : 'flex'"
+    >
       <div class="px-4.5 pb-2.5 pt-4">
         <h2 class="font-display text-[15.5px] font-bold tracking-[-0.01em]">
           {{ t("messaging.inbox.title") }}
@@ -586,7 +614,7 @@ onUnmounted(() => {
               v-if="channel !== 'All'"
               class="h-1.5 w-1.5 rounded-full bg-current"
             />
-            {{ channel === "All" ? t("messaging.filters.all") : channelMeta[channel as Exclude<ChannelFilter, 'All'>].label }}
+            {{ channel === "All" ? t("messaging.filters.all") : channelMeta(channel).label }}
           </button>
         </div>
       </div>
@@ -620,10 +648,10 @@ onUnmounted(() => {
           <span class="relative flex-none">
             <AAvatar
               :initials="(chat.name || 'C').slice(0, 2).toUpperCase()"
-              :tone="chat.platform === 'Instagram' ? 'lilac' : chat.platform === 'Web' ? 'sky' : 'lime'"
+              :tone="channelTone(chat.platform)"
             />
             <span class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full bg-surface text-ink-3 ring-1 ring-line">
-              <AIcon :name="platformIcon(chat.platform)" :size="10" weight="fill" />
+              <AIcon :name="channelIcon(chat.platform)" :size="10" weight="fill" />
             </span>
           </span>
           <span class="min-w-0">
@@ -639,6 +667,7 @@ onUnmounted(() => {
             <span class="text-[11px] text-ink-3">{{ chat.time }}</span>
             <span
               v-if="chat.unreadCount"
+              data-testid="conversation-unread"
               class="grid h-5 min-w-5 place-items-center rounded-full bg-ink px-1.5 text-[11px] font-bold text-white [font-variant-numeric:tabular-nums]"
             >
               {{ chat.unreadCount }}
@@ -649,7 +678,10 @@ onUnmounted(() => {
     </aside>
 
     <!-- Hilo -->
-    <main class="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-big bg-surface shadow-card">
+    <main
+      class="min-h-0 min-w-0 flex-col overflow-hidden rounded-big bg-surface shadow-card"
+      :class="selectedChat ? 'flex' : 'hidden lg:flex'"
+    >
       <div
         v-if="!selectedChat"
         class="flex flex-1 items-center justify-center"
@@ -658,14 +690,22 @@ onUnmounted(() => {
       </div>
       <template v-else>
         <header class="flex flex-none flex-wrap items-center gap-3 border-b-[1.5px] border-line px-5 py-4">
-          <span class="flex items-center gap-3">
-            <AAvatar :initials="(selectedChat.name || 'C').slice(0, 2).toUpperCase()" tone="lilac" />
+          <button
+            type="button"
+            class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink lg:hidden"
+            :aria-label="t('common.back')"
+            @click="closeChat"
+          >
+            <AIcon name="ArrowLeft" :size="17" />
+          </button>
+          <span class="flex min-w-0 items-center gap-3">
+            <AAvatar :initials="(selectedChat.name || 'C').slice(0, 2).toUpperCase()" :tone="channelTone(selectedChat.platform)" />
             <span class="flex flex-col">
               <span class="font-display text-base font-semibold tracking-[-0.01em]">
                 {{ selectedChat.name }}
               </span>
               <span class="flex items-center gap-1.5 text-[11.5px] text-ink-3">
-                <AIcon :name="platformIcon(selectedChat.platform)" :size="13" />
+                <AIcon :name="channelIcon(selectedChat.platform)" :size="13" />
                 {{ selectedChat.platform }}
                 <template v-if="!selectedChat.isContactCreated">
                   · {{ t("messaging.contact.noContact") }}
@@ -791,10 +831,10 @@ onUnmounted(() => {
     <!-- Detalles -->
     <aside
       v-if="selectedChat"
-      class="flex h-full min-h-0 flex-col gap-3.5 overflow-y-auto rounded-big bg-surface p-4.5 shadow-card lg:flex"
+      class="hidden h-full min-h-0 flex-col gap-3.5 overflow-y-auto rounded-big bg-surface p-4.5 shadow-card lg:flex"
     >
       <div class="flex items-center gap-3">
-        <AAvatar :initials="(selectedChat.name || 'C').slice(0, 2).toUpperCase()" tone="lilac" size="lg" />
+        <AAvatar :initials="(selectedChat.name || 'C').slice(0, 2).toUpperCase()" :tone="channelTone(selectedChat.platform)" size="lg" />
         <div class="min-w-0">
           <div class="truncate text-[13.5px] font-semibold">{{ selectedChat.name }}</div>
           <div class="truncate text-xs text-ink-3">
@@ -911,6 +951,44 @@ onUnmounted(() => {
         </div>
       </div>
     </aside>
+
+    <!-- Modal: modificar parámetros de la herramienta -->
+    <AModal
+      :open="!!modifyTarget"
+      :label="t('messaging.tools.modifyTitle')"
+      size="lg"
+      @close="closeModifyModal"
+    >
+      <div class="p-6">
+        <div class="flex items-center justify-between">
+          <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('messaging.tools.modifyTitle') }}</h2>
+          <button
+            type="button"
+            class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas"
+            @click="closeModifyModal"
+          >
+            <AIcon name="X" :size="18" />
+          </button>
+        </div>
+        <p class="mt-2 text-xs text-ink-3">{{ t('messaging.tools.modifyPrompt') }}</p>
+        <div
+          v-if="modifyError"
+          class="mt-3 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]"
+        >
+          <AIcon name="WarningCircle" :size="17" />
+          {{ modifyError }}
+        </div>
+        <textarea
+          v-model="modifyInput"
+          class="field mt-3 h-48 resize-none font-mono text-[13px]"
+          spellcheck="false"
+        />
+        <div class="mt-6 flex justify-end gap-3">
+          <AButton variant="ghost" @click="closeModifyModal">{{ t('common.cancel') }}</AButton>
+          <AButton variant="primary" @click="confirmModifyTool">{{ t('common.confirm') }}</AButton>
+        </div>
+      </div>
+    </AModal>
   </div>
 </template>
 

@@ -68,6 +68,12 @@ const sources = computed(() =>
             : t('brain.status.ready');
     const statusTone: 'lime' | 'butter' | 'danger' | 'ghost' =
       s.status === "Indexed" ? "lime" : s.status === "Processing" ? "butter" : s.status === "Failed" ? "danger" : "ghost";
+    const statusLabel =
+      s.status === "Indexed" ? t("brain.status.indexed")
+        : s.status === "Processing" ? t("brain.status.processing")
+          : s.status === "Failed" ? t("brain.status.failed")
+            : s.status === "Queued" ? t("brain.status.queued")
+              : s.status;
     const progressColor = s.status === "Failed" ? "var(--danger)" : s.status === "Indexed" ? "var(--lime)" : "var(--butter)";
     return {
       ...s,
@@ -83,6 +89,7 @@ const sources = computed(() =>
       progress,
       stageLabel,
       statusTone,
+      statusLabel,
       progressColor,
     };
   }),
@@ -163,15 +170,36 @@ function closeExtractedText() {
   extractedModalSourceId.value = null;
 }
 
-async function handleDeleteSource(sourceId: string) {
+const showDeleteModal = ref(false);
+const deletingSource = ref<KnowledgeSource | null>(null);
+const isDeleting = ref(false);
+
+function openDeleteModal(source: KnowledgeSource) {
+  deletingSource.value = source;
+  showDeleteModal.value = true;
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false;
+  deletingSource.value = null;
+}
+
+async function confirmDeleteSource() {
+  const source = deletingSource.value;
+  if (!source) return;
   actionError.value = null;
   actionSuccess.value = null;
+  isDeleting.value = true;
   try {
-    await brainService.deleteSource(sourceId);
+    await brainService.deleteSource(source._id);
     actionSuccess.value = t('brain.success.deleted');
+    closeDeleteModal();
     await refreshBrain();
   } catch (err: any) {
+    closeDeleteModal();
     actionError.value = err.message || t('brain.errors.deleteFailed');
+  } finally {
+    isDeleting.value = false;
   }
 }
 
@@ -442,7 +470,7 @@ function startPolling() {
                 </td>
                 <td class="px-4.5 py-3.5 text-ink-2">{{ source.size }}</td>
                 <td class="px-4.5 py-3.5">
-                  <APill :tone="source.statusTone" size="sm">{{ source.status }}</APill>
+                  <APill :tone="source.statusTone" size="sm">{{ source.statusLabel }}</APill>
                   <div class="mt-1 text-[11px] text-ink-3">{{ source.stageLabel }}</div>
                 </td>
                 <td class="px-4.5 py-3.5">
@@ -477,7 +505,7 @@ function startPolling() {
                       class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-[color:var(--danger-soft)] hover:text-[color:var(--danger)]"
                       :title="t('brain.sources.delete')"
                       :aria-label="t('brain.sources.delete')"
-                      @click="handleDeleteSource(source._id)"
+                      @click="openDeleteModal(source)"
                     >
                       <AIcon name="Trash" :size="14" />
                     </button>
@@ -631,6 +659,32 @@ function startPolling() {
               extractedModalSourceId ? extractedTextBySource[extractedModalSourceId]?.markdown : ''
             }}            </pre>
           </div>
+      </div>
+    </AModal>
+
+    <AModal
+      :open="showDeleteModal"
+      :label="t('brain.deleteModal.title')"
+      size="sm"
+      @close="closeDeleteModal"
+    >
+      <div class="p-6 text-center">
+        <div class="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-[color:var(--danger-soft)]">
+          <AIcon name="Trash" :size="24" class="text-[color:var(--danger)]" />
+        </div>
+        <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('brain.deleteModal.title') }}</h2>
+        <i18n-t keypath="brain.deleteModal.confirm" tag="p" class="mt-2 text-sm text-ink-3">
+          <template #name>
+            <strong class="text-ink">{{ deletingSource?.name }}</strong>
+          </template>
+        </i18n-t>
+        <p class="mt-2 text-xs text-ink-3">{{ t('brain.deleteModal.hint') }}</p>
+        <div class="mt-6 flex justify-center gap-3">
+          <AButton variant="ghost" @click="closeDeleteModal">{{ t('common.cancel') }}</AButton>
+          <AButton variant="primary" :loading="isDeleting" @click="confirmDeleteSource">
+            {{ t('common.delete') }}
+          </AButton>
+        </div>
       </div>
     </AModal>
   </div>

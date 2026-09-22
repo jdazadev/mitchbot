@@ -117,7 +117,6 @@
       "totalConversations": "Conversaciones totales",
       "activeChats": "Chats activos",
       "responseRate": "Tasa de respuesta",
-      "leadConversion": "Conversión de leads",
       "live": "En vivo"
     },
     "volume": {
@@ -135,7 +134,6 @@
     },
     "activity": {
       "title": "Actividad reciente",
-      "viewAll": "Ver todo",
       "empty": "Sin actividad reciente"
     },
     "time": {
@@ -181,9 +179,11 @@
       "syncStatus": "Estado de sincronización"
     },
     "status": {
+      "queued": "En cola",
       "processing": "Procesando",
       "failed": "Error",
-      "ready": "Listo"
+      "ready": "Listo",
+      "indexed": "Indexado"
     },
     "stage": {
       "queued": "En cola",
@@ -244,6 +244,11 @@
       "title": "Texto extraído",
       "method": "Método: {method}",
       "empty": "Sin texto extraído."
+    },
+    "deleteModal": {
+      "title": "Eliminar fuente",
+      "confirm": "¿Seguro que quieres eliminar {name}? Se borrarán sus vectores y no se puede deshacer.",
+      "hint": "Esta acción no se puede deshacer."
     }
   },
   "clients": {
@@ -351,6 +356,16 @@
   },
   "login": {
     "subtitle": "Inicia sesión en tu cuenta",
+    "headline": {
+      "line1": "Hola otra vez.",
+      "line2": "Entra al panel."
+    },
+    "badges": {
+      "noCard": "Sin tarjeta",
+      "readyInMinutes": "Listo en minutos",
+      "encrypted": "Tus datos, cifrados"
+    },
+    "accountsNote": "Las cuentas se crean desde el equipo, no desde aquí.",
     "submit": "Iniciar Sesión",
     "loading": "Iniciando sesión...",
     "form": {
@@ -395,6 +410,7 @@
       "confirmationRequired": "Confirmación requerida",
       "defaultName": "Herramienta",
       "modify": "Modificar",
+      "modifyTitle": "Modificar acción",
       "modifyPrompt": "Edita los datos de la acción (JSON):",
       "invalidJson": "JSON inválido",
       "status": {
@@ -419,7 +435,12 @@
     "details": {
       "title": "Detalles",
       "platform": "Plataforma",
-      "notAvailable": "No disponible"
+      "notAvailable": "No disponible",
+      "status": {
+        "active": "Activa",
+        "closed": "Cerrada",
+        "pendingHuman": "Pendiente de humano"
+      }
     },
     "urgency": {
       "title": "Urgencia",
@@ -486,6 +507,21 @@
       "notConfigured": "No configurado",
       "personalityTitle": "Personalidad del Bot",
       "personalityHint": "Configura cómo se comporta y responde el chatbot",
+      "section": {
+        "identity": "Identidad",
+        "identityHint": "Nombre, descripción, rol y carácter del bot",
+        "voice": "Voz y tono",
+        "voiceHint": "Idioma y longitud de las respuestas",
+        "knowledge": "Conocimiento",
+        "knowledgeHint": "Cómo usa la base de conocimiento (RAG)",
+        "generation": "Generación",
+        "generationHint": "Creatividad y longitud máxima de la respuesta",
+        "messages": "Mensajes automáticos",
+        "messagesHint": "Saludo, despedida y respuesta de respaldo",
+        "instructions": "Instrucciones adicionales",
+        "instructionsHint": "Reglas extra para el comportamiento del bot"
+      },
+      "unsaved": "Cambios sin guardar",
       "roleLabel": "Rol",
       "roles": {
         "assistant": "Asistente",

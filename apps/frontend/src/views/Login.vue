@@ -44,7 +44,7 @@ async function handleLogin() {
 
       <div class="rounded-big bg-surface p-8 shadow-[var(--shadow-pop)]">
         <h1 class="font-display text-[34px] font-bold leading-none tracking-[-0.035em]">
-          Hola otra vez.<br />Entra al panel.
+          {{ t('login.headline.line1') }}<br />{{ t('login.headline.line2') }}
         </h1>
         <p class="mb-6 mt-2.5 text-[13px] text-ink-3">{{ t('login.subtitle') }}</p>
 
@@ -82,18 +82,18 @@ async function handleLogin() {
 
         <div class="mt-5 flex flex-wrap justify-center gap-2">
           <span class="inline-flex items-center gap-1.5 rounded-full bg-sky-soft px-2.5 py-1 text-[11px] font-semibold text-sky-ink">
-            <span class="h-1.5 w-1.5 rounded-full bg-current" />Sin tarjeta
+            <span class="h-1.5 w-1.5 rounded-full bg-current" />{{ t('login.badges.noCard') }}
           </span>
           <span class="inline-flex items-center gap-1.5 rounded-full bg-lime-soft px-2.5 py-1 text-[11px] font-semibold text-lime-ink">
-            <span class="h-1.5 w-1.5 rounded-full bg-current" />Listo en minutos
+            <span class="h-1.5 w-1.5 rounded-full bg-current" />{{ t('login.badges.readyInMinutes') }}
           </span>
           <span class="inline-flex items-center gap-1.5 rounded-full bg-lilac-soft px-2.5 py-1 text-[11px] font-semibold text-lilac-ink">
-            <span class="h-1.5 w-1.5 rounded-full bg-current" />Tus datos, cifrados
+            <span class="h-1.5 w-1.5 rounded-full bg-current" />{{ t('login.badges.encrypted') }}
           </span>
         </div>
       </div>
 
-      <p class="mt-4 text-center text-xs text-ink-3">Las cuentas se crean desde el equipo, no desde aquí.</p>
+      <p class="mt-4 text-center text-xs text-ink-3">{{ t('login.accountsNote') }}</p>
     </div>
   </div>
 </template>

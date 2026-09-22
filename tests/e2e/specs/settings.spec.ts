@@ -21,13 +21,13 @@ test.describe('Configuración y agentes', () => {
     await expect(page.getByText('Agente actualizado correctamente')).toBeVisible({ timeout: 20_000 });
 
     // Tab Canales.
-    await page.getByRole('button', { name: 'Canales' }).click();
+    await page.getByRole('tab', { name: 'Canales' }).click();
     await expect(page.getByRole('heading', { name: 'Canales de Comunicación' })).toBeVisible();
     await page.getByRole('button', { name: /Guardar Canales/ }).click();
     await expect(page.getByText('Canales actualizados')).toBeVisible({ timeout: 20_000 });
 
     // Tab Opciones.
-    await page.getByRole('button', { name: 'Opciones' }).click();
+    await page.getByRole('tab', { name: 'Opciones' }).click();
     await expect(page.getByRole('heading', { name: 'Opciones' })).toBeVisible();
     await page.getByRole('button', { name: /^Guardar$/ }).click();
     await expect(page.getByText('Opciones actualizadas')).toBeVisible({ timeout: 20_000 });
