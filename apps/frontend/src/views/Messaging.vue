@@ -819,7 +819,7 @@ onUnmounted(() => {
               <AIcon :name="isFocusMode ? 'ArrowsInSimple' : 'ArrowsOutSimple'" :size="15" />
               <span class="hidden xl:inline">{{ t("messaging.focus.toggle") }}</span>
             </button>
-            <APill :tone="selectedChat.mode === 'auto_pilot' ? 'lime' : 'butter'">
+            <APill :dot="false" :tone="selectedChat.mode === 'auto_pilot' ? 'lime' : 'butter'">
               <AIcon :name="selectedChat.mode === 'auto_pilot' ? 'Robot' : 'Headset'" :size="13" />
               {{ selectedChat.mode === "auto_pilot" ? t("messaging.mode.autoPilotOn") : t("messaging.mode.humanTakeover") }}
             </APill>

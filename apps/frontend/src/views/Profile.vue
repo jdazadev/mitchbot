@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { authService, type User } from '../services/auth.service';
 import { projectService, type Project } from '../services/project.service';
@@ -8,7 +8,7 @@ import AAvatar from '../components/ui/AAvatar.vue';
 import APill from '../components/ui/APill.vue';
 import AButton from '../components/ui/AButton.vue';
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 const currentUser = ref<User | null>(null);
 const projects = ref<Project[]>([]);
@@ -18,6 +18,13 @@ const profileSuccess = ref('');
 const profileError = ref('');
 
 const userInitials = ref('?');
+
+const roleLabel = computed(() => {
+  const role = currentUser.value?.role;
+  if (!role) return '';
+  const key = `users.roles.${role}`;
+  return te(key) ? t(key) : role;
+});
 
 onMounted(async () => {
   try {
@@ -90,7 +97,7 @@ async function handleUpdateProfile() {
         </h2>
         <p class="mt-1 text-[13px] text-ink-3">{{ currentUser?.email || '' }}</p>
         <div class="mt-3 flex justify-center">
-          <APill tone="lilac">{{ currentUser?.role || '' }}</APill>
+          <APill tone="lilac">{{ roleLabel }}</APill>
         </div>
         <div class="my-4 h-px bg-line" />
         <div class="text-left text-[13px] text-ink-3">

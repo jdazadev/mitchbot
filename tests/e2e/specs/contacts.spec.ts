@@ -5,7 +5,7 @@ import { startPublicConversation, sendHumanMessage } from '../helpers/api';
 import { uniqueId, uniqueName } from '../helpers/data';
 
 function modal(page: Page) {
-  return page.locator('div.fixed.inset-0').last();
+  return page.getByRole('dialog').last();
 }
 
 test.describe('Clientes', () => {

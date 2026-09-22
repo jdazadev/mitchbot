@@ -290,11 +290,11 @@ function scrollToBottom() {
 </script>
 
 <template>
-  <div class="relative flex h-full gap-8 overflow-hidden bg-canvas p-8">
+  <div class="relative flex h-full flex-col gap-4 overflow-y-auto bg-canvas p-4 lg:flex-row lg:gap-8 lg:overflow-hidden lg:p-8">
     <div class="aurora-haze" aria-hidden="true" />
 
     <!-- Panel de configuración -->
-    <div class="relative z-10 flex w-1/3 flex-col overflow-hidden rounded-card bg-surface shadow-card">
+    <div class="relative z-10 flex w-full shrink-0 flex-col overflow-hidden rounded-card bg-surface shadow-card lg:w-1/3">
       <div class="border-b border-line p-4">
         <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t("publicChat.simulator.title") }}</h2>
         <p class="mt-1 text-xs text-ink-3">{{ t("publicChat.simulator.subtitle") }}</p>
@@ -350,7 +350,7 @@ function scrollToBottom() {
     </div>
 
     <!-- Simulador -->
-    <div class="relative z-10 flex flex-1 flex-col overflow-hidden rounded-big bg-surface shadow-card">
+    <div class="relative z-10 flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-big bg-surface shadow-card lg:min-h-0">
       <div class="flex items-center gap-3 border-b-[1.5px] border-line p-4">
         <AAvatar :initials="(clientName?.[0] || '?').toUpperCase()" tone="lilac" />
         <div>
@@ -361,7 +361,7 @@ function scrollToBottom() {
             {{ activeConversation ? t("publicChat.header.activeWithPlatform", { platform: selectedPlatform }) : t("publicChat.header.startPrompt") }}
           </div>
         </div>
-        <APill v-if="activeConversation" tone="lime" class="ml-auto">
+        <APill v-if="activeConversation" :dot="false" tone="lime" class="ml-auto">
           <AIcon name="Robot" :size="13" />
           {{ t("publicChat.sender.ai") }}
         </APill>

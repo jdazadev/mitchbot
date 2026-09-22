@@ -4,7 +4,7 @@ import { E2E } from '../helpers/config';
 import { uniqueEmail, uniqueId } from '../helpers/data';
 
 function modal(page: Page) {
-  return page.locator('div.fixed.inset-0').last();
+  return page.getByRole('dialog').last();
 }
 
 test.describe('Usuarios del sistema', () => {
@@ -24,7 +24,8 @@ test.describe('Usuarios del sistema', () => {
     await createModal.getByPlaceholder('********').fill('usuario123');
 
     // Rol válido.
-    await createModal.locator('select').first().selectOption('support');
+    await createModal.getByRole('button', { name: 'Rol' }).click();
+    await createModal.getByRole('option', { name: 'Soporte' }).click();
     // Proyecto asignado (checkbox con el nombre del proyecto).
     await createModal.getByRole('checkbox', { name: E2E.project.name }).check();
 
@@ -40,7 +41,8 @@ test.describe('Usuarios del sistema', () => {
     await row.getByTitle('Editar').click();
     await expect(page.getByRole('heading', { name: 'Editar Usuario' })).toBeVisible();
     const editModal = modal(page);
-    await editModal.locator('select').nth(1).selectOption('Inactive');
+    await editModal.getByRole('button', { name: 'Estado' }).click();
+    await editModal.getByRole('option', { name: 'Inactivo' }).click();
     await editModal.getByRole('button', { name: /Guardar/ }).click();
     await expect(page.getByText('Usuario actualizado correctamente')).toBeVisible({ timeout: 20_000 });
   });

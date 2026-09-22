@@ -13,7 +13,6 @@ const props = withDefaults(
     panelClass?: string;
     wrapperClass?: string;
     disabled?: boolean;
-    autoFocus?: boolean;
   }>(),
   {
     label: undefined,
@@ -26,34 +25,94 @@ const props = withDefaults(
     panelClass: '',
     wrapperClass: '',
     disabled: false,
-    autoFocus: false,
   }
 );
 
 const emit = defineEmits<{ (e: 'open'): void; (e: 'close'): void }>();
 
 const open = ref(false);
+const trigger = ref<HTMLButtonElement | null>(null);
 const panel = ref<HTMLElement | null>(null);
+
+const ITEM_SELECTOR =
+  '[role="option"], [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]';
+
+function focusableItems(): HTMLElement[] {
+  if (!panel.value) return [];
+  return Array.from(panel.value.querySelectorAll<HTMLElement>(ITEM_SELECTOR)).filter(
+    (el) => !el.hasAttribute('disabled') && el.getAttribute('aria-disabled') !== 'true'
+  );
+}
+
+function focusItem(index: number) {
+  const items = focusableItems();
+  if (items.length === 0) return;
+  const clamped = ((index % items.length) + items.length) % items.length;
+  items[clamped]?.focus();
+}
+
+function moveFocus(delta: number) {
+  const items = focusableItems();
+  if (items.length === 0) return;
+  const current = items.indexOf(document.activeElement as HTMLElement);
+  if (current === -1) {
+    focusItem(delta > 0 ? 0 : items.length - 1);
+    return;
+  }
+  focusItem(current + delta);
+}
 
 async function openPanel() {
   if (open.value || props.disabled) return;
   open.value = true;
   emit('open');
-  if (props.autoFocus) {
-    await nextTick();
+  await nextTick();
+  const items = focusableItems();
+  if (items.length === 0) {
     panel.value?.focus();
+    return;
   }
+  const checked = items.findIndex(
+    (el) => el.getAttribute('aria-selected') === 'true' || el.getAttribute('aria-checked') === 'true'
+  );
+  focusItem(checked >= 0 ? checked : 0);
 }
 
 function close() {
   if (!open.value) return;
   open.value = false;
   emit('close');
+  trigger.value?.focus();
 }
 
 function toggle() {
   if (open.value) close();
   else openPanel();
+}
+
+function onPanelKeydown(event: KeyboardEvent) {
+  if (props.role === 'dialog') return;
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault();
+      moveFocus(1);
+      break;
+    case 'ArrowUp':
+      event.preventDefault();
+      moveFocus(-1);
+      break;
+    case 'Home':
+      event.preventDefault();
+      focusItem(0);
+      break;
+    case 'End':
+      event.preventDefault();
+      focusItem(focusableItems().length - 1);
+      break;
+    case 'Tab':
+      close();
+      break;
+  }
 }
 
 defineExpose({ open: openPanel, close });
@@ -62,6 +121,7 @@ defineExpose({ open: openPanel, close });
 <template>
   <div :class="['relative flex min-w-0', wrapperClass]" @keydown.escape="close">
     <button
+      ref="trigger"
       type="button"
       :disabled="disabled"
       :aria-label="label"
@@ -71,6 +131,8 @@ defineExpose({ open: openPanel, close });
       :data-testid="testid"
       :class="triggerClass"
       @click="toggle"
+      @keydown.down.prevent="openPanel"
+      @keydown.up.prevent="openPanel"
     >
       <slot name="trigger" :open="open" />
     </button>
@@ -80,13 +142,14 @@ defineExpose({ open: openPanel, close });
       v-if="open"
       ref="panel"
       :role="role"
-      :tabindex="autoFocus ? -1 : undefined"
+      tabindex="-1"
       :aria-label="label"
       :class="[
         'absolute z-40 mt-2 max-w-[calc(100vw-1.75rem)] overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)] focus:outline-none',
         align === 'right' ? 'right-0' : 'left-0',
         panelClass,
       ]"
+      @keydown="onPanelKeydown"
     >
       <slot name="content" :close="close" />
     </div>

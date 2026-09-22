@@ -244,6 +244,7 @@
       "viewConversation": "Ver conversación"
     },
     "errors": {
+      "load": "No se pudieron cargar los clientes. {message}",
       "update": "Error al actualizar cliente: {message}",
       "archive": "Error al archivar cliente: {message}",
       "restore": "Error al restaurar cliente: {message}"
@@ -459,6 +460,7 @@
   },
   "settings": {
     "subtitle": "Gestiona agente, canales y configuración",
+    "unsaved": "Cambios sin guardar",
     "tabs": {
       "agent": "Agente IA",
       "info": "Información",
@@ -499,7 +501,6 @@
         "instructions": "Instrucciones adicionales",
         "instructionsHint": "Reglas extra para el comportamiento del bot"
       },
-      "unsaved": "Cambios sin guardar",
       "roleLabel": "Rol",
       "roles": {
         "assistant": "Asistente",

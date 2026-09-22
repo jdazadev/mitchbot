@@ -107,6 +107,25 @@ const editingContact = ref<Contact | null>(null);
 const editForm = ref<Partial<Contact>>({});
 const editError = ref<string | null>(null);
 
+const editPlatformOptions: { value: Contact["platform"]; label: string }[] = [
+  { value: "WhatsApp", label: "WhatsApp" },
+  { value: "Instagram", label: "Instagram" },
+  { value: "Web", label: "Web" },
+];
+
+const editStatusOptions = computed<{ value: Contact["status"]; label: string }[]>(() => [
+  { value: "Active", label: statusLabel("Active") },
+  { value: "New", label: statusLabel("New") },
+  { value: "Inactive", label: statusLabel("Inactive") },
+]);
+
+const editPlatformLabel = computed(
+  () => editPlatformOptions.find((o) => o.value === editForm.value.platform)?.label ?? ""
+);
+const editStatusLabel = computed(
+  () => editStatusOptions.value.find((o) => o.value === editForm.value.status)?.label ?? ""
+);
+
 // Modal de confirmación de archivar
 const showArchiveModal = ref(false);
 const archivingContact = ref<Contact | null>(null);
@@ -426,8 +445,15 @@ async function restoreContact(contact: Contact) {
       <div v-if="isLoading" class="px-6 py-10 text-center text-sm font-semibold text-ink-3">
         {{ t('clients.loading') }}
       </div>
-      <div v-else-if="error" class="px-6 py-10 text-center text-sm font-semibold text-[color:var(--danger)]">
-        {{ error }}
+      <div
+        v-else-if="error"
+        role="alert"
+        class="flex flex-col items-center gap-3 px-6 py-10 text-center text-sm font-semibold text-[color:var(--danger)]"
+      >
+        <span>{{ t('clients.errors.load', { message: error }) }}</span>
+        <AButton variant="secondary" size="sm" icon="ArrowsClockwise" @click="fetchContacts">
+          {{ t('common.retry') }}
+        </AButton>
       </div>
       <div v-else class="overflow-x-auto">
         <table class="w-full border-collapse text-[13px]">
@@ -662,22 +688,70 @@ async function restoreContact(contact: Contact) {
             </label>
           </div>
           <div class="grid grid-cols-2 gap-4">
-            <label class="flex flex-col gap-1.5">
+            <div class="flex flex-col gap-1.5">
               <span class="text-xs font-semibold text-ink-2">{{ t('clients.editModal.platform') }}</span>
-              <select v-model="editForm.platform" class="field appearance-none">
-                <option value="WhatsApp">WhatsApp</option>
-                <option value="Instagram">Instagram</option>
-                <option value="Web">Web</option>
-              </select>
-            </label>
-            <label class="flex flex-col gap-1.5">
+              <ADropdown
+                :label="t('clients.editModal.platform')"
+                role="listbox"
+                haspopup="listbox"
+                align="left"
+                wrapper-class="w-full"
+                trigger-class="field flex items-center justify-between gap-2 text-left"
+                panel-class="w-full"
+              >
+                <template #trigger>
+                  <span class="truncate">{{ editPlatformLabel }}</span>
+                  <AIcon name="CaretDown" :size="14" class="shrink-0 text-ink-3" />
+                </template>
+                <template #content="{ close }">
+                  <button
+                    v-for="option in editPlatformOptions"
+                    :key="option.value"
+                    type="button"
+                    role="option"
+                    :aria-selected="editForm.platform === option.value"
+                    class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+                    :class="editForm.platform === option.value ? 'text-lilac-ink' : 'text-ink-2'"
+                    @click="editForm.platform = option.value; close()"
+                  >
+                    {{ option.label }}
+                    <AIcon v-if="editForm.platform === option.value" name="Check" :size="16" />
+                  </button>
+                </template>
+              </ADropdown>
+            </div>
+            <div class="flex flex-col gap-1.5">
               <span class="text-xs font-semibold text-ink-2">{{ t('common.status') }}</span>
-              <select v-model="editForm.status" class="field appearance-none">
-                <option value="Active">{{ statusLabel('Active') }}</option>
-                <option value="New">{{ statusLabel('New') }}</option>
-                <option value="Inactive">{{ statusLabel('Inactive') }}</option>
-              </select>
-            </label>
+              <ADropdown
+                :label="t('common.status')"
+                role="listbox"
+                haspopup="listbox"
+                align="left"
+                wrapper-class="w-full"
+                trigger-class="field flex items-center justify-between gap-2 text-left"
+                panel-class="w-full"
+              >
+                <template #trigger>
+                  <span class="truncate">{{ editStatusLabel }}</span>
+                  <AIcon name="CaretDown" :size="14" class="shrink-0 text-ink-3" />
+                </template>
+                <template #content="{ close }">
+                  <button
+                    v-for="option in editStatusOptions"
+                    :key="option.value"
+                    type="button"
+                    role="option"
+                    :aria-selected="editForm.status === option.value"
+                    class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+                    :class="editForm.status === option.value ? 'text-lilac-ink' : 'text-ink-2'"
+                    @click="editForm.status = option.value; close()"
+                  >
+                    {{ option.label }}
+                    <AIcon v-if="editForm.status === option.value" name="Check" :size="16" />
+                  </button>
+                </template>
+              </ADropdown>
+            </div>
           </div>
         </div>
 

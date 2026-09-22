@@ -5,6 +5,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.8.0 — 2026-09-22
+
+> 🎨 **Disciplina del sistema**: pastel que significa, un solo set de iconos, selects unificados y recuperación de errores
+
+### ✨ Añadido
+- **Navegación por teclado en `ADropdown`**: al abrir recibe foco el primer ítem (o el seleccionado), `ArrowUp/Down` y `Home/End` recorren las opciones (`role="option"`/`menuitem*`), `Tab` cierra el menú y `Escape` devuelve el foco al disparador; los desplegables `dialog` (Notificaciones) conservan su foco propio.
+- **Recuperación en Clientes**: el fallo de carga ya no reemplaza la tabla por un texto; muestra banner `role="alert"` con la clave `clients.errors.load` y botón **Reintentar** que reejecuta `fetchContacts()` conservando los filtros (como Usuarios y Brain).
+- **Iconos Phosphor nuevos** en `AIcon`: `SmileyMeh`, `Smiley`, `SmileyWink`, `Target`, `PaintBrush`, `Broadcast`.
+- **Guardado consistente en Configuración**: Canales y Opciones ganan el mismo indicador **"Cambios sin guardar"** y la barra pegajosa que ya tenía Agente (claves `settings.unsaved`).
+
+### 🔧 Cambiado
+- **El pastel vuelve a significar** (`Dashboard`, `ProjectSetup`): las métricas agregadas (total, activos, tasa) pasan a tinta neutra (`sunken`/`ink-2`) y el paso del agente usa **lima (bot)**; proyecto y canales quedan neutros. Se deja de rotar pasteles por variedad.
+- **Fuera los emoji como iconografía**: `Settings` (😐🙂😄 → `SmileyMeh`/`Smiley`/`SmileyWink`; 🎯🎨 → `Target`/`PaintBrush`) y `ProjectSetup` (📁🤖📡 → `FolderOpen`/`Robot`/`Broadcast`); el idioma se muestra como texto ("Español"/"English") sin banderas.
+- **Selects nativos → `ADropdown`** en los modales de edición de Clientes (plataforma, estado) y Usuarios (rol, estado) y en la creación de Usuarios; ahora el campo muestra chevron y se opera como lista.
+- **`ADropdown`**: se retira la prop `autoFocus` (el foco inicial es siempre parte del componente).
+- **`APill`**: los pills con icono interno (modo de Conversaciones y cabecera del chat público) usan `:dot="false"`; fin al doble marcador.
+- **`TestChat` responsive**: el simulador apila el panel y el chat en móvil (`flex-col` → `lg:flex-row`, `w-full` → `lg:w-1/3`, alto mínimo del hilo) en vez de fijar `w-1/3` sin breakpoints.
+- **`Profile`**: el rol se traduce con `users.roles.*` en lugar de mostrar el valor crudo.
+
+### 📝 Documentación
+- **AGENTS.md** actualizado con la sección v4.8.0.
+
+### ✅ Verificación
+- `vue-tsc --noEmit` y `build` (frontend) en verde; paridad es/en **568/568**; detector Impeccable sobre `src` en **0 hallazgos**; suite e2e completa **44/44**; auditoría de overflow en 1440 y 390 sin desborde.
+
+---
+
 ## v4.7.1 — 2026-09-22
 
 > 🧹 **Limpieza**: fuera dependencias, tipos, iconos, tokens, clases y claves i18n sin uso

@@ -49,21 +49,18 @@ const stats = computed(() => [
     testId: "total-conversations",
     value: new Intl.NumberFormat().format(dashboardStats.value.total),
     icon: "ChatTeardropText",
-    tone: "sky" as const,
   },
   {
     label: t("dashboard.stats.activeChats"),
     testId: "active-chats",
     value: dashboardStats.value.active.toString(),
     icon: "ChatsCircle",
-    tone: "lilac" as const,
   },
   {
     label: t("dashboard.stats.responseRate"),
     testId: "response-rate",
     value: dashboardStats.value.responseRate,
     icon: "Lightning",
-    tone: "lime" as const,
   },
 ]);
 
@@ -208,12 +205,7 @@ onMounted(() => {
           class="rounded-card bg-surface p-5 px-6 shadow-card"
         >
           <div class="flex items-center gap-2.5">
-            <span
-              :class="[
-                'grid h-8 w-8 place-items-center rounded-[11px]',
-                stat.tone === 'sky' ? 'bg-sky text-sky-ink' : stat.tone === 'lilac' ? 'bg-lilac text-lilac-ink' : 'bg-lime text-lime-ink',
-              ]"
-            >
+            <span class="grid h-8 w-8 place-items-center rounded-[11px] bg-sunken text-ink-2">
               <AIcon :name="stat.icon" :size="16" weight="bold" />
             </span>
             <span class="text-xs font-semibold text-ink-3">{{ stat.label }}</span>

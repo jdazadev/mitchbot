@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { userService, type SystemUser } from '../services/user.service';
 import { projectService, type Project } from '../services/project.service';
@@ -26,6 +26,22 @@ const projects = ref<Project[]>([]);
 
 const roles = ['admin', 'support', 'assistant'] as const;
 const pageSizeOptions = [5, 10, 25, 50];
+
+const roleOptions = computed(() => roles.map((r) => ({ value: r, label: t('users.roles.' + r) })));
+const userStatusOptions = computed(() => [
+  { value: 'Active', label: t('common.active') },
+  { value: 'Inactive', label: t('common.inactive') },
+]);
+
+const createRoleLabel = computed(
+  () => roleOptions.value.find((o) => o.value === createForm.value.role)?.label ?? ''
+);
+const editRoleLabel = computed(
+  () => roleOptions.value.find((o) => o.value === editForm.value.role)?.label ?? ''
+);
+const editStatusLabel = computed(
+  () => userStatusOptions.value.find((o) => o.value === editForm.value.status)?.label ?? ''
+);
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
@@ -441,12 +457,38 @@ function formatDate(dateStr: string) {
             <span class="text-xs font-semibold text-ink-2">{{ t('users.form.password') }} *</span>
             <input v-model="createForm.password" type="password" class="field" :placeholder="t('users.form.passwordPlaceholder')" />
           </label>
-          <label class="flex flex-col gap-1.5">
+          <div class="flex flex-col gap-1.5">
             <span class="text-xs font-semibold text-ink-2">{{ t('users.form.role') }}</span>
-            <select v-model="createForm.role" class="field appearance-none">
-              <option v-for="r in roles" :key="r" :value="r">{{ t('users.roles.' + r) }}</option>
-            </select>
-          </label>
+            <ADropdown
+              :label="t('users.form.role')"
+              role="listbox"
+              haspopup="listbox"
+              align="left"
+              wrapper-class="w-full"
+              trigger-class="field flex items-center justify-between gap-2 text-left"
+              panel-class="w-full"
+            >
+              <template #trigger>
+                <span class="truncate">{{ createRoleLabel }}</span>
+                <AIcon name="CaretDown" :size="14" class="shrink-0 text-ink-3" />
+              </template>
+              <template #content="{ close }">
+                <button
+                  v-for="option in roleOptions"
+                  :key="option.value"
+                  type="button"
+                  role="option"
+                  :aria-selected="createForm.role === option.value"
+                  class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+                  :class="createForm.role === option.value ? 'text-lilac-ink' : 'text-ink-2'"
+                  @click="createForm.role = option.value; close()"
+                >
+                  {{ option.label }}
+                  <AIcon v-if="createForm.role === option.value" name="Check" :size="16" />
+                </button>
+              </template>
+            </ADropdown>
+          </div>
           <div class="flex flex-col gap-1.5">
             <span class="text-xs font-semibold text-ink-2">{{ t('users.form.projects') }}</span>
             <div v-if="projects.length === 0" class="text-xs text-ink-3">{{ t('users.noProjects') }}</div>
@@ -486,19 +528,70 @@ function formatDate(dateStr: string) {
             <span class="text-xs font-semibold text-ink-2">{{ t('users.form.email') }}</span>
             <input v-model="editForm.email" type="email" class="field" />
           </label>
-          <label class="flex flex-col gap-1.5">
+          <div class="flex flex-col gap-1.5">
             <span class="text-xs font-semibold text-ink-2">{{ t('users.form.role') }}</span>
-            <select v-model="editForm.role" class="field appearance-none">
-              <option v-for="r in roles" :key="r" :value="r">{{ t('users.roles.' + r) }}</option>
-            </select>
-          </label>
-          <label class="flex flex-col gap-1.5">
+            <ADropdown
+              :label="t('users.form.role')"
+              role="listbox"
+              haspopup="listbox"
+              align="left"
+              wrapper-class="w-full"
+              trigger-class="field flex items-center justify-between gap-2 text-left"
+              panel-class="w-full"
+            >
+              <template #trigger>
+                <span class="truncate">{{ editRoleLabel }}</span>
+                <AIcon name="CaretDown" :size="14" class="shrink-0 text-ink-3" />
+              </template>
+              <template #content="{ close }">
+                <button
+                  v-for="option in roleOptions"
+                  :key="option.value"
+                  type="button"
+                  role="option"
+                  :aria-selected="editForm.role === option.value"
+                  class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+                  :class="editForm.role === option.value ? 'text-lilac-ink' : 'text-ink-2'"
+                  @click="editForm.role = option.value; close()"
+                >
+                  {{ option.label }}
+                  <AIcon v-if="editForm.role === option.value" name="Check" :size="16" />
+                </button>
+              </template>
+            </ADropdown>
+          </div>
+          <div class="flex flex-col gap-1.5">
             <span class="text-xs font-semibold text-ink-2">{{ t('common.status') }}</span>
-            <select v-model="editForm.status" class="field appearance-none">
-              <option value="Active">{{ t('common.active') }}</option>
-              <option value="Inactive">{{ t('common.inactive') }}</option>
-            </select>
-          </label>
+            <ADropdown
+              :label="t('common.status')"
+              role="listbox"
+              haspopup="listbox"
+              align="left"
+              wrapper-class="w-full"
+              trigger-class="field flex items-center justify-between gap-2 text-left"
+              panel-class="w-full"
+            >
+              <template #trigger>
+                <span class="truncate">{{ editStatusLabel }}</span>
+                <AIcon name="CaretDown" :size="14" class="shrink-0 text-ink-3" />
+              </template>
+              <template #content="{ close }">
+                <button
+                  v-for="option in userStatusOptions"
+                  :key="option.value"
+                  type="button"
+                  role="option"
+                  :aria-selected="editForm.status === option.value"
+                  class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+                  :class="editForm.status === option.value ? 'text-lilac-ink' : 'text-ink-2'"
+                  @click="editForm.status = option.value; close()"
+                >
+                  {{ option.label }}
+                  <AIcon v-if="editForm.status === option.value" name="Check" :size="16" />
+                </button>
+              </template>
+            </ADropdown>
+          </div>
           <div class="flex flex-col gap-1.5">
             <span class="text-xs font-semibold text-ink-2">{{ t('users.form.projects') }}</span>
             <div v-if="projects.length === 0" class="text-xs text-ink-3">{{ t('users.noProjects') }}</div>

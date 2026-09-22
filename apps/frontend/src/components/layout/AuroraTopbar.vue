@@ -416,7 +416,6 @@ onBeforeUnmount(() => {
           role="dialog"
           haspopup="dialog"
           align="right"
-          :auto-focus="true"
           wrapper-class="shrink-0"
           panel-class="w-80"
           :trigger-class="'relative ' + iconButtonClass"

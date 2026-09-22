@@ -226,7 +226,7 @@ async function handleSubmit() {
         <!-- Paso 1: Proyecto -->
         <div v-if="currentStep === 1" class="flex flex-col gap-5">
           <div class="flex items-center gap-3">
-            <span class="grid h-10 w-10 place-items-center rounded-[13px] bg-sky text-sky-ink">
+            <span class="grid h-10 w-10 place-items-center rounded-[13px] bg-sunken text-ink-2">
               <AIcon name="FolderOpen" :size="20" />
             </span>
             <div>
@@ -247,7 +247,7 @@ async function handleSubmit() {
         <!-- Paso 2: Agente -->
         <div v-if="currentStep === 2" class="flex flex-col gap-5">
           <div class="flex items-center gap-3">
-            <span class="grid h-10 w-10 place-items-center rounded-[13px] bg-lilac text-lilac-ink">
+            <span class="grid h-10 w-10 place-items-center rounded-[13px] bg-lime text-lime-ink">
               <AIcon name="Robot" :size="20" />
             </span>
             <div>
@@ -337,7 +337,7 @@ async function handleSubmit() {
         <!-- Paso 3: Canales y opciones -->
         <div v-if="currentStep === 3" class="flex flex-col gap-5">
           <div class="flex items-center gap-3">
-            <span class="grid h-10 w-10 place-items-center rounded-[13px] bg-lime text-lime-ink">
+            <span class="grid h-10 w-10 place-items-center rounded-[13px] bg-sunken text-ink-2">
               <AIcon name="GearSix" :size="20" />
             </span>
             <div>
@@ -377,9 +377,17 @@ async function handleSubmit() {
           <div class="rounded-field bg-canvas p-4">
             <h3 class="text-xs font-semibold text-ink-2">{{ t('setup.summary.title') }}</h3>
             <div class="mt-2 flex flex-col gap-1 text-[13px] text-ink-2">
-              <p>📁 <strong>{{ t('setup.summary.project') }}:</strong> {{ projectForm.name }}</p>
-              <p>🤖 <strong>{{ t('setup.summary.agent') }}:</strong> {{ agentForm.name }}</p>
-              <p>📡 <strong>{{ t('setup.summary.channels') }}:</strong>
+              <p class="flex items-center gap-1.5">
+                <AIcon name="FolderOpen" :size="15" class="shrink-0 text-ink-3" />
+                <strong>{{ t('setup.summary.project') }}:</strong> {{ projectForm.name }}
+              </p>
+              <p class="flex items-center gap-1.5">
+                <AIcon name="Robot" :size="15" class="shrink-0 text-ink-3" />
+                <strong>{{ t('setup.summary.agent') }}:</strong> {{ agentForm.name }}
+              </p>
+              <p class="flex items-center gap-1.5">
+                <AIcon name="Broadcast" :size="15" class="shrink-0 text-ink-3" />
+                <strong>{{ t('setup.summary.channels') }}:</strong>
                 {{ [
                   configForm.channels.whatsapp ? t('setup.channels.whatsapp') : '',
                   configForm.channels.instagram ? t('setup.channels.instagram') : '',

@@ -66,6 +66,12 @@ import {
   PhBrain,
   PhSun,
   PhMoonStars,
+  PhSmileyMeh,
+  PhSmiley,
+  PhSmileyWink,
+  PhTarget,
+  PhPaintBrush,
+  PhBroadcast,
 } from '@phosphor-icons/vue';
 
 type IconWeight = 'thin' | 'light' | 'regular' | 'bold' | 'fill' | 'duotone';
@@ -147,6 +153,12 @@ const ICONS: Record<string, unknown> = {
   Brain: PhBrain,
   Sun: PhSun,
   MoonStars: PhMoonStars,
+  SmileyMeh: PhSmileyMeh,
+  Smiley: PhSmiley,
+  SmileyWink: PhSmileyWink,
+  Target: PhTarget,
+  PaintBrush: PhPaintBrush,
+  Broadcast: PhBroadcast,
 };
 
 const component = computed(() => (ICONS[props.name] || PhCircle) as unknown);

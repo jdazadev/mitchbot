@@ -120,14 +120,14 @@ const traitOptions = computed(() => [
 ]);
 
 const emojiOptions = computed(() => [
-  { id: 'low', label: t('settings.agent.emoji.low'), icon: '😐' },
-  { id: 'medium', label: t('settings.agent.emoji.medium'), icon: '🙂' },
-  { id: 'high', label: t('settings.agent.emoji.high'), icon: '😄' },
+  { id: 'low', label: t('settings.agent.emoji.low'), icon: 'SmileyMeh' },
+  { id: 'medium', label: t('settings.agent.emoji.medium'), icon: 'Smiley' },
+  { id: 'high', label: t('settings.agent.emoji.high'), icon: 'SmileyWink' },
 ]);
 
 const languageOptions = computed(() => [
-  { id: 'es', label: t('common.spanish'), flag: '🇪🇸' },
-  { id: 'en', label: t('common.english'), flag: '🇺🇸' },
+  { id: 'es', label: t('common.spanish') },
+  { id: 'en', label: t('common.english') },
 ]);
 
 const responseLengthOptions = computed(() => [
@@ -163,6 +163,22 @@ const isAgentDirty = computed(() => {
   if (!agent.value?._id) return false;
   return JSON.stringify(agentForm.value) !== savedAgentJson.value;
 });
+
+/** Snapshots de canales y opciones, para el mismo indicador de cambios sin guardar. */
+const savedChannelsJson = ref('');
+const savedOptionsJson = ref('');
+
+const isChannelsDirty = computed(
+  () => JSON.stringify(channels.value.map((c) => c.enabled)) !== savedChannelsJson.value
+);
+const isOptionsDirty = computed(() => JSON.stringify(optionsForm.value) !== savedOptionsJson.value);
+
+function snapshotChannels() {
+  savedChannelsJson.value = JSON.stringify(channels.value.map((c) => c.enabled));
+}
+function snapshotOptions() {
+  savedOptionsJson.value = JSON.stringify(optionsForm.value);
+}
 
 function addGoodbyeKeyword() {
   const value = goodbyeKeywordInput.value.trim();
@@ -265,6 +281,9 @@ onMounted(async () => {
     if (agents.length > 0) {
       applyAgent(agents[0]);
     }
+
+    snapshotChannels();
+    snapshotOptions();
 
   } catch (err: any) {
     console.error('Error loading settings:', err);
@@ -447,6 +466,7 @@ async function handleSaveChannels() {
       },
     });
     showSuccessMsg(t('settings.toasts.channelsUpdated'));
+    snapshotChannels();
   } catch (err: any) {
     showErrorMsg(err.message);
   } finally {
@@ -467,6 +487,7 @@ async function handleSaveOptions() {
       },
     });
     showSuccessMsg(t('settings.toasts.optionsUpdated'));
+    snapshotOptions();
   } catch (err: any) {
     showErrorMsg(err.message);
   } finally {
@@ -707,7 +728,7 @@ async function handleSaveOptions() {
                     :class="agentForm.personality.emojiUsage === e.id ? 'border-lilac bg-lilac-soft text-lilac-ink' : 'border-line text-ink-2 hover:border-line-strong'"
                     @click="agentForm.personality.emojiUsage = e.id as AgentPersonality['emojiUsage']"
                   >
-                    <span>{{ e.icon }}</span> {{ e.label }}
+                    <AIcon :name="e.icon" :size="18" /> {{ e.label }}
                   </button>
                 </div>
               </div>
@@ -745,7 +766,7 @@ async function handleSaveOptions() {
                     :class="agentForm.personality.language === l.id ? 'border-lilac bg-lilac-soft text-lilac-ink' : 'border-line text-ink-2 hover:border-line-strong'"
                     @click="agentForm.personality.language = l.id as AgentPersonality['language']"
                   >
-                    <span>{{ l.flag }}</span> {{ l.label }}
+                    {{ l.label }}
                   </button>
                 </div>
               </div>
@@ -832,8 +853,8 @@ async function handleSaveOptions() {
                 </span>
                 <input v-model.number="agentForm.temperature" type="range" min="0" max="1" step="0.1" class="mt-2 w-full accent-[color:var(--brand)]" />
                 <div class="mt-1 flex justify-between text-[10px] text-ink-3">
-                  <span>🎯 {{ t('settings.agent.temperaturePrecise') }}</span>
-                  <span>🎨 {{ t('settings.agent.temperatureCreative') }}</span>
+                  <span class="inline-flex items-center gap-1"><AIcon name="Target" :size="12" /> {{ t('settings.agent.temperaturePrecise') }}</span>
+                  <span class="inline-flex items-center gap-1">{{ t('settings.agent.temperatureCreative') }} <AIcon name="PaintBrush" :size="12" /></span>
                 </div>
                 <div v-if="showTemperatureWarning" class="mt-2 flex items-center gap-2 rounded-field bg-butter-soft p-2.5 text-xs text-butter-ink">
                   <AIcon name="Warning" :size="15" />
@@ -972,7 +993,7 @@ async function handleSaveOptions() {
           <div class="sticky bottom-3.5 z-10 flex flex-wrap items-center gap-3 rounded-card bg-surface p-3 shadow-card">
             <span v-if="isAgentDirty" class="inline-flex items-center gap-1.5 text-xs font-semibold text-butter-ink">
               <span class="h-1.5 w-1.5 rounded-full bg-butter-ink" />
-              {{ t('settings.agent.unsaved') }}
+              {{ t('settings.unsaved') }}
             </span>
             <AButton variant="primary" class="ml-auto" :loading="saving" @click="handleSaveAgent">
               {{ saving ? t('common.saving') : t('settings.agent.save') }}
@@ -982,7 +1003,7 @@ async function handleSaveOptions() {
       </div>
 
       <!-- ============== TAB: CANALES ============== -->
-      <div v-if="activeTab === 'channels'">
+      <div v-if="activeTab === 'channels'" class="flex flex-col gap-3.5">
         <div class="rounded-card bg-surface p-6 shadow-card">
           <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.channels.title') }}</h2>
           <div class="mt-4 flex flex-col gap-4">
@@ -998,16 +1019,20 @@ async function handleSaveOptions() {
               <ASwitch v-model="channel.enabled" :aria-label="channel.name" />
             </div>
           </div>
-          <div class="flex justify-end pt-4">
-            <AButton variant="primary" :loading="saving" @click="handleSaveChannels">
-              {{ saving ? t('common.saving') : t('settings.channels.save') }}
-            </AButton>
-          </div>
+        </div>
+        <div class="sticky bottom-3.5 z-10 flex flex-wrap items-center gap-3 rounded-card bg-surface p-3 shadow-card">
+          <span v-if="isChannelsDirty" class="inline-flex items-center gap-1.5 text-xs font-semibold text-butter-ink">
+            <span class="h-1.5 w-1.5 rounded-full bg-butter-ink" />
+            {{ t('settings.unsaved') }}
+          </span>
+          <AButton variant="primary" class="ml-auto" :loading="saving" @click="handleSaveChannels">
+            {{ saving ? t('common.saving') : t('settings.channels.save') }}
+          </AButton>
         </div>
       </div>
 
       <!-- ============== TAB: OPCIONES ============== -->
-      <div v-if="activeTab === 'options'">
+      <div v-if="activeTab === 'options'" class="flex flex-col gap-3.5">
         <div class="rounded-card bg-surface p-6 shadow-card">
           <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.options.title') }}</h2>
           <div class="mt-4 flex items-center justify-between rounded-field border border-line p-4">
@@ -1017,11 +1042,15 @@ async function handleSaveOptions() {
             </div>
             <ASwitch v-model="optionsForm.autoCreateContact" :aria-label="t('settings.options.autoCreateContact')" />
           </div>
-          <div class="flex justify-end pt-4">
-            <AButton variant="primary" :loading="saving" @click="handleSaveOptions">
-              {{ saving ? t('common.saving') : t('common.save') }}
-            </AButton>
-          </div>
+        </div>
+        <div class="sticky bottom-3.5 z-10 flex flex-wrap items-center gap-3 rounded-card bg-surface p-3 shadow-card">
+          <span v-if="isOptionsDirty" class="inline-flex items-center gap-1.5 text-xs font-semibold text-butter-ink">
+            <span class="h-1.5 w-1.5 rounded-full bg-butter-ink" />
+            {{ t('settings.unsaved') }}
+          </span>
+          <AButton variant="primary" class="ml-auto" :loading="saving" @click="handleSaveOptions">
+            {{ saving ? t('common.saving') : t('common.save') }}
+          </AButton>
         </div>
       </div>
     </template>

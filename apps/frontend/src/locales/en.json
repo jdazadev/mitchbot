@@ -244,6 +244,7 @@
       "viewConversation": "View conversation"
     },
     "errors": {
+      "load": "Could not load clients. {message}",
       "update": "Error updating client: {message}",
       "archive": "Error archiving client: {message}",
       "restore": "Error restoring client: {message}"
@@ -459,6 +460,7 @@
   },
   "settings": {
     "subtitle": "Manage the agent, channels and settings",
+    "unsaved": "Unsaved changes",
     "tabs": {
       "agent": "AI Agent",
       "info": "Information",
@@ -499,7 +501,6 @@
         "instructions": "Additional instructions",
         "instructionsHint": "Extra rules for the bot's behavior"
       },
-      "unsaved": "Unsaved changes",
       "roleLabel": "Role",
       "roles": {
         "assistant": "Assistant",

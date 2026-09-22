@@ -13,7 +13,22 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.7.1
+**Versión actual del proyecto:** v4.8.0
+
+---
+
+## Disciplina del sistema del frontend (v4.8.0)
+
+Cierre de los 5 hallazgos del critique Impeccable (25/40): que las reglas de `DESIGN.md` se cumplan también en los bordes (onboarding, settings, modales).
+
+- **El pastel vuelve a significar**: en `Dashboard.vue` las métricas agregadas (total, activos, tasa) dejan la rotación cielo/lila/lima y pasan a **tinta neutra** (`bg-sunken text-ink-2`); en `ProjectSetup.vue` el paso del agente usa **lima (bot)**, y proyecto y canales quedan neutros. El lila se conserva como **selección** (progreso, rol elegido).
+- **Un solo set de iconos**: fuera los emoji. `Settings.vue` usa `SmileyMeh`/`Smiley`/`SmileyWink` y `Target`/`PaintBrush`; `ProjectSetup.vue` usa `FolderOpen`/`Robot`/`Broadcast`; el idioma se muestra como texto ("Español"/"English") sin banderas. Iconos nuevos registrados en `AIcon.vue`.
+- **Selects nativos → `ADropdown`**: los `<select class="field appearance-none">` de los modales de **Clientes** (plataforma/estado) y **Usuarios** (rol/estado) y la creación de Usuarios se migran al primitivo (`role="listbox"`, trigger `field`, panel `w-full`). Se acabó el campo que parecía un input.
+- **`ADropdown` operable por teclado**: al abrir enfoca el primer ítem (o el seleccionado/marcado), `ArrowUp/Down` y `Home/End` hacen roving focus sobre `[role="option"]`/`menuitem*`, `Tab` cierra y `Escape` devuelve el foco al **trigger**; los `dialog` (Notificaciones) conservan su foco propio. Se retira la prop `autoFocus` (el foco inicial es del componente).
+- **Recuperación en Clientes**: el error de carga deja de ser texto plano; banner `role="alert"` con `clients.errors.load` + **Reintentar** que reejecuta `fetchContacts()` conservando filtros (paridad con Usuarios/Brain).
+- **Guardado consistente en Configuración**: **Canales** y **Opciones** ganan el indicador **"Cambios sin guardar"** (`settings.unsaved`) y la barra pegajosa que ya tenía Agente; snapshots `savedChannelsJson`/`savedOptionsJson`.
+- **Cierres menores**: pills con icono interno usan `:dot="false"` (fin al doble marcador); `TestChat` pasa a layout **responsive** (`flex-col` → `lg:flex-row`, `w-full` → `lg:w/1/3`); el rol de `Profile` se traduce con `users.roles.*`.
+- **Verificación**: `vue-tsc --noEmit` + `build` en verde; paridad es/en **568/568**; detector Impeccable sobre `src` en **0 hallazgos**; e2e **44/44**; auditoría de overflow 1440/390 sin desborde.
 
 ---
 
