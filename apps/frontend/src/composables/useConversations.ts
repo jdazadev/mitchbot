@@ -2,6 +2,7 @@ import { computed, ref } from 'vue';
 import type { Socket } from 'socket.io-client';
 import { messagingService, type ChatConversation, type ChatMessage } from '../services/messaging.service';
 import { socketService } from '../services/socket.service';
+import i18n from '../i18n';
 
 export type ChannelFilter = 'All' | 'WhatsApp' | 'Instagram' | 'Web';
 
@@ -19,14 +20,15 @@ export function formatConversationTime(dateStr?: string): string {
   if (!dateStr) return '';
   const date = new Date(dateStr);
   const now = new Date();
+  const locale = i18n.global.locale.value;
   const sameDay =
     now.getFullYear() === date.getFullYear() &&
     now.getMonth() === date.getMonth() &&
     now.getDate() === date.getDate();
   if (sameDay) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   }
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 }
 
 export function decorateConversation(c: ChatConversation): ChatConversation {

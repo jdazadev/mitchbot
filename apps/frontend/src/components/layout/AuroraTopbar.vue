@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { projectService, type Project } from '../../services/project.service';
@@ -59,6 +59,25 @@ const pageTitle = computed(() => {
       return t('topbar.default');
   }
 });
+
+// === Reloj (invariante del topbar) ===
+const clock = ref(new Date());
+let clockTimer: ReturnType<typeof setInterval> | undefined;
+
+const clockLabel = computed(() => {
+  const date = clock.value.toLocaleDateString(locale.value, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const time = clock.value.toLocaleTimeString(locale.value, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  return `${date} ${time}`;
+});
+const clockIso = computed(() => clock.value.toISOString());
 
 const currentUser = ref<User | null>(null);
 
@@ -190,6 +209,9 @@ function formatNotificationTime(value: string) {
 }
 
 onMounted(async () => {
+  clockTimer = setInterval(() => {
+    clock.value = new Date();
+  }, 10_000);
   currentUser.value = authService.getUser();
   activeProjectId.value = authService.getActiveProjectId();
   try {
@@ -198,6 +220,10 @@ onMounted(async () => {
     projects.value = [];
   }
   socketService.onNotification(handleNotification);
+});
+
+onBeforeUnmount(() => {
+  if (clockTimer) clearInterval(clockTimer);
 });
 </script>
 
@@ -217,12 +243,19 @@ onMounted(async () => {
 
       <h2
         data-testid="page-title"
-        class="rounded-full bg-surface px-4 py-2 font-display text-[15px] font-bold tracking-[-0.02em] shadow-card"
+        class="font-display text-[19px] font-bold leading-none tracking-[-0.03em] text-ink"
       >
         {{ pageTitle }}
       </h2>
 
-      <div class="ml-auto flex items-center gap-2">
+      <div class="ml-auto flex items-center gap-2.5">
+        <div
+          class="mr-1 hidden items-center gap-2 whitespace-nowrap text-[12.5px] font-semibold text-ink-3 min-[1360px]:flex"
+        >
+          <AIcon name="Clock" :size="15" class="text-ink-3" />
+          <time :datetime="clockIso" class="[font-variant-numeric:tabular-nums]">{{ clockLabel }}</time>
+        </div>
+
         <!-- Proyectos -->
         <div class="relative" @keydown.escape="projectOpen = false">
           <button
@@ -433,6 +466,15 @@ onMounted(async () => {
               <p class="truncate text-sm font-bold">{{ currentUser?.name }}</p>
               <p class="truncate text-[11px] font-semibold text-ink-3">{{ currentUser?.email }}</p>
             </div>
+            <router-link
+              to="/settings"
+              role="menuitem"
+              class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-ink-2 hover:bg-canvas hover:text-ink"
+              @click="userOpen = false"
+            >
+              <AIcon name="GearSix" :size="16" />
+              {{ t('nav.settings') }}
+            </router-link>
             <router-link
               to="/profile"
               role="menuitem"

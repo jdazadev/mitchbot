@@ -40,7 +40,7 @@ const isPolling = ref(false);
 const brainStats = ref<BrainStats>({
   totalDocs: 0,
   totalVectors: 0,
-  syncStatus: "Unknown",
+  syncStatus: "",
 });
 
 const sources = computed(() =>
@@ -119,6 +119,16 @@ const sourceCounts = computed(() => {
 });
 
 const totalSources = computed(() => sourceList.value.length);
+
+/** Estado de sincronización real, derivado del estado de las fuentes. */
+const syncLabel = computed(() => {
+  if (totalSources.value === 0) return t('brain.knowledge.noSources');
+  if (sourceCounts.value.Processing > 0 || sourceCounts.value.Queued > 0) {
+    return t('brain.status.processing');
+  }
+  if (sourceCounts.value.Failed > 0) return t('brain.status.failed');
+  return t('brain.status.indexed');
+});
 
 const coveragePct = computed(() => {
   if (!totalSources.value) return 0;
@@ -434,8 +444,8 @@ function startPolling() {
           <div class="mt-0.5 text-[12px] text-ink-3 [font-variant-numeric:tabular-nums]">
             {{ t("brain.knowledge.subtitle", {
               vectors: formattedVectors,
-              docs: brainStats.totalDocs,
-              sync: brainStats.syncStatus,
+              docs: totalSources,
+              sync: syncLabel,
             }) }}
           </div>
         </div>

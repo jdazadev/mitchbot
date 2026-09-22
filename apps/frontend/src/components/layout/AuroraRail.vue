@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{ variant?: 'desktop' | 'mobile' }>(), {
 
 const emit = defineEmits<{ (e: 'navigate'): void }>();
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const route = useRoute();
 const { unreadTotal } = useConversations();
 const { brand } = useBrand();
@@ -25,11 +25,6 @@ const OPERATION = [
   { key: 'users', icon: 'UserList', href: '/users' },
 ];
 
-const ORGANIZATION = [
-  { key: 'settings', icon: 'GearSix', href: '/settings' },
-  { key: 'profile', icon: 'User', href: '/profile' },
-];
-
 const projectInitial = computed(() => (brand.value.name || 'M').trim().charAt(0).toUpperCase());
 
 const containerClass = computed(() =>
@@ -37,9 +32,6 @@ const containerClass = computed(() =>
     ? 'fixed inset-y-[var(--shell-pad)] left-[var(--shell-pad)] z-40 flex w-[var(--rail-w)] flex-col overflow-hidden rounded-big bg-surface shadow-card md:hidden'
     : 'fixed inset-y-[var(--shell-pad)] left-[var(--shell-pad)] z-20 hidden w-[var(--rail-w)] flex-col overflow-hidden rounded-big bg-surface shadow-card md:flex'
 );
-
-const clock = ref(new Date());
-let clockTimer: ReturnType<typeof setInterval> | undefined;
 
 const railRef = ref<HTMLElement | null>(null);
 
@@ -66,22 +58,7 @@ function onDrawerKeydown(event: KeyboardEvent) {
   }
 }
 
-const timeLabel = computed(() =>
-  clock.value.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
-);
-const weekdayLabel = computed(() => clock.value.toLocaleDateString(locale.value, { weekday: 'long' }));
-const dateLabel = computed(() => {
-  const d = clock.value;
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  return `${dd}/${mm}/${d.getFullYear()}`;
-});
-
 onMounted(() => {
-  clockTimer = setInterval(() => {
-    clock.value = new Date();
-  }, 10_000);
-
   if (props.variant === 'mobile') {
     document.addEventListener('keydown', onDrawerKeydown);
     nextTick(() => railRef.value?.querySelector<HTMLElement>('a[href]')?.focus());
@@ -89,7 +66,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  if (clockTimer) clearInterval(clockTimer);
   document.removeEventListener('keydown', onDrawerKeydown);
 });
 
@@ -149,37 +125,6 @@ function isActive(href: string) {
           {{ unreadTotal }}
         </span>
       </router-link>
-
-      <div class="my-2 h-px bg-line" />
-
-      <router-link
-        v-for="item in ORGANIZATION"
-        :key="item.key"
-        :to="item.href"
-        :data-testid="'nav-' + item.key"
-        :class="[
-          'flex items-center gap-2.5 rounded-full px-3 py-2.5 text-[13.5px] font-medium transition-colors duration-150',
-          isActive(item.href)
-            ? 'bg-lilac-soft font-semibold text-lilac-ink'
-            : 'text-ink-2 hover:bg-canvas hover:text-ink',
-        ]"
-        @click="emit('navigate')"
-      >
-        <AIcon :name="item.icon" :size="18" :weight="isActive(item.href) ? 'fill' : 'regular'" />
-        <span class="truncate">{{ t('nav.' + item.key) }}</span>
-      </router-link>
     </nav>
-
-    <div class="m-3 mt-2 rounded-card bg-canvas px-3 py-3.5 text-center">
-      <div
-        class="font-display text-[24px] font-bold tracking-[-0.03em] [font-variant-numeric:tabular-nums]"
-      >
-        {{ timeLabel }}
-      </div>
-      <div class="mt-0.5 text-[11.5px] capitalize text-ink-3">{{ weekdayLabel }}</div>
-      <div class="text-[11.5px] text-ink-3 [font-variant-numeric:tabular-nums]">
-        {{ dateLabel }}
-      </div>
-    </div>
   </aside>
 </template>

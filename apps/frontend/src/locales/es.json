@@ -23,7 +23,7 @@
     "messaging": "Conversaciones",
     "brain": "Brain",
     "clients": "Clientes",
-    "default": "BotMaster",
+    "default": "Mitchbot",
     "selectProject": "Selecciona proyecto",
     "projectSwitchError": "No se pudo cambiar de proyecto. {message}",
     "noProjects": "No tienes proyectos",
@@ -187,7 +187,8 @@
       "title": "Conocimiento indexado",
       "subtitle": "{vectors} vectores · {docs} fuentes · {sync}",
       "coverage": "cobertura",
-      "empty": "Aún no hay conocimiento indexado. Añade una fuente para empezar."
+      "empty": "Aún no hay conocimiento indexado. Añade una fuente para empezar.",
+      "noSources": "sin fuentes"
     },
     "status": {
       "queued": "En cola",
@@ -210,8 +211,8 @@
       "empty": "No se encontraron fuentes de conocimiento. Añade una para empezar.",
       "viewExtracted": "Ver texto extraído",
       "labelExtracted": "Ver texto",
-      "viewLogs": "Ver logs",
-      "labelLogs": "Logs",
+      "viewLogs": "Ver registros",
+      "labelLogs": "Registros",
       "delete": "Eliminar fuente",
       "labelDelete": "Eliminar",
       "table": {
@@ -222,7 +223,7 @@
       }
     },
     "logs": {
-      "empty": "Sin logs disponibles",
+      "empty": "Sin registros disponibles",
       "general": "general"
     },
     "errors": {
@@ -523,12 +524,12 @@
     },
     "info": {
       "title": "Información del Proyecto",
-      "subtitle": "Administra datos básicos del proyecto y el enlace de test chat",
+      "subtitle": "Administra datos básicos del proyecto y el enlace del chat de prueba",
       "slugLabel": "Slug del Proyecto",
-      "slugHint": "Se usa para compartir el enlace de test chat",
+      "slugHint": "Se usa para compartir el enlace del chat de prueba",
       "slugPlaceholder": "mi-proyecto",
       "slugFallback": "slug",
-      "copyLink": "Copiar link"
+      "copyLink": "Copiar enlace"
     },
     "agent": {
       "basicTitle": "Información del Agente",
@@ -623,7 +624,7 @@
         "high": "Alta",
         "veryHigh": "Muy alta"
       },
-      "maxTokensLabel": "Max tokens — {level} ({value})",
+      "maxTokensLabel": "Tokens máximos — {level} ({value})",
       "maxTokensOption": {
         "veryShort": "Muy corto",
         "medium": "Media",
@@ -637,8 +638,8 @@
       "goodbyeHint": "Despide cuando el usuario se despida o cierre chat",
       "fallbackAdvisor": "Cuando no sepa la respuesta",
       "fallbackAdvisorHint": "Disculparse y aconsejar contactar con un asesor",
-      "goodbyeKeywordsLabel": "Keywords de despedida",
-      "goodbyeKeywordPlaceholder": "Escribe una keyword",
+      "goodbyeKeywordsLabel": "Palabras clave de despedida",
+      "goodbyeKeywordPlaceholder": "Escribe una palabra clave",
       "goodbyeKeywordsHint": "Se comparan en minúsculas. Usa términos como “adios”, “gracias”, “bye”.",
       "additionalInstructionsLabel": "Instrucciones adicionales",
       "additionalInstructionsPlaceholder": "Ej: No menciones precios, siempre sugiere contactar a un asesor...",
@@ -658,20 +659,20 @@
       "projectNotFound": "No se encontró el proyecto",
       "slugRequired": "El slug es obligatorio",
       "slugUpdate": "Error al actualizar slug",
-      "copyLink": "No se pudo copiar el link",
+      "copyLink": "No se pudo copiar el enlace",
       "agentNotFound": "No se encontró el agente",
       "agentSave": "Error al guardar agente"
     },
     "toasts": {
       "slugUpdated": "Slug actualizado correctamente",
-      "linkCopied": "Link copiado",
+      "linkCopied": "Enlace copiado",
       "agentUpdated": "Agente actualizado correctamente",
       "channelsUpdated": "Canales actualizados",
       "optionsUpdated": "Opciones actualizadas"
     },
     "brand": {
       "title": "Identidad del proyecto",
-      "subtitle": "Color, nombre y logo que se aplican a toda la interfaz (sidebar, botones y acentos).",
+      "subtitle": "Color, nombre y logo que se aplican a toda la interfaz (barra lateral, botones y acentos).",
       "nameLabel": "Nombre del proyecto",
       "namePlaceholder": "Ej. Estudio La Rural",
       "colorLabel": "Color de la marca",
@@ -813,7 +814,7 @@
   },
   "publicChat": {
     "simulator": {
-      "title": "🧪 Test — Simulador de Cliente",
+      "title": "🧪 Prueba — Simulador de Cliente",
       "subtitle": "Simula un cliente que inicia una conversación. El contacto se crea automáticamente cuando el agente responde."
     },
     "client": {
@@ -830,7 +831,7 @@
       "contactCreated": "Contacto creado:",
       "contactCreatedYes": "✅ Sí",
       "contactPending": "⏳ Pendiente (responde desde el dashboard)",
-      "reset": "Resetear"
+      "reset": "Reiniciar"
     },
     "header": {
       "anonymous": "Cliente Anónimo",

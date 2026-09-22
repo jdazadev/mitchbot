@@ -25,7 +25,7 @@ import AEmptyState from "../components/ui/AEmptyState.vue";
 import { renderMarkdown } from "../lib/markdown";
 import { channelMeta, channelIcon, channelTone } from "../lib/channels";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 
 const {
@@ -172,7 +172,7 @@ function processMessage(m: ChatMessage, chat: ChatConversation) {
   return {
     ...m,
     isMe: m.sender !== "contact",
-    time: new Date(m.createdAt).toLocaleTimeString([], {
+    time: new Date(m.createdAt).toLocaleTimeString(locale.value, {
       hour: "2-digit",
       minute: "2-digit",
     }),
@@ -216,7 +216,7 @@ function formatDayLabel(date: Date) {
   yesterday.setDate(today.getDate() - 1);
   if (sameDay(date, today)) return t("common.today");
   if (sameDay(date, yesterday)) return t("common.yesterday");
-  return date.toLocaleDateString([], {
+  return date.toLocaleDateString(locale.value, {
     day: "numeric",
     month: "long",
     year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
@@ -472,9 +472,9 @@ function formatTime(dateStr: string) {
   const date = new Date(dateStr);
   const now = new Date();
   if (now.getDate() === date.getDate()) {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString(locale.value, { hour: "2-digit", minute: "2-digit" });
   }
-  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  return date.toLocaleDateString(locale.value, { month: "short", day: "numeric" });
 }
 
 function onNewMessage(msg: ChatMessage) {

@@ -23,7 +23,7 @@
     "messaging": "Conversations",
     "brain": "Brain",
     "clients": "Clients",
-    "default": "BotMaster",
+    "default": "Mitchbot",
     "selectProject": "Select project",
     "projectSwitchError": "Could not switch project. {message}",
     "noProjects": "You have no projects",
@@ -187,7 +187,8 @@
       "title": "Indexed knowledge",
       "subtitle": "{vectors} vectors · {docs} sources · {sync}",
       "coverage": "coverage",
-      "empty": "No indexed knowledge yet. Add a source to get started."
+      "empty": "No indexed knowledge yet. Add a source to get started.",
+      "noSources": "no sources"
     },
     "status": {
       "queued": "Queued",

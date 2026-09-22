@@ -5,6 +5,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.6.0 — 2026-09-22
+
+> 🕒 **Shell afinado**: reloj al topbar, título honesto, Configuración/Mi Perfil al menú del usuario y adiós al spanglish
+
+### ✨ Añadido
+- **Reloj en el topbar**: fecha y hora en formato largo del idioma activo (`Tue, Sep 22, 2026 12:33 PM` / `mar, 22 sept 2026 12:33`), **anclado al clúster derecho junto al botón de proyecto** (el `mx-auto` anterior lo recentraba y se movía al cambiar de vista), visible desde `1360px`, con `tabular-nums` y refresco cada 10s.
+- **Configuración** en el menú del usuario del topbar, junto a **Mi Perfil** y **Cerrar sesión**.
+
+### 🔧 Cambiado
+- **Título de vista honesto**: el `page-title` deja de ser una cápsula blanca con sombra (se leía como otro botón) y pasa a **texto plano** Bricolage 19px.
+- **Rail simplificado**: solo marca + navegación (Panel · Conversaciones · Clientes · Brain · Usuarios); se retiran la tarjeta de hora y los enlaces de Configuración/Mi Perfil.
+- **Modo claro por defecto**: `useTheme` y el script inline de `index.html` arrancan en claro cuando no hay preferencia guardada (ya no consultan `prefers-color-scheme`); el toggle sigue persistiendo en `localStorage` (`mitchbot.theme`).
+- **Fechas y horas de Conversaciones y de la bandeja** usan el **locale de la app** (antes `[]` = locale del navegador), eliminando meses/días en inglés bajo interfaz española.
+
+### 🐛 Corregido
+- **Brain**: la cabecera de conocimiento ya no muestra `Unknown`; el estado de sincronización se deriva de las fuentes (procesando / error / indexado / `sin fuentes`) y el recuento de fuentes usa el total real.
+- **Spanglish del catálogo es**: `Registros` por "logs", `Copiar enlace` / `Enlace copiado` por "link", `Tokens máximos` por "Max tokens", `Palabras clave` por "Keywords", `barra lateral` por "sidebar", `chat de prueba` por "test chat", `Prueba` por "Test", `Reiniciar` por "Resetear" y `Mitchbot` por `BotMaster` como título por defecto.
+
+### 📝 Documentación
+- **DESIGN.md** y **AGENTS.md** actualizados: topbar con título plano + reloj junto al clúster derecho, rail sin Configuración/Mi Perfil ni turno, menú del usuario con Configuración, y arranque en claro por defecto.
+
+### ✅ Verificación
+- `vue-tsc` + `build` en verde; paridad es/en 622/622; detector Impeccable sobre lo tocado en **0 hallazgos**.
+
+---
+
 ## v4.5.0 — 2026-09-22
 
 > 🌙 **Tema oscuro y endurecimiento del critique**: Aurora de noche, errores que se ven y accesibilidad real

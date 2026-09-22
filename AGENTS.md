@@ -9,10 +9,22 @@
 - Cada vez que termines unos cambios, actualiza el `changelog.md` (usa la fecha actual) y este archivo `AGENTS.md`.
 - También actualiza la versión dependiendo del tipo de cambio (semver).
 - **Al terminar de implementar un cambio de OpenSpec, realiza el commit correspondiente** (sin esperar a que se lo pidan).
+- **Al terminar cualquier tanda de Impeccable** (diseño, critique, audit, polish, etc.), **realiza el commit correspondiente sin esperar a que te lo pidan**.
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.5.0
+**Versión actual del proyecto:** v4.6.0
+
+---
+
+## Shell afinado: reloj al topbar, título honesto y spanglish (v4.6.0)
+
+- **Reloj del topbar**: sale del pie del rail y vive **anclado al clúster derecho**, pegado al botón de proyecto (`mx-auto` se retiró porque lo recentraba y se movía al cambiar de vista; visible desde `1360px`). Formato largo del idioma activo (`Tue, Sep 22, 2026 12:33 PM` / `mar, 22 sept 2026 12:33`) con `Intl`, `tabular-nums` y actualización cada 10s. Ya no queda una tarjeta de hora en el rail.
+- **Configuración y Mi Perfil al menú del usuario**: el rail queda solo con marca + navegación (Panel · Conversaciones · Clientes · Brain · Usuarios); el dropdown del Usuario en el topbar gana **Configuración** y conserva **Mi Perfil** / **Cerrar sesión**.
+- **Título de vista honesto**: el `page-title` deja de ser una cápsula blanca con sombra (parecía otro botón) y pasa a **texto plano** Bricolage 19px.
+- **Spanglish**: fechas/horas de Conversaciones y de la bandeja usan el **locale de la app** (antes `[]` = navegador); Brain deja de mostrar `Unknown` y deriva el estado de sincronización de las fuentes (`brain.knowledge.noSources`); catálogo es corregido (`Registros` por "logs", `Copiar enlace`/`Enlace copiado` por "link", `Tokens máximos` por "Max tokens", `Palabras clave` por "Keywords", `barra lateral` por "sidebar", `chat de prueba` por "test chat", `Prueba` por "Test", `Reiniciar` por "Resetear"); `topbar.default` pasa de `BotMaster` a `Mitchbot`.
+- **Modo claro por defecto**: `useTheme` y el script inline de `index.html` arrancan en claro si no hay preferencia guardada (ya no consultan `prefers-color-scheme`); el toggle sigue persistiendo en `localStorage`.
+- **Verificación**: `vue-tsc` + `build` en verde; paridad es/en 622/622; detector Impeccable sobre lo tocado en 0 hallazgos.
 
 ---
 
@@ -20,7 +32,7 @@
 
 Cierre de la tanda completa de remediación del critique Impeccable (harden → audit → distill → colorize → polish).
 
-- **Modo oscuro "Aurora de noche"**: tokens propios en `src/style.css` bajo `:root[data-theme="dark"]` que **recomponen** el mundo (papel púrpura cálido, tinta clara, pasteles profundos, sombras densas, `aurora-haze` tenue), no lo invierten. Toggle en `AuroraTopbar` (`data-testid="theme-toggle"`), persistencia `localStorage` (`mitchbot.theme`), arranque desde `prefers-color-scheme` sin flash (script inline en `index.html`). Nuevo `composables/useTheme.ts`; `useBrand` recalcula `--brand*`/`--focus` con el tema activo (`brandDerivatives(hsl, theme)`). Par de acción `--ink-solid`/`--ink-solid-contrast`.
+- **Modo oscuro "Aurora de noche"**: tokens propios en `src/style.css` bajo `:root[data-theme="dark"]` que **recomponen** el mundo (papel púrpura cálido, tinta clara, pasteles profundos, sombras densas, `aurora-haze` tenue), no lo invierten. Toggle en `AuroraTopbar` (`data-testid="theme-toggle"`), persistencia `localStorage` (`mitchbot.theme`), arranque sin flash (script inline en `index.html`; claro por defecto desde v4.6.0). Nuevo `composables/useTheme.ts`; `useBrand` recalcula `--brand*`/`--focus` con el tema activo (`brandDerivatives(hsl, theme)`). Par de acción `--ink-solid`/`--ink-solid-contrast`.
 - **Estados de error con recuperación**: Usuarios y Brain muestran error + **Reintentar** (el polling de Brain ya no se traga fallos); TestChat con banner inline, reintento, borrador conservado y anti doble-submit; el cambio de proyecto del topbar muestra su error.
 - **Urgencia de 3 niveles**: el nivel **Alta** (rojo) se enciende con sentimiento negativo + último mensaje del cliente sin responder.
 - **Accesibilidad**: `ASwitch` con `aria-label` (10 instancias), `scope="col"` en Brain/Usuarios, orden accesible en Usuarios, alternativa textual (`sr-only`) del gráfico de volumen y anuncio acotado (`role="status"`) en el chat público.
@@ -172,7 +184,7 @@ Tras la auditoría Impeccable (`audit`) sobre Aurora se cerraron los hallazgos P
 - **Tipografía**: **Bricolage Grotesque** (display; ejes `opsz`/`wdth`/`wght`) + **Hanken Grotesk** (cuerpo, cifras tabulares). Ya no se usa Nunito ni la webfont de Material Symbols.
 - **Iconografía**: **Phosphor** (`@phosphor-icons/vue`) envuelto en `src/components/ui/AIcon.vue` (6 pesos, `fill` para el nav activo, mapa de nombres Material heredados). El set es intercambiable desde `AIcon`.
 - **Componentes base** (`apps/frontend/src/components/ui/`): `AIcon`, `AButton`, `APill`, `AChip`, `ACard`, `AStat`, `ATable`, `AAvatar`, `AField`, `ASearch`, `ASwitch`, `ATab`, `ATabs`, `ADropdown`, `AModal`, `AEmptyState`, `ABubble`, `ABand`, `ACallout`, `AKpi`.
-- **Shell** (`apps/frontend/src/components/layout/`): `AuroraRail` (rail flotante con marca centrada sin subtítulo, nav con iconos Phosphor y pie con hora/día/fecha `DD/MM/AAAA`) + `AuroraTopbar`, compuestos dentro de `DashboardLayout`. El **topbar es una fila de cápsulas flotantes** (sin fondo/borde/blur): izquierda = título de página, derecha = invariantes (Proyectos · Idiomas · Notificaciones · **Usuario**, que se movió del pie del rail al topbar). Por debajo de 768px el rail se abre como **drawer** desde una cápsula de menú del topbar.
+- **Shell** (`apps/frontend/src/components/layout/`): `AuroraRail` (rail flotante con marca centrada sin subtítulo y nav con iconos Phosphor) + `AuroraTopbar`, compuestos dentro de `DashboardLayout`. El **topbar es una fila de cápsulas flotantes** (sin fondo/borde/blur): izquierda = título de página en **texto plano** (Bricolage 19px, ya no cápsula) + **reloj centrado** en el hueco (visible desde 1360px), derecha = invariantes (Proyectos · Idiomas · Tema · Notificaciones · **Usuario**, cuyo dropdown reúne **Configuración / Mi Perfil / Cerrar sesión**). Por debajo de 768px el rail se abre como **drawer** desde una cápsula de menú del topbar.
 - **Acento de marca** (`useBrand.ts`): default `#E2C6FF` (lila). `--brand*` es **identidad y selección** (item activo, avatar, punto de proyecto, foco), **no** primario de acción — el primario es siempre **tinta negra**.
 - **Documentación normativa**: `apps/frontend/DESIGN.md` + `apps/frontend/.impeccable/design.json` (re-documentados para Aurora). Diseñar contra los tokens `--brand*`, nunca contra un hue fijo.
 - **Estado de migración**: el shell Aurora, los componentes base y **todas las vistas del dashboard están migrados** (cero clases `warm-*` en el código). Vistas reales en Aurora: Panel, Conversaciones (con tarjeta de **Sentimiento** y bloque de **Urgencia**), Clientes, Brain, Usuarios, Configuración, Mi Perfil, Login, Setup, TestChat y DevTests. El **Resumen (Dashboard) se conserva tal cual** (datos reales) para refinarlo en una tanda posterior. La persistencia de `project.config.brand` en el backend sigue pendiente.
