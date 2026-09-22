@@ -21,6 +21,7 @@ import APill from "../components/ui/APill.vue";
 import ABubble from "../components/ui/ABubble.vue";
 import AButton from "../components/ui/AButton.vue";
 import AModal from "../components/ui/AModal.vue";
+import ADropdown from "../components/ui/ADropdown.vue";
 import AEmptyState from "../components/ui/AEmptyState.vue";
 import { renderMarkdown } from "../lib/markdown";
 import { channelMeta, channelIcon, channelTone } from "../lib/channels";
@@ -134,9 +135,20 @@ function closeChat() {
   chats.value.forEach((c) => (c.active = false));
 }
 
-// === Modo enfoque: estrecha las tarjetas laterales para dar espacio al hilo ===
+// === Modo enfoque: colapsa las laterales a carriles de iconos (solo escritorio) ===
 const FOCUS_STORAGE_KEY = "mitchbot.messaging.focus";
 const isFocusMode = ref(localStorage.getItem(FOCUS_STORAGE_KEY) === "1");
+
+/** En móvil las laterales ya se ocultan, así que el colapso solo aplica desde `lg`. */
+const isDesktop = ref(
+  typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : true,
+);
+const focusCollapsed = computed(() => isFocusMode.value && isDesktop.value);
+let focusMedia: MediaQueryList | undefined;
+
+function onFocusMediaChange(event: MediaQueryListEvent) {
+  isDesktop.value = event.matches;
+}
 
 function toggleFocusMode() {
   isFocusMode.value = !isFocusMode.value;
@@ -146,14 +158,45 @@ function toggleFocusMode() {
 /** Reparte el ancho de las tres columnas según el modo enfoque. */
 const gridColumns = computed(() => {
   if (selectedChat.value) {
-    return isFocusMode.value
-      ? "lg:grid-cols-[minmax(248px,22%)_1fr_240px]"
+    return focusCollapsed.value
+      ? "lg:grid-cols-[74px_1fr_74px]"
       : "lg:grid-cols-[minmax(320px,30%)_1fr_300px]";
   }
-  return isFocusMode.value
-    ? "lg:grid-cols-[minmax(248px,22%)_1fr]"
+  return focusCollapsed.value
+    ? "lg:grid-cols-[74px_1fr]"
     : "lg:grid-cols-[minmax(320px,30%)_1fr]";
 });
+
+/** Fondo pastel de los indicadores del carril (sentimiento y urgencia). */
+const TONE_BOX: Record<"lime" | "butter" | "danger", string> = {
+  lime: "bg-lime-soft text-lime-ink",
+  butter: "bg-butter-soft text-butter-ink",
+  danger: "bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
+};
+
+function collapsedChatTitle(chat: ChatConversation) {
+  const parts = [chat.name, chat.platform];
+  if (chat.unreadCount) parts.push(t("messaging.inbox.unread", { count: chat.unreadCount }));
+  if (!chat.isContactCreated) parts.push(t("messaging.contact.noContact"));
+  return parts.filter(Boolean).join(" · ");
+}
+
+const sentimentPct = computed(() => {
+  const sentiment = insights.value?.sentiment;
+  const scores = insights.value?.sentimentScores;
+  if (!sentiment || !scores) return null;
+  return Math.round((scores[sentiment] ?? 0) * 100);
+});
+
+const sentimentTitle = computed(() => {
+  if (isLoadingInsights.value) return t("messaging.insights.loading");
+  if (sentimentPct.value === null) return t("messaging.insights.empty");
+  return `${t("messaging.insights.sentimentLabel")}: ${sentimentLabel.value} (${sentimentPct.value}%)`;
+});
+
+const urgencyTitle = computed(
+  () => `${t("messaging.urgency.title")}: ${urgency.value.level} — ${urgency.value.reason}`,
+);
 
 async function fetchMessages(chat: ChatConversation) {
   try {
@@ -633,6 +676,10 @@ function onNotification(data: any) {
 }
 
 onMounted(async () => {
+  focusMedia = window.matchMedia("(min-width: 1024px)");
+  isDesktop.value = focusMedia.matches;
+  focusMedia.addEventListener("change", onFocusMediaChange);
+
   try {
     bindConversationSocket();
     socketService.onMessage(onNewMessage);
@@ -655,6 +702,7 @@ onMounted(async () => {
 onUnmounted(() => {
   setOpenConversation(null);
   if (modeNoticeTimer) clearTimeout(modeNoticeTimer);
+  focusMedia?.removeEventListener("change", onFocusMediaChange);
   socketService.offMessage(onNewMessage);
   socketService.offMessageChunk(onMessageChunk);
   socketService.offMessageUpdated(onMessageUpdated);
@@ -674,100 +722,233 @@ onUnmounted(() => {
   >
     <!-- Bandeja de entrada -->
     <aside
-      class="h-full min-h-0 flex-col overflow-hidden rounded-big bg-surface shadow-card"
-      :class="selectedChat ? 'hidden lg:flex' : 'flex'"
+      class="h-full min-h-0 flex-col rounded-big bg-surface shadow-card"
+      :class="[
+        focusCollapsed ? 'overflow-visible' : 'overflow-hidden',
+        selectedChat ? 'hidden lg:flex' : 'flex',
+      ]"
     >
-      <div class="px-4.5 pb-2.5 pt-4">
-        <h2 class="font-display text-[15.5px] font-bold tracking-[-0.01em]">
-          {{ t("messaging.inbox.title") }}
-        </h2>
-        <div class="mt-3 flex items-center gap-2.5 rounded-full bg-canvas px-4 py-2.5 transition-shadow focus-within:shadow-[0_0_0_2px_var(--focus)]">
-          <AIcon name="MagnifyingGlass" :size="17" class="shrink-0 text-ink-3" />
-          <input
-            v-model="searchQuery"
-            class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3 focus-visible:shadow-none"
-            :placeholder="t('messaging.inbox.searchPlaceholder')"
-            type="text"
-          />
+      <template v-if="!focusCollapsed">
+        <div class="px-4.5 pb-2.5 pt-4">
+          <h2 class="font-display text-[15.5px] font-bold tracking-[-0.01em]">
+            {{ t("messaging.inbox.title") }}
+          </h2>
+          <div class="mt-3 flex items-center gap-2.5 rounded-full bg-canvas px-4 py-2.5 transition-shadow focus-within:shadow-[0_0_0_2px_var(--focus)]">
+            <AIcon name="MagnifyingGlass" :size="17" class="shrink-0 text-ink-3" />
+            <input
+              v-model="searchQuery"
+              class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3 focus-visible:shadow-none"
+              :placeholder="t('messaging.inbox.searchPlaceholder')"
+              type="text"
+            />
+          </div>
+          <div class="mt-3 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            <button
+              v-for="channel in enabledChannels"
+              :key="channel"
+              type="button"
+              :class="[
+                'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
+                activeChannel === channel
+                  ? 'bg-ink-solid text-ink-contrast'
+                  : 'bg-canvas text-ink-2 hover:bg-sunken hover:text-ink',
+              ]"
+              @click="setActiveChannel(channel)"
+            >
+              <span
+                v-if="channel !== 'All'"
+                class="h-1.5 w-1.5 rounded-full bg-current"
+              />
+              {{ channel === "All" ? t("messaging.filters.all") : channelMeta(channel).label }}
+            </button>
+          </div>
         </div>
-        <div class="mt-3 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+
+        <div class="flex-1 overflow-y-auto p-1.5">
+          <div v-if="isLoadingChats" class="px-3 py-8 text-center text-sm font-semibold text-ink-3">
+            {{ t("messaging.inbox.loading") }}
+          </div>
+          <AEmptyState
+            v-else-if="chats.length === 0"
+            icon="ChatCircleDots"
+            :title="t('messaging.inbox.empty')"
+          />
+          <div
+            v-else-if="filteredChats.length === 0"
+            class="px-3 py-8 text-center text-sm font-semibold text-ink-3"
+          >
+            {{ t("messaging.inbox.noMatches") }}
+          </div>
           <button
-            v-for="channel in enabledChannels"
-            :key="channel"
+            v-for="chat in filteredChats"
+            v-else
+            :key="chat._id"
             type="button"
             :class="[
-              'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
-              activeChannel === channel
-                ? 'bg-ink-solid text-ink-contrast'
-                : 'bg-canvas text-ink-2 hover:bg-sunken hover:text-ink',
+              'grid w-full grid-cols-[38px_1fr_auto] items-center gap-3 rounded-card border-[1.5px] border-transparent p-3 text-left transition-colors',
+              chat.active ? 'border-lilac bg-lilac-soft' : 'hover:bg-canvas',
             ]"
-            @click="setActiveChannel(channel)"
+            @click="selectChat(chat)"
           >
-            <span
-              v-if="channel !== 'All'"
-              class="h-1.5 w-1.5 rounded-full bg-current"
-            />
-            {{ channel === "All" ? t("messaging.filters.all") : channelMeta(channel).label }}
+            <span class="relative flex-none">
+              <AAvatar
+                :initials="(chat.name || 'C').slice(0, 2).toUpperCase()"
+                :tone="channelTone(chat.platform)"
+              />
+              <span class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full bg-surface text-ink-3 ring-1 ring-line">
+                <AIcon :name="channelIcon(chat.platform)" :size="10" weight="fill" />
+              </span>
+            </span>
+            <span class="min-w-0">
+              <span class="flex items-center gap-2">
+                <span class="truncate text-[13.5px] font-semibold">{{ chat.name }}</span>
+                <APill v-if="!chat.isContactCreated" tone="butter" size="sm">
+                  {{ t("messaging.contact.noContact") }}
+                </APill>
+              </span>
+              <span class="mt-0.5 block truncate text-xs text-ink-3">{{ chat.message }}</span>
+            </span>
+            <span class="flex flex-col items-end gap-1.5">
+              <span class="text-[11px] text-ink-3">{{ chat.time }}</span>
+              <span
+                v-if="chat.unreadCount"
+                data-testid="conversation-unread"
+                class="grid h-5 min-w-5 place-items-center rounded-full bg-ink-solid px-1.5 text-[11px] font-bold text-ink-contrast [font-variant-numeric:tabular-nums]"
+              >
+                {{ chat.unreadCount }}
+              </span>
+            </span>
           </button>
         </div>
-      </div>
+      </template>
 
-      <div class="flex-1 overflow-y-auto p-1.5">
-        <div v-if="isLoadingChats" class="px-3 py-8 text-center text-sm font-semibold text-ink-3">
-          {{ t("messaging.inbox.loading") }}
+      <!-- Enfoque: carril de iconos -->
+      <template v-else>
+        <div class="flex flex-none flex-col items-center gap-1.5 px-2 pb-1 pt-3">
+          <ADropdown
+            role="dialog"
+            align="left"
+            :label="t('messaging.inbox.search')"
+            :title="t('messaging.inbox.search')"
+            trigger-class="grid h-10 w-10 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+            panel-class="w-64"
+          >
+            <template #trigger>
+              <AIcon name="MagnifyingGlass" :size="17" />
+            </template>
+            <template #content>
+              <div class="flex items-center gap-2.5 px-4 py-3">
+                <AIcon name="MagnifyingGlass" :size="16" class="shrink-0 text-ink-3" />
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3"
+                  :placeholder="t('messaging.inbox.searchPlaceholder')"
+                  :aria-label="t('messaging.inbox.search')"
+                />
+              </div>
+            </template>
+          </ADropdown>
+
+          <ADropdown
+            role="listbox"
+            align="left"
+            :label="t('messaging.inbox.filter')"
+            :title="t('messaging.inbox.filter')"
+            trigger-class="relative grid h-10 w-10 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+            panel-class="w-44 p-1.5"
+          >
+            <template #trigger>
+              <AIcon name="Funnel" :size="17" />
+              <span
+                v-if="activeChannel !== 'All'"
+                class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-lilac ring-2 ring-surface"
+              />
+            </template>
+            <template #content="{ close }">
+              <button
+                v-for="channel in enabledChannels"
+                :key="channel"
+                type="button"
+                role="option"
+                :aria-selected="activeChannel === channel"
+                :class="[
+                  'inline-flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-xs font-semibold transition-colors',
+                  activeChannel === channel
+                    ? 'bg-lilac-soft text-lilac-ink'
+                    : 'text-ink-2 hover:bg-canvas hover:text-ink',
+                ]"
+                @click="setActiveChannel(channel); close()"
+              >
+                <span v-if="channel !== 'All'" class="h-1.5 w-1.5 rounded-full bg-current" />
+                {{ channel === "All" ? t("messaging.filters.all") : channelMeta(channel).label }}
+                <AIcon v-if="activeChannel === channel" name="Check" :size="14" class="ml-auto" />
+              </button>
+            </template>
+          </ADropdown>
         </div>
-        <AEmptyState
-          v-else-if="chats.length === 0"
-          icon="ChatCircleDots"
-          :title="t('messaging.inbox.empty')"
-        />
-        <div
-          v-else-if="filteredChats.length === 0"
-          class="px-3 py-8 text-center text-sm font-semibold text-ink-3"
-        >
-          {{ t("messaging.inbox.noMatches") }}
+
+        <div class="flex flex-1 flex-col items-center gap-1 overflow-y-auto rounded-b-big px-2 pb-2">
+          <div
+            v-if="isLoadingChats"
+            class="grid flex-1 place-items-center py-6 text-ink-3"
+            :title="t('messaging.inbox.loading')"
+          >
+            <AIcon name="SpinnerGap" :size="20" class="animate-spin" />
+          </div>
+          <div
+            v-else-if="chats.length === 0"
+            class="grid flex-1 place-items-center py-6 text-ink-3"
+            :title="t('messaging.inbox.empty')"
+          >
+            <AIcon name="ChatCircleDots" :size="22" />
+          </div>
+          <div
+            v-else-if="filteredChats.length === 0"
+            class="grid flex-1 place-items-center py-6 text-ink-3"
+            :title="t('messaging.inbox.noMatches')"
+          >
+            <AIcon name="ChatCircleDots" :size="22" />
+          </div>
+          <button
+            v-for="chat in filteredChats"
+            v-else
+            :key="chat._id"
+            type="button"
+            :title="collapsedChatTitle(chat)"
+            :aria-label="collapsedChatTitle(chat)"
+            :class="[
+              'grid w-full shrink-0 place-items-center rounded-card border-[1.5px] border-transparent py-2 transition-colors',
+              chat.active ? 'border-lilac bg-lilac-soft' : 'hover:bg-canvas',
+            ]"
+            @click="selectChat(chat)"
+          >
+            <span class="relative flex-none">
+              <AAvatar
+                :initials="(chat.name || 'C').slice(0, 2).toUpperCase()"
+                :tone="channelTone(chat.platform)"
+              />
+              <span class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full bg-surface text-ink-3 ring-1 ring-line">
+                <AIcon :name="channelIcon(chat.platform)" :size="10" weight="fill" />
+              </span>
+              <span
+                v-if="chat.unreadCount"
+                data-testid="conversation-unread"
+                class="absolute -right-2 -top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-ink-solid px-1 text-[10px] font-bold text-ink-contrast ring-2 ring-surface [font-variant-numeric:tabular-nums]"
+              >
+                {{ chat.unreadCount }}
+              </span>
+              <span
+                v-if="!chat.isContactCreated"
+                class="absolute -bottom-1 -left-1.5 grid h-[15px] w-[15px] place-items-center rounded-full bg-butter text-butter-ink ring-2 ring-surface"
+                :title="t('messaging.contact.noContact')"
+              >
+                <AIcon name="UserPlus" :size="9" weight="fill" />
+              </span>
+            </span>
+          </button>
         </div>
-        <button
-          v-for="chat in filteredChats"
-          v-else
-          :key="chat._id"
-          type="button"
-          :class="[
-            'grid w-full grid-cols-[38px_1fr_auto] items-center gap-3 rounded-card border-[1.5px] border-transparent p-3 text-left transition-colors',
-            chat.active ? 'border-lilac bg-lilac-soft' : 'hover:bg-canvas',
-          ]"
-          @click="selectChat(chat)"
-        >
-          <span class="relative flex-none">
-            <AAvatar
-              :initials="(chat.name || 'C').slice(0, 2).toUpperCase()"
-              :tone="channelTone(chat.platform)"
-            />
-            <span class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full bg-surface text-ink-3 ring-1 ring-line">
-              <AIcon :name="channelIcon(chat.platform)" :size="10" weight="fill" />
-            </span>
-          </span>
-          <span class="min-w-0">
-            <span class="flex items-center gap-2">
-              <span class="truncate text-[13.5px] font-semibold">{{ chat.name }}</span>
-              <APill v-if="!chat.isContactCreated" tone="butter" size="sm">
-                {{ t("messaging.contact.noContact") }}
-              </APill>
-            </span>
-            <span class="mt-0.5 block truncate text-xs text-ink-3">{{ chat.message }}</span>
-          </span>
-          <span class="flex flex-col items-end gap-1.5">
-            <span class="text-[11px] text-ink-3">{{ chat.time }}</span>
-            <span
-              v-if="chat.unreadCount"
-              data-testid="conversation-unread"
-              class="grid h-5 min-w-5 place-items-center rounded-full bg-ink-solid px-1.5 text-[11px] font-bold text-ink-contrast [font-variant-numeric:tabular-nums]"
-            >
-              {{ chat.unreadCount }}
-            </span>
-          </span>
-        </button>
-      </div>
+      </template>
     </aside>
 
     <!-- Hilo -->
@@ -970,8 +1151,77 @@ onUnmounted(() => {
     <!-- Detalles -->
     <aside
       v-if="selectedChat"
-      class="hidden h-full min-h-0 flex-col gap-3.5 overflow-y-auto rounded-big bg-surface p-4.5 shadow-card lg:flex"
+      class="hidden h-full min-h-0 flex-col overflow-y-auto rounded-big bg-surface shadow-card lg:flex"
+      :class="focusCollapsed ? 'items-center gap-3 p-3' : 'gap-3.5 p-4.5'"
     >
+      <template v-if="focusCollapsed">
+        <AAvatar
+          :initials="(selectedChat.name || 'C').slice(0, 2).toUpperCase()"
+          :tone="channelTone(selectedChat.platform)"
+          size="lg"
+        />
+
+        <span class="h-px w-7 flex-none rounded-full bg-line" />
+
+        <span
+          role="img"
+          :aria-label="sentimentTitle"
+          :title="sentimentTitle"
+          class="grid h-10.5 w-10.5 flex-none place-items-center rounded-field"
+          :class="sentimentPct !== null ? TONE_BOX[sentimentTone] : 'bg-canvas text-ink-3'"
+        >
+          <AIcon name="Brain" :size="19" weight="fill" />
+        </span>
+
+        <span
+          role="img"
+          :aria-label="urgencyTitle"
+          :title="urgencyTitle"
+          class="flex w-full flex-none flex-col items-center gap-1"
+        >
+          <span class="grid h-10.5 w-10.5 place-items-center rounded-field" :class="TONE_BOX[urgency.tone]">
+            <AIcon name="WarningCircle" :size="19" weight="fill" />
+          </span>
+          <span class="flex w-7 gap-0.5">
+            <span
+              v-for="step in 3"
+              :key="step"
+              class="h-1 flex-1 rounded-full"
+              :class="step <= urgency.step
+                ? urgency.step >= 3 ? 'bg-[color:var(--danger)]' : urgency.step === 2 ? 'bg-butter' : 'bg-lime'
+                : 'bg-sunken'"
+            />
+          </span>
+        </span>
+
+        <span class="h-px w-7 flex-none rounded-full bg-line" />
+
+        <span
+          v-if="selectedChat.isContactCreated"
+          role="img"
+          :aria-label="t('messaging.contact.contactCreated')"
+          :title="t('messaging.contact.contactCreated')"
+          class="grid h-10.5 w-10.5 flex-none place-items-center rounded-field bg-lime-soft text-lime-ink"
+        >
+          <AIcon name="CheckCircle" :size="19" weight="fill" />
+        </span>
+        <button
+          v-else
+          type="button"
+          :disabled="isSavingContact"
+          :aria-label="t('messaging.contact.saveAsContact')"
+          :title="t('messaging.contact.saveAsContact')"
+          class="relative grid h-10.5 w-10.5 flex-none place-items-center rounded-field bg-canvas text-[12px] font-extrabold text-lilac-ink transition-colors hover:bg-lilac-soft disabled:opacity-50"
+          @click="saveAsContact"
+        >
+          {{ (selectedChat.name || 'C').slice(0, 2).toUpperCase() }}
+          <span class="absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full bg-lilac-ink text-lilac ring-2 ring-surface">
+            <AIcon name="Plus" :size="9" weight="bold" />
+          </span>
+        </button>
+      </template>
+
+      <template v-else>
       <div class="flex items-center gap-3">
         <AAvatar :initials="(selectedChat.name || 'C').slice(0, 2).toUpperCase()" :tone="channelTone(selectedChat.platform)" size="lg" />
         <div class="min-w-0">
@@ -1089,6 +1339,7 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
+      </template>
     </aside>
 
     <!-- Modal: modificar parámetros de la herramienta -->

@@ -13,7 +13,20 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.9.0
+**Versión actual del proyecto:** v4.10.0
+
+---
+
+## Modo enfoque en carriles de iconos (v4.10.0)
+
+El modo enfoque de Conversaciones deja de "estrechar" las laterales y pasa a **colapsarlas a iconos**, dando casi todo el ancho al hilo.
+
+- **Carriles de 74px**: con enfoque activo en escritorio la rejilla pasa a `lg:grid-cols-[74px_1fr_74px]` (sin selección, `[74px_1fr]`; sigue animando `grid-template-columns`).
+- **Bandeja colapsada**: los controles son dos botones-icono — `MagnifyingGlass` que abre un **popover de búsqueda** (`ADropdown` con `role="dialog"`; filtra en vivo) y `Funnel` que abre la **lista de canales** (`role="listbox"` con marca del activo y punto lila en el disparador). La lista se queda en avatar + insignia de canal + no leídos (anillo) + punto mantequilla si el cliente no está guardado.
+- **Ficha colapsada**: avatar, y tres bloques de solo lectura —**sentimiento** (tinte `danger`/`butter`/`lime` según el análisis; gris si no hay), **urgencia** (icono + medidor de 3 tramos) y **estado de contacto**— más el único control: **guardar contacto** con las iniciales del cliente y una insignia `Plus` (una vez creado pasa a un indicador `CheckCircle` lima). Los indicadores son `role="img"` + `aria-label`, nunca botones muertos.
+- **Solo escritorio**: `focusCollapsed = isFocusMode && matchMedia('(min-width: 1024px)')`; en móvil el modo se ignora (las laterales ya se ocultan). El carril usa `overflow-visible` para que los popovers escapen del redondeo de la tarjeta; la bandeja sin enfoque conserva `overflow-hidden`.
+- **i18n**: `messaging.inbox.search`, `messaging.inbox.filter`, `messaging.inbox.unread`; `messaging.focus.hint` reescrito. Icono `Funnel` reincorporado a `AIcon` (se retiró como muerto en v4.7.1).
+- **Verificación**: `vue-tsc --noEmit` + `build` en verde; paridad es/en **571/571**; detector Impeccable sobre `src` en **0 hallazgos**; e2e **44/44**; medición en navegador a 1440 (carriles 74/74, popovers 256px fuera del carril, consola limpia) y a 390 (modo ignorado, sin overflow).
 
 ---
 

@@ -343,6 +343,9 @@
   "messaging": {
     "inbox": {
       "title": "Bandeja de entrada",
+      "search": "Buscar conversaciones",
+      "filter": "Filtrar por canal",
+      "unread": "{count} sin leer",
       "searchPlaceholder": "Buscar conversaciones...",
       "loading": "Cargando conversaciones...",
       "empty": "No hay conversaciones aún. Los clientes las iniciarán.",
@@ -379,7 +382,7 @@
     },
     "focus": {
       "toggle": "Modo enfoque",
-      "hint": "Estrecha las tarjetas laterales para dar más espacio a la conversación"
+      "hint": "Colapsa las laterales a iconos para dar todo el ancho a la conversación"
     },
     "tools": {
       "confirmationRequired": "Confirmación requerida",

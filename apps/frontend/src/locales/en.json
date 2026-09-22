@@ -343,6 +343,9 @@
   "messaging": {
     "inbox": {
       "title": "Inbox",
+      "search": "Search conversations",
+      "filter": "Filter by channel",
+      "unread": "{count} unread",
       "searchPlaceholder": "Search chats...",
       "loading": "Loading conversations...",
       "empty": "No conversations yet. Customers will start them.",
@@ -379,7 +382,7 @@
     },
     "focus": {
       "toggle": "Focus mode",
-      "hint": "Narrows the side panels to give more room to the conversation"
+      "hint": "Collapses the side panels to icons, giving the conversation full width"
     },
     "tools": {
       "confirmationRequired": "Confirmation required",

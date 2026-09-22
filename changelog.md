@@ -5,6 +5,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.10.0 — 2026-09-22
+
+> 🎯 **Modo enfoque real**: las laterales de Conversaciones colapsan a carriles de iconos
+
+### ✨ Añadido
+- **Carril de iconos en modo enfoque (`Messaging.vue`)**: con enfoque activo en escritorio las dos laterales pasan a carriles de **74px** (`lg:grid-cols-[74px_1fr_74px]`; sin selección, `[74px_1fr]`). La **bandeja** muestra solo avatar + insignia de canal, no leídos (anillo sobre el avatar) y punto mantequilla si el cliente no está guardado; la **ficha** muestra avatar, sentimiento, urgencia con medidor de 3 tramos, estado del contacto y el botón de guardar con las iniciales + insignia `Plus`. Todo con `title`/`aria-label` descriptivos (`nombre · canal · no leídos · sin contacto`, `Sentimiento: … (%)`, `Urgencia: … — …`).
+- **Búsqueda y filtro como iconos** dentro del carril: `MagnifyingGlass` abre un popover (`ADropdown` con `role="dialog"`) con el campo de búsqueda (filtra en vivo) y `Funnel` abre la lista de canales (`role="listbox"`, marca del activo y punto lila en el disparador).
+- **`AIcon`**: se reincorpora `Funnel` (`PhFunnel`), retirado como muerto en v4.7.1.
+- Claves i18n `messaging.inbox.search`, `messaging.inbox.filter` y `messaging.inbox.unread` (es/en).
+
+### 🔧 Cambiado
+- **Modo enfoque solo en escritorio**: `focusCollapsed = isFocusMode && matchMedia('(min-width: 1024px)')`; en móvil el modo se ignora (las laterales ya se ocultan) y la bandeja conserva `overflow-hidden`. El carril usa `overflow-visible` para que los popovers de búsqueda/filtro escapen del redondeo de la tarjeta.
+- **`messaging.focus.hint`** describe el nuevo comportamiento (colapsa a iconos, no solo estrecha).
+- Los indicadores de sentimiento, urgencia y contacto son **informativos** (`role="img"` + `aria-label`), no botones muertos; el único control del carril de ficha es guardar contacto.
+
+### ✅ Verificación
+- `vue-tsc --noEmit` y `build` en verde; paridad es/en **571/571**; detector Impeccable sobre `src` en **0 hallazgos**; suite e2e **44/44**. Medición en navegador a 1440 (carriles de 74/74px, popovers de 256px fuera del carril, 0 errores de consola) y 390 (modo ignorado, sin overflow horizontal).
+
+---
+
 ## v4.9.0 — 2026-09-22
 
 > 🧭 **Rail desnudo**: el sidebar deja de ser tarjeta y el item activo se marca con sello desregistrado + eco
