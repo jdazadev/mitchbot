@@ -5,6 +5,24 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.9.0 — 2026-09-22
+
+> 🧭 **Rail desnudo**: el sidebar deja de ser tarjeta y el item activo se marca con sello desregistrado + eco
+
+### 🔧 Cambiado
+- **`AuroraRail.vue` sin fondo en escritorio**: el rail pierde `bg-surface shadow-card` (y `rounded-big`/`overflow-hidden`) y pasa a ser **navegación desnuda** apoyada en el lienzo, como el título de cada vista; la `aurora-haze` vuelve a verse a través de él. El **drawer móvil** conserva `surface` + `shadow-card` porque flota sobre el contenido y necesita leerse.
+- **Item activo = Sello desregistrado + Eco (variante C+G)**: el activo abandona el relleno de fila. Ahora lo marcan una cápsula `lilac-soft` con `inset: 3px -8px 3px -9px`, girada `-1.3deg`, corrida `-2px/-1px` y anillo lila interior de `1.5px`, más el **label duplicado en `text-lilac`** corrido `+1px/+2px` por detrás (eco de doble impresión). El icono Phosphor pasa a peso `fill` con tinta `lilac-ink` y el label a tinta plena.
+- **Hover honesto en el rail**: sobre lienzo transparente el `hover:bg-canvas` era invisible; el item en reposo usa `hover:bg-sunken` y el activo no pinta hover (su señal es el sello).
+
+### 📝 Documentación
+- **`DESIGN.md`**: Layout, Elevation y Navigation actualizados (rail sin tarjeta ni sombra; el sello/eco documentado como marca del activo).
+- **AGENTS.md** actualizado con la sección v4.9.0.
+
+### ✅ Verificación
+- `vue-tsc --noEmit` y `build` en verde; suite e2e **44/44** (incluida la auditoría de overflow y consola en 1440/390); medición en navegador de las propiedades computadas del sello y el eco y capturas en claro, oscuro y drawer móvil.
+
+---
+
 ## v4.8.0 — 2026-09-22
 
 > 🎨 **Disciplina del sistema**: pastel que significa, un solo set de iconos, selects unificados y recuperación de errores

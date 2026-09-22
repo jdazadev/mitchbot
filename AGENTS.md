@@ -13,7 +13,21 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.8.0
+**Versión actual del proyecto:** v4.9.0
+
+---
+
+## Rail desnudo: sello desregistrado + eco (v4.9.0)
+
+El rail deja de ser una tarjeta blanca flotante y se apoya en el lienzo, igual que el título de cada vista.
+
+- **Sin fondo ni sombra**: `AuroraRail.vue` pierde `bg-surface shadow-card` (y `rounded-big`/`overflow-hidden`) en escritorio; el rail pasa a ser **navegación desnuda** sobre el papel, dejando ver la `aurora-haze`. El **drawer móvil** conserva `surface` + `shadow-card` (flota sobre el contenido y necesita leerse).
+- **Item activo = Sello + Eco (variante C+G)**: el activo abandona el relleno de fila y se marca con
+  - **sello**: cápsula `lilac-soft` con `inset: 3px -8px 3px -9px`, girada `-1.3deg`, corrida `-2px/-1px` y anillo lila interior de `1.5px` (`--lilac`);
+  - **eco**: el label duplicado en `text-lilac`, corrido `+1px/+2px` por detrás (error de registro de imprenta).
+  El icono Phosphor pasa a `fill` con tinta `lilac-ink`; el label, a tinta plena.
+- **Hover honesto**: sobre lienzo transparente el `hover:bg-canvas` era invisible; ahora el ítem en reposo usa `hover:bg-sunken` (el activo no pinta hover: su señal es el sello).
+- **Verificación**: `vue-tsc --noEmit` + `build` en verde; e2e **44/44** (incluida la auditoría de overflow y consola en 1440/390); medición en navegador de las propiedades computadas del sello y el eco (inset, anillo, color, offsets) y capturas en claro, oscuro y drawer móvil.
 
 ---
 

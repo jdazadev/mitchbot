@@ -30,7 +30,7 @@ const projectInitial = computed(() => (brand.value.name || 'M').trim().charAt(0)
 const containerClass = computed(() =>
   props.variant === 'mobile'
     ? 'fixed inset-y-[var(--shell-pad)] left-[var(--shell-pad)] z-40 flex w-[var(--rail-w)] flex-col overflow-hidden rounded-big bg-surface shadow-card md:hidden'
-    : 'fixed inset-y-[var(--shell-pad)] left-[var(--shell-pad)] z-20 hidden w-[var(--rail-w)] flex-col overflow-hidden rounded-big bg-surface shadow-card md:flex'
+    : 'fixed inset-y-[var(--shell-pad)] left-[var(--shell-pad)] z-20 hidden w-[var(--rail-w)] flex-col md:flex'
 );
 
 const railRef = ref<HTMLElement | null>(null);
@@ -109,18 +109,35 @@ function isActive(href: string) {
         :to="item.href"
         :data-testid="'nav-' + item.key"
         :class="[
-          'flex items-center gap-2.5 rounded-full px-3 py-2.5 text-[13.5px] font-medium transition-colors duration-150',
+          'relative flex items-center gap-2.5 rounded-full px-3 py-2.5 text-[13.5px] font-medium transition-colors duration-150',
           isActive(item.href)
-            ? 'bg-lilac-soft font-semibold text-lilac-ink'
-            : 'text-ink-2 hover:bg-canvas hover:text-ink',
+            ? 'font-semibold text-ink'
+            : 'text-ink-2 hover:bg-sunken hover:text-ink',
         ]"
         @click="emit('navigate')"
       >
-        <AIcon :name="item.icon" :size="18" :weight="isActive(item.href) ? 'fill' : 'regular'" />
-        <span class="truncate">{{ t('nav.' + item.key) }}</span>
+        <span
+          v-if="isActive(item.href)"
+          aria-hidden="true"
+          class="pointer-events-none absolute [inset:3px_-8px_3px_-9px] -translate-x-0.5 -translate-y-px rotate-[-1.3deg] rounded-full bg-lilac-soft shadow-[inset_0_0_0_1.5px_var(--lilac)]"
+        />
+        <span
+          v-if="isActive(item.href)"
+          aria-hidden="true"
+          class="pointer-events-none absolute left-[41px] top-[calc(50%+2px)] -translate-y-1/2 text-[13.5px] font-semibold leading-none text-lilac"
+        >
+          {{ t('nav.' + item.key) }}
+        </span>
+        <AIcon
+          :name="item.icon"
+          :size="18"
+          :weight="isActive(item.href) ? 'fill' : 'regular'"
+          :class="['relative', isActive(item.href) ? 'text-lilac-ink' : '']"
+        />
+        <span class="relative truncate">{{ t('nav.' + item.key) }}</span>
         <span
           v-if="item.key === 'conversations' && unreadTotal > 0"
-          class="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-ink-solid px-1.5 text-[11px] font-bold text-ink-contrast [font-variant-numeric:tabular-nums]"
+          class="relative ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-ink-solid px-1.5 text-[11px] font-bold text-ink-contrast [font-variant-numeric:tabular-nums]"
         >
           {{ unreadTotal }}
         </span>
