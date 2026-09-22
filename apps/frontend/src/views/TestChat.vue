@@ -419,7 +419,7 @@ function scrollToBottom() {
         <button type="button" class="shrink-0 font-semibold underline" @click="retrySend">
           {{ t("common.retry") }}
         </button>
-        <button type="button" class="shrink-0" :aria-label="t('common.close')" @click="sendError = null">
+        <button type="button" class="shrink-0" :aria-label="t('common.close')" :title="t('common.close')" @click="sendError = null">
           <AIcon name="X" :size="15" />
         </button>
       </div>
@@ -459,6 +459,8 @@ function scrollToBottom() {
           <button
             type="button"
             class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas"
+            :aria-label="t('common.close')"
+            :title="t('common.close')"
             @click="closeModifyModal"
           >
             <AIcon name="X" :size="18" />

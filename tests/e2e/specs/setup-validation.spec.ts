@@ -1,11 +1,10 @@
 import { test, expect } from '../fixtures';
-import { E2E } from '../helpers/config';
 
 /**
  * Validación interna del setup (usuario e2e con proyecto ya creado).
  *
  * - Entrar a /setup sin intención explícita redirige al dashboard.
- * - El botón "Crear nuevo proyecto" del Topbar abre el wizard con ?mode=new.
+ * - El botón "Crear nuevo proyecto" del Topbar abre el modal de creación.
  * - Una sesión localmente válida pero rechazada por el servidor vuelve al login.
  */
 test.describe('Validación del setup', () => {
@@ -16,18 +15,20 @@ test.describe('Validación del setup', () => {
     await expect(page.getByTestId('page-title')).toHaveText('Resumen del panel');
   });
 
-  test('el botón crear proyecto del Topbar abre el wizard con ?mode=new', async ({ page }) => {
+  test('el botón crear proyecto del Topbar abre el modal de creación', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('page-title')).toHaveText('Resumen del panel');
 
-    await page.locator('button').filter({ hasText: E2E.project.name }).first().click();
+    await page.getByTestId('project-selector').click();
     await page.getByRole('menuitem', { name: 'Crear nuevo proyecto' }).click();
 
-    await page.waitForURL((url) => url.pathname === '/setup' && url.searchParams.get('mode') === 'new', {
-      timeout: 30_000,
-    });
-    await expect(page.getByRole('heading', { name: 'Datos del Proyecto' })).toBeVisible();
-    await expect(page.getByText('Datos del Proyecto')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: 'Nuevo proyecto' })).toBeVisible();
+    await expect(dialog.getByLabel('Nombre del proyecto')).toBeVisible();
+    await expect(dialog.getByLabel('Descripción')).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(page.getByRole('heading', { name: 'Nuevo proyecto' })).toHaveCount(0);
   });
 
   test('sesión inválida en el servidor redirige silenciosamente al login', async ({ page }) => {

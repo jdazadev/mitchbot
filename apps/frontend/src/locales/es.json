@@ -7,7 +7,7 @@
     "dashboard": "Panel",
     "conversations": "Conversaciones",
     "clients": "Clientes",
-    "brain": "Brain",
+    "brain": "Memoria",
     "users": "Usuarios",
     "settings": "Configuración",
     "profile": "Mi Perfil",
@@ -21,7 +21,7 @@
   "topbar": {
     "dashboard": "Resumen del panel",
     "messaging": "Conversaciones",
-    "brain": "Brain",
+    "brain": "Memoria",
     "clients": "Clientes",
     "default": "Mitchbot",
     "selectProject": "Selecciona proyecto",
@@ -41,6 +41,21 @@
       "minutesAgo": "hace {count} min",
       "hoursAgo": "hace {count} h",
       "daysAgo": "hace {count} d"
+    },
+    "createModal": {
+      "title": "Nuevo proyecto",
+      "subtitle": "Crea un proyecto con un agente por defecto. Podrás configurarlo después.",
+      "name": "Nombre del proyecto",
+      "namePlaceholder": "Ej.: Tienda Online",
+      "description": "Descripción",
+      "descriptionPlaceholder": "¿De qué trata este proyecto?",
+      "submit": "Crear proyecto",
+      "creating": "Creando...",
+      "defaultAgentName": "Asistente",
+      "errors": {
+        "nameRequired": "El nombre del proyecto es obligatorio.",
+        "create": "No se pudo crear el proyecto. {message}"
+      }
     }
   },
   "common": {
@@ -113,12 +128,14 @@
     "you": "Tú",
     "today": "Hoy",
     "yesterday": "Ayer",
-    "and": "y"
+    "and": "y",
+    "expand": "Expandir",
+    "collapse": "Contraer"
   },
   "dashboard": {
     "stats": {
       "totalConversations": "Conversaciones totales",
-      "activeChats": "Chats activos",
+      "activeChats": "Conversaciones activas",
       "responseRate": "Tasa de respuesta",
       "live": "En vivo"
     },
@@ -293,7 +310,7 @@
       "created": "Creado"
     },
     "empty": "No se encontraron clientes",
-    "noEmail": "Sin email",
+    "noEmail": "Sin correo",
     "actions": {
       "viewConversation": "Ver conversación"
     },
@@ -390,13 +407,13 @@
       "passwordPlaceholder": "••••••••"
     },
     "errors": {
-      "requiredFields": "Email y contraseña son requeridos"
+      "requiredFields": "Correo y contraseña son requeridos"
     }
   },
   "messaging": {
     "inbox": {
       "title": "Bandeja de entrada",
-      "searchPlaceholder": "Buscar chats...",
+      "searchPlaceholder": "Buscar conversaciones...",
       "loading": "Cargando conversaciones...",
       "empty": "No hay conversaciones aún. Los clientes las iniciarán.",
       "noMatches": "No hay conversaciones que coincidan con el filtro."
@@ -410,7 +427,7 @@
       "saveAsContact": "Guardar como contacto"
     },
     "chat": {
-      "selectPrompt": "Selecciona un chat para empezar a responder",
+      "selectPrompt": "Selecciona una conversación para empezar a responder",
       "loadingMessages": "Cargando mensajes..."
     },
     "mode": {
@@ -798,7 +815,7 @@
     },
     "form": {
       "name": "Nombre",
-      "email": "Email",
+      "email": "Correo",
       "password": "Contraseña",
       "role": "Rol",
       "projects": "Proyectos",
@@ -821,7 +838,7 @@
       "name": "Nombre",
       "namePlaceholder": "Nombre del cliente",
       "phone": "Teléfono",
-      "email": "Email",
+      "email": "Correo",
       "emailPlaceholder": "cliente{'@'}email.com",
       "platform": "Plataforma"
     },
@@ -830,7 +847,7 @@
       "idLabel": "ID:",
       "contactCreated": "Contacto creado:",
       "contactCreatedYes": "✅ Sí",
-      "contactPending": "⏳ Pendiente (responde desde el dashboard)",
+      "contactPending": "⏳ Pendiente (responde desde el panel)",
       "reset": "Reiniciar"
     },
     "header": {
@@ -864,7 +881,7 @@
     },
     "sender": {
       "you": "Tú (Cliente)",
-      "ai": "Mitchbot (AI)",
+      "ai": "Mitchbot (IA)",
       "human": "Agente Humano"
     },
     "input": {

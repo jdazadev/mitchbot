@@ -33,7 +33,6 @@ test.describe('Usuarios del sistema', () => {
 
     // Listar/buscar.
     await page.getByPlaceholder('Buscar por nombre o email...').fill(email);
-    await page.getByRole('button', { name: 'Buscar' }).click();
     const row = page.getByRole('row', { name: new RegExp(email) });
     await expect(row).toBeVisible({ timeout: 20_000 });
 

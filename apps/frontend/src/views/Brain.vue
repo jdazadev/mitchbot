@@ -620,6 +620,8 @@ function startPolling() {
             <button
               type="button"
               class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas"
+              :aria-label="t('common.close')"
+              :title="t('common.close')"
               @click="closeAddModal"
             >
               <AIcon name="X" :size="18" />
@@ -723,6 +725,8 @@ function startPolling() {
             <button
               type="button"
               class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas"
+              :aria-label="t('common.close')"
+              :title="t('common.close')"
               @click="closeExtractedText"
             >
               <AIcon name="X" :size="18" />

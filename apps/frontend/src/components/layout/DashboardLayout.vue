@@ -35,7 +35,7 @@ const mobileNavOpen = ref(false);
     />
     <main id="main-content" class="relative z-10 flex h-full flex-1 flex-col overflow-hidden">
       <AuroraTopbar :nav-open="mobileNavOpen" @toggle-nav="mobileNavOpen = !mobileNavOpen" />
-      <div class="flex-1 overflow-y-auto px-[var(--shell-pad)] pb-[var(--shell-pad)] md:pl-[var(--rail-offset)]">
+      <div class="flex-1 overflow-y-auto px-[var(--shell-pad)] pb-[var(--shell-pad)] pt-[var(--shell-pad)] md:pl-[var(--rail-offset)]">
         <div
           class="mx-auto w-full max-w-[1400px]"
           :class="{ 'h-full': noPadding }"

@@ -13,7 +13,21 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.6.0
+**Versión actual del proyecto:** v4.7.0
+
+---
+
+## Shell consistente: modal de proyecto, idioma unificado y Memoria (v4.7.0)
+
+- **Modal de creación de proyecto**: el ítem **"Crear nuevo proyecto"** del menú de proyectos del topbar abre un `AModal` (nombre + descripción) y crea el proyecto con agente y canales por defecto, sin navegar a `/setup`; al crear sincroniza el perfil, reconecta el socket y recarga. El disparador lleva `data-testid="project-selector"`.
+- **`ADropdown`** (`components/ui/ADropdown.vue`): primitivo único de **cápsula + popover** (trigger por slot, `align`, cierre por clic fuera/Escape, foco inicial, roles `menu`/`listbox`/`dialog`, `wrapper-class`/`panel-class`). Unifica las cuatro implementaciones a mano del topbar (Proyectos · Idiomas · Notificaciones · Usuario) y los selectores de filtro/tamaño de página de **Clientes** y **Usuarios** (antes `<select>` nativos). Regla: un solo componente por objetivo.
+- **Idioma**: botón **icon-only** (`Translate`) como el tema y las notificaciones, que abre un menú Español/Inglés con marca del activo (ya no un `<select>`).
+- **Espaciado del lienzo**: el contenido de **todas** las vistas suma `--shell-pad` arriba (`DashboardLayout`), separando el topbar de la primera tarjeta.
+- **Topbar en móvil sin desborde**: nombres de proyecto/usuario con `min-w-0` (truncan) y botones de icono con `shrink-0`; el clúster cabe en 390px.
+- **Brain → Memoria** en español (inglés conserva "Brain"): rail, `topbar.brain` y `nav.brain`.
+- **Tooltips** (`title`) en controles icon-only: toggle de navegación, notificaciones, paginación, cierres de modales, toggles de sección de Configuración y quitar palabra clave.
+- **Spanglish es corregido**: `Memoria`, `Sin correo`/`Correo`, `Conversaciones activas`, `Buscar conversaciones…`, `Selecciona una conversación…`, `Mitchbot (IA)`, `responde desde el panel`, `Correo y contraseña son requeridos`.
+- **Verificación**: `vue-tsc` + `build` en verde; paridad es/en **635/635**; detector Impeccable sobre lo tocado en **0 hallazgos**; e2e **41/41**; capturas en 1440/390 sin desborde.
 
 ---
 

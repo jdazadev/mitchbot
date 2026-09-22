@@ -315,7 +315,7 @@ async function handleSubmit() {
                   class="inline-flex items-center gap-1 rounded-full bg-canvas px-2.5 py-1 text-xs text-ink-2"
                 >
                   {{ keyword }}
-                  <button type="button" class="text-ink-3 hover:text-ink" @click="removeGoodbyeKeyword(keyword)">
+                  <button type="button" class="text-ink-3 hover:text-ink" :aria-label="t('common.remove')" :title="t('common.remove')" @click="removeGoodbyeKeyword(keyword)">
                     <AIcon name="X" :size="12" />
                   </button>
                 </span>

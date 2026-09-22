@@ -5,6 +5,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.7.0 — 2026-09-22
+
+> 🧩 **Shell consistente**: modal de proyecto, idioma como el de proyecto, Memoria y tooltips
+
+### ✨ Añadido
+- **Modal de creación de proyecto** desde el topbar: el ítem "Crear nuevo proyecto" del menú de proyectos abre un `AModal` (nombre + descripción) y crea el proyecto con agente y canales por defecto sin salir del dashboard; al crear, sincroniza el perfil, reconecta el socket y recarga. Nuevo `data-testid="project-selector"` en el disparador.
+- **`ADropdown`** (componente base): primitivo único de cápsula + popover (trigger por slot, alineación, cierre por clic fuera/Escape, foco inicial, roles `menu`/`listbox`/`dialog`). Sustituye las cuatro implementaciones a mano del topbar (Proyectos, Idiomas, Notificaciones, Usuario) y los `<select>` nativos de filtro y tamaño de página de Clientes y Usuarios.
+- **Tooltips** (`title`) en controles icon-only que no los tenían: toggle de navegación, notificaciones, paginación (Clientes y Usuarios), cierres de modales y toggles de sección de Configuración, y quitar palabra clave en Setup/Configuración.
+
+### 🔧 Cambiado
+- **Selector de idioma**: deja de ser un `<select>` nativo y pasa a botón **icon-only** (`Translate`) como sus vecinos, que abre un menú Español/Inglés con marca del idioma activo.
+- **Espaciado del lienzo**: el contenido de todas las vistas suma `--shell-pad` arriba, separando el topbar de la primera tarjeta (el buscador de Clientes ya no se pega al topbar).
+- **Topbar en móvil**: los nombres de proyecto y usuario truncan (`min-w-0`) y los botones de icono no se encogen (`shrink-0`); el clúster deja de desbordar a la derecha (medido: 390 = 390).
+- **Brain → Memoria** en español (el inglés conserva "Brain"): rail, título de vista y catálogos i18n.
+- **Menú de estado de Clientes** alineado a la derecha para no salirse del viewport.
+
+### 🐛 Corregido
+- **Spanglish del catálogo es**: `Memoria` por "Brain", `Sin correo`/`Correo` por "Sin email"/"Email", `Conversaciones activas` por "Chats activos", `Buscar conversaciones…` / `Selecciona una conversación…` por "chats", `Mitchbot (IA)` por "(AI)", `responde desde el panel` por "dashboard", `Correo y contraseña son requeridos` por "Email y contraseña…".
+
+### 📝 Documentación
+- **AGENTS.md** actualizado con la sección v4.7.0.
+
+### ✅ Verificación
+- `vue-tsc` + `build` en verde; paridad es/en **635/635**; detector Impeccable sobre lo tocado en **0 hallazgos**; suite e2e completa **41/41** (cubre el modal de proyecto, el dropdown de idioma y los filtros de Clientes); capturas de verificación en escritorio (1440) y móvil (390) sin desborde horizontal.
+
+---
+
 ## v4.6.0 — 2026-09-22
 
 > 🕒 **Shell afinado**: reloj al topbar, título honesto, Configuración/Mi Perfil al menú del usuario y adiós al spanglish

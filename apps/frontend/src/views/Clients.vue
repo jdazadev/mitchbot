@@ -14,6 +14,7 @@ import AAvatar from "../components/ui/AAvatar.vue";
 import APill from "../components/ui/APill.vue";
 import AButton from "../components/ui/AButton.vue";
 import AModal from "../components/ui/AModal.vue";
+import ADropdown from "../components/ui/ADropdown.vue";
 import { channelInk, channelTone } from "../lib/channels";
 
 const { t, locale } = useI18n();
@@ -75,6 +76,30 @@ const sortBy = ref("createdAt");
 const sortOrder = ref<"asc" | "desc">("desc");
 const currentPage = ref(1);
 const pageSize = ref(10);
+
+const platformOptions = computed(() => [
+  { value: "All", label: t("clients.filters.allPlatforms") },
+  { value: "WhatsApp", label: "WhatsApp" },
+  { value: "Instagram", label: "Instagram" },
+  { value: "Web", label: "Web" },
+]);
+
+const statusOptions = computed(() => [
+  { value: "All", label: t("clients.filters.allStatuses") },
+  { value: "Active", label: statusLabel("Active") },
+  { value: "New", label: statusLabel("New") },
+  { value: "Inactive", label: statusLabel("Inactive") },
+  { value: "Archived", label: statusLabel("Archived") },
+]);
+
+const pageSizeOptions = [5, 10, 25, 50];
+
+const platformFilterLabel = computed(
+  () => platformOptions.value.find((o) => o.value === filterPlatform.value)?.label ?? ""
+);
+const statusFilterLabel = computed(
+  () => statusOptions.value.find((o) => o.value === filterStatus.value)?.label ?? ""
+);
 
 // Modal de edición
 const showEditModal = ref(false);
@@ -280,27 +305,70 @@ async function restoreContact(contact: Contact) {
           type="text"
         />
       </div>
-      <select
-        v-model="filterPlatform"
-        data-testid="clients-platform-filter"
-        class="appearance-none rounded-full bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink-2 shadow-card outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
+      <ADropdown
+        :label="t('clients.filters.allPlatforms')"
+        :title="t('clients.filters.allPlatforms')"
+        testid="clients-platform-filter"
+        role="listbox"
+        haspopup="listbox"
+        align="left"
+        wrapper-class="shrink-0"
+        :trigger-class="'flex items-center gap-2 rounded-full bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink-2 shadow-card transition-colors hover:bg-canvas'"
+        panel-class="w-52"
       >
-        <option value="All">{{ t('clients.filters.allPlatforms') }}</option>
-        <option value="WhatsApp">WhatsApp</option>
-        <option value="Instagram">Instagram</option>
-        <option value="Web">Web</option>
-      </select>
-      <select
-        v-model="filterStatus"
-        data-testid="clients-status-filter"
-        class="appearance-none rounded-full bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink-2 shadow-card outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
+        <template #trigger>
+          {{ platformFilterLabel }}
+          <AIcon name="CaretDown" :size="14" class="text-ink-3" />
+        </template>
+        <template #content="{ close }">
+          <button
+            v-for="option in platformOptions"
+            :key="option.value"
+            type="button"
+            role="option"
+            :data-value="option.value"
+            :aria-selected="filterPlatform === option.value"
+            class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+            :class="filterPlatform === option.value ? 'text-lilac-ink' : 'text-ink-2'"
+            @click="filterPlatform = option.value; close()"
+          >
+            {{ option.label }}
+            <AIcon v-if="filterPlatform === option.value" name="Check" :size="16" />
+          </button>
+        </template>
+      </ADropdown>
+      <ADropdown
+        :label="t('clients.filters.allStatuses')"
+        :title="t('clients.filters.allStatuses')"
+        testid="clients-status-filter"
+        role="listbox"
+        haspopup="listbox"
+        align="right"
+        wrapper-class="shrink-0"
+        :trigger-class="'flex items-center gap-2 rounded-full bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink-2 shadow-card transition-colors hover:bg-canvas'"
+        panel-class="w-52"
       >
-        <option value="All">{{ t('clients.filters.allStatuses') }}</option>
-        <option value="Active">{{ statusLabel('Active') }}</option>
-        <option value="New">{{ statusLabel('New') }}</option>
-        <option value="Inactive">{{ statusLabel('Inactive') }}</option>
-        <option value="Archived">{{ statusLabel('Archived') }}</option>
-      </select>
+        <template #trigger>
+          {{ statusFilterLabel }}
+          <AIcon name="CaretDown" :size="14" class="text-ink-3" />
+        </template>
+        <template #content="{ close }">
+          <button
+            v-for="option in statusOptions"
+            :key="option.value"
+            type="button"
+            role="option"
+            :data-value="option.value"
+            :aria-selected="filterStatus === option.value"
+            class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+            :class="filterStatus === option.value ? 'text-lilac-ink' : 'text-ink-2'"
+            @click="filterStatus = option.value; close()"
+          >
+            {{ option.label }}
+            <AIcon v-if="filterStatus === option.value" name="Check" :size="16" />
+          </button>
+        </template>
+      </ADropdown>
     </div>
 
     <div class="flex flex-wrap items-center gap-2 text-xs text-ink-3">
@@ -308,15 +376,36 @@ async function restoreContact(contact: Contact) {
       {{ t('clients.hint.autoCreated') }}
       <span class="ml-auto flex items-center gap-2">
         {{ t('clients.results.found', totalContacts) }}
-        <select
-          v-model="pageSize"
-          class="appearance-none rounded-full bg-canvas px-3 py-1 text-xs font-semibold text-ink-2 outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
+        <ADropdown
+          :label="t('clients.pagination.perPage')"
+          :title="t('clients.pagination.perPage')"
+          role="listbox"
+          haspopup="listbox"
+          align="right"
+          wrapper-class="shrink-0"
+          trigger-class="flex items-center gap-1.5 rounded-full bg-canvas px-3 py-1 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken"
+          panel-class="w-24"
         >
-          <option :value="5">5</option>
-          <option :value="10">10</option>
-          <option :value="25">25</option>
-          <option :value="50">50</option>
-        </select>
+          <template #trigger>
+            {{ pageSize }}
+            <AIcon name="CaretDown" :size="12" class="text-ink-3" />
+          </template>
+          <template #content="{ close }">
+            <button
+              v-for="size in pageSizeOptions"
+              :key="size"
+              type="button"
+              role="option"
+              :aria-selected="pageSize === size"
+              class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+              :class="pageSize === size ? 'text-lilac-ink' : 'text-ink-2'"
+              @click="pageSize = size; close()"
+            >
+              {{ size }}
+              <AIcon v-if="pageSize === size" name="Check" :size="16" />
+            </button>
+          </template>
+        </ADropdown>
         {{ t('clients.pagination.perPage') }}
       </span>
     </div>
@@ -327,7 +416,7 @@ async function restoreContact(contact: Contact) {
     >
       <AIcon name="WarningCircle" :size="18" />
       <span class="flex-1">{{ actionError }}</span>
-      <button type="button" class="shrink-0" :aria-label="t('common.close')" @click="actionError = null">
+      <button type="button" class="shrink-0" :aria-label="t('common.close')" :title="t('common.close')" @click="actionError = null">
         <AIcon name="X" :size="16" />
       </button>
     </div>
@@ -474,6 +563,7 @@ async function restoreContact(contact: Contact) {
             type="button"
             :disabled="currentPage === 1"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :title="t('common.firstPage')"
             :aria-label="t('common.firstPage')"
             @click="goToPage(1)"
           >
@@ -483,6 +573,7 @@ async function restoreContact(contact: Contact) {
             type="button"
             :disabled="currentPage === 1"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :title="t('common.previous')"
             :aria-label="t('common.previous')"
             @click="goToPage(currentPage - 1)"
           >
@@ -511,6 +602,7 @@ async function restoreContact(contact: Contact) {
             type="button"
             :disabled="currentPage === totalPages"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :title="t('common.next')"
             :aria-label="t('common.next')"
             @click="goToPage(currentPage + 1)"
           >
@@ -520,6 +612,7 @@ async function restoreContact(contact: Contact) {
             type="button"
             :disabled="currentPage === totalPages"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :title="t('common.lastPage')"
             :aria-label="t('common.lastPage')"
             @click="goToPage(totalPages)"
           >
@@ -537,6 +630,8 @@ async function restoreContact(contact: Contact) {
           <button
             type="button"
             class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas"
+            :aria-label="t('common.close')"
+            :title="t('common.close')"
             @click="showEditModal = false"
           >
             <AIcon name="X" :size="18" />

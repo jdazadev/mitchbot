@@ -151,12 +151,12 @@ test.describe('Mensajería', () => {
 
     // Búsqueda por nombre (canal "Todos").
     await inbox.getByRole('button', { name: 'Todos', exact: true }).click();
-    await inbox.getByPlaceholder('Buscar chats...').fill(webName);
+    await inbox.getByPlaceholder('Buscar conversaciones...').fill(webName);
     await expect(inbox.getByText(webName).first()).toBeVisible();
     await expect(inbox.getByText(waName)).toHaveCount(0);
 
     // Vaciar la búsqueda restaura la lista.
-    await inbox.getByPlaceholder('Buscar chats...').fill('');
+    await inbox.getByPlaceholder('Buscar conversaciones...').fill('');
     await expect(inbox.getByText(waName).first()).toBeVisible();
   });
 
@@ -213,6 +213,7 @@ test.describe('Mensajería', () => {
 
     // Tomar control.
     await page.getByRole('button', { name: /Tomar control/i }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Tomar control' }).click();
     await expect(page.getByText('Atención humana')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('Piloto automático activo')).toHaveCount(0);
     await expect
@@ -230,6 +231,7 @@ test.describe('Mensajería', () => {
 
     // Devolver al modo automático.
     await page.getByRole('button', { name: /Piloto automático/i }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Activar piloto automático' }).click();
     await expect(page.getByText('Piloto automático activo')).toBeVisible({ timeout: 15_000 });
     await expect
       .poll(async () => (await getConversation(api, conversationId)).mode)
@@ -343,7 +345,7 @@ test.describe('Mensajería', () => {
   test('al entrar sin ?conversation= no hay conversación seleccionada', async ({ page }) => {
     await page.goto('/messaging');
     await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
-    await expect(page.getByText('Selecciona un chat para empezar a responder')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Selecciona una conversación para empezar a responder')).toBeVisible({ timeout: 20_000 });
     await expect(page.getByPlaceholder('Escribe un mensaje...')).toHaveCount(0);
   });
 

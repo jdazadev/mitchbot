@@ -8,6 +8,7 @@ import AAvatar from '../components/ui/AAvatar.vue';
 import APill from '../components/ui/APill.vue';
 import AButton from '../components/ui/AButton.vue';
 import AModal from '../components/ui/AModal.vue';
+import ADropdown from '../components/ui/ADropdown.vue';
 
 const { t, locale } = useI18n();
 
@@ -24,6 +25,7 @@ const sortOrder = ref<'asc' | 'desc'>('desc');
 const projects = ref<Project[]>([]);
 
 const roles = ['admin', 'support', 'assistant'] as const;
+const pageSizeOptions = [5, 10, 25, 50];
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
@@ -212,15 +214,36 @@ function formatDate(dateStr: string) {
       <AIcon name="Users" :size="15" />
       {{ t('users.results.found', totalUsers) }}
       <span class="ml-auto flex items-center gap-2">
-        <select
-          v-model="pageSize"
-          class="appearance-none rounded-full bg-canvas px-3 py-1 text-xs font-semibold text-ink-2 outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
+        <ADropdown
+          :label="t('users.pagination.perPage')"
+          :title="t('users.pagination.perPage')"
+          role="listbox"
+          haspopup="listbox"
+          align="right"
+          wrapper-class="shrink-0"
+          trigger-class="flex items-center gap-1.5 rounded-full bg-canvas px-3 py-1 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken"
+          panel-class="w-24"
         >
-          <option :value="5">5</option>
-          <option :value="10">10</option>
-          <option :value="25">25</option>
-          <option :value="50">50</option>
-        </select>
+          <template #trigger>
+            {{ pageSize }}
+            <AIcon name="CaretDown" :size="12" class="text-ink-3" />
+          </template>
+          <template #content="{ close }">
+            <button
+              v-for="size in pageSizeOptions"
+              :key="size"
+              type="button"
+              role="option"
+              :aria-selected="pageSize === size"
+              class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+              :class="pageSize === size ? 'text-lilac-ink' : 'text-ink-2'"
+              @click="pageSize = size; close()"
+            >
+              {{ size }}
+              <AIcon v-if="pageSize === size" name="Check" :size="16" />
+            </button>
+          </template>
+        </ADropdown>
         {{ t('users.pagination.perPage') }}
       </span>
     </div>
@@ -336,6 +359,7 @@ function formatDate(dateStr: string) {
             type="button"
             :disabled="currentPage === 1"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :title="t('common.firstPage')"
             :aria-label="t('common.firstPage')"
             @click="goToPage(1)"
           >
@@ -345,6 +369,7 @@ function formatDate(dateStr: string) {
             type="button"
             :disabled="currentPage === 1"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :title="t('common.previous')"
             :aria-label="t('common.previous')"
             @click="goToPage(currentPage - 1)"
           >
@@ -373,6 +398,7 @@ function formatDate(dateStr: string) {
             type="button"
             :disabled="currentPage === totalPages"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :title="t('common.next')"
             :aria-label="t('common.next')"
             @click="goToPage(currentPage + 1)"
           >
@@ -382,6 +408,7 @@ function formatDate(dateStr: string) {
             type="button"
             :disabled="currentPage === totalPages"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :title="t('common.lastPage')"
             :aria-label="t('common.lastPage')"
             @click="goToPage(totalPages)"
           >
@@ -396,7 +423,7 @@ function formatDate(dateStr: string) {
       <div class="p-6">
         <div class="flex items-center justify-between">
           <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('users.create.title') }}</h2>
-          <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas" @click="showCreateModal = false">
+          <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas" :aria-label="t('common.close')" :title="t('common.close')" @click="showCreateModal = false">
             <AIcon name="X" :size="18" />
           </button>
         </div>
@@ -445,7 +472,7 @@ function formatDate(dateStr: string) {
       <div class="p-6">
         <div class="flex items-center justify-between">
           <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('users.edit.title') }}</h2>
-          <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas" @click="showEditModal = false">
+          <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas" :aria-label="t('common.close')" :title="t('common.close')" @click="showEditModal = false">
             <AIcon name="X" :size="18" />
           </button>
         </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { projectService, type Project } from '../../services/project.service';
@@ -8,6 +8,9 @@ import { socketService } from '../../services/socket.service';
 import { useTheme } from '../../composables/useTheme';
 import AIcon from '../ui/AIcon.vue';
 import AAvatar from '../ui/AAvatar.vue';
+import ADropdown from '../ui/ADropdown.vue';
+import AModal from '../ui/AModal.vue';
+import AButton from '../ui/AButton.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -17,25 +20,6 @@ const { theme, toggleTheme } = useTheme();
 const emit = defineEmits<{ (e: 'toggle-nav'): void }>();
 
 withDefaults(defineProps<{ navOpen?: boolean }>(), { navOpen: false });
-
-function closeMenus() {
-  projectOpen.value = false;
-  notificationsOpen.value = false;
-  userOpen.value = false;
-}
-function toggleMenu(menu: 'project' | 'notifications' | 'user') {
-  const next = {
-    project: menu === 'project' ? !projectOpen.value : false,
-    notifications: menu === 'notifications' ? !notificationsOpen.value : false,
-    user: menu === 'user' ? !userOpen.value : false,
-  };
-  projectOpen.value = next.project;
-  notificationsOpen.value = next.notifications;
-  userOpen.value = next.user;
-  if (menu === 'notifications' && notificationsOpen.value) {
-    nextTick(() => notificationsPanel.value?.focus());
-  }
-}
 
 const pageTitle = computed(() => {
   switch (route.name) {
@@ -94,7 +78,6 @@ const userInitials = computed(() => {
 // === Selector de proyecto ===
 const projects = ref<Project[]>([]);
 const activeProjectId = ref<string | null>(null);
-const projectOpen = ref(false);
 const switching = ref(false);
 const projectError = ref<string | null>(null);
 
@@ -102,11 +85,11 @@ const activeProject = computed(
   () => projects.value.find((p) => p._id === activeProjectId.value) || null
 );
 
+const projectTriggerClass =
+  'flex min-w-0 items-center gap-2 rounded-full bg-surface px-3.5 py-2 text-[13px] font-semibold shadow-card transition-colors hover:bg-canvas disabled:opacity-60';
+
 async function selectProject(project: Project) {
-  if (project._id === activeProjectId.value) {
-    projectOpen.value = false;
-    return;
-  }
+  if (project._id === activeProjectId.value) return;
   switching.value = true;
   projectError.value = null;
   try {
@@ -118,20 +101,80 @@ async function selectProject(project: Project) {
     projectError.value = t('topbar.projectSwitchError', { message: err?.message || '' });
   } finally {
     switching.value = false;
-    projectOpen.value = !!projectError.value;
   }
 }
 
-function createProject() {
-  projectOpen.value = false;
-  router.push({ name: 'setup', query: { mode: 'new' } });
+// === Crear proyecto (modal) ===
+const createOpen = ref(false);
+const creating = ref(false);
+const createError = ref<string | null>(null);
+const createForm = ref({ name: '', description: '' });
+
+function openCreateProject() {
+  projectError.value = null;
+  createForm.value = { name: '', description: '' };
+  createError.value = null;
+  createOpen.value = true;
+}
+
+async function submitCreateProject() {
+  const name = createForm.value.name.trim();
+  if (!name) {
+    createError.value = t('topbar.createModal.errors.nameRequired');
+    return;
+  }
+  creating.value = true;
+  createError.value = null;
+  try {
+    const { project } = await projectService.createProject({
+      name,
+      description: createForm.value.description.trim() || undefined,
+      agent: {
+        name: t('topbar.createModal.defaultAgentName'),
+        description: '',
+        personality: {
+          role: 'assistant',
+          traits: ['neutral'],
+          emojiUsage: 'medium',
+          language: 'es',
+          responseLength: 'medium',
+          ragBehavior: 'hybrid',
+        },
+      },
+      config: {
+        channels: { whatsapp: true, instagram: false, web: true },
+        options: { autoCreateContact: true },
+      },
+    });
+    try {
+      await authService.getProfile();
+    } catch {
+      /* noop */
+    }
+    createOpen.value = false;
+    socketService.reconnect(project._id);
+    window.location.reload();
+  } catch (err: any) {
+    createError.value = t('topbar.createModal.errors.create', { message: err?.message || '' });
+  } finally {
+    creating.value = false;
+  }
+}
+
+// === Idioma ===
+const localeOptions = computed(() =>
+  [
+    { value: 'es' as const, label: t('common.spanish') },
+    { value: 'en' as const, label: t('common.english') },
+  ]
+);
+
+function selectLocale(value: 'es' | 'en') {
+  locale.value = value;
 }
 
 // === Usuario ===
-const userOpen = ref(false);
-
 async function handleLogout() {
-  userOpen.value = false;
   socketService.disconnect();
   await authService.logout();
   router.push('/login');
@@ -149,8 +192,6 @@ interface AdminNotification {
 }
 
 const notifications = ref<AdminNotification[]>([]);
-const notificationsOpen = ref(false);
-const notificationsPanel = ref<HTMLElement | null>(null);
 const unreadCount = computed(() => notifications.value.filter((n) => !n.read).length);
 
 let notificationSeq = 0;
@@ -208,6 +249,9 @@ function formatNotificationTime(value: string) {
   return t('topbar.time.daysAgo', { count: Math.floor(hours / 24) });
 }
 
+const iconButtonClass =
+  'grid h-9.5 w-9.5 shrink-0 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink';
+
 onMounted(async () => {
   clockTimer = setInterval(() => {
     clock.value = new Date();
@@ -234,8 +278,9 @@ onBeforeUnmount(() => {
         type="button"
         data-testid="nav-toggle"
         :aria-label="t('nav.primary')"
+        :title="t('nav.primary')"
         :aria-expanded="navOpen"
-        class="grid h-10 w-10 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink md:hidden"
+        class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink md:hidden"
         @click="emit('toggle-nav')"
       >
         <AIcon name="List" :size="19" />
@@ -248,7 +293,7 @@ onBeforeUnmount(() => {
         {{ pageTitle }}
       </h2>
 
-      <div class="ml-auto flex items-center gap-2.5">
+      <div class="ml-auto flex min-w-0 items-center gap-2.5">
         <div
           class="mr-1 hidden items-center gap-2 whitespace-nowrap text-[12.5px] font-semibold text-ink-3 min-[1360px]:flex"
         >
@@ -257,28 +302,24 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Proyectos -->
-        <div class="relative" @keydown.escape="projectOpen = false">
-          <button
-            type="button"
-            :disabled="switching"
-            aria-haspopup="menu"
-            :aria-expanded="projectOpen"
-            class="flex items-center gap-2 rounded-full bg-surface px-3.5 py-2 text-[13px] font-semibold shadow-card transition-colors hover:bg-canvas disabled:opacity-60"
-            @click="toggleMenu('project')"
-          >
+        <ADropdown
+          :label="t('topbar.selectProject')"
+          :title="t('topbar.selectProject')"
+          testid="project-selector"
+          align="right"
+          :disabled="switching"
+          :trigger-class="projectTriggerClass"
+          panel-class="w-64"
+        >
+          <template #trigger>
             <span class="h-2 w-2 rounded-full" :style="{ background: 'var(--brand)' }" />
-            <span class="max-w-[150px] truncate">
+            <span class="min-w-0 max-w-[150px] truncate">
               {{ activeProject?.name || t('topbar.selectProject') }}
             </span>
             <AIcon name="CaretDown" :size="15" class="text-ink-3" />
-          </button>
+          </template>
 
-          <div v-if="projectOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="projectOpen = false" />
-          <div
-            v-if="projectOpen"
-            role="menu"
-            class="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
-          >
+          <template #content="{ close }">
             <div
               v-if="projectError"
               role="alert"
@@ -317,36 +358,44 @@ onBeforeUnmount(() => {
               type="button"
               role="menuitem"
               class="flex w-full items-center gap-2 border-t border-line px-4 py-2.5 text-sm font-semibold text-lilac-ink hover:bg-canvas"
-              @click="createProject"
+              @click="close(); openCreateProject()"
             >
               <AIcon name="Plus" :size="16" />
               {{ t('topbar.createProject') }}
             </button>
-          </div>
-        </div>
+          </template>
+        </ADropdown>
 
         <!-- Idiomas -->
-        <div class="relative flex items-center">
-          <AIcon
-            name="Translate"
-            :size="16"
-            class="pointer-events-none absolute left-3 text-ink-3"
-          />
-          <select
-            v-model="locale"
-            :aria-label="t('topbar.language')"
-            data-testid="language-selector"
-            class="appearance-none rounded-full bg-surface py-2 pl-9 pr-7 text-[13px] font-semibold text-ink-2 shadow-card transition-colors hover:bg-canvas focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
-          >
-            <option value="es">{{ t('common.spanish') }}</option>
-            <option value="en">{{ t('common.english') }}</option>
-          </select>
-          <AIcon
-            name="CaretDown"
-            :size="15"
-            class="pointer-events-none absolute right-2.5 text-ink-3"
-          />
-        </div>
+        <ADropdown
+          :label="t('topbar.language')"
+          :title="t('topbar.language')"
+          testid="language-selector"
+          align="right"
+          wrapper-class="shrink-0"
+          panel-class="w-48"
+          :trigger-class="iconButtonClass"
+        >
+          <template #trigger>
+            <AIcon name="Translate" :size="18" />
+          </template>
+          <template #content="{ close }">
+            <button
+              v-for="option in localeOptions"
+              :key="option.value"
+              type="button"
+              role="menuitemradio"
+              :data-locale="option.value"
+              :aria-checked="locale === option.value"
+              class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
+              :class="locale === option.value ? 'text-lilac-ink' : 'text-ink-2'"
+              @click="selectLocale(option.value); close()"
+            >
+              {{ option.label }}
+              <AIcon v-if="locale === option.value" name="Check" :size="16" />
+            </button>
+          </template>
+        </ADropdown>
 
         <!-- Tema -->
         <button
@@ -354,22 +403,25 @@ onBeforeUnmount(() => {
           data-testid="theme-toggle"
           :aria-label="theme === 'dark' ? t('topbar.themeLight') : t('topbar.themeDark')"
           :title="theme === 'dark' ? t('topbar.themeLight') : t('topbar.themeDark')"
-          class="grid h-9.5 w-9.5 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink"
+          class="grid h-9.5 w-9.5 shrink-0 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink"
           @click="toggleTheme"
         >
           <AIcon :name="theme === 'dark' ? 'Sun' : 'MoonStars'" :size="18" />
         </button>
 
         <!-- Notificaciones -->
-        <div class="relative" @keydown.escape="notificationsOpen = false">
-          <button
-            type="button"
-            :aria-label="t('topbar.notifications')"
-            aria-haspopup="dialog"
-            :aria-expanded="notificationsOpen"
-            class="relative grid h-9.5 w-9.5 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink"
-            @click="toggleMenu('notifications')"
-          >
+        <ADropdown
+          :label="t('topbar.notifications')"
+          :title="t('topbar.notifications')"
+          role="dialog"
+          haspopup="dialog"
+          align="right"
+          :auto-focus="true"
+          wrapper-class="shrink-0"
+          panel-class="w-80"
+          :trigger-class="'relative ' + iconButtonClass"
+        >
+          <template #trigger>
             <AIcon name="Bell" :size="18" />
             <span
               v-if="unreadCount > 0"
@@ -377,17 +429,8 @@ onBeforeUnmount(() => {
               class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full"
               :style="{ background: 'var(--brand)', boxShadow: '0 0 0 2px var(--surface)' }"
             />
-          </button>
-
-          <div v-if="notificationsOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="notificationsOpen = false" />
-          <div
-            v-if="notificationsOpen"
-            ref="notificationsPanel"
-            role="dialog"
-            tabindex="-1"
-            :aria-label="t('topbar.notifications')"
-            class="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)] focus:outline-none"
-          >
+          </template>
+          <template #content>
             <div class="flex items-center justify-between border-b border-line px-4 py-3">
               <span class="text-sm font-bold">{{ t('topbar.notifications') }}</span>
               <button
@@ -436,32 +479,25 @@ onBeforeUnmount(() => {
             >
               {{ t('topbar.clearAll') }}
             </button>
-          </div>
-        </div>
+          </template>
+        </ADropdown>
 
         <!-- Usuario -->
-        <div class="relative" @keydown.escape="userOpen = false">
-          <button
-            type="button"
-            aria-haspopup="menu"
-            :aria-expanded="userOpen"
-            :aria-label="t('nav.profile')"
-            class="flex items-center gap-2 rounded-full bg-surface py-1 pl-1 pr-3 shadow-card transition-colors hover:bg-canvas"
-            @click="toggleMenu('user')"
-          >
+        <ADropdown
+          :label="t('nav.profile')"
+          :title="t('nav.profile')"
+          align="right"
+          panel-class="w-56"
+          trigger-class="flex min-w-0 items-center gap-2 rounded-full bg-surface py-1 pl-1 pr-3 shadow-card transition-colors hover:bg-canvas"
+        >
+          <template #trigger>
             <AAvatar :initials="userInitials" tone="lilac" size="sm" />
-            <span class="max-w-[110px] truncate text-[13px] font-semibold">
+            <span class="min-w-0 max-w-[110px] truncate text-[13px] font-semibold">
               {{ currentUser?.name || t('nav.userPlaceholder') }}
             </span>
             <AIcon name="CaretDown" :size="15" class="text-ink-3" />
-          </button>
-
-          <div v-if="userOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="userOpen = false" />
-          <div
-            v-if="userOpen"
-            role="menu"
-            class="absolute right-0 z-40 mt-2 w-56 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
-          >
+          </template>
+          <template #content="{ close }">
             <div class="border-b border-line px-4 py-3">
               <p class="truncate text-sm font-bold">{{ currentUser?.name }}</p>
               <p class="truncate text-[11px] font-semibold text-ink-3">{{ currentUser?.email }}</p>
@@ -470,7 +506,7 @@ onBeforeUnmount(() => {
               to="/settings"
               role="menuitem"
               class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-ink-2 hover:bg-canvas hover:text-ink"
-              @click="userOpen = false"
+              @click="close"
             >
               <AIcon name="GearSix" :size="16" />
               {{ t('nav.settings') }}
@@ -479,7 +515,7 @@ onBeforeUnmount(() => {
               to="/profile"
               role="menuitem"
               class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-ink-2 hover:bg-canvas hover:text-ink"
-              @click="userOpen = false"
+              @click="close"
             >
               <AIcon name="User" :size="16" />
               {{ t('nav.profile') }}
@@ -489,14 +525,77 @@ onBeforeUnmount(() => {
               type="button"
               role="menuitem"
               class="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-[color:var(--danger)] hover:bg-[color:var(--danger-soft)]"
-              @click="handleLogout"
+              @click="close(); handleLogout()"
             >
               <AIcon name="SignOut" :size="16" />
               {{ t('nav.logout') }}
             </button>
-          </div>
-        </div>
+          </template>
+        </ADropdown>
       </div>
     </div>
+
+    <!-- Modal: Crear proyecto -->
+    <AModal
+      :open="createOpen"
+      :label="t('topbar.createModal.title')"
+      size="md"
+      @close="createOpen = false"
+    >
+      <div class="p-6">
+        <div class="flex items-center justify-between">
+          <h2 class="font-display text-lg font-bold tracking-[-0.02em]">
+            {{ t('topbar.createModal.title') }}
+          </h2>
+          <button
+            type="button"
+            class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas"
+            :aria-label="t('common.close')"
+            :title="t('common.close')"
+            @click="createOpen = false"
+          >
+            <AIcon name="X" :size="18" />
+          </button>
+        </div>
+        <p class="mt-1 text-xs text-ink-3">{{ t('topbar.createModal.subtitle') }}</p>
+
+        <div
+          v-if="createError"
+          role="alert"
+          class="mt-4 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]"
+        >
+          <AIcon name="WarningCircle" :size="17" />
+          {{ createError }}
+        </div>
+
+        <div class="mt-5 flex flex-col gap-4">
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('topbar.createModal.name') }}</span>
+            <input
+              v-model="createForm.name"
+              data-autofocus
+              class="field"
+              :placeholder="t('topbar.createModal.namePlaceholder')"
+              @keydown.enter.prevent="submitCreateProject"
+            />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('topbar.createModal.description') }}</span>
+            <textarea
+              v-model="createForm.description"
+              class="field h-24 resize-none"
+              :placeholder="t('topbar.createModal.descriptionPlaceholder')"
+            />
+          </label>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-3">
+          <AButton variant="ghost" @click="createOpen = false">{{ t('common.cancel') }}</AButton>
+          <AButton variant="primary" :loading="creating" @click="submitCreateProject">
+            {{ creating ? t('topbar.createModal.creating') : t('topbar.createModal.submit') }}
+          </AButton>
+        </div>
+      </div>
+    </AModal>
   </header>
 </template>

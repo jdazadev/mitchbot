@@ -41,6 +41,21 @@
       "minutesAgo": "{count} min ago",
       "hoursAgo": "{count} h ago",
       "daysAgo": "{count} d ago"
+    },
+    "createModal": {
+      "title": "New project",
+      "subtitle": "Create a project with a default agent. You can configure it later.",
+      "name": "Project name",
+      "namePlaceholder": "E.g.: Online Store",
+      "description": "Description",
+      "descriptionPlaceholder": "What is this project about?",
+      "submit": "Create project",
+      "creating": "Creating...",
+      "defaultAgentName": "Assistant",
+      "errors": {
+        "nameRequired": "Project name is required.",
+        "create": "Could not create the project. {message}"
+      }
     }
   },
   "common": {
@@ -113,7 +128,9 @@
     "you": "You",
     "today": "Today",
     "yesterday": "Yesterday",
-    "and": "and"
+    "and": "and",
+    "expand": "Expand",
+    "collapse": "Collapse"
   },
   "dashboard": {
     "stats": {

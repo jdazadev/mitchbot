@@ -787,6 +787,7 @@ onUnmounted(() => {
             type="button"
             class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink lg:hidden"
             :aria-label="t('common.back')"
+            :title="t('common.back')"
             @click="closeChat"
           >
             <AIcon name="ArrowLeft" :size="17" />
@@ -924,6 +925,7 @@ onUnmounted(() => {
             type="button"
             class="grid h-7 w-7 shrink-0 place-items-center rounded-full transition-opacity hover:opacity-70"
             :aria-label="t('common.close')"
+            :title="t('common.close')"
             @click="actionError = null"
           >
             <AIcon name="X" :size="15" />
@@ -1102,6 +1104,8 @@ onUnmounted(() => {
           <button
             type="button"
             class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas"
+            :aria-label="t('common.close')"
+            :title="t('common.close')"
             @click="closeModifyModal"
           >
             <AIcon name="X" :size="18" />

@@ -9,7 +9,8 @@ test.describe('Internacionalización (i18n)', () => {
     await expect(page.getByTestId('nav-dashboard')).toContainText('Panel');
 
     // Cambio a inglés inmediato, sin recargar.
-    await page.getByTestId('language-selector').selectOption('en');
+    await page.getByTestId('language-selector').click();
+    await page.locator('[data-locale="en"]').click();
     await expect(page.getByTestId('page-title')).toHaveText('Dashboard Overview');
     await expect(page.getByTestId('nav-dashboard')).toContainText('Dashboard');
 

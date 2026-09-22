@@ -638,6 +638,7 @@ async function handleSaveOptions() {
                 type="button"
                 class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
                 :aria-label="t('settings.agent.section.identity')"
+                :title="expandedSections.identity ? t('common.collapse') : t('common.expand')"
                 :aria-expanded="expandedSections.identity"
                 aria-controls="agent-section-identity"
                 @click="toggleSection('identity')"
@@ -724,6 +725,7 @@ async function handleSaveOptions() {
                 type="button"
                 class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
                 :aria-label="t('settings.agent.section.voice')"
+                :title="expandedSections.voice ? t('common.collapse') : t('common.expand')"
                 :aria-expanded="expandedSections.voice"
                 aria-controls="agent-section-voice"
                 @click="toggleSection('voice')"
@@ -777,6 +779,7 @@ async function handleSaveOptions() {
                 type="button"
                 class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
                 :aria-label="t('settings.agent.section.knowledge')"
+                :title="expandedSections.knowledge ? t('common.collapse') : t('common.expand')"
                 :aria-expanded="expandedSections.knowledge"
                 aria-controls="agent-section-knowledge"
                 @click="toggleSection('knowledge')"
@@ -814,6 +817,7 @@ async function handleSaveOptions() {
                 type="button"
                 class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
                 :aria-label="t('settings.agent.section.generation')"
+                :title="expandedSections.generation ? t('common.collapse') : t('common.expand')"
                 :aria-expanded="expandedSections.generation"
                 aria-controls="agent-section-generation"
                 @click="toggleSection('generation')"
@@ -870,6 +874,7 @@ async function handleSaveOptions() {
                 type="button"
                 class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
                 :aria-label="t('settings.agent.section.messages')"
+                :title="expandedSections.messages ? t('common.collapse') : t('common.expand')"
                 :aria-expanded="expandedSections.messages"
                 aria-controls="agent-section-messages"
                 @click="toggleSection('messages')"
@@ -911,7 +916,7 @@ async function handleSaveOptions() {
                     class="inline-flex items-center gap-1 rounded-full bg-canvas px-2.5 py-1 text-xs text-ink-2"
                   >
                     {{ keyword }}
-                    <button type="button" class="text-ink-3 hover:text-ink" @click="removeGoodbyeKeyword(keyword)">
+                    <button type="button" class="text-ink-3 hover:text-ink" :aria-label="t('common.remove')" :title="t('common.remove')" @click="removeGoodbyeKeyword(keyword)">
                       <AIcon name="X" :size="12" />
                     </button>
                   </span>
@@ -941,6 +946,7 @@ async function handleSaveOptions() {
                 type="button"
                 class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-canvas hover:text-ink"
                 :aria-label="t('settings.agent.section.instructions')"
+                :title="expandedSections.instructions ? t('common.collapse') : t('common.expand')"
                 :aria-expanded="expandedSections.instructions"
                 aria-controls="agent-section-instructions"
                 @click="toggleSection('instructions')"
