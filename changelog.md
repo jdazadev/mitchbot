@@ -5,6 +5,190 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.5.0 — 2026-09-22
+
+> 🌙 **Tema oscuro y endurecimiento del critique**: Aurora de noche, errores que se ven y accesibilidad real
+
+Cierre de la tanda completa de remediación del critique Impeccable (#1→#6): modo oscuro, estados de error con recuperación, tercer nivel de urgencia, accesibilidad y limpieza del sistema de componentes.
+
+### ✨ Añadido
+- **Tema oscuro "Aurora de noche"**: set de tokens propio en `style.css` (`data-theme="dark"`) que **recompone** el mundo (papel púrpura cálido, tinta clara, pasteles profundos, sombras más densas, `aurora-haze` tenue) en lugar de invertirlo. Toggle en el topbar (`data-testid="theme-toggle"`, iconos `Sun`/`MoonStars`), persistencia en `localStorage` (`mitchbot.theme`) y arranque desde `prefers-color-scheme` sin flash (script inline en `index.html`). `useTheme.ts` gestiona el tema y `useBrand` recalcula `--brand*`/`--focus` por tema (`brandDerivatives(hsl, theme)`).
+- **Par de acción `--ink-solid` / `--ink-solid-contrast`**: el primario sólido sigue siendo "tinta" sin perder contraste al cambiar de tema.
+- **Reintento visible**: Usuarios y Brain muestran el error con botón **Reintentar**; el polling de Brain deja de tragarse los fallos.
+- **TestChat a prueba de fallos**: banner de error inline (`role="alert"`) con reintento, borrador conservado y anti doble-submit; el cambio de proyecto en el topbar también muestra su error.
+- **Urgencia de 3 niveles cableada**: el nivel **Alta** (rojo) se enciende con una señal real (sentimiento negativo + último mensaje del cliente sin responder).
+- **Alternativa textual del gráfico de volumen**: tabla `sr-only` con fecha/recuento; el SVG pasa a decorativo.
+- **Anuncio acotado en el chat público** (`role="status"`): solo los mensajes del agente, no el hilo completo.
+
+### 🔧 Cambiado
+- **Usuarios** migrado al patrón de Clientes: búsqueda en vivo, cabeceras ordenables (`<th scope="col" :aria-sort>` con botón), paginación con primera/última + tamaño de página y estado de error.
+- **Fechas y números** con el locale de la app (Usuarios, Clientes, Brain, logs).
+- **`ASwitch`** acepta nombre accesible (`aria-label`); las 10 instancias de Configuración y Setup lo reciben.
+- **`scope="col"`** en las tablas de Brain y Usuarios.
+- **DESIGN.md**: sección de modo oscuro y par de acción; el topbar suma el control de tema; brief de superficie de Mensajería reescrito para Aurora.
+
+### 🗑️ Eliminado
+- 11 componentes UI sin uso (`ABand`, `ACallout`, `ACard`, `AChip`, `ADropdown`, `AField`, `AKpi`, `ASearch`, `AStat`, `ATable`, `ATab`).
+- Variantes sin uso de `AButton` (`lilac`/`lime`/`sky`/`danger`) y tonos `solid-*` de `APill`; tokens huérfanos `--ok`/`--warn`.
+
+### ✅ Verificado
+- `vue-tsc --noEmit` y `build` en verde; paridad es/en **621/621**; detector Impeccable sobre `src/` en **0 hallazgos**.
+
+---
+
+## v4.4.7 — 2026-09-22
+
+> 📊 **Honestidad de datos y limpieza del Panel**: el gráfico se puede leer y el shell deja de fingir
+
+Cierre de los "minors" que el critique dejó abiertos tras los arreglos de fondo.
+
+### 🔧 Cambiado
+- **Gráfico de volumen** (`Dashboard.vue`): se elimina `preserveAspectRatio="none"` (los marcadores ya no se estiran en elipses), se añade **eje Y real** (0 / mitad / máximo del rango), tooltip nativo por punto (`fecha: recuento`) y `role="img"` con nombre accesible.
+- **Fuera el badge "En vivo"** sobre un valor que no se empuja por socket y la línea decorativa `Tráfico: 100%` del panel de canales.
+- **Favicon de marca** inline en `index.html` (data-URI lila con "M") en vez de `/vite.svg`; `useBrand` lo sigue reemplazando en runtime.
+- **Reloj del rail**: actualiza cada 10s (antes 30s).
+
+### ✅ Verificado
+- `vue-tsc --noEmit` y `build` en verde; detector Impeccable sobre `src/` en **0 hallazgos**.
+
+---
+
+## v4.4.6 — 2026-09-22
+
+> ♿ **Accesibilidad del "modo serio"**: teclado y foco en las acciones de alto riesgo
+
+Cierre de los red flags que el critique marcó alrededor de la toma de control y la mensajería.
+
+### 🔧 Cambiado
+- **Clientes**: las cabeceras ordenables pasan de `<th @click>` a `<th scope="col" :aria-sort>` con un `<button>` interno — ahora operables por teclado y con estado anunciado.
+- **Popover de notificaciones** (`AuroraTopbar`): al abrir recibe foco (`tabindex="-1"` + `nextTick`); Escape sigue cerrándolo.
+- **Drawer del rail en móvil** (`AuroraRail` variant `mobile`): `role="dialog"` + `aria-modal`, foco al primer enlace al abrir, Tab atrapado y Escape para cerrar.
+- **Conversaciones**: el hilo deja de ser `role="log"` global; un `role="status"` `sr-only` anuncia solo los mensajes entrantes del cliente (`messaging.a11y.incoming`).
+
+### ✅ Verificado
+- `vue-tsc --noEmit` y `build` en verde; paridad es/en **608/608**; detector Impeccable sobre `src/` en **0 hallazgos**.
+
+---
+
+## v4.4.5 — 2026-09-22
+
+> 🧠 **Brain como conocimiento**: el RAG deja de parecer un gestor de archivos
+
+El critique señaló que el foso del producto (el RAG) se presentaba como una tabla genérica con tres tarjetas de stat al pie. La vista ahora lidera con lo que el bot sabe.
+
+### ✨ Añadido
+- **Cabecera de conocimiento** en Brain: vectores · fuentes · sincronización y una **cobertura (%)** con barra segmentada por estado (lime=indexado, mantequilla=procesando, cielo=en cola, rojo=error) y leyenda con recuentos reales.
+- Etiquetas visibles en las acciones de fila ("Ver texto", "Logs", "Eliminar") desde `xl`, conservando `aria-label` y `title`.
+
+### 🔧 Cambiado
+- Claves `brain.knowledge.*` y `brain.sources.label{Extracted,Logs,Delete}` (es/en). Sustituyen a las tres tarjetas de stat genéricas.
+
+### ✅ Verificado
+- `vue-tsc --noEmit` y `build` en verde; paridad es/en **607/607**; detector Impeccable sobre `src/` en **0 hallazgos**.
+
+---
+
+## v4.4.4 — 2026-09-22
+
+> 🖐️ **Modo serio en Conversaciones**: tomar el control se confirma, se pinta en lila y se acusa
+
+Tomar el control de una conversación era la acción más importante del producto y la menos confirmada: un click inmediato sin confirmación ni acuse, apenas distinguible del silencio.
+
+### ✨ Añadido
+- **Modal de confirmación** (`AModal`) antes de tomar el control y antes de devolvérselo al bot, con copy que nombra la acción y su consecuencia.
+- **Acuse efímero** (`role="status"`, 4s) en el hilo tras el cambio de modo.
+- Claves `messaging.mode.*` para los modales y acuses (es/en).
+
+### 🔧 Cambiado
+- **Botón de modo con semántica pastel**: "Tomar control" en lila (persona/control) y "Piloto automático" en neutro, alineado con `DESIGN.md`. La pill de la cabecera queda como estado de solo lectura.
+
+### ✅ Verificado
+- `vue-tsc --noEmit` y `build` en verde; paridad es/en **600/600**.
+
+---
+
+## v4.4.3 — 2026-09-22
+
+> 🛟 **Mensajería a prueba de fallos**: enviar, tomar control y guardar contacto ya no fallan en silencio
+
+El critique detectó que las tres acciones de mayor riesgo de Conversaciones se tragaban el error en `console.error`. Ahora el operador ve el fallo, puede reintentar y no pierde el borrador.
+
+### ✨ Añadido
+- **Banner de error inline** en el hilo de Conversaciones (`role="alert"`, descartable) que aparece cuando fallan enviar un mensaje, cambiar el modo, guardar el contacto o analizar el sentimiento.
+- Claves `messaging.errors.*` (`send`/`mode`/`contact`/`insights`) en `es.json` y `en.json`.
+
+### 🔧 Cambiado
+- **Borrador conservado**: si el envío falla, el texto vuelve al compositor.
+- **Anti doble-submit**: nuevo estado `isSending` deshabilita el botón de enviar mientras hay un mensaje en vuelo.
+
+### ✅ Verificado
+- `vue-tsc --noEmit` y `build` en verde; paridad es/en **592/592**.
+
+---
+
+## v4.4.2 — 2026-09-22
+
+> 🫥 **Shell honesto**: el topbar deja de mostrar instrumentos falsos (controles muertos y métricas inventadas)
+
+El critique Impeccable detectó un **P0** en el shell: `TopbarContext.vue` renderizaba instrumentos de vista con **datos inventados** y **sin handlers**. Se elimina el componente; los controles reales permanecen dentro de cada vista.
+
+### 🗑️ Eliminado
+- **`apps/frontend/src/components/layout/TopbarContext.vue`** y su import/uso en `AuroraTopbar.vue`. Sus cápsulas (`segmented` de rango/periodo, contadores `12 activas`/`61 trozos`, chips de canal, roles) no tenían `@click` y su selección era una expresión estática — decoración que violaba el Principio 3 de `PRODUCT.md`.
+
+### 🔧 Cambiado
+- **`AuroraTopbar`**: el topbar queda con **título de página + invariantes** (Proyectos · Idiomas · Notificaciones · Usuario), sin instrumentos decorativos. Los controles de cada vista (rango y granularidad en el Panel, filtros y page size en Clientes, stats en Brain, modo en Conversaciones) siguen en su superficie.
+- **`DESIGN.md`** y **`AGENTS.md`**: la sección Layout deja de prometer instrumentos por vista en el topbar.
+
+### ✅ Verificado
+- `vue-tsc --noEmit` y `build` en verde.
+
+---
+
+## v4.4.1 — 2026-09-22
+
+> 📐 **Margen uniforme del shell**: las tarjetas dejan de pegarse al rail y todo el lienzo respira 14px en las cuatro direcciones
+
+El contenedor de contenido y el topbar usaban `md:pl-[242px]`, dejando solo **4px** entre el rail (termina en 238px) y las tarjetas, frente a los **14px (3.5)** del resto del lienzo. Se tokeniza el shell y se unifica el respiro.
+
+### ✨ Añadido
+- **Tokens de shell** en `style.css`: `--shell-pad: 0.875rem` (14px), `--rail-w: 14rem` (224px) y `--rail-offset: calc(var(--rail-w) + 2 * var(--shell-pad))` (252px).
+
+### 🔧 Cambiado
+- **`AuroraRail`**: el ancho y los márgenes pasan a `w-[var(--rail-w)]` e `inset-y-[var(--shell-pad)] left-[var(--shell-pad)]`.
+- **`DashboardLayout` y `AuroraTopbar`**: sustituyen `px-3.5 … md:pl-[242px]` por `px-[var(--shell-pad)] … md:pl-[var(--rail-offset)]` (con `pt`/`pb` tokenizados). Topbar y contenido comparten el token, por lo que ya no pueden desalinearse.
+- **`DESIGN.md`**: la sección Layout documenta el margen uniforme `--shell-pad` y el gutter de 252px (corrige el `2rem`/230px previos).
+
+### ✅ Verificado
+- `vue-tsc --noEmit` y `build` en verde.
+- Detector Impeccable (`--scope layout` sobre el shell y global sobre los archivos tocados): **0 hallazgos**.
+- **Medición real en navegador del CSS construido** (1440): rail `[14, 14 → 238, 886]`, contenido a `252` → gutter rail–tarjeta **14px**; cápsulas y tarjetas comparten borde izquierdo (`Δ = 0`); topbar a 14px del borde. A 390/820/1440/3440 el margen es 14px uniforme y no hay overflow horizontal.
+
+---
+
+## v4.4.0 — 2026-09-22
+
+> 🔎 **Modo enfoque en Conversaciones**: un toggle estrecha las tarjetas laterales para dar espacio al hilo
+
+Se añade un control de **modo enfoque** en la cabecera del hilo de Conversaciones: al activarlo, la bandeja de entrada y la tarjeta de detalle del cliente se **estrechan** y el hilo gana ese ancho. El control es una cápsula con `aria-pressed` e icono Phosphor (`ArrowsOutSimple` → entrar, `ArrowsInSimple` → salir), con `title` que describe el efecto.
+
+### ✨ Añadido
+- **Toggle "Modo enfoque"** en la cabecera del hilo (`Messaging.vue`): visible solo en `lg+` (en móvil/tablet las laterales ya se ocultan), con etiqueta visible a partir de `xl`.
+- **Rejilla adaptable**: `[minmax(320px,30%)_1fr_300px]` → `[minmax(248px,22%)_1fr_240px]` con enfoque activo (sin selección: la bandeja pasa a `minmax(248px,22%)`); transición de `grid-template-columns` de 300ms, respetando `prefers-reduced-motion`.
+- **Persistencia en `localStorage`** (`mitchbot.messaging.focus`) para que la preferencia del operador sobreviva a recargas.
+- **Iconos `ArrowsInSimple` / `ArrowsOutSimple`** en `AIcon.vue` (import + mapa canónico).
+- Claves i18n `messaging.focus.toggle` / `messaging.focus.hint` en `es.json` y `en.json`.
+
+### 🐛 Corregido
+- **Desbordamiento de la fila de Urgencia** con el panel estrecho: el motivo ("conversación abierta") se salía 36px del panel a 1024px. Ahora la fila usa `flex-wrap` con `min-w-0` y el texto cae a una segunda línea en lugar de recortarse. Verificado: `scrollWidth === clientWidth` en el panel de detalle.
+
+### ✅ Verificado
+- `pnpm --filter @mitchbot/frontend exec vue-tsc --noEmit` y `pnpm --filter @mitchbot/frontend build` en verde.
+- Detector Impeccable sobre los archivos tocados: **0 hallazgos** (exit 0).
+- **Medición real en navegador** (stack de desarrollo en 3000/5173) a 1024/1180/1280/1440: el hilo gana ancho con enfoque en todos los casos (p. ej. 1280: `376px` → `508px`; 1440: `501px` → `656px`); en móvil (390px) el control no se muestra y el layout no cambia.
+- Paridad de claves `es.json`/`en.json`.
+
+---
+
 ## v4.3.0 — 2026-09-22
 
 > 🔍 **Cierre del critique Impeccable**: Panel honesto, semántica de canal unificada, Conversaciones móviles y Configuración por tareas

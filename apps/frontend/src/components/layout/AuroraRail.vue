@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useConversations } from '../../composables/useConversations';
@@ -34,12 +34,37 @@ const projectInitial = computed(() => (brand.value.name || 'M').trim().charAt(0)
 
 const containerClass = computed(() =>
   props.variant === 'mobile'
-    ? 'fixed inset-y-3.5 left-3.5 z-40 flex w-56 flex-col overflow-hidden rounded-big bg-surface shadow-card md:hidden'
-    : 'fixed inset-y-3.5 left-3.5 z-20 hidden w-56 flex-col overflow-hidden rounded-big bg-surface shadow-card md:flex'
+    ? 'fixed inset-y-[var(--shell-pad)] left-[var(--shell-pad)] z-40 flex w-[var(--rail-w)] flex-col overflow-hidden rounded-big bg-surface shadow-card md:hidden'
+    : 'fixed inset-y-[var(--shell-pad)] left-[var(--shell-pad)] z-20 hidden w-[var(--rail-w)] flex-col overflow-hidden rounded-big bg-surface shadow-card md:flex'
 );
 
 const clock = ref(new Date());
 let clockTimer: ReturnType<typeof setInterval> | undefined;
+
+const railRef = ref<HTMLElement | null>(null);
+
+/** En móvil el rail es un drawer: mueve el foco dentro y lo atrapa. */
+function onDrawerKeydown(event: KeyboardEvent) {
+  if (props.variant !== 'mobile') return;
+  if (event.key === 'Escape') {
+    emit('navigate');
+    return;
+  }
+  if (event.key !== 'Tab' || !railRef.value) return;
+  const focusables = Array.from(
+    railRef.value.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')
+  );
+  if (focusables.length === 0) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
 
 const timeLabel = computed(() =>
   clock.value.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
@@ -55,11 +80,17 @@ const dateLabel = computed(() => {
 onMounted(() => {
   clockTimer = setInterval(() => {
     clock.value = new Date();
-  }, 30_000);
+  }, 10_000);
+
+  if (props.variant === 'mobile') {
+    document.addEventListener('keydown', onDrawerKeydown);
+    nextTick(() => railRef.value?.querySelector<HTMLElement>('a[href]')?.focus());
+  }
 });
 
 onBeforeUnmount(() => {
   if (clockTimer) clearInterval(clockTimer);
+  document.removeEventListener('keydown', onDrawerKeydown);
 });
 
 function isActive(href: string) {
@@ -69,7 +100,14 @@ function isActive(href: string) {
 </script>
 
 <template>
-  <aside :class="containerClass">
+  <aside
+    ref="railRef"
+    :class="containerClass"
+    :tabindex="variant === 'mobile' ? -1 : undefined"
+    :role="variant === 'mobile' ? 'dialog' : undefined"
+    :aria-modal="variant === 'mobile' ? 'true' : undefined"
+    :aria-label="variant === 'mobile' ? t('nav.primary') : undefined"
+  >
     <div class="flex flex-col items-center gap-2.5 px-4 pb-4.5 pt-5 text-center">
       <img
         v-if="brand.logo"
@@ -79,7 +117,7 @@ function isActive(href: string) {
       />
       <div
         v-else
-        class="grid h-10 w-10 place-items-center rounded-[14px] bg-ink font-display text-[19px] font-bold tracking-[-0.02em] text-white"
+        class="grid h-10 w-10 place-items-center rounded-[14px] bg-ink-solid font-display text-[19px] font-bold tracking-[-0.02em] text-ink-contrast"
       >
         {{ projectInitial }}
       </div>
@@ -106,7 +144,7 @@ function isActive(href: string) {
         <span class="truncate">{{ t('nav.' + item.key) }}</span>
         <span
           v-if="item.key === 'conversations' && unreadTotal > 0"
-          class="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-ink px-1.5 text-[11px] font-bold text-white [font-variant-numeric:tabular-nums]"
+          class="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-ink-solid px-1.5 text-[11px] font-bold text-ink-contrast [font-variant-numeric:tabular-nums]"
         >
           {{ unreadTotal }}
         </span>

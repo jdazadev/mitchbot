@@ -25,6 +25,7 @@
     "clients": "Clients",
     "default": "BotMaster",
     "selectProject": "Select project",
+    "projectSwitchError": "Could not switch project. {message}",
     "noProjects": "You have no projects",
     "createProject": "Create new project",
     "notifications": "Notifications",
@@ -33,6 +34,8 @@
     "clearAll": "Clear all",
     "newNotification": "New notification",
     "language": "Language",
+    "themeLight": "Switch to light theme",
+    "themeDark": "Switch to dark theme",
     "time": {
       "now": "now",
       "minutesAgo": "{count} min ago",
@@ -125,8 +128,10 @@
       "lastDays": "Last {days} Days",
       "daily": "Daily",
       "weekly": "Weekly",
-      "monthly": "Monthly",
-      "noData": "No data in this range"
+    "monthly": "Monthly",
+    "noData": "No data in this range",
+    "tableDate": "Date",
+    "tableCount": "Conversations"
     },
     "channels": {
       "title": "Channel Distribution",
@@ -178,6 +183,12 @@
       "totalVectors": "Total vectors",
       "syncStatus": "Sync status"
     },
+    "knowledge": {
+      "title": "Indexed knowledge",
+      "subtitle": "{vectors} vectors · {docs} sources · {sync}",
+      "coverage": "coverage",
+      "empty": "No indexed knowledge yet. Add a source to get started."
+    },
     "status": {
       "queued": "Queued",
       "processing": "Processing",
@@ -198,8 +209,11 @@
       "loading": "Loading knowledge sources...",
       "empty": "No knowledge sources found. Add one to get started.",
       "viewExtracted": "View extracted text",
+      "labelExtracted": "View text",
       "viewLogs": "View logs",
+      "labelLogs": "Logs",
       "delete": "Delete source",
+      "labelDelete": "Delete",
       "table": {
         "sourceName": "Source name",
         "sizePages": "Size/Pages",
@@ -212,6 +226,7 @@
       "general": "general"
     },
     "errors": {
+      "load": "Could not load the knowledge base. {message}",
       "extractFailed": "Failed to retrieve extracted text.",
       "deleteFailed": "Failed to delete source.",
       "invalidFile": "File type not allowed. Only PDF, TXT, CSV or images.",
@@ -399,12 +414,24 @@
     },
     "mode": {
       "autoPilotOn": "Auto-Pilot On",
-      "humanTakeover": "Human Takeover"
+      "humanTakeover": "Human Takeover",
+      "takeoverTitle": "Take over this conversation",
+      "takeoverBody": "The bot will stop replying and you'll handle this chat as a human agent. You can hand it back to auto-pilot anytime.",
+      "takeoverConfirm": "Take over",
+      "autoPilotTitle": "Hand back to auto-pilot",
+      "autoPilotBody": "The bot will reply to this customer's messages automatically again.",
+      "autoPilotConfirm": "Turn on auto-pilot",
+      "takenOver": "You took over this conversation.",
+      "autoPilotRestored": "Auto-pilot is back on."
     },
     "composer": {
       "sendPlaceholder": "Type a message...",
       "takeOver": "Take Over",
       "autoPilot": "Auto-Pilot"
+    },
+    "focus": {
+      "toggle": "Focus mode",
+      "hint": "Narrows the side panels to give more room to the conversation"
     },
     "tools": {
       "confirmationRequired": "Confirmation required",
@@ -447,9 +474,19 @@
       "level.low": "Low",
       "level.medium": "Medium",
       "level.high": "High",
-      "reasonPending": "awaiting approval",
-      "reasonOpen": "open conversation",
-      "reasonClosed": "conversation closed"
+    "reasonPending": "awaiting approval",
+    "reasonOpen": "open conversation",
+    "reasonClosed": "conversation closed",
+    "reasonEscalated": "negative sentiment unanswered"
+    },
+    "errors": {
+      "send": "Couldn't send the message. Your draft was kept; try again.",
+      "mode": "Couldn't change the conversation mode. Try again.",
+      "contact": "Couldn't save the contact. Try again.",
+      "insights": "Couldn't analyze the conversation. Try again."
+    },
+    "a11y": {
+      "incoming": "New message from {name}: {message}"
     }
   },
   "profile": {
@@ -732,6 +769,15 @@
     "searchPlaceholder": "Search by name or email...",
     "loading": "Loading users...",
     "noProjects": "No projects available",
+    "results": {
+      "found": "No users found | {count} user found | {count} users found"
+    },
+    "pagination": {
+      "perPage": "per page"
+    },
+    "errors": {
+      "load": "Could not load users. {message}"
+    },
     "toast": {
       "created": "User created successfully",
       "updated": "User updated successfully"
@@ -792,6 +838,13 @@
       "startPrompt": "Type to start a conversation"
     },
     "empty": "Type a message to start a conversation as a client",
+    "errors": {
+      "start": "Could not start the conversation. {message}",
+      "send": "Could not send the message. {message}"
+    },
+    "a11y": {
+      "incoming": "New message from {name}: {message}"
+    },
     "tool": {
       "confirmationRequired": "Confirmation required",
       "tool": "Tool",

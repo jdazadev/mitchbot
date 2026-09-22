@@ -1,5 +1,6 @@
 import { ref, onMounted } from 'vue';
 import { projectService, type Project } from '../services/project.service';
+import { currentTheme, registerBrandReapply, type Theme } from './useTheme';
 
 /** Color de identidad por defecto del mundo Aurora */
 export const DEFAULT_BRAND_COLOR = '#E2C6FF';
@@ -51,12 +52,28 @@ function isLightColor(hsl: { h: number; s: number; l: number }) {
  * Deriva la familia `--brand*` desde el color del proyecto con clamping real
  * (el cálculo directo en CSS saturaba `--brand-soft` a blanco en marcas claras
  * y dejaba el anillo de foco invisible). Devuelve también un tono de foco con
- * contraste garantizado sobre el lienzo.
+ * contraste garantizado sobre el lienzo. El modo oscuro recompone la familia en
+ * lugar de invertirla mecánicamente: el acento se aclara y los tintes se hunden.
  */
-export function brandDerivatives(hsl: { h: number; s: number; l: number }) {
+export function brandDerivatives(hsl: { h: number; s: number; l: number }, theme: Theme = 'light') {
   const { h, s, l } = hsl;
   const hh = Math.round(h);
   const ss = Math.round(s);
+
+  if (theme === 'dark') {
+    const baseL = Math.max(72, Math.round(l));
+    return {
+      base: `hsl(${hh} ${ss}% ${baseL}%)`,
+      hover: `hsl(${hh} ${ss}% ${Math.min(97, baseL + 6)}%)`,
+      deep: `hsl(${hh} ${ss}% ${Math.max(58, baseL - 16)}%)`,
+      soft: `hsl(${hh} ${Math.min(50, ss)}% 24%)`,
+      softer: `hsl(${hh} 40% 15%)`,
+      ink: `hsl(${hh} ${Math.min(70, ss)}% 88%)`,
+      focus: `hsl(${hh} ${Math.min(70, ss)}% 72%)`,
+      focusHalo: `hsl(${hh} ${ss}% ${baseL}% / 0.35)`,
+    };
+  }
+
   const soft = Math.round(l + (100 - l) * 0.55);
   const inkL = Math.max(24, Math.round(l - 60));
   const inkS = Math.min(60, Math.round(s * 0.55));
@@ -75,7 +92,7 @@ export function brandDerivatives(hsl: { h: number; s: number; l: number }) {
 export function applyBrand(next: BrandConfig) {
   brand.value = next;
   const hsl = hexToHsl(next.color || DEFAULT_BRAND_COLOR);
-  const d = brandDerivatives(hsl);
+  const d = brandDerivatives(hsl, currentTheme());
   const root = document.documentElement.style;
   root.setProperty('--brand-h', String(Math.round(hsl.h)));
   root.setProperty('--brand-s', `${Math.round(hsl.s)}%`);
@@ -119,6 +136,9 @@ export function applyBrand(next: BrandConfig) {
     link.href = canvas.toDataURL('image/png');
   }
 }
+
+// Al cambiar de tema, la familia --brand* se recalcula con el tema activo.
+registerBrandReapply(() => applyBrand(brand.value));
 
 export function useBrand() {
   async function loadBrand() {

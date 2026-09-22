@@ -193,7 +193,7 @@ async function handleSubmit() {
     <div v-else class="relative z-10 w-full max-w-2xl">
       <!-- Header -->
       <div class="mb-5 flex items-center gap-3">
-        <div class="grid h-10 w-10 place-items-center rounded-[14px] bg-ink font-display text-lg font-bold tracking-[-0.02em] text-white">
+        <div class="grid h-10 w-10 place-items-center rounded-[14px] bg-ink-solid font-display text-lg font-bold tracking-[-0.02em] text-ink-contrast">
           M
         </div>
         <p class="text-[12.5px] font-semibold text-ink-3">{{ t('setup.subtitle') }}</p>
@@ -288,21 +288,21 @@ async function handleSubmit() {
                   <span class="text-[13px] font-medium">{{ t('setup.agent.welcomeGreeting') }}</span>
                   <p class="mt-0.5 text-xs text-ink-3">{{ t('setup.agent.welcomeGreetingHelp') }}</p>
                 </div>
-                <ASwitch v-model="agentForm.enableWelcomeGreeting" />
+                <ASwitch v-model="agentForm.enableWelcomeGreeting" :aria-label="t('setup.agent.welcomeGreeting')" />
               </div>
               <div class="flex items-center justify-between rounded-field border border-line p-3">
                 <div>
                   <span class="text-[13px] font-medium">{{ t('setup.agent.goodbyeMessage') }}</span>
                   <p class="mt-0.5 text-xs text-ink-3">{{ t('setup.agent.goodbyeMessageHelp') }}</p>
                 </div>
-                <ASwitch v-model="agentForm.enableGoodbyeMessage" />
+                <ASwitch v-model="agentForm.enableGoodbyeMessage" :aria-label="t('setup.agent.goodbyeMessage')" />
               </div>
               <div class="flex items-center justify-between rounded-field border border-line p-3">
                 <div>
                   <span class="text-[13px] font-medium">{{ t('setup.agent.fallbackAdvisor') }}</span>
                   <p class="mt-0.5 text-xs text-ink-3">{{ t('setup.agent.fallbackAdvisorHelp') }}</p>
                 </div>
-                <ASwitch v-model="agentForm.enableFallbackAdvisor" />
+                <ASwitch v-model="agentForm.enableFallbackAdvisor" :aria-label="t('setup.agent.fallbackAdvisor')" />
               </div>
             </div>
 
@@ -358,7 +358,7 @@ async function handleSubmit() {
                   <AIcon :name="ch.icon" :size="20" class="text-ink-3" />
                   <span class="text-[13px] font-medium">{{ ch.name }}</span>
                 </div>
-                <ASwitch v-model="(configForm.channels as any)[ch.key]" />
+                <ASwitch v-model="(configForm.channels as any)[ch.key]" :aria-label="ch.name" />
               </div>
             </div>
           </div>
@@ -370,7 +370,7 @@ async function handleSubmit() {
                 <span class="text-[13px] font-medium">{{ t('setup.channels.autoCreateContact') }}</span>
                 <p class="mt-0.5 text-xs text-ink-3">{{ t('setup.channels.autoCreateContactHelp') }}</p>
               </div>
-              <ASwitch v-model="configForm.options.autoCreateContact" />
+              <ASwitch v-model="configForm.options.autoCreateContact" :aria-label="t('setup.channels.autoCreateContact')" />
             </div>
           </div>
 

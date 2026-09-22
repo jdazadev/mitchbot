@@ -9,6 +9,7 @@
  * desde Configuración → Identidad y gobierna selección y orientación, no las acciones.
  */
 :root {
+  color-scheme: light;
   /* Suelo y superficies del mundo */
   --canvas: #f7f3ef;
   --surface: #ffffff;
@@ -22,6 +23,10 @@
   --ink-2: #56534e;
   --ink-3: #6f6960;
   --ink: #0b0b0c;
+  /* Superficie sólida de acción (tinta) y su texto; en oscuro se invierte el par
+     para que el primario siga siendo "tinta" sin perder contraste. */
+  --ink-solid: #0b0b0c;
+  --ink-solid-contrast: #ffffff;
 
   /* Familia pastel con papel semántico */
   --sky: #bbecff;
@@ -53,12 +58,13 @@
   --brand-contrast: var(--ink-1);
 
   /* Estados */
-  --ok: #2c5a15;
-  --ok-soft: var(--lime-soft);
-  --warn: #5e5a00;
-  --warn-soft: var(--butter-soft);
   --danger: #b92f1a;
   --danger-soft: #fdece9;
+
+  /* Shell de cápsulas flotantes: un solo margen de lienzo y un solo offset de rail */
+  --shell-pad: 0.875rem; /* margen uniforme del lienzo (3.5) */
+  --rail-w: 14rem; /* ancho del rail (w-56) */
+  --rail-offset: calc(var(--rail-w) + 2 * var(--shell-pad)); /* gutter rail → contenido */
 
   /* Radios del mundo */
   --r-card: 20px;
@@ -77,6 +83,60 @@
   /* Tipografía */
   --display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
   --body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * === Tema oscuro "Aurora de noche" ===
+ * No es una inversión mecánica: el papel se hunde a un púrpura cálido, los
+ * pasteles pasan a tintes profundos con tinta clara y el acento de identidad
+ * se aclara (useBrand recalcula --brand* con el tema activo). Las sombras
+ * difusas se profundizan porque la tinta ya no contrasta sobre el suelo.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #16141b;
+  --surface: #211e28;
+  --sunken: #2b2733;
+  --line: #332e3d;
+  --line-2: #433c50;
+  --overlay: rgba(0, 0, 0, 0.65);
+
+  --ink-1: #f3f0ea;
+  --ink-2: #bdb6ad;
+  --ink-3: #918a80;
+  --ink: #f3f0ea;
+  --ink-solid: #f3f0ea;
+  --ink-solid-contrast: #16141b;
+
+  --sky: #2f6a8a;
+  --sky-ink: #d8f1ff;
+  --sky-soft: #16303d;
+  --lime: #4a6b2f;
+  --lime-ink: #e6fbd2;
+  --lime-soft: #1b2d16;
+  --lilac: #6b4fa3;
+  --lilac-ink: #f0e6ff;
+  --lilac-soft: #271c3b;
+  --butter: #6b6420;
+  --butter-ink: #fbf8c8;
+  --butter-soft: #2b2913;
+
+  --danger: #ff8a72;
+  --danger-soft: #3a1c17;
+
+  /* Defaults de la familia de marca antes de que useBrand la recalcule */
+  --brand: hsl(270 100% 78%);
+  --brand-hover: hsl(270 100% 84%);
+  --brand-deep: hsl(270 100% 62%);
+  --brand-soft: hsl(270 50% 24%);
+  --brand-softer: hsl(270 40% 15%);
+  --brand-ink: hsl(270 60% 88%);
+  --focus: hsl(270 70% 72%);
+  --focus-halo: hsl(270 100% 67% / 0.35);
+  --brand-contrast: var(--ink-1);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 44px rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 2px 4px rgba(0, 0, 0, 0.45), 0 28px 70px rgba(0, 0, 0, 0.55);
 }
 
 @layer base {
@@ -166,6 +226,14 @@
     mask-image: linear-gradient(180deg, black 0%, black 62%, transparent 100%);
   }
 
+  /* De noche la niebla baja de intensidad y se tiñe del acento, no de pastel claro */
+  :root[data-theme="dark"] .aurora-haze {
+    background:
+      radial-gradient(46rem 30rem at 88% -6%, color-mix(in srgb, var(--lilac) 34%, transparent), transparent 62%),
+      radial-gradient(38rem 26rem at -8% 8%, color-mix(in srgb, var(--lime) 26%, transparent), transparent 60%),
+      radial-gradient(40rem 28rem at 50% 108%, color-mix(in srgb, var(--sky) 28%, transparent), transparent 62%);
+  }
+
   /* Componentes base del sistema */
   .card {
     background: var(--surface);
@@ -177,8 +245,8 @@
     padding: 0.6rem 1.25rem;
   }
   .btn-primary {
-    background: var(--ink);
-    color: #ffffff;
+    background: var(--ink-solid);
+    color: var(--ink-solid-contrast);
   }
   .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);

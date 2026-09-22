@@ -12,7 +12,114 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.3.0
+**Versión actual del proyecto:** v4.5.0
+
+---
+
+## Tema oscuro y endurecimiento del critique (v4.5.0)
+
+Cierre de la tanda completa de remediación del critique Impeccable (harden → audit → distill → colorize → polish).
+
+- **Modo oscuro "Aurora de noche"**: tokens propios en `src/style.css` bajo `:root[data-theme="dark"]` que **recomponen** el mundo (papel púrpura cálido, tinta clara, pasteles profundos, sombras densas, `aurora-haze` tenue), no lo invierten. Toggle en `AuroraTopbar` (`data-testid="theme-toggle"`), persistencia `localStorage` (`mitchbot.theme`), arranque desde `prefers-color-scheme` sin flash (script inline en `index.html`). Nuevo `composables/useTheme.ts`; `useBrand` recalcula `--brand*`/`--focus` con el tema activo (`brandDerivatives(hsl, theme)`). Par de acción `--ink-solid`/`--ink-solid-contrast`.
+- **Estados de error con recuperación**: Usuarios y Brain muestran error + **Reintentar** (el polling de Brain ya no se traga fallos); TestChat con banner inline, reintento, borrador conservado y anti doble-submit; el cambio de proyecto del topbar muestra su error.
+- **Urgencia de 3 niveles**: el nivel **Alta** (rojo) se enciende con sentimiento negativo + último mensaje del cliente sin responder.
+- **Accesibilidad**: `ASwitch` con `aria-label` (10 instancias), `scope="col"` en Brain/Usuarios, orden accesible en Usuarios, alternativa textual (`sr-only`) del gráfico de volumen y anuncio acotado (`role="status"`) en el chat público.
+- **Usuarios** migrado al patrón de Clientes (búsqueda en vivo, orden, paginación con primera/última + page size); fechas/números con el locale de la app (Usuarios, Clientes, Brain).
+- **Distill**: eliminados 11 componentes UI sin uso, variantes muertas de `AButton`/`APill` y tokens `--ok`/`--warn`.
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde; paridad es/en 621/621; detector Impeccable sobre `src/` en 0 hallazgos.
+
+---
+
+## Honestidad de datos y limpieza del Panel (v4.4.7)
+
+Cierre de los minors baratos que el critique dejó abiertos.
+
+- **Gráfico de volumen honesto**: fuera `preserveAspectRatio="none"` (los marcadores ya no se estiran en elipses); **eje Y real** con marcas 0/mitad/máximo del rango, tooltip nativo por punto (`fecha: recuento`) y `role="img"` con nombre.
+- **Fuera el badge "En vivo"** sobre un valor no empujado por socket y la línea decorativa `Tráfico: 100%` del panel de canales.
+- **Favicon de marca inline** en `index.html` (data-URI lila con "M") en lugar de `/vite.svg`; `useBrand` lo sigue reemplazando en runtime.
+- **Reloj del rail** actualiza cada 10s (antes 30s → hasta 30s de minuto obsoleto).
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde; detector en 0 hallazgos.
+
+---
+
+## Accesibilidad del "modo serio" (v4.4.6)
+
+Cierre de los red flags de teclado y foco que el critique marcó alrededor de las acciones de alto riesgo.
+
+- **Orden por teclado en Clientes**: las cabeceras ordenables pasan a `<th scope="col" :aria-sort>` con un `<button>` interno (antes eran `<th @click>` sin foco ni teclado → fallaba WCAG 2.1.1).
+- **Popover de notificaciones**: al abrir recibe foco (`tabindex="-1"` + `nextTick`); Escape sigue cerrándolo.
+- **Drawer del rail en móvil**: `role="dialog"` + `aria-modal`, foco al primer enlace al abrir, Tab atrapado dentro y Escape para cerrar.
+- **Live region acotada en Conversaciones**: el hilo deja de ser `role="log"` global; un `role="status"` `sr-only` anuncia solo los mensajes entrantes del cliente (`messaging.a11y.incoming`), evitando re-anunciar bloques completos.
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde; paridad es/en 608/608; detector en 0 hallazgos.
+
+---
+
+## Brain como conocimiento, no como gestor de archivos (v4.4.5)
+
+El critique señaló que el foso del producto (RAG) se presentaba como una tabla genérica con tres tarjetas de stat al pie.
+
+- **Cabecera de conocimiento**: una sola tarjeta lidera con **vectores · fuentes · sincronización** y una **cobertura** (%) con barra segmentada por estado (lime=indexado, mantequilla=procesando, cielo=en cola, rojo=error) y su leyenda con recuentos reales.
+- **Acciones de fila con etiqueta**: "Ver texto", "Logs" y "Eliminar" dejan de depender solo del `title` (visibles desde `xl`, `aria-label` siempre).
+- Claves `brain.knowledge.*` y `brain.sources.label{Extracted,Logs,Delete}` (es/en).
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde; paridad es/en 607/607; detector Impeccable sobre `src/` en 0 hallazgos.
+
+---
+
+## Modo serio en Conversaciones (v4.4.4)
+
+Tomar el control era la acción más importante del producto y la menos confirmada: un click inmediato sin aviso ni acuse.
+
+- **Confirmación en modal** (`AModal`) antes de abandonar el piloto automático y antes de devolvérselo al bot, con copy que nombra la acción y su consecuencia.
+- **Botón de modo con semántica pastel**: "Tomar control" en **lila** (persona) y "Piloto automático" en neutro, según `DESIGN.md`.
+- **Acuse honesto**: banner `role="status"` efímero (4s) en el hilo tras el cambio; la pill de la cabecera sigue siendo el estado de solo lectura.
+- Claves `messaging.mode.{takeoverTitle,takeoverBody,takeoverConfirm,autoPilotTitle,autoPilotBody,autoPilotConfirm,takenOver,autoPilotRestored}` (es/en).
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde; paridad es/en 600/600.
+
+---
+
+## Mensajería a prueba de fallos (v4.4.3)
+
+El critique halló que las tres acciones de mayor riesgo de Conversaciones se tragaban el error en `console.error`, indistinguible del éxito para el operador.
+
+- **Banner de error inline** en el hilo (`role="alert"`, descartable) para envío, cambio de modo, guardado de contacto y análisis de sentimiento; claves `messaging.errors.*` (es/en).
+- **Borrador conservado**: si el envío falla, el texto vuelve al compositor.
+- **Anti doble-submit**: estado `isSending` deshabilita el botón de enviar mientras hay un mensaje en vuelo.
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde; paridad es/en 592/592.
+
+---
+
+## Shell honesto: adiós a los instrumentos falsos del topbar (v4.4.2)
+
+El critique Impeccable halló un **P0**: `TopbarContext.vue` renderizaba instrumentos de vista (rango/granularidad, contadores de Messaging, chips de canal, vectores de Brain, roles de Usuarios) con **datos inventados** (`12 activas`, `61 trozos`) y **sin handlers** —botones y chips que no hacían nada—, violando el Principio 3 de `PRODUCT.md` ("solo elementos con comportamiento real").
+
+- **Eliminado** `apps/frontend/src/components/layout/TopbarContext.vue` y su uso/import en `AuroraTopbar.vue`. Los instrumentos reales ya viven dentro de cada vista (rango y granularidad en el Panel, filtros y page size en Clientes, stats en Brain, modo en Conversaciones); el topbar queda con **título + invariantes**, sin controles decorativos.
+- **`DESIGN.md`**: la sección Layout deja de prometer instrumentos en el topbar; los controles pertenecen a la superficie que los posee.
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde.
+
+---
+
+## Margen uniforme del shell (v4.4.1)
+
+El contenedor `pl-[242px]` dejaba solo **4px** entre el rail y las tarjetas, frente a los **14px (3.5)** del resto del lienzo. Se tokeniza el shell en `style.css` y se unifica el respiro a `--shell-pad` (14px) en las cuatro direcciones:
+
+- **Tokens**: `--shell-pad: 0.875rem` · `--rail-w: 14rem` (224px) · `--rail-offset: calc(var(--rail-w) + 2 * var(--shell-pad))` (252px).
+- **`AuroraRail`**: usa `w-[var(--rail-w)]` e `inset-y-[var(--shell-pad)] left-[var(--shell-pad)]`.
+- **`DashboardLayout` y `AuroraTopbar`**: pasan de `px-3.5 … md:pl-[242px]` a `px-[var(--shell-pad)] … md:pl-[var(--rail-offset)]` (topbar `pt/pb`, layout `pb`). Topbar y contenido comparten el token, así que ya no pueden desalinearse.
+- **Resultado medido en navegador** (1440): rail `[14, 238]`, contenido a `252` → gutter **14px**; topbar a 14px del borde y separado 14px de las tarjetas; cápsulas y tarjetas comparten borde izquierdo (`Δ = 0`). A 390 el rail se oculta y el margen es 14px uniforme; sin overflow horizontal en 390/820/1440/3440.
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde; detector Impeccable (`--scope layout` y global) en 0 hallazgos.
+
+---
+
+## Modo enfoque en Conversaciones (v4.4.0)
+
+Un toggle en la **cabecera del hilo** de Conversaciones (`Messaging.vue`) estrecha las tarjetas laterales para dar más ancho al hilo:
+
+- **Rejilla adaptable**: normal `lg:grid-cols-[minmax(320px,30%)_1fr_300px]` → enfoque `lg:grid-cols-[minmax(248px,22%)_1fr_240px]` (sin selección, la bandeja pasa a `minmax(248px,22%)`). Transición de `grid-template-columns` de 300ms, cubierta por el `prefers-reduced-motion` global.
+- **Control honesto**: cápsula con `aria-pressed` e icono Phosphor (`ArrowsOutSimple` al entrar, `ArrowsInSimple` al salir) y `title` que describe el efecto; visible solo en `lg+` (en móvil las laterales ya se ocultan), con etiqueta a partir de `xl`.
+- **Persistencia**: `localStorage` (`mitchbot.messaging.focus`).
+- **i18n**: `messaging.focus.toggle` / `messaging.focus.hint` (es/en). Iconos nuevos en `AIcon.vue`.
+- **Corrección**: la fila de **Urgencia** del panel de detalle desbordaba 36px con el panel estrecho; ahora usa `flex-wrap` + `min-w-0` y el motivo cae a una segunda línea.
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde; detector Impeccable en 0 hallazgos; medición real en navegador a 1024/1180/1280/1440 (el hilo gana ancho en todos los casos) y a 390 (el control no se muestra).
 
 ---
 
@@ -65,7 +172,7 @@ Tras la auditoría Impeccable (`audit`) sobre Aurora se cerraron los hallazgos P
 - **Tipografía**: **Bricolage Grotesque** (display; ejes `opsz`/`wdth`/`wght`) + **Hanken Grotesk** (cuerpo, cifras tabulares). Ya no se usa Nunito ni la webfont de Material Symbols.
 - **Iconografía**: **Phosphor** (`@phosphor-icons/vue`) envuelto en `src/components/ui/AIcon.vue` (6 pesos, `fill` para el nav activo, mapa de nombres Material heredados). El set es intercambiable desde `AIcon`.
 - **Componentes base** (`apps/frontend/src/components/ui/`): `AIcon`, `AButton`, `APill`, `AChip`, `ACard`, `AStat`, `ATable`, `AAvatar`, `AField`, `ASearch`, `ASwitch`, `ATab`, `ATabs`, `ADropdown`, `AModal`, `AEmptyState`, `ABubble`, `ABand`, `ACallout`, `AKpi`.
-- **Shell** (`apps/frontend/src/components/layout/`): `AuroraRail` (rail flotante con marca centrada sin subtítulo, nav con iconos Phosphor y pie con hora/día/fecha `DD/MM/AAAA`) + `AuroraTopbar` + `TopbarContext` (instrumentos por vista), compuestos dentro de `DashboardLayout`. El **topbar es una fila de cápsulas flotantes** (sin fondo/borde/blur): izquierda = instrumento de la vista (título de página + controles), derecha = invariantes (Proyectos · Idiomas · Notificaciones · **Usuario**, que se movió del pie del rail al topbar). Por debajo de 768px el rail se abre como **drawer** desde una cápsula de menú del topbar.
+- **Shell** (`apps/frontend/src/components/layout/`): `AuroraRail` (rail flotante con marca centrada sin subtítulo, nav con iconos Phosphor y pie con hora/día/fecha `DD/MM/AAAA`) + `AuroraTopbar`, compuestos dentro de `DashboardLayout`. El **topbar es una fila de cápsulas flotantes** (sin fondo/borde/blur): izquierda = título de página, derecha = invariantes (Proyectos · Idiomas · Notificaciones · **Usuario**, que se movió del pie del rail al topbar). Por debajo de 768px el rail se abre como **drawer** desde una cápsula de menú del topbar.
 - **Acento de marca** (`useBrand.ts`): default `#E2C6FF` (lila). `--brand*` es **identidad y selección** (item activo, avatar, punto de proyecto, foco), **no** primario de acción — el primario es siempre **tinta negra**.
 - **Documentación normativa**: `apps/frontend/DESIGN.md` + `apps/frontend/.impeccable/design.json` (re-documentados para Aurora). Diseñar contra los tokens `--brand*`, nunca contra un hue fijo.
 - **Estado de migración**: el shell Aurora, los componentes base y **todas las vistas del dashboard están migrados** (cero clases `warm-*` en el código). Vistas reales en Aurora: Panel, Conversaciones (con tarjeta de **Sentimiento** y bloque de **Urgencia**), Clientes, Brain, Usuarios, Configuración, Mi Perfil, Login, Setup, TestChat y DevTests. El **Resumen (Dashboard) se conserva tal cual** (datos reales) para refinarlo en una tanda posterior. La persistencia de `project.config.brand` en el backend sigue pendiente.
@@ -246,6 +353,7 @@ apps/frontend/src/
 - **No leídos reales**: el badge del sidebar suma los `unreadCount` del proyecto activo mediante el composable `useConversations` (estado de módulo compartido). Solo los mensajes entrantes del cliente (`contact`) incrementan el contador; los del bot y del agente humano **no** suman. Al abrir una conversación se persiste la lectura vía `PUT /api/conversations/:id/read` (`unreadCount = 0`) y se emite `chat:read` a la room del proyecto para sincronizar el resto de sesiones; un mensaje entrante en la conversación abierta se re-marca como leída de inmediato (estilo WhatsApp), sin que el badge suba. La actualización en vivo del sidebar llega por `chat:message` (también entregado a la room exclusiva del dashboard `project:<id>:dashboard`) y `chat:new_conversation`. Una conversación nueva creada por el cliente nace con 1 no leído.
 - **Sin selección por defecto**: al entrar a Messaging **no** se autoselecciona ninguna conversación; se muestra el estado vacío hasta que el agente elija una. El deep-link `?conversation=<id>` sigue resolviendo la conversación solicitada (botón "Ver conversación" de Clients).
 - **Compositor honesto**: solo expone acciones funcionales (enviar, tomar control); se retiraron chips de sugerencia, emoji, adjuntos, menú y el indicador "online" simulado.
+- **Modo enfoque**: toggle en la cabecera del hilo que estrecha la bandeja y el detalle del cliente para dar ancho al hilo (solo `lg+`, persistido en `localStorage`). Ver v4.4.0.
 - **AI Insights**: análisis de **sentimiento y su distribución** (sin resumen) persistido en `conversation.aiInsights`. `GET /:id/insights` devuelve solo sentimiento y `sentimentScores` (aunque existan resúmenes antiguos en la BD) y `POST /:id/insights` recalcula (el `$set` limpia `aiInsights.summary` con `$unset`); se emite `chat:insights`. El análisis automático corre fire-and-forget tras cada respuesta del bot (un fallo no afecta la respuesta). El modelo se resuelve desde `OPENROUTER_INSIGHTS_MODEL` con fallback a `OPENROUTER_LLM_MODEL`.
 
 ### 2. Módulo de Clientes (Contactos)

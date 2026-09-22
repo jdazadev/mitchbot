@@ -36,7 +36,7 @@ async function handleLogin() {
     <div class="aurora-haze" aria-hidden="true" />
     <div class="relative z-10 w-full max-w-md">
       <div class="mb-6 flex items-center gap-3">
-        <div class="grid h-11 w-11 place-items-center rounded-[16px] bg-ink font-display text-xl font-bold tracking-[-0.02em] text-white">
+        <div class="grid h-11 w-11 place-items-center rounded-[16px] bg-ink-solid font-display text-xl font-bold tracking-[-0.02em] text-ink-contrast">
           M
         </div>
         <div class="font-display text-xl font-bold tracking-[-0.02em]">Mitchbot</div>

@@ -16,7 +16,7 @@ const mobileNavOpen = ref(false);
   <div class="relative flex h-screen w-full overflow-hidden">
     <a
       href="#main-content"
-      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-ink-solid focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink-contrast"
     >
       {{ t('a11y.skipToContent') }}
     </a>
@@ -35,7 +35,7 @@ const mobileNavOpen = ref(false);
     />
     <main id="main-content" class="relative z-10 flex h-full flex-1 flex-col overflow-hidden">
       <AuroraTopbar :nav-open="mobileNavOpen" @toggle-nav="mobileNavOpen = !mobileNavOpen" />
-      <div class="flex-1 overflow-y-auto px-3.5 pb-3.5 md:pl-[242px]">
+      <div class="flex-1 overflow-y-auto px-[var(--shell-pad)] pb-[var(--shell-pad)] md:pl-[var(--rail-offset)]">
         <div
           class="mx-auto w-full max-w-[1400px]"
           :class="{ 'h-full': noPadding }"

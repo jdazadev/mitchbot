@@ -50,7 +50,6 @@ const stats = computed(() => [
     value: new Intl.NumberFormat().format(dashboardStats.value.total),
     icon: "ChatTeardropText",
     tone: "sky" as const,
-    live: false,
   },
   {
     label: t("dashboard.stats.activeChats"),
@@ -58,7 +57,6 @@ const stats = computed(() => [
     value: dashboardStats.value.active.toString(),
     icon: "ChatsCircle",
     tone: "lilac" as const,
-    live: true,
   },
   {
     label: t("dashboard.stats.responseRate"),
@@ -66,7 +64,6 @@ const stats = computed(() => [
     value: dashboardStats.value.responseRate,
     icon: "Lightning",
     tone: "lime" as const,
-    live: false,
   },
 ]);
 
@@ -136,6 +133,12 @@ const volumeLabels = computed(() => {
   const step = (points.length - 1) / 6;
   return Array.from({ length: 7 }, (_, i) => points[Math.round(i * step)].date);
 });
+
+// Eje Y real: 0, mitad y máximo del rango (nunca un valor inventado).
+const volumeMax = computed(() => Math.max(...volumeData.value.map((d) => d.count), 1));
+const volumeTicks = computed(() =>
+  [1, 0.5, 0].map((f) => ({ y: 20 + (1 - f) * 260, value: Math.round(volumeMax.value * f) })),
+);
 
 async function loadVolume() {
   try {
@@ -226,10 +229,6 @@ onMounted(() => {
           >
             {{ stat.value }}
           </div>
-          <div v-if="stat.live && !isLoading" class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-lime-ink">
-            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-lime-ink" />
-            {{ t("dashboard.stats.live") }}
-          </div>
         </div>
       </div>
 
@@ -252,7 +251,7 @@ onMounted(() => {
                 type="button"
                 :class="[
                   'rounded-full px-3 py-1 text-xs font-semibold transition-colors',
-                  rangeDays === days ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink',
+                  rangeDays === days ? 'bg-ink-solid text-ink-contrast' : 'text-ink-2 hover:text-ink',
                 ]"
                 @click="rangeDays = days"
               >
@@ -267,7 +266,7 @@ onMounted(() => {
                 type="button"
                 :class="[
                   'rounded-full px-3 py-1 text-xs font-semibold transition-colors',
-                  period === p.id ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink',
+                  period === p.id ? 'bg-ink-solid text-ink-contrast' : 'text-ink-2 hover:text-ink',
                 ]"
                 @click="period = p.id"
               >
@@ -278,24 +277,41 @@ onMounted(() => {
         </div>
 
         <div class="relative mt-5 h-72 w-full">
-          <svg class="h-full w-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 1000 300">
+          <svg
+            class="h-full w-full overflow-visible"
+            viewBox="0 0 1000 300"
+            aria-hidden="true"
+          >
             <defs>
               <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0%" stop-color="var(--lilac)" stop-opacity="0.35" />
                 <stop offset="100%" stop-color="var(--lilac)" stop-opacity="0" />
               </linearGradient>
             </defs>
-            <line
-              v-for="y in [299, 225, 150, 75]"
-              :key="y"
-              stroke="var(--line)"
-              :stroke-dasharray="y === 299 ? undefined : '4 4'"
-              stroke-width="1"
-              x1="0"
-              x2="1000"
-              :y1="y"
-              :y2="y"
-            />
+            <template v-if="volumePoints.length > 0">
+              <line
+                v-for="tick in volumeTicks"
+                :key="tick.value"
+                stroke="var(--line)"
+                :stroke-dasharray="tick.value === 0 ? undefined : '4 4'"
+                stroke-width="1"
+                x1="0"
+                x2="1000"
+                :y1="tick.y"
+                :y2="tick.y"
+              />
+              <text
+                v-for="tick in volumeTicks"
+                :key="'label-' + tick.value"
+                fill="var(--ink-3)"
+                font-size="13"
+                text-anchor="start"
+                x="6"
+                :y="tick.y - 6"
+              >
+                {{ tick.value }}
+              </text>
+            </template>
             <path
               v-if="volumeAreaPath"
               :d="volumeAreaPath"
@@ -320,7 +336,9 @@ onMounted(() => {
               :cy="p.y"
               :r="i === volumePoints.length - 1 ? 7 : 5"
               stroke-width="2"
-            />
+            >
+              <title>{{ p.date }}: {{ p.count }}</title>
+            </circle>
             <text
               v-if="!isLoading && volumePoints.length === 0"
               fill="var(--ink-3)"
@@ -332,6 +350,21 @@ onMounted(() => {
               {{ t("dashboard.volume.noData") }}
             </text>
           </svg>
+          <table v-if="volumePoints.length > 0" class="sr-only">
+            <caption>{{ t("dashboard.volume.title") }}</caption>
+            <thead>
+              <tr>
+                <th scope="col">{{ t("dashboard.volume.tableDate") }}</th>
+                <th scope="col">{{ t("dashboard.volume.tableCount") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in volumePoints" :key="p.date">
+                <th scope="row">{{ p.date }}</th>
+                <td>{{ p.count }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
         <div class="mt-4 flex justify-between px-2 text-xs font-medium text-ink-3">
           <span v-for="(label, i) in volumeLabels" :key="i">{{ label }}</span>
@@ -354,9 +387,6 @@ onMounted(() => {
                 <span class="block h-full rounded-full" :style="{ width: ch.pct + '%', background: ch.color }" />
               </div>
             </div>
-            <p class="mt-4 text-xs text-ink-3">
-              {{ t("dashboard.channels.traffic") }}: 100%
-            </p>
           </div>
         </div>
 

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import AIcon from './AIcon.vue';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'lilac' | 'lime' | 'sky' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost';
 type Size = 'sm' | 'md' | 'lg';
 
 const props = withDefaults(
@@ -21,13 +21,9 @@ const props = withDefaults(
 );
 
 const VARIANT_CLASS: Record<Variant, string> = {
-  primary: 'bg-ink text-white hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)]',
+  primary: 'bg-ink-solid text-ink-contrast hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)]',
   secondary: 'bg-sunken text-ink hover:shadow-[0_8px_18px_rgba(11,11,12,0.1)]',
   ghost: 'bg-transparent text-ink-2 hover:bg-canvas hover:text-ink',
-  lilac: 'bg-lilac text-lilac-ink hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.12)]',
-  lime: 'bg-lime text-lime-ink hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.12)]',
-  sky: 'bg-sky text-sky-ink hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.12)]',
-  danger: 'bg-[color:var(--danger)] text-white hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(185,47,26,0.24)]',
 };
 
 const SIZE_CLASS: Record<Size, string> = {

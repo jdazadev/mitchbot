@@ -21,7 +21,7 @@ const classes = computed(() => {
     case 'in':
       return `${base} self-start rounded-[20px] rounded-bl-[7px] border-[1.5px] border-line bg-surface`;
     case 'bot':
-      return `${base} self-end rounded-[20px] rounded-br-[7px] bg-ink text-white`;
+      return `${base} self-end rounded-[20px] rounded-br-[7px] bg-ink-solid text-ink-contrast`;
     case 'human':
       return `${base} self-end rounded-[20px] rounded-br-[7px] bg-lilac-soft text-lilac-ink shadow-[inset_0_0_0_1.5px_var(--lilac)]`;
     default:

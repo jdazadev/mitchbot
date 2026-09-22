@@ -39,6 +39,8 @@ export default {
           1: "var(--ink-1)",
           2: "var(--ink-2)",
           3: "var(--ink-3)",
+          solid: "var(--ink-solid)",
+          contrast: "var(--ink-solid-contrast)",
         },
         sky: {
           DEFAULT: "var(--sky)",

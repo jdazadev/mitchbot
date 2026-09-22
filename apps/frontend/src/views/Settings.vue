@@ -884,21 +884,21 @@ async function handleSaveOptions() {
                     <span class="text-[13px] font-medium">{{ t('settings.agent.welcome') }}</span>
                     <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.welcomeHint') }}</p>
                   </div>
-                  <ASwitch v-model="agentForm.enableWelcomeGreeting" />
+                  <ASwitch v-model="agentForm.enableWelcomeGreeting" :aria-label="t('settings.agent.welcome')" />
                 </div>
                 <div class="flex items-center justify-between rounded-field border border-line p-3">
                   <div>
                     <span class="text-[13px] font-medium">{{ t('settings.agent.goodbye') }}</span>
                     <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.goodbyeHint') }}</p>
                   </div>
-                  <ASwitch v-model="agentForm.enableGoodbyeMessage" />
+                  <ASwitch v-model="agentForm.enableGoodbyeMessage" :aria-label="t('settings.agent.goodbye')" />
                 </div>
                 <div class="flex items-center justify-between rounded-field border border-line p-3">
                   <div>
                     <span class="text-[13px] font-medium">{{ t('settings.agent.fallbackAdvisor') }}</span>
                     <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.agent.fallbackAdvisorHint') }}</p>
                   </div>
-                  <ASwitch v-model="agentForm.enableFallbackAdvisor" />
+                  <ASwitch v-model="agentForm.enableFallbackAdvisor" :aria-label="t('settings.agent.fallbackAdvisor')" />
                 </div>
               </div>
 
@@ -989,7 +989,7 @@ async function handleSaveOptions() {
                 <AIcon :name="channel.icon" :size="20" class="text-ink-3" />
                 <span class="text-[13px] font-medium">{{ channel.name }}</span>
               </div>
-              <ASwitch v-model="channel.enabled" />
+              <ASwitch v-model="channel.enabled" :aria-label="channel.name" />
             </div>
           </div>
           <div class="flex justify-end pt-4">
@@ -1009,7 +1009,7 @@ async function handleSaveOptions() {
               <span class="text-[13px] font-medium">{{ t('settings.options.autoCreateContact') }}</span>
               <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.options.autoCreateContactHint') }}</p>
             </div>
-            <ASwitch v-model="optionsForm.autoCreateContact" />
+            <ASwitch v-model="optionsForm.autoCreateContact" :aria-label="t('settings.options.autoCreateContact')" />
           </div>
           <div class="flex justify-end pt-4">
             <AButton variant="primary" :loading="saving" @click="handleSaveOptions">

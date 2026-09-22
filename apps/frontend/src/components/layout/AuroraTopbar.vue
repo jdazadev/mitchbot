@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { projectService, type Project } from '../../services/project.service';
 import { authService, type User } from '../../services/auth.service';
 import { socketService } from '../../services/socket.service';
+import { useTheme } from '../../composables/useTheme';
 import AIcon from '../ui/AIcon.vue';
 import AAvatar from '../ui/AAvatar.vue';
-import TopbarContext from './TopbarContext.vue';
 
 const route = useRoute();
 const router = useRouter();
 const { t, locale } = useI18n();
+const { theme, toggleTheme } = useTheme();
 
 const emit = defineEmits<{ (e: 'toggle-nav'): void }>();
 
@@ -31,6 +32,9 @@ function toggleMenu(menu: 'project' | 'notifications' | 'user') {
   projectOpen.value = next.project;
   notificationsOpen.value = next.notifications;
   userOpen.value = next.user;
+  if (menu === 'notifications' && notificationsOpen.value) {
+    nextTick(() => notificationsPanel.value?.focus());
+  }
 }
 
 const pageTitle = computed(() => {
@@ -73,6 +77,7 @@ const projects = ref<Project[]>([]);
 const activeProjectId = ref<string | null>(null);
 const projectOpen = ref(false);
 const switching = ref(false);
+const projectError = ref<string | null>(null);
 
 const activeProject = computed(
   () => projects.value.find((p) => p._id === activeProjectId.value) || null
@@ -84,16 +89,17 @@ async function selectProject(project: Project) {
     return;
   }
   switching.value = true;
+  projectError.value = null;
   try {
     await projectService.setActiveProject(project._id);
     activeProjectId.value = project._id;
     socketService.reconnect(project._id);
     window.location.reload();
-  } catch (err) {
-    console.error('Error al cambiar de proyecto:', err);
+  } catch (err: any) {
+    projectError.value = t('topbar.projectSwitchError', { message: err?.message || '' });
   } finally {
     switching.value = false;
-    projectOpen.value = false;
+    projectOpen.value = !!projectError.value;
   }
 }
 
@@ -125,6 +131,7 @@ interface AdminNotification {
 
 const notifications = ref<AdminNotification[]>([]);
 const notificationsOpen = ref(false);
+const notificationsPanel = ref<HTMLElement | null>(null);
 const unreadCount = computed(() => notifications.value.filter((n) => !n.read).length);
 
 let notificationSeq = 0;
@@ -195,7 +202,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <header class="relative z-20 px-3.5 pb-3.5 pt-3.5 md:pl-[242px]">
+  <header class="relative z-20 px-[var(--shell-pad)] pb-[var(--shell-pad)] pt-[var(--shell-pad)] md:pl-[var(--rail-offset)]">
     <div class="mx-auto flex w-full max-w-[1400px] flex-wrap items-center gap-2.5">
       <button
         type="button"
@@ -214,8 +221,6 @@ onMounted(async () => {
       >
         {{ pageTitle }}
       </h2>
-
-      <TopbarContext />
 
       <div class="ml-auto flex items-center gap-2">
         <!-- Proyectos -->
@@ -241,6 +246,14 @@ onMounted(async () => {
             role="menu"
             class="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
           >
+            <div
+              v-if="projectError"
+              role="alert"
+              class="flex items-start gap-2 border-b border-line bg-[color:var(--danger-soft)] px-4 py-3 text-[12px] text-[color:var(--danger)]"
+            >
+              <AIcon name="WarningCircle" :size="15" class="mt-0.5 shrink-0" />
+              <span class="min-w-0 flex-1 break-words">{{ projectError }}</span>
+            </div>
             <div class="max-h-64 overflow-y-auto py-1">
               <button
                 v-for="project in projects"
@@ -302,6 +315,18 @@ onMounted(async () => {
           />
         </div>
 
+        <!-- Tema -->
+        <button
+          type="button"
+          data-testid="theme-toggle"
+          :aria-label="theme === 'dark' ? t('topbar.themeLight') : t('topbar.themeDark')"
+          :title="theme === 'dark' ? t('topbar.themeLight') : t('topbar.themeDark')"
+          class="grid h-9.5 w-9.5 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink"
+          @click="toggleTheme"
+        >
+          <AIcon :name="theme === 'dark' ? 'Sun' : 'MoonStars'" :size="18" />
+        </button>
+
         <!-- Notificaciones -->
         <div class="relative" @keydown.escape="notificationsOpen = false">
           <button
@@ -324,9 +349,11 @@ onMounted(async () => {
           <div v-if="notificationsOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="notificationsOpen = false" />
           <div
             v-if="notificationsOpen"
+            ref="notificationsPanel"
             role="dialog"
+            tabindex="-1"
             :aria-label="t('topbar.notifications')"
-            class="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
+            class="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)] focus:outline-none"
           >
             <div class="flex items-center justify-between border-b border-line px-4 py-3">
               <span class="text-sm font-bold">{{ t('topbar.notifications') }}</span>

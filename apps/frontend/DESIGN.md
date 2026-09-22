@@ -194,6 +194,11 @@ Lienzo cálido con tinta negra, familia pastel semántica y un acento de identid
 **La Regla de la Tinta Primaria.** El primario de acción es **tinta negra**, no color. El acento de marca no pinta botones: pinta orientación y selección.
 **La Regla del Lienzo Cálido.** Toda superficie neutra nace del papel (`--canvas/--surface`) con hairline cálida; prohibido introducir grises fríos o azules de panel administrativo.
 
+### Dark mode — "Aurora de noche"
+El tema oscuro **recompone** el mundo, no lo invierte. El papel se hunde a un púrpura cálido (`--canvas #16141b`, `--surface #211e28`, `--sunken #2b2733`, `--line #332e3d`), la tinta sube a un blanco cálido (`--ink-1 #f3f0ea`, `--ink-2 #bdb6ad`, `--ink-3 #918a80`) y la familia pastel pasa a tintes profundos con tinta clara (`--sky-soft #16303d`/`--sky-ink #d8f1ff`, etc.). El acento de identidad se **aclara** para sobrevivir al suelo oscuro y el par de acción se invierte con tokens propios: `--ink-solid` (= `--ink-1`) y `--ink-solid-contrast` (= `#16141b`), de modo que el primario sigue siendo "tinta" sin perder contraste. Las sombras difusas se profundizan (la tinta ya no proyecta sobre el suelo) y la niebla `aurora-haze` baja de intensidad y se tiñe del acento. La familia `--brand*` la recalcula `useBrand` con el tema activo (`brandDerivatives(hsl, theme)`); el tema se aplica con `data-theme` en `<html>`, se persiste en `localStorage` (`mitchbot.theme`) y arranca desde `prefers-color-scheme` sin flash (script inline en `index.html`).
+
+**La Regla del Par de Acción.** El primario sólido nunca se pinta con `--ink-1` directo: usa `--ink-solid` + `--ink-solid-contrast` para sobrevivir al cambio de tema.
+
 ## Typography
 
 **Display Font:** Bricolage Grotesque (fallback `ui-sans-serif, system-ui, sans-serif`) — ejes `opsz`/`wdth`/`wght`.
@@ -217,11 +222,13 @@ Cada paso declarado en el frontmatter (`typography.*`) es el que aparece en la i
 
 ## Layout
 
-La app es un lienzo con **cápsulas flotantes**, no un shell con barras: el rail es una tarjeta fija a la izquierda (`left:14px`, ancho 230px, radio 28px) y el topbar es una fila de cápsulas sueltas que respira sobre el papel. El contenido ocupa `max-width: 1400px` centrado con padding de `2rem` en desktop y `3.5` en móvil.
+La app es un lienzo con **cápsulas flotantes**, no un shell con barras: el rail es una tarjeta fija a la izquierda (`--shell-pad` de margen, ancho `--rail-w: 224px`, radio 28px) y el topbar es una fila de cápsulas sueltas que respira sobre el papel. El contenido ocupa `max-width: 1400px` centrado con un **margen uniforme de `--shell-pad` (14px) en todas las direcciones**: el mismo valor separa el rail del borde, el topbar y las tarjetas. El gutter rail → contenido es `--rail-offset: calc(--rail-w + 2 × --shell-pad) = 252px`, de modo que la separación rail–tarjeta iguala exactamente el margen del lienzo (topbar y layout comparten el token, así que no pueden desalinearse).
 
-- **Topbar — izquierda (dinámico):** el título de página es la primera cápsula (conserva `data-testid="page-title"`), seguido de los instrumentos propios de la vista (rango y granularidad en el Panel, contadores y modo en Conversaciones, filtros de canal en Clientes, vectores en Brain, roles en Usuarios).
-- **Topbar — derecha (invariante):** Proyectos (punto de marca + nombre → dropdown) · Idiomas ES/EN (conserva `data-testid="language-selector"`) · Notificaciones · Usuario (avatar + nombre → dropdown con Mi Perfil / Cerrar sesión).
+- **Topbar — izquierda (dinámico):** el título de página es la única cápsula (conserva `data-testid="page-title"`). Los instrumentos de vista (rango y granularidad en el Panel, filtros en Clientes, contadores y modo en Conversaciones, vectores en Brain) viven **dentro de la superficie que los posee**, no en el topbar.
+- **Topbar — derecha (invariante):** Proyectos (punto de marca + nombre → dropdown) · Idiomas ES/EN (conserva `data-testid="language-selector"`) · Tema claro/oscuro (`data-testid="theme-toggle"`) · Notificaciones · Usuario (avatar + nombre → dropdown con Mi Perfil / Cerrar sesión).
 - **Rail:** marca del proyecto, navegación (Panel · Conversaciones · Clientes · Brain · Usuarios), separador, Configuración y Mi Perfil, y la tarjeta de turno.
+- **Margen del lienzo (`--shell-pad`, 14px):** un único valor rige el respiro del shell en todas las direcciones — rail respecto al borde (arriba/izquierda/abajo), topbar y contenido respecto al borde (arriba/derecha/abajo) y la separación rail → tarjetas. `--rail-w` (224px) y `--rail-offset` (`--rail-w + 2 × --shell-pad` = 252px) derivan de él; topbar y `DashboardLayout` consumen el mismo token.
+- **Conversaciones — modo enfoque:** la cabecera del hilo ofrece un toggle que estrecha las laterales para dar ancho al hilo: `[minmax(320px,30%)_1fr_300px]` → `[minmax(248px,22%)_1fr_240px]`, con transición de `grid-template-columns` (300ms, sujeta a `prefers-reduced-motion`). Es una cápsula con `aria-pressed`, icono Phosphor y `title` que describe el efecto; vive solo en `lg+` y se persiste en `localStorage`.
 - **Por debajo de 1024px:** el rail se oculta, el topbar apila sus cápsulas y las rejillas colapsan; el cluster derecho se conserva.
 
 ## Elevation & Depth
@@ -247,7 +254,7 @@ El lenguaje es de **cápsulas y tarjetas de esquina generosa**: tarjetas 20px (`
 - **Primary** (`.btn-primary`): fondo **tinta negra** (`--ink-1`), texto blanco, peso 600; hover levanta 1px con sombra.
 - **Secondary** (`.btn-secondary`): fondo hundido (`--sunken`), texto tinta; hover con sombra suave.
 - **Ghost** (`.btn-ghost`): transparente, texto tinta secundaria; hover invade el lienzo.
-- **Pastel** (`lilac`/`lime`/`sky`): para acciones de su semántica (tomar control, resolver, conectar).
+- **Pastel en cápsula** (no en `AButton`): las acciones de semántica pastel (tomar control, resolver, conectar) usan `bg-lilac`/`bg-lime`/`bg-sky` directamente sobre la cápsula, no una variante del botón base.
 - **Disabled:** opacidad 45% + cursor not-allowed.
 
 ### Stamps / Pills
@@ -267,7 +274,7 @@ El lenguaje es de **cápsulas y tarjetas de esquina generosa**: tarjetas 20px (`
 
 ### Navigation — la fila de cápsulas
 - **Rail:** tarjeta flotante con radio 28px; item en reposo tinta secundaria, item activo fondo `lilac-soft` con tinta `lilac-ink` e icono Phosphor en peso `fill`.
-- **Topbar:** **sin fondo, sin borde, sin blur** — cada item es su propia cápsula blanca con `--shadow-card`. Izquierda = instrumento de la vista; derecha = invariantes.
+- **Topbar:** **sin fondo, sin borde, sin blur** — cada item es su propia cápsula blanca con `--shadow-card`. Izquierda = título de página; derecha = invariantes (Proyectos · Idiomas · Tema · Notificaciones · Usuario).
 - El foco visible global es un outline de 2px `--brand` con offset 2px.
 
 ### Iconography
@@ -293,4 +300,4 @@ El lenguaje es de **cápsulas y tarjetas de esquina generosa**: tarjetas 20px (`
 - **Don't** inventar tamaños de badge fuera del sello (10px/800/pill).
 - **Don't** mezclar la webfont de Material Symbols con Phosphor: el set es uno solo.
 
-> **Dirección implementada:** Aurora reemplaza al mundo "App Cálida" (v4.0.0) como sistema de diseño. Los tokens viven en `apps/frontend/src/style.css` y `tailwind.config.js`; los componentes base en `apps/frontend/src/components/ui/*`; el shell en `components/layout/Aurora{Rail,Topbar}.vue` + `TopbarContext.vue`, compuestos dentro de `DashboardLayout.vue`. **Todas las vistas del dashboard están migradas** (cero clases `warm-*` en el código): Panel, Conversaciones (con tarjeta de Sentimiento y bloque de Urgencia), Clientes, Brain, Usuarios, Configuración, Mi Perfil, Login, Setup, TestChat y DevTests; el Resumen (Dashboard) se conserva tal cual para refinar en una tanda posterior. Queda pendiente la persistencia de `project.config.brand` en el backend. El prototipo fiel de 12 vistas está en `apps/frontend/.impeccable/mocks/aurora/`.
+> **Dirección implementada:** Aurora reemplaza al mundo "App Cálida" (v4.0.0) como sistema de diseño. Los tokens viven en `apps/frontend/src/style.css` y `tailwind.config.js`; los componentes base en `apps/frontend/src/components/ui/*`; el shell en `components/layout/Aurora{Rail,Topbar}.vue`, compuestos dentro de `DashboardLayout.vue`. **Todas las vistas del dashboard están migradas** (cero clases `warm-*` en el código): Panel, Conversaciones (con tarjeta de Sentimiento y bloque de Urgencia), Clientes, Brain, Usuarios, Configuración, Mi Perfil, Login, Setup, TestChat y DevTests; el Resumen (Dashboard) se conserva tal cual para refinar en una tanda posterior. Queda pendiente la persistencia de `project.config.brand` en el backend. El prototipo fiel de 12 vistas está en `apps/frontend/.impeccable/mocks/aurora/`.

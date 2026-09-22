@@ -177,7 +177,7 @@ function clearResult() {
             />
             <label
               for="dev-extract-file"
-              class="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white"
+              class="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink-solid px-4 py-2 text-xs font-semibold text-ink-contrast"
             >
               <AIcon name="UploadSimple" :size="14" />
               {{ t('devTests.extract.selectFile') }}
@@ -242,7 +242,7 @@ function clearResult() {
             />
             <label
               for="dev-pdf-preview-file"
-              class="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white"
+              class="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink-solid px-4 py-2 text-xs font-semibold text-ink-contrast"
             >
               <AIcon name="UploadSimple" :size="14" />
               {{ t('devTests.pdfPreview.selectFile') }}

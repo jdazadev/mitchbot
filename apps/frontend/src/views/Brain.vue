@@ -11,7 +11,7 @@ import APill from "../components/ui/APill.vue";
 import AButton from "../components/ui/AButton.vue";
 import AModal from "../components/ui/AModal.vue";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const isLoading = ref(true);
 const error = ref<string | null>(null);
@@ -77,7 +77,7 @@ const sources = computed(() =>
     const progressColor = s.status === "Failed" ? "var(--danger)" : s.status === "Indexed" ? "var(--lime)" : "var(--butter)";
     return {
       ...s,
-      date: new Date(s.createdAt).toLocaleDateString("en-US", {
+      date: new Date(s.createdAt).toLocaleDateString(locale.value, {
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -95,21 +95,47 @@ const sources = computed(() =>
   }),
 );
 
-const stats = computed(() => [
-  {
-    label: t("brain.stats.totalDocuments"),
-    value: brainStats.value.totalDocs.toString(),
-    icon: "FolderOpen",
-    tone: "sky" as const,
-  },
-  {
-    label: t("brain.stats.totalVectors"),
-    value: new Intl.NumberFormat().format(brainStats.value.totalVectors),
-    icon: "TreeStructure",
-    tone: "lilac" as const,
-  },
-  { label: t("brain.stats.syncStatus"), value: brainStats.value.syncStatus, icon: "ArrowsClockwise", tone: "lime" as const },
-]);
+const formattedVectors = computed(() =>
+  new Intl.NumberFormat(locale.value).format(brainStats.value.totalVectors),
+);
+
+function formatLogTime(timestamp: string) {
+  try {
+    return new Date(timestamp).toLocaleTimeString(locale.value);
+  } catch {
+    return timestamp;
+  }
+}
+
+const sourceCounts = computed(() => {
+  const counts: Record<KnowledgeSource["status"], number> = {
+    Queued: 0,
+    Processing: 0,
+    Indexed: 0,
+    Failed: 0,
+  };
+  for (const source of sourceList.value) counts[source.status] += 1;
+  return counts;
+});
+
+const totalSources = computed(() => sourceList.value.length);
+
+const coveragePct = computed(() => {
+  if (!totalSources.value) return 0;
+  return Math.round((sourceCounts.value.Indexed / totalSources.value) * 100);
+});
+
+const coverageSegments = computed(() => {
+  const total = totalSources.value || 1;
+  return [
+    { key: "indexed", label: t("brain.status.indexed"), count: sourceCounts.value.Indexed, color: "var(--lime)" },
+    { key: "processing", label: t("brain.status.processing"), count: sourceCounts.value.Processing, color: "var(--butter)" },
+    { key: "queued", label: t("brain.status.queued"), count: sourceCounts.value.Queued, color: "var(--sky)" },
+    { key: "failed", label: t("brain.status.failed"), count: sourceCounts.value.Failed, color: "var(--danger)" },
+  ]
+    .filter((segment) => segment.count > 0)
+    .map((segment) => ({ ...segment, width: `${(segment.count / total) * 100}%` }));
+});
 
 function getTypeMetadata(type: string) {
   switch (type) {
@@ -326,18 +352,21 @@ async function resolveRagStatus() {
   }
 }
 
-onMounted(async () => {
+async function loadBrain() {
+  isLoading.value = true;
+  error.value = null;
   try {
-    isLoading.value = true;
     await resolveRagStatus();
     await refreshBrain();
     startPolling();
   } catch (err: any) {
-    error.value = err.message;
+    error.value = err.message || t('brain.errors.load');
   } finally {
     isLoading.value = false;
   }
-});
+}
+
+onMounted(loadBrain);
 
 let pollTimer: number | null = null;
 function startPolling() {
@@ -347,11 +376,14 @@ function startPolling() {
     isPolling.value = true;
     try {
       await refreshBrain();
+      error.value = null;
       for (const source of sourceList.value) {
         if (expandedLogs.value[source._id]) {
           await refreshLogsForSource(source._id);
         }
       }
+    } catch (err: any) {
+      error.value = err.message || t('brain.errors.load');
     } finally {
       isPolling.value = false;
     }
@@ -389,28 +421,56 @@ function startPolling() {
       {{ fileAlert }}
     </div>
 
-    <!-- Stats -->
-    <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-      <div
-        v-for="stat in stats"
-        :key="stat.label"
-        class="rounded-card bg-surface p-5 px-6 shadow-card"
-      >
-        <div class="flex items-center gap-2.5">
-          <span
-            :class="[
-              'grid h-8 w-8 place-items-center rounded-[11px]',
-              stat.tone === 'sky' ? 'bg-sky text-sky-ink' : stat.tone === 'lilac' ? 'bg-lilac text-lilac-ink' : 'bg-lime text-lime-ink',
-            ]"
-          >
-            <AIcon :name="stat.icon" :size="16" weight="bold" />
-          </span>
-          <span class="text-xs font-semibold text-ink-3">{{ stat.label }}</span>
+    <!-- Conocimiento indexado -->
+    <div class="rounded-card bg-surface p-5 px-6 shadow-card">
+      <div class="flex flex-wrap items-center gap-4">
+        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] bg-lilac text-lilac-ink">
+          <AIcon name="Brain" :size="18" weight="bold" />
+        </span>
+        <div class="min-w-0">
+          <div class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">
+            {{ t("brain.knowledge.title") }}
+          </div>
+          <div class="mt-0.5 text-[12px] text-ink-3 [font-variant-numeric:tabular-nums]">
+            {{ t("brain.knowledge.subtitle", {
+              vectors: formattedVectors,
+              docs: brainStats.totalDocs,
+              sync: brainStats.syncStatus,
+            }) }}
+          </div>
         </div>
-        <div class="mt-3 font-display text-[32px] font-bold leading-none tracking-[-0.04em] [font-variant-numeric:tabular-nums]">
-          {{ stat.value }}
+        <div class="ml-auto text-right">
+          <div class="font-display text-[30px] font-bold leading-none tracking-[-0.04em] [font-variant-numeric:tabular-nums]">
+            {{ coveragePct }}%
+          </div>
+          <div class="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+            {{ t("brain.knowledge.coverage") }}
+          </div>
         </div>
       </div>
+
+      <template v-if="totalSources">
+        <div class="mt-4 flex h-2.5 gap-1 overflow-hidden rounded-full bg-sunken">
+          <span
+            v-for="segment in coverageSegments"
+            :key="segment.key"
+            class="block h-full rounded-full"
+            :style="{ width: segment.width, background: segment.color }"
+          />
+        </div>
+        <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-3">
+          <span
+            v-for="segment in coverageSegments"
+            :key="segment.key"
+            class="inline-flex items-center gap-1.5"
+          >
+            <span class="h-1.5 w-1.5 rounded-full" :style="{ background: segment.color }" />
+            <b class="font-semibold text-ink-2 [font-variant-numeric:tabular-nums]">{{ segment.count }}</b>
+            {{ segment.label }}
+          </span>
+        </div>
+      </template>
+      <p v-else class="mt-3 text-[12.5px] text-ink-3">{{ t("brain.knowledge.empty") }}</p>
     </div>
 
     <!-- Fuentes de conocimiento -->
@@ -424,8 +484,11 @@ function startPolling() {
       <div v-if="isLoading" class="px-6 py-10 text-center text-sm font-semibold text-ink-3">
         {{ t("brain.sources.loading") }}
       </div>
-      <div v-else-if="error" class="px-6 py-10 text-center text-sm font-semibold text-[color:var(--danger)]">
-        {{ error }}
+      <div v-else-if="error" class="flex flex-col items-center gap-3 px-6 py-10 text-center text-sm font-semibold text-[color:var(--danger)]">
+        <span>{{ error }}</span>
+        <AButton variant="secondary" size="sm" icon="ArrowsClockwise" @click="loadBrain">
+          {{ t("common.retry") }}
+        </AButton>
       </div>
       <div v-else class="overflow-x-auto">
         <table class="w-full border-collapse text-[13px]">
@@ -440,11 +503,12 @@ function startPolling() {
                   t('brain.sources.table.lastSynced'),
                 ]"
                 :key="col"
+                scope="col"
                 class="border-b-[1.5px] border-line px-4.5 py-3 text-left text-[11px] font-semibold text-ink-3"
               >
                 {{ col }}
               </th>
-              <th class="border-b-[1.5px] border-line px-4.5 py-3 text-right text-[11px] font-semibold text-ink-3">
+              <th scope="col" class="border-b-[1.5px] border-line px-4.5 py-3 text-right text-[11px] font-semibold text-ink-3">
                 {{ t("common.actions") }}
               </th>
             </tr>
@@ -484,30 +548,33 @@ function startPolling() {
                   <div class="flex items-center justify-end gap-1.5">
                     <button
                       type="button"
-                      class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+                      class="inline-flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-1.5 text-[11px] font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
                       :title="t('brain.sources.viewExtracted')"
                       :aria-label="t('brain.sources.viewExtracted')"
                       @click="openExtractedText(source._id)"
                     >
-                      <AIcon name="FileText" :size="14" />
+                      <AIcon name="FileText" :size="13" />
+                      <span class="hidden xl:inline">{{ t('brain.sources.labelExtracted') }}</span>
                     </button>
                     <button
                       type="button"
-                      class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+                      class="inline-flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-1.5 text-[11px] font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
                       :title="t('brain.sources.viewLogs')"
                       :aria-label="t('brain.sources.viewLogs')"
                       @click="toggleLogs(source._id)"
                     >
-                      <AIcon name="NotePencil" :size="14" />
+                      <AIcon name="NotePencil" :size="13" />
+                      <span class="hidden xl:inline">{{ t('brain.sources.labelLogs') }}</span>
                     </button>
                     <button
                       type="button"
-                      class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-[color:var(--danger-soft)] hover:text-[color:var(--danger)]"
+                      class="inline-flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-1.5 text-[11px] font-semibold text-ink-2 transition-colors hover:bg-[color:var(--danger-soft)] hover:text-[color:var(--danger)]"
                       :title="t('brain.sources.delete')"
                       :aria-label="t('brain.sources.delete')"
                       @click="openDeleteModal(source)"
                     >
-                      <AIcon name="Trash" :size="14" />
+                      <AIcon name="Trash" :size="13" />
+                      <span class="hidden xl:inline">{{ t('brain.sources.labelDelete') }}</span>
                     </button>
                   </div>
                 </td>
@@ -517,7 +584,7 @@ function startPolling() {
                   <div class="space-y-2 rounded-field bg-canvas p-4 text-xs text-ink-2">
                     <div v-if="!logsBySource[source._id]?.length" class="text-ink-3">{{ t("brain.logs.empty") }}</div>
                     <div v-else v-for="log in logsBySource[source._id]" :key="log.timestamp">
-                      <span class="font-bold">{{ new Date(log.timestamp).toLocaleTimeString() }}</span>
+                      <span class="font-bold">{{ formatLogTime(log.timestamp) }}</span>
                       <span class="text-[10px] uppercase">{{
                         log.level
                       }}</span>
@@ -554,7 +621,7 @@ function startPolling() {
               type="button"
               :class="[
                 'rounded-full px-4 py-2 text-[13px] font-semibold transition-colors',
-                uploadMode === 'file' ? 'bg-ink text-white' : 'bg-canvas text-ink-2',
+                uploadMode === 'file' ? 'bg-ink-solid text-ink-contrast' : 'bg-canvas text-ink-2',
               ]"
               @click="uploadMode = 'file'"
             >
@@ -564,7 +631,7 @@ function startPolling() {
               type="button"
               :class="[
                 'rounded-full px-4 py-2 text-[13px] font-semibold transition-colors',
-                uploadMode === 'text' ? 'bg-ink text-white' : 'bg-canvas text-ink-2',
+                uploadMode === 'text' ? 'bg-ink-solid text-ink-contrast' : 'bg-canvas text-ink-2',
               ]"
               @click="uploadMode = 'text'"
             >
@@ -600,7 +667,7 @@ function startPolling() {
                 />
                 <label
                   for="brain-file"
-                  class="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white"
+                  class="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink-solid px-4 py-2 text-xs font-semibold text-ink-contrast"
                 >
                   <AIcon name="UploadSimple" :size="14" />
                   {{ t("brain.modal.selectFile") }}

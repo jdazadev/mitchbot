@@ -25,6 +25,7 @@
     "clients": "Clientes",
     "default": "BotMaster",
     "selectProject": "Selecciona proyecto",
+    "projectSwitchError": "No se pudo cambiar de proyecto. {message}",
     "noProjects": "No tienes proyectos",
     "createProject": "Crear nuevo proyecto",
     "notifications": "Notificaciones",
@@ -33,6 +34,8 @@
     "clearAll": "Limpiar todo",
     "newNotification": "Nueva notificación",
     "language": "Idioma",
+    "themeLight": "Cambiar a tema claro",
+    "themeDark": "Cambiar a tema oscuro",
     "time": {
       "now": "ahora",
       "minutesAgo": "hace {count} min",
@@ -125,8 +128,10 @@
       "lastDays": "Últimos {days} días",
       "daily": "Diaria",
       "weekly": "Semanal",
-      "monthly": "Mensual",
-      "noData": "Sin datos en este rango"
+    "monthly": "Mensual",
+    "noData": "Sin datos en este rango",
+    "tableDate": "Fecha",
+    "tableCount": "Conversaciones"
     },
     "channels": {
       "title": "Distribución por canal",
@@ -178,6 +183,12 @@
       "totalVectors": "Vectores totales",
       "syncStatus": "Estado de sincronización"
     },
+    "knowledge": {
+      "title": "Conocimiento indexado",
+      "subtitle": "{vectors} vectores · {docs} fuentes · {sync}",
+      "coverage": "cobertura",
+      "empty": "Aún no hay conocimiento indexado. Añade una fuente para empezar."
+    },
     "status": {
       "queued": "En cola",
       "processing": "Procesando",
@@ -198,8 +209,11 @@
       "loading": "Cargando fuentes de conocimiento...",
       "empty": "No se encontraron fuentes de conocimiento. Añade una para empezar.",
       "viewExtracted": "Ver texto extraído",
+      "labelExtracted": "Ver texto",
       "viewLogs": "Ver logs",
+      "labelLogs": "Logs",
       "delete": "Eliminar fuente",
+      "labelDelete": "Eliminar",
       "table": {
         "sourceName": "Nombre de la fuente",
         "sizePages": "Tamaño/Páginas",
@@ -212,6 +226,7 @@
       "general": "general"
     },
     "errors": {
+      "load": "No se pudo cargar la base de conocimiento. {message}",
       "extractFailed": "Error al obtener el texto extraído.",
       "deleteFailed": "Error al eliminar la fuente.",
       "invalidFile": "Tipo de archivo no permitido. Solo PDF, TXT, CSV o imágenes.",
@@ -399,12 +414,24 @@
     },
     "mode": {
       "autoPilotOn": "Piloto automático activo",
-      "humanTakeover": "Atención humana"
+      "humanTakeover": "Atención humana",
+      "takeoverTitle": "Tomar control de la conversación",
+      "takeoverBody": "El bot dejará de responder y atenderás este chat como agente humano. Podrás devolverlo al piloto automático cuando quieras.",
+      "takeoverConfirm": "Tomar control",
+      "autoPilotTitle": "Devolver al piloto automático",
+      "autoPilotBody": "El bot volverá a responder automáticamente los mensajes de este cliente.",
+      "autoPilotConfirm": "Activar piloto automático",
+      "takenOver": "Tomaste el control de esta conversación.",
+      "autoPilotRestored": "El piloto automático volvió a activarse."
     },
     "composer": {
       "sendPlaceholder": "Escribe un mensaje...",
       "takeOver": "Tomar control",
       "autoPilot": "Piloto automático"
+    },
+    "focus": {
+      "toggle": "Modo enfoque",
+      "hint": "Estrecha las tarjetas laterales para dar más espacio a la conversación"
     },
     "tools": {
       "confirmationRequired": "Confirmación requerida",
@@ -447,9 +474,19 @@
       "level.low": "Baja",
       "level.medium": "Media",
       "level.high": "Alta",
-      "reasonPending": "espera visto bueno",
-      "reasonOpen": "conversación abierta",
-      "reasonClosed": "conversación cerrada"
+    "reasonPending": "espera visto bueno",
+    "reasonOpen": "conversación abierta",
+    "reasonClosed": "conversación cerrada",
+    "reasonEscalated": "sentimiento negativo sin responder"
+    },
+    "errors": {
+      "send": "No se pudo enviar el mensaje. Conservamos tu borrador; inténtalo de nuevo.",
+      "mode": "No se pudo cambiar el modo de la conversación. Inténtalo de nuevo.",
+      "contact": "No se pudo guardar el contacto. Inténtalo de nuevo.",
+      "insights": "No se pudo analizar la conversación. Inténtalo de nuevo."
+    },
+    "a11y": {
+      "incoming": "Nuevo mensaje de {name}: {message}"
     }
   },
   "profile": {
@@ -732,6 +769,15 @@
     "searchPlaceholder": "Buscar por nombre o email...",
     "loading": "Cargando usuarios...",
     "noProjects": "No hay proyectos disponibles",
+    "results": {
+      "found": "No se encontró ningún usuario | {count} usuario encontrado | {count} usuarios encontrados"
+    },
+    "pagination": {
+      "perPage": "por página"
+    },
+    "errors": {
+      "load": "No se pudieron cargar los usuarios. {message}"
+    },
     "toast": {
       "created": "Usuario creado correctamente",
       "updated": "Usuario actualizado correctamente"
@@ -792,6 +838,13 @@
       "startPrompt": "Escribe para iniciar conversación"
     },
     "empty": "Escribe un mensaje para iniciar una conversación como cliente",
+    "errors": {
+      "start": "No se pudo iniciar la conversación. {message}",
+      "send": "No se pudo enviar el mensaje. {message}"
+    },
+    "a11y": {
+      "incoming": "Nuevo mensaje de {name}: {message}"
+    },
     "tool": {
       "confirmationRequired": "Confirmación requerida",
       "tool": "Herramienta",

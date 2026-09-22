@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-type Tone = 'lime' | 'lilac' | 'sky' | 'butter' | 'danger' | 'ghost' | 'solid-lime' | 'solid-lilac' | 'solid-sky';
+type Tone = 'lime' | 'lilac' | 'sky' | 'butter' | 'danger' | 'ghost';
 type Size = 'sm' | 'md';
 
 const props = withDefaults(
@@ -16,9 +16,6 @@ const TONE_CLASS: Record<Tone, string> = {
   butter: 'bg-butter-soft text-butter-ink',
   danger: 'bg-[color:var(--danger-soft)] text-[color:var(--danger)]',
   ghost: 'bg-canvas text-ink-2',
-  'solid-lime': 'bg-lime text-lime-ink',
-  'solid-lilac': 'bg-lilac text-lilac-ink',
-  'solid-sky': 'bg-sky text-sky-ink',
 };
 
 const classes = computed(() => [

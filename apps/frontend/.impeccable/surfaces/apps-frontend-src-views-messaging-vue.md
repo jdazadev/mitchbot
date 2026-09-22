@@ -2,21 +2,22 @@
 version: 1
 slug: "apps-frontend-src-views-messaging-vue"
 primary_target: "apps/frontend/src/views/Messaging.vue"
-related_targets: []
+related_targets:
+  - "apps/frontend/src/views/TestChat.vue"
 ---
 
-# Mensajería (Messaging) · superficie primaria del rediseño total
+# Mensajería (Messaging) · superficie primaria
 
-- Modo: Operate. Alcance: todas las vistas del dashboard + chat público, en el mundo "Mesa de Exposición".
+- Modo: Operate. Plataforma: web. Alcance: la vista de Conversaciones del dashboard y, como cara del cliente, el chat público (`TestChat.vue`). El mundo vigente es **Aurora** (ver `DESIGN.md`).
 
 ## Audience, job, action
-- Operador PYME/soporte en escritorio, jornada larga; escanea la cola, atiende o toma control. Realtime vivo (badges, modos, insights, tools). Honestidad funcional.
+- Operador PYME/soporte en escritorio, jornada larga; escanea la bandeja, atiende el hilo o toma el control. Realtime vivo (badges de no leídos, modos `auto_pilot`/`human_takeover`, insights de sentimiento, tool use). Honestidad funcional: solo elementos con comportamiento real.
 
 ## Direction contract
-- THESIS: "El dashboard es una mesa de señales sobre papel de calco": cada conversación un circuito con su estado en lámpara (verde=bot, magenta=humano, hueco=cerrado), y la carga se lee por hatching, no por color; rechaza el dashboard SaaS azul y toda nostalgia gratuita.
-- OWN-WORLD: papel #F1EDE6 (#FBF9F3 card), tinta #1C1E22, verde #1D7A4F, magenta #C13A7C único acento de acción/humano, hairlines #C7C2B6. Labels Barlow Condensed trailing; datos IBM Plex Mono tabular; cuerpo Spline Sans. Cerrado con regla tachada; conflicto = hatch cruzado 90°; herramientas sin confirmar = tramo punteado magenta.
-- STORY: el operador ve la rampa del día, elige la regleta con más hatching, despacha o despliega la llave magenta de toma de control; la conversación cerrada baja de la cola.
-- FIRST VIEWPORT: rail de andén (tinta) con marca + nav de circuitos; KPIs en sobre-hilera tabular; cola de regletas con lámpara-dot + hatching; a la derecha el hilo-despacho con la llave "TOMAR CONTROL · +1⅓" arriba y el composer (portaminas) abajo.
-- FORM: fusión fijada por el usuario (topología Mesa de Señales + material Ficha de Exposición, seed 5e4a857d/b69db4c6). Code-led.
-- Memorable moment: girar la llave convierte el circuito entero de verde a magenta con el contador "+1⅓" anotado a mano.
-- FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+- THESIS: "un estudio optimista a media mañana": lienzo de papel cálido con niebla de pasteles en los bordes, tinta negra de imprenta, tipografía display enorme y una familia pastel que **significa algo** — lila=persona/selección, lima=bot/éxito, cielo=Web, mantequilla=espera.
+- OWN-WORLD: `--canvas #f7f3ef`, `--surface #fff`, `--sunken #efebe5`, `--ink-1 #0b0b0c`; pasteles `--sky/--lime/--lilac/--butter` con `-ink`/`-soft`; acento de identidad por proyecto (`--brand*`, recalcula `useBrand`); radios `--r-card 20px`/`--r-big 28px`/`--r-bubble 20px`; sombras difusas sin halo de color. Tema oscuro "Aurora de noche" por `data-theme` (recompone, no invierte).
+- STORY: el operador lee la cola, abre el hilo, responde o despliega la toma de control (confirmada en modal), y ve el estado del bot/insights/urgencia sin recargar.
+- FIRST VIEWPORT: rail flotante con marca + nav; bandeja con búsqueda, chips de canal y badge de no leídos; hilo con cabecera (pill de modo, toggle de **modo enfoque**, confirmación de cambio de modo) y composer honesto; tarjeta lateral de Sentimiento y bloque de **Urgencia** (3 niveles; el alto enciende rojo con sentimiento negativo + mensaje del cliente sin responder).
+- FORM: Aurora (cápsulas flotantes, tinta primaria de acción, pasteles semánticos). Code-led.
+- Memorable moment: girar la llave de modo (lila=persona) confirma en modal y deja un acuse honesto en el hilo, sin abandonar el piloto automático por accidente.
+- FINISH: errores de envío/modo/contacto/insights con banner inline y reintento; anti doble-submit; borrador conservado; anuncio acotado de mensajes entrantes; sin acciones decorativas.

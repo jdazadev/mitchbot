@@ -16,8 +16,17 @@ import AButton from "../components/ui/AButton.vue";
 import AModal from "../components/ui/AModal.vue";
 import { channelInk, channelTone } from "../lib/channels";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const router = useRouter();
+
+function formatDate(value?: string) {
+  if (!value) return '-';
+  try {
+    return new Date(value).toLocaleDateString(locale.value, { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return '-';
+  }
+}
 
 const STATUS_LABEL_KEYS: Record<string, string> = {
   Active: "clients.status.active",
@@ -344,16 +353,21 @@ async function restoreContact(contact: Contact) {
                   { key: 'createdAt', label: t('clients.table.created') },
                 ]"
                 :key="col.key"
-                class="cursor-pointer select-none border-b-[1.5px] border-line px-4.5 py-3 text-left text-[11px] font-semibold text-ink-3 transition-colors hover:text-ink"
-                @click="toggleSort(col.key)"
+                scope="col"
+                :aria-sort="sortBy === col.key ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'"
+                class="border-b-[1.5px] border-line p-0 text-left text-[11px] font-semibold text-ink-3"
               >
-                <span class="inline-flex items-center gap-1">
+                <button
+                  type="button"
+                  class="inline-flex w-full items-center gap-1 px-4.5 py-3 text-left transition-colors hover:text-ink focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--focus)]"
+                  @click="toggleSort(col.key)"
+                >
                   {{ col.label }}
                   <AIcon
                     :name="sortBy !== col.key ? 'CaretUpDown' : sortOrder === 'asc' ? 'CaretUp' : 'CaretDown'"
                     :size="13"
                   />
-                </span>
+                </button>
               </th>
               <th class="border-b-[1.5px] border-line px-4.5 py-3 text-right text-[11px] font-semibold text-ink-3">
                 {{ t('common.actions') }}
@@ -392,7 +406,7 @@ async function restoreContact(contact: Contact) {
               </td>
               <td class="px-4.5 py-3.5 text-ink-3 [font-variant-numeric:tabular-nums]">{{ contact.phone }}</td>
               <td class="px-4.5 py-3.5 text-xs text-ink-3">
-                {{ contact.createdAt ? new Date(contact.createdAt).toLocaleDateString() : '-' }}
+                {{ formatDate(contact.createdAt) }}
               </td>
               <td class="px-4.5 py-3.5">
                 <div class="flex items-center justify-end gap-1.5">
@@ -481,7 +495,7 @@ async function restoreContact(contact: Contact) {
               type="button"
               :class="[
                 'grid h-8 w-8 place-items-center rounded-full text-xs font-bold transition-colors',
-                page === currentPage ? 'bg-ink text-white' : 'text-ink-2 hover:bg-canvas',
+                page === currentPage ? 'bg-ink-solid text-ink-contrast' : 'text-ink-2 hover:bg-canvas',
               ]"
               @click="goToPage(page)"
             >

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { userService, type SystemUser } from '../services/user.service';
 import { projectService, type Project } from '../services/project.service';
@@ -9,14 +9,18 @@ import APill from '../components/ui/APill.vue';
 import AButton from '../components/ui/AButton.vue';
 import AModal from '../components/ui/AModal.vue';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const users = ref<SystemUser[]>([]);
 const totalUsers = ref(0);
 const currentPage = ref(1);
 const totalPages = ref(1);
+const pageSize = ref(10);
 const pageLoading = ref(true);
+const error = ref<string | null>(null);
 const searchQuery = ref('');
+const sortBy = ref('createdAt');
+const sortOrder = ref<'asc' | 'desc'>('desc');
 const projects = ref<Project[]>([]);
 
 const roles = ['admin', 'support', 'assistant'] as const;
@@ -30,33 +34,69 @@ const formLoading = ref(false);
 const formError = ref('');
 const formSuccess = ref('');
 
-async function loadUsers(page = 1) {
+// Ignora respuestas fuera de orden cuando varios cambios disparan fetches seguidos.
+let fetchSeq = 0;
+
+async function loadUsers(page = currentPage.value) {
+  const seq = ++fetchSeq;
   pageLoading.value = true;
+  error.value = null;
   try {
     const result = await userService.list({
       page,
-      limit: 10,
+      limit: pageSize.value,
       q: searchQuery.value || undefined,
+      sortBy: sortBy.value,
+      sortOrder: sortOrder.value,
     });
+    if (seq !== fetchSeq) return;
     users.value = result.items;
     totalUsers.value = result.total;
     currentPage.value = result.page;
     totalPages.value = result.totalPages;
   } catch (err: any) {
-    console.error('Error loading users:', err);
+    if (seq !== fetchSeq) return;
+    error.value = err.message || t('common.error');
   } finally {
-    pageLoading.value = false;
+    if (seq === fetchSeq) pageLoading.value = false;
   }
 }
 
+let searchTimeout: ReturnType<typeof setTimeout>;
+watch(searchQuery, () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    loadUsers(1);
+  }, 300);
+});
+
+watch([pageSize, sortBy, sortOrder], () => {
+  loadUsers(1);
+});
+
 onMounted(async () => {
-  loadUsers();
+  loadUsers(1);
   try {
     projects.value = await projectService.listProjects();
   } catch {
     projects.value = [];
   }
 });
+
+function toggleSort(field: string) {
+  if (sortBy.value === field) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortBy.value = field;
+    sortOrder.value = 'asc';
+  }
+}
+
+function goToPage(page: number) {
+  if (page >= 1 && page <= totalPages.value && page !== currentPage.value) {
+    loadUsers(page);
+  }
+}
 
 function toggleCreateProject(id: string) {
   const list = createForm.value.projectIds;
@@ -70,10 +110,6 @@ function toggleEditProject(id: string) {
   const idx = list.indexOf(id);
   if (idx >= 0) list.splice(idx, 1);
   else list.push(id);
-}
-
-function handleSearch() {
-  loadUsers(1);
 }
 
 function openEditModal(user: SystemUser) {
@@ -135,7 +171,7 @@ function roleTone(role: string) {
 
 function formatDate(dateStr: string) {
   try {
-    return new Date(dateStr).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(dateStr).toLocaleDateString(locale.value, { day: '2-digit', month: 'short', year: 'numeric' });
   } catch {
     return dateStr;
   }
@@ -161,18 +197,44 @@ function formatDate(dateStr: string) {
       {{ formSuccess }}
     </div>
 
-    <div class="flex gap-2.5">
-      <div class="flex flex-1 items-center gap-2.5 rounded-full bg-surface px-4 py-2.5 shadow-card transition-shadow focus-within:shadow-[0_0_0_2px_var(--focus)]">
-        <AIcon name="MagnifyingGlass" :size="17" class="shrink-0 text-ink-3" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          :placeholder="t('users.searchPlaceholder')"
-          class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3 focus-visible:shadow-none"
-          @keydown.enter="handleSearch"
-        />
-      </div>
-      <AButton variant="secondary" @click="handleSearch">{{ t('common.search') }}</AButton>
+    <div class="flex min-w-[240px] items-center gap-2.5 rounded-full bg-surface px-4 py-2.5 shadow-card transition-shadow focus-within:shadow-[0_0_0_2px_var(--focus)]">
+      <AIcon name="MagnifyingGlass" :size="17" class="shrink-0 text-ink-3" />
+      <input
+        v-model="searchQuery"
+        type="text"
+        :placeholder="t('users.searchPlaceholder')"
+        class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3 focus-visible:shadow-none"
+        @keydown.enter="loadUsers(1)"
+      />
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2 text-xs text-ink-3">
+      <AIcon name="Users" :size="15" />
+      {{ t('users.results.found', totalUsers) }}
+      <span class="ml-auto flex items-center gap-2">
+        <select
+          v-model="pageSize"
+          class="appearance-none rounded-full bg-canvas px-3 py-1 text-xs font-semibold text-ink-2 outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
+        >
+          <option :value="5">5</option>
+          <option :value="10">10</option>
+          <option :value="25">25</option>
+          <option :value="50">50</option>
+        </select>
+        {{ t('users.pagination.perPage') }}
+      </span>
+    </div>
+
+    <div
+      v-if="error"
+      role="alert"
+      class="flex items-center gap-3 rounded-card bg-[color:var(--danger-soft)] p-4 text-[13px] text-[color:var(--danger)]"
+    >
+      <AIcon name="WarningCircle" :size="18" />
+      <span class="flex-1">{{ t('users.errors.load', { message: error }) }}</span>
+      <button type="button" class="shrink-0 font-semibold underline" @click="loadUsers(currentPage)">
+        {{ t('common.retry') }}
+      </button>
     </div>
 
     <div v-if="pageLoading" class="flex items-center justify-center gap-3 py-12 text-sm text-ink-3">
@@ -180,24 +242,36 @@ function formatDate(dateStr: string) {
       {{ t('users.loading') }}
     </div>
 
-    <div v-else class="overflow-hidden rounded-card bg-surface shadow-card">
+    <div v-else-if="!error" class="overflow-hidden rounded-card bg-surface shadow-card">
       <div class="overflow-x-auto">
         <table class="w-full border-collapse text-[13px]">
           <thead>
             <tr>
               <th
                 v-for="col in [
-                  t('users.table.user'),
-                  t('users.table.role'),
-                  t('common.status'),
-                  t('users.table.createdAt'),
+                  { key: 'name', label: t('users.table.user') },
+                  { key: 'role', label: t('users.table.role') },
+                  { key: 'status', label: t('common.status') },
+                  { key: 'createdAt', label: t('users.table.createdAt') },
                 ]"
-                :key="col"
-                class="border-b-[1.5px] border-line px-4.5 py-3 text-left text-[11px] font-semibold text-ink-3"
+                :key="col.key"
+                scope="col"
+                :aria-sort="sortBy === col.key ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'"
+                class="border-b-[1.5px] border-line p-0 text-left text-[11px] font-semibold text-ink-3"
               >
-                {{ col }}
+                <button
+                  type="button"
+                  class="inline-flex w-full items-center gap-1 px-4.5 py-3 text-left transition-colors hover:text-ink focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--focus)]"
+                  @click="toggleSort(col.key)"
+                >
+                  {{ col.label }}
+                  <AIcon
+                    :name="sortBy !== col.key ? 'CaretUpDown' : sortOrder === 'asc' ? 'CaretUp' : 'CaretDown'"
+                    :size="13"
+                  />
+                </button>
               </th>
-              <th class="border-b-[1.5px] border-line px-4.5 py-3 text-right text-[11px] font-semibold text-ink-3">
+              <th scope="col" class="border-b-[1.5px] border-line px-4.5 py-3 text-right text-[11px] font-semibold text-ink-3">
                 {{ t('common.actions') }}
               </th>
             </tr>
@@ -217,9 +291,9 @@ function formatDate(dateStr: string) {
                     :initials="(user.name || 'U').slice(0, 2).toUpperCase()"
                     :tone="roleTone(user.role) === 'ghost' ? 'sky' : (roleTone(user.role) as any)"
                   />
-                  <div class="flex flex-col">
-                    <span class="font-semibold">{{ user.name }}</span>
-                    <span class="text-xs text-ink-3">{{ user.email }}</span>
+                  <div class="flex min-w-0 flex-col">
+                    <span class="truncate font-semibold">{{ user.name }}</span>
+                    <span class="truncate text-xs text-ink-3">{{ user.email }}</span>
                   </div>
                 </div>
               </td>
@@ -252,16 +326,67 @@ function formatDate(dateStr: string) {
 
       <div
         v-if="totalPages > 1"
-        class="flex items-center justify-between border-t border-line px-4.5 py-3"
+        class="flex items-center justify-between border-t border-line px-4.5 py-3.5"
       >
-        <span class="text-xs text-ink-3">{{ t('common.page') }} {{ currentPage }} {{ t('common.of') }} {{ totalPages }}</span>
-        <div class="flex gap-2">
-          <AButton variant="secondary" size="sm" :disabled="currentPage <= 1" @click="loadUsers(currentPage - 1)">
-            {{ t('common.previous') }}
-          </AButton>
-          <AButton variant="secondary" size="sm" :disabled="currentPage >= totalPages" @click="loadUsers(currentPage + 1)">
-            {{ t('common.next') }}
-          </AButton>
+        <span class="text-xs text-ink-3">
+          {{ t('common.page') }} {{ currentPage }} {{ t('common.of') }} {{ totalPages }}
+        </span>
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            :disabled="currentPage === 1"
+            class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :aria-label="t('common.firstPage')"
+            @click="goToPage(1)"
+          >
+            <AIcon name="CaretDoubleLeft" :size="16" />
+          </button>
+          <button
+            type="button"
+            :disabled="currentPage === 1"
+            class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :aria-label="t('common.previous')"
+            @click="goToPage(currentPage - 1)"
+          >
+            <AIcon name="CaretLeft" :size="16" />
+          </button>
+
+          <template v-for="page in totalPages" :key="page">
+            <button
+              v-if="Math.abs(page - currentPage) <= 2 || page === 1 || page === totalPages"
+              type="button"
+              :class="[
+                'grid h-8 w-8 place-items-center rounded-full text-xs font-bold transition-colors',
+                page === currentPage ? 'bg-ink-solid text-ink-contrast' : 'text-ink-2 hover:bg-canvas',
+              ]"
+              @click="goToPage(page)"
+            >
+              {{ page }}
+            </button>
+            <span
+              v-else-if="Math.abs(page - currentPage) === 3"
+              class="text-xs text-line-strong"
+            >…</span>
+          </template>
+
+          <button
+            type="button"
+            :disabled="currentPage === totalPages"
+            class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :aria-label="t('common.next')"
+            @click="goToPage(currentPage + 1)"
+          >
+            <AIcon name="CaretRight" :size="16" />
+          </button>
+          <button
+            type="button"
+            :disabled="currentPage === totalPages"
+            class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :aria-label="t('common.lastPage')"
+            @click="goToPage(totalPages)"
+          >
+            <AIcon name="CaretDoubleRight" :size="16" />
+          </button>
         </div>
       </div>
     </div>

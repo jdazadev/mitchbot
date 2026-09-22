@@ -31,6 +31,9 @@ const activeConversation = ref<ChatConversation | null>(null);
 const messages = ref<ChatMessage[]>([]);
 const newMessage = ref("");
 const isLoading = ref(false);
+const isSending = ref(false);
+const sendError = ref<string | null>(null);
+const liveAnnouncement = ref("");
 
 // Datos del cliente simulado
 const clientName = ref("Cliente Test");
@@ -76,8 +79,9 @@ async function startConversation() {
   if (!newMessage.value.trim()) return;
   if (!isSlugReady.value) return;
 
+  sendError.value = null;
+  isLoading.value = true;
   try {
-    isLoading.value = true;
     const result = await messagingService.clientStartConversation(projectSlug.value, {
       platform: selectedPlatform.value,
       clientName: clientName.value || undefined,
@@ -93,8 +97,9 @@ async function startConversation() {
 
     // Join room para recibir respuestas
     socketService.joinRoom(result.conversation._id);
-  } catch (e) {
-    console.error("Error starting conversation:", e);
+  } catch (e: any) {
+    // El borrador se conserva para poder reintentar sin reescribirlo.
+    sendError.value = t("publicChat.errors.start", { message: e?.message || "" });
   } finally {
     isLoading.value = false;
   }
@@ -105,10 +110,11 @@ async function startConversation() {
  */
 async function sendMessage() {
   if (!newMessage.value.trim() || !activeConversation.value) return;
-  if (!isSlugReady.value) return;
+  if (!isSlugReady.value || isSending.value) return;
   const content = newMessage.value;
-  newMessage.value = "";
 
+  sendError.value = null;
+  isSending.value = true;
   try {
     const msg = await messagingService.clientSendMessage(
       projectSlug.value,
@@ -116,16 +122,26 @@ async function sendMessage() {
       content,
       clientName.value
     );
+    newMessage.value = "";
     if (!messages.value.find((m) => m._id === msg._id)) {
       messages.value.push(msg);
       scrollToBottom();
     }
-  } catch (e) {
-    console.error(e);
+  } catch (e: any) {
+    // El borrador se conserva para poder reintentar sin reescribirlo.
+    sendError.value = t("publicChat.errors.send", { message: e?.message || "" });
+  } finally {
+    isSending.value = false;
   }
 }
 
+function retrySend() {
+  sendError.value = null;
+  handleSend();
+}
+
 function handleSend() {
+  if (isSending.value || isLoading.value) return;
   if (activeConversation.value) {
     sendMessage();
   } else {
@@ -142,6 +158,13 @@ function onNewMessage(msg: ChatMessage) {
       messages.value.push(msg);
       scrollToBottom();
     }
+    // Solo se anuncia lo que llega del agente; los mensajes del propio cliente no.
+    if (msg.sender !== "contact" && !isHiddenToolMessage(msg)) {
+      liveAnnouncement.value = t("publicChat.a11y.incoming", {
+        name: senderLabel(msg.sender),
+        message: (msg.content || "").slice(0, 140),
+      });
+    }
   }
 }
 
@@ -156,6 +179,12 @@ function onMessageChunk(data: { messageId: string, conversationId: string, conte
     if (existingMsg) {
       existingMsg.content = data.content;
       scrollToBottom();
+      if (existingMsg.sender !== "contact" && !isHiddenToolMessage(existingMsg)) {
+        liveAnnouncement.value = t("publicChat.a11y.incoming", {
+          name: senderLabel(existingMsg.sender),
+          message: (data.content || "").slice(0, 140),
+        });
+      }
     }
   }
 }
@@ -293,7 +322,7 @@ function scrollToBottom() {
               :class="[
                 'rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
                 selectedPlatform === p
-                  ? 'bg-ink text-white'
+                  ? 'bg-ink-solid text-ink-contrast'
                   : 'bg-canvas text-ink-2 hover:bg-sunken',
               ]"
               @click="selectedPlatform = p"
@@ -338,7 +367,9 @@ function scrollToBottom() {
         </APill>
       </div>
 
-      <div id="chat-container" role="log" aria-live="polite" aria-relevant="additions text" class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-5 py-5">
+      <p role="status" aria-live="polite" class="sr-only">{{ liveAnnouncement }}</p>
+
+      <div id="chat-container" class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-5 py-5">
         <div v-if="messages.length === 0" class="flex flex-1 items-center justify-center text-sm text-ink-3">
           {{ t("publicChat.empty") }}
         </div>
@@ -382,6 +413,17 @@ function scrollToBottom() {
         </template>
       </div>
 
+      <div v-if="sendError" role="alert" class="flex items-start gap-2 border-t-[1.5px] border-line bg-[color:var(--danger-soft)] px-4 py-3 text-[12.5px] text-[color:var(--danger)]">
+        <AIcon name="WarningCircle" :size="16" class="mt-0.5 shrink-0" />
+        <span class="min-w-0 flex-1 break-words">{{ sendError }}</span>
+        <button type="button" class="shrink-0 font-semibold underline" @click="retrySend">
+          {{ t("common.retry") }}
+        </button>
+        <button type="button" class="shrink-0" :aria-label="t('common.close')" @click="sendError = null">
+          <AIcon name="X" :size="15" />
+        </button>
+      </div>
+
       <div class="border-t-[1.5px] border-line p-4">
         <div class="flex gap-2">
           <input
@@ -392,11 +434,12 @@ function scrollToBottom() {
           />
           <button
             type="button"
-            :disabled="!newMessage.trim() || isLoading || !isSlugReady"
-            class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-[13px] font-semibold text-white transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)] disabled:opacity-45"
+            :disabled="!newMessage.trim() || isLoading || isSending || !isSlugReady"
+            class="inline-flex items-center gap-2 rounded-full bg-ink-solid px-5 py-3 text-[13px] font-semibold text-ink-contrast transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)] disabled:opacity-45"
             @click="handleSend"
           >
-            <AIcon name="PaperPlaneTilt" :size="15" />
+            <span v-if="isLoading || isSending" class="animate-spin"><AIcon name="SpinnerGap" :size="15" /></span>
+            <AIcon v-else name="PaperPlaneTilt" :size="15" />
             {{ activeConversation ? t("publicChat.input.send") : t("publicChat.input.start") }}
           </button>
         </div>

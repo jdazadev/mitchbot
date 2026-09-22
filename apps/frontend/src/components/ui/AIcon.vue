@@ -58,6 +58,8 @@ import {
   PhSpinnerGap,
   PhTreeStructure,
   PhArrowsClockwise,
+  PhArrowsInSimple,
+  PhArrowsOutSimple,
   PhNotePencil,
   PhPaperclip,
   PhSmiley,
@@ -91,6 +93,8 @@ import {
   PhGraduationCap,
   PhFlask,
   PhBrain,
+  PhSun,
+  PhMoonStars,
 } from '@phosphor-icons/vue';
 
 type IconWeight = 'thin' | 'light' | 'regular' | 'bold' | 'fill' | 'duotone';
@@ -164,6 +168,8 @@ const ICONS: Record<string, unknown> = {
   SpinnerGap: PhSpinnerGap,
   TreeStructure: PhTreeStructure,
   ArrowsClockwise: PhArrowsClockwise,
+  ArrowsInSimple: PhArrowsInSimple,
+  ArrowsOutSimple: PhArrowsOutSimple,
   NotePencil: PhNotePencil,
   Paperclip: PhPaperclip,
   Smiley: PhSmiley,
@@ -197,6 +203,8 @@ const ICONS: Record<string, unknown> = {
   GraduationCap: PhGraduationCap,
   Flask: PhFlask,
   Brain: PhBrain,
+  Sun: PhSun,
+  MoonStars: PhMoonStars,
 };
 
 /**

@@ -43,6 +43,9 @@ const messages = ref<ChatMessage[]>([]);
 const selectedChat = ref<ChatConversation | null>(null);
 const isLoadingMessages = ref(false);
 const newMessage = ref("");
+const isSending = ref(false);
+const actionError = ref<string | null>(null);
+const liveAnnouncement = ref("");
 
 const searchQuery = ref("");
 
@@ -114,6 +117,7 @@ async function fetchChats() {
 
 async function selectChat(chat: ChatConversation) {
   selectedChat.value = chat;
+  actionError.value = null;
   setOpenConversation(chat._id);
   socketService.joinRoom(chat._id);
   markConversationRead(chat._id);
@@ -129,6 +133,27 @@ function closeChat() {
   setOpenConversation(null);
   chats.value.forEach((c) => (c.active = false));
 }
+
+// === Modo enfoque: estrecha las tarjetas laterales para dar espacio al hilo ===
+const FOCUS_STORAGE_KEY = "mitchbot.messaging.focus";
+const isFocusMode = ref(localStorage.getItem(FOCUS_STORAGE_KEY) === "1");
+
+function toggleFocusMode() {
+  isFocusMode.value = !isFocusMode.value;
+  localStorage.setItem(FOCUS_STORAGE_KEY, isFocusMode.value ? "1" : "0");
+}
+
+/** Reparte el ancho de las tres columnas según el modo enfoque. */
+const gridColumns = computed(() => {
+  if (selectedChat.value) {
+    return isFocusMode.value
+      ? "lg:grid-cols-[minmax(248px,22%)_1fr_240px]"
+      : "lg:grid-cols-[minmax(320px,30%)_1fr_300px]";
+  }
+  return isFocusMode.value
+    ? "lg:grid-cols-[minmax(248px,22%)_1fr]"
+    : "lg:grid-cols-[minmax(320px,30%)_1fr]";
+});
 
 async function fetchMessages(chat: ChatConversation) {
   try {
@@ -199,10 +224,12 @@ function formatDayLabel(date: Date) {
 }
 
 async function handleSendMessage() {
-  if (!newMessage.value.trim() || !selectedChat.value) return;
+  if (!newMessage.value.trim() || !selectedChat.value || isSending.value) return;
 
   const content = newMessage.value;
   newMessage.value = "";
+  isSending.value = true;
+  actionError.value = null;
 
   try {
     const sentMsg = await messagingService.sendMessage(
@@ -221,6 +248,10 @@ async function handleSendMessage() {
     }
   } catch (error) {
     console.error("Failed to send message", error);
+    if (!newMessage.value.trim()) newMessage.value = content;
+    actionError.value = t("messaging.errors.send");
+  } finally {
+    isSending.value = false;
   }
 }
 
@@ -237,16 +268,42 @@ async function refreshSelectedConversation() {
 
 // === Toma de control manual (auto_pilot <-> human_takeover) ===
 const isUpdatingMode = ref(false);
+const modeConfirmOpen = ref(false);
+const modeNotice = ref<{ text: string; tone: "lilac" | "lime" } | null>(null);
+let modeNoticeTimer: ReturnType<typeof setTimeout> | undefined;
 
-async function toggleMode() {
+function requestModeChange() {
+  if (!selectedChat.value || isUpdatingMode.value) return;
+  modeConfirmOpen.value = true;
+}
+
+function closeModeConfirm() {
+  modeConfirmOpen.value = false;
+}
+
+function showModeNotice(key: string, tone: "lilac" | "lime") {
+  modeNotice.value = { text: t(key), tone };
+  if (modeNoticeTimer) clearTimeout(modeNoticeTimer);
+  modeNoticeTimer = setTimeout(() => (modeNotice.value = null), 4000);
+}
+
+async function confirmModeChange() {
   if (!selectedChat.value || isUpdatingMode.value) return;
   const next = selectedChat.value.mode === "auto_pilot" ? "human_takeover" : "auto_pilot";
   isUpdatingMode.value = true;
+  actionError.value = null;
   try {
     await messagingService.updateConversationMode(selectedChat.value._id, next);
     applyMode(selectedChat.value._id, next);
+    modeConfirmOpen.value = false;
+    showModeNotice(
+      next === "human_takeover" ? "messaging.mode.takenOver" : "messaging.mode.autoPilotRestored",
+      next === "human_takeover" ? "lilac" : "lime",
+    );
   } catch (error) {
     console.error("Failed to update conversation mode", error);
+    actionError.value = t("messaging.errors.mode");
+    modeConfirmOpen.value = false;
   } finally {
     isUpdatingMode.value = false;
   }
@@ -265,11 +322,13 @@ const isSavingContact = ref(false);
 async function saveAsContact() {
   if (!selectedChat.value || isSavingContact.value || selectedChat.value.isContactCreated) return;
   isSavingContact.value = true;
+  actionError.value = null;
   try {
     await messagingService.createContact(selectedChat.value._id);
     applyContactCreated(selectedChat.value._id);
   } catch (error) {
     console.error("Failed to save contact", error);
+    actionError.value = t("messaging.errors.contact");
   } finally {
     isSavingContact.value = false;
   }
@@ -303,10 +362,12 @@ async function loadInsights(conversationId: string) {
 async function analyzeInsights() {
   if (!selectedChat.value || isAnalyzingInsights.value) return;
   isAnalyzingInsights.value = true;
+  actionError.value = null;
   try {
     insights.value = await messagingService.analyzeInsights(selectedChat.value._id);
   } catch (error) {
     console.error("Failed to analyze insights", error);
+    actionError.value = t("messaging.errors.insights");
   } finally {
     isAnalyzingInsights.value = false;
   }
@@ -342,16 +403,41 @@ const sentimentBars = computed(() => {
   ].map((b) => ({ ...b, width: `${b.pct}%` }));
 });
 
-// Urgencia: dato aún no expuesto por el backend — derivado de señales visibles.
+// Último mensaje real del cliente sin respuesta posterior del bot o de un humano.
+const lastCustomerMessageUnanswered = computed(() => {
+  const list = messages.value.filter(
+    (m) =>
+      (m.content || "").trim() &&
+      m.contentType !== "tool_call" &&
+      m.contentType !== "tool_result" &&
+      m.contentType !== "confirmation_request",
+  );
+  const last = list[list.length - 1];
+  return !!last && last.sender === "contact";
+});
+
+// Urgencia: dato derivado de señales visibles (sentimiento, confirmaciones y respuesta pendiente).
 const urgency = computed(() => {
   const chat = selectedChat.value;
   if (!chat) return { level: t("messaging.urgency.level.low"), tone: "lime" as const, step: 1, reason: "" };
+
+  const negativeSentiment = insights.value?.sentiment === "negative";
+  if (negativeSentiment && lastCustomerMessageUnanswered.value) {
+    return {
+      level: t("messaging.urgency.level.high"),
+      tone: "danger" as const,
+      step: 3,
+      reason: t("messaging.urgency.reasonEscalated"),
+    };
+  }
+
   const pending = messages.value.some(
     (m) => m.contentType === "confirmation_request" && m.toolData?.status === "needs_confirmation",
   );
   if (pending) {
     return { level: t("messaging.urgency.level.medium"), tone: "butter" as const, step: 2, reason: t("messaging.urgency.reasonPending") };
   }
+
   const open = chat.status !== "closed";
   return {
     level: t("messaging.urgency.level.low"),
@@ -402,6 +488,12 @@ function onNewMessage(msg: ChatMessage) {
       scrollToBottom();
     } else {
       existingMsg.content = processed.content;
+    }
+    if (msg.sender === "contact") {
+      liveAnnouncement.value = t("messaging.a11y.incoming", {
+        name: selectedChat.value.name || "",
+        message: (msg.content || "").slice(0, 140),
+      });
     }
   }
 }
@@ -562,6 +654,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   setOpenConversation(null);
+  if (modeNoticeTimer) clearTimeout(modeNoticeTimer);
   socketService.offMessage(onNewMessage);
   socketService.offMessageChunk(onMessageChunk);
   socketService.offMessageUpdated(onMessageUpdated);
@@ -576,8 +669,8 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="grid h-full min-h-0 grid-cols-1 gap-3.5 overflow-hidden"
-    :class="selectedChat ? 'lg:grid-cols-[minmax(320px,30%)_1fr_300px]' : 'lg:grid-cols-[minmax(320px,30%)_1fr]'"
+    class="grid h-full min-h-0 grid-cols-1 gap-3.5 overflow-hidden transition-[grid-template-columns] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+    :class="gridColumns"
   >
     <!-- Bandeja de entrada -->
     <aside
@@ -605,7 +698,7 @@ onUnmounted(() => {
             :class="[
               'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
               activeChannel === channel
-                ? 'bg-ink text-white'
+                ? 'bg-ink-solid text-ink-contrast'
                 : 'bg-canvas text-ink-2 hover:bg-sunken hover:text-ink',
             ]"
             @click="setActiveChannel(channel)"
@@ -668,7 +761,7 @@ onUnmounted(() => {
             <span
               v-if="chat.unreadCount"
               data-testid="conversation-unread"
-              class="grid h-5 min-w-5 place-items-center rounded-full bg-ink px-1.5 text-[11px] font-bold text-white [font-variant-numeric:tabular-nums]"
+              class="grid h-5 min-w-5 place-items-center rounded-full bg-ink-solid px-1.5 text-[11px] font-bold text-ink-contrast [font-variant-numeric:tabular-nums]"
             >
               {{ chat.unreadCount }}
             </span>
@@ -714,6 +807,17 @@ onUnmounted(() => {
             </span>
           </span>
           <span class="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              class="hidden items-center gap-2 rounded-full bg-canvas px-3.5 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink lg:inline-flex"
+              :aria-pressed="isFocusMode"
+              :aria-label="t('messaging.focus.toggle')"
+              :title="t('messaging.focus.hint')"
+              @click="toggleFocusMode"
+            >
+              <AIcon :name="isFocusMode ? 'ArrowsInSimple' : 'ArrowsOutSimple'" :size="15" />
+              <span class="hidden xl:inline">{{ t("messaging.focus.toggle") }}</span>
+            </button>
             <APill :tone="selectedChat.mode === 'auto_pilot' ? 'lime' : 'butter'">
               <AIcon :name="selectedChat.mode === 'auto_pilot' ? 'Robot' : 'Headset'" :size="13" />
               {{ selectedChat.mode === "auto_pilot" ? t("messaging.mode.autoPilotOn") : t("messaging.mode.humanTakeover") }}
@@ -722,10 +826,20 @@ onUnmounted(() => {
         </header>
 
         <div
-          id="chat-messages-container"
-          role="log"
+          v-if="modeNotice"
+          role="status"
           aria-live="polite"
-          aria-relevant="additions text"
+          class="flex flex-none items-center gap-2 border-b-[1.5px] border-line px-5 py-2.5 text-[12.5px] font-semibold"
+          :class="modeNotice.tone === 'lilac' ? 'bg-lilac-soft text-lilac-ink' : 'bg-lime-soft text-lime-ink'"
+        >
+          <AIcon :name="modeNotice.tone === 'lilac' ? 'User' : 'Robot'" :size="15" />
+          {{ modeNotice.text }}
+        </div>
+
+        <p class="sr-only" role="status" aria-live="polite">{{ liveAnnouncement }}</p>
+
+        <div
+          id="chat-messages-container"
           class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-5 py-5 scroll-smooth"
         >
           <div v-if="isLoadingMessages" role="status" class="py-4 text-center text-sm font-semibold text-ink-3">
@@ -799,6 +913,23 @@ onUnmounted(() => {
           </template>
         </div>
 
+        <div
+          v-if="actionError"
+          role="alert"
+          class="flex flex-none items-center gap-3 border-t-[1.5px] border-line bg-[color:var(--danger-soft)] px-5 py-3 text-[12.5px] font-medium text-[color:var(--danger)]"
+        >
+          <AIcon name="WarningCircle" :size="17" class="shrink-0" />
+          <span class="flex-1">{{ actionError }}</span>
+          <button
+            type="button"
+            class="grid h-7 w-7 shrink-0 place-items-center rounded-full transition-opacity hover:opacity-70"
+            :aria-label="t('common.close')"
+            @click="actionError = null"
+          >
+            <AIcon name="X" :size="15" />
+          </button>
+        </div>
+
         <footer class="flex flex-none items-center gap-2.5 border-t-[1.5px] border-line px-5 py-3.5">
           <input
             v-model="newMessage"
@@ -810,15 +941,21 @@ onUnmounted(() => {
           <button
             type="button"
             :disabled="isUpdatingMode"
-            class="inline-flex items-center gap-2 rounded-full bg-canvas px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-50"
-            @click="toggleMode"
+            :class="[
+              'inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-colors disabled:opacity-50',
+              selectedChat.mode === 'auto_pilot'
+                ? 'bg-lilac text-lilac-ink hover:opacity-90'
+                : 'bg-canvas text-ink-2 hover:bg-sunken hover:text-ink',
+            ]"
+            @click="requestModeChange"
           >
             <AIcon :name="selectedChat.mode === 'auto_pilot' ? 'User' : 'Robot'" :size="15" />
             {{ selectedChat.mode === "auto_pilot" ? t("messaging.composer.takeOver") : t("messaging.composer.autoPilot") }}
           </button>
           <button
             type="button"
-            class="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)]"
+            :disabled="!newMessage.trim() || isSending"
+            class="inline-flex items-center gap-2 rounded-full bg-ink-solid px-4 py-2 text-xs font-semibold text-ink-contrast transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:shadow-none"
             @click="handleSendMessage"
           >
             <AIcon name="PaperPlaneTilt" :size="15" />
@@ -918,9 +1055,9 @@ onUnmounted(() => {
           <AIcon name="WarningCircle" :size="16" class="text-ink-3" />
           {{ t("messaging.urgency.title") }}
         </div>
-        <div class="mt-3 flex items-center gap-2">
+        <div class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
           <APill :tone="urgency.tone">{{ urgency.level }}</APill>
-          <span class="ml-auto text-xs text-ink-3">{{ urgency.reason }}</span>
+          <span class="ml-auto min-w-0 text-right text-xs text-ink-3">{{ urgency.reason }}</span>
         </div>
         <div class="mt-2.5 flex gap-1">
           <span
@@ -986,6 +1123,43 @@ onUnmounted(() => {
         <div class="mt-6 flex justify-end gap-3">
           <AButton variant="ghost" @click="closeModifyModal">{{ t('common.cancel') }}</AButton>
           <AButton variant="primary" @click="confirmModifyTool">{{ t('common.confirm') }}</AButton>
+        </div>
+      </div>
+    </AModal>
+
+    <!-- Modal: confirmar cambio de modo (acción de alto riesgo) -->
+    <AModal
+      :open="modeConfirmOpen"
+      :label="selectedChat?.mode === 'auto_pilot' ? t('messaging.mode.takeoverTitle') : t('messaging.mode.autoPilotTitle')"
+      size="md"
+      @close="closeModeConfirm"
+    >
+      <div class="p-6">
+        <div class="flex items-start gap-3">
+          <span
+            class="grid h-10 w-10 shrink-0 place-items-center rounded-full"
+            :class="selectedChat?.mode === 'auto_pilot' ? 'bg-lilac text-lilac-ink' : 'bg-lime text-lime-ink'"
+          >
+            <AIcon
+              :name="selectedChat?.mode === 'auto_pilot' ? 'User' : 'Robot'"
+              :size="20"
+              weight="fill"
+            />
+          </span>
+          <div class="min-w-0">
+            <h2 class="font-display text-lg font-bold tracking-[-0.02em]">
+              {{ selectedChat?.mode === "auto_pilot" ? t("messaging.mode.takeoverTitle") : t("messaging.mode.autoPilotTitle") }}
+            </h2>
+            <p class="mt-2 text-[13px] leading-relaxed text-ink-2">
+              {{ selectedChat?.mode === "auto_pilot" ? t("messaging.mode.takeoverBody") : t("messaging.mode.autoPilotBody") }}
+            </p>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-3">
+          <AButton variant="ghost" @click="closeModeConfirm">{{ t('common.cancel') }}</AButton>
+          <AButton variant="primary" :disabled="isUpdatingMode" @click="confirmModeChange">
+            {{ selectedChat?.mode === "auto_pilot" ? t("messaging.mode.takeoverConfirm") : t("messaging.mode.autoPilotConfirm") }}
+          </AButton>
         </div>
       </div>
     </AModal>
