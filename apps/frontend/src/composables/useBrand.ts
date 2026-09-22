@@ -47,13 +47,47 @@ function isLightColor(hsl: { h: number; s: number; l: number }) {
   return hsl.l >= 72;
 }
 
+/**
+ * Deriva la familia `--brand*` desde el color del proyecto con clamping real
+ * (el cálculo directo en CSS saturaba `--brand-soft` a blanco en marcas claras
+ * y dejaba el anillo de foco invisible). Devuelve también un tono de foco con
+ * contraste garantizado sobre el lienzo.
+ */
+export function brandDerivatives(hsl: { h: number; s: number; l: number }) {
+  const { h, s, l } = hsl;
+  const hh = Math.round(h);
+  const ss = Math.round(s);
+  const soft = Math.round(l + (100 - l) * 0.55);
+  const inkL = Math.max(24, Math.round(l - 60));
+  const inkS = Math.min(60, Math.round(s * 0.55));
+  return {
+    base: `hsl(${hh} ${ss}% ${Math.round(l)}%)`,
+    hover: `hsl(${hh} ${ss}% ${Math.max(0, Math.round(l) - 6)}%)`,
+    deep: `hsl(${hh} ${ss}% ${Math.max(0, Math.round(l) - 18)}%)`,
+    soft: `hsl(${hh} ${ss}% ${soft}%)`,
+    softer: `hsl(${hh} 100% 97%)`,
+    ink: `hsl(${hh} ${inkS}% ${inkL}%)`,
+    focus: `hsl(${hh} ${Math.min(70, ss)}% ${Math.max(22, Math.round(l) - 58)}%)`,
+    focusHalo: `hsl(${hh} ${ss}% ${Math.max(0, Math.round(l) - 22)}% / 0.3)`,
+  };
+}
+
 export function applyBrand(next: BrandConfig) {
   brand.value = next;
   const hsl = hexToHsl(next.color || DEFAULT_BRAND_COLOR);
+  const d = brandDerivatives(hsl);
   const root = document.documentElement.style;
-  root.setProperty('--brand-h', String(hsl.h));
-  root.setProperty('--brand-s', `${hsl.s}%`);
-  root.setProperty('--brand-l', `${hsl.l}%`);
+  root.setProperty('--brand-h', String(Math.round(hsl.h)));
+  root.setProperty('--brand-s', `${Math.round(hsl.s)}%`);
+  root.setProperty('--brand-l', `${Math.round(hsl.l)}%`);
+  root.setProperty('--brand', d.base);
+  root.setProperty('--brand-hover', d.hover);
+  root.setProperty('--brand-deep', d.deep);
+  root.setProperty('--brand-soft', d.soft);
+  root.setProperty('--brand-softer', d.softer);
+  root.setProperty('--brand-ink', d.ink);
+  root.setProperty('--focus', d.focus);
+  root.setProperty('--focus-halo', d.focusHalo);
   root.setProperty('--brand-contrast', isLightColor(hsl) ? 'var(--ink-1)' : '#ffffff');
   // Favicon liviano teñido con la marca del proyecto
   const canvas = document.createElement('canvas');

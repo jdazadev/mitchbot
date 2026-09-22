@@ -373,7 +373,7 @@ onMounted(() => {
               </span>
               <div class="min-w-0 flex-1">
                 <p class="text-[13px] font-semibold">{{ act.title }}</p>
-                <p class="mt-0.5 text-xs text-ink-3" v-html="act.detail" />
+                <p class="mt-0.5 text-xs text-ink-3">{{ act.detail }}</p>
               </div>
               <span class="shrink-0 text-[11px] text-ink-3">{{ act.time }}</span>
             </div>

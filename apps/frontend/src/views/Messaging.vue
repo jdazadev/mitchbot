@@ -20,6 +20,7 @@ import AAvatar from "../components/ui/AAvatar.vue";
 import APill from "../components/ui/APill.vue";
 import ABubble from "../components/ui/ABubble.vue";
 import AEmptyState from "../components/ui/AEmptyState.vue";
+import { renderMarkdown } from "../lib/markdown";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -196,14 +197,6 @@ function formatDayLabel(date: Date) {
     month: "long",
     year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
   });
-}
-
-function renderMarkdown(content: string) {
-  if (!content) return '';
-  return content
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br/>');
 }
 
 async function handleSendMessage() {
@@ -567,11 +560,11 @@ onUnmounted(() => {
         <h2 class="font-display text-[15.5px] font-bold tracking-[-0.01em]">
           {{ t("messaging.inbox.title") }}
         </h2>
-        <div class="mt-3 flex items-center gap-2.5 rounded-full bg-canvas px-4 py-2.5">
+        <div class="mt-3 flex items-center gap-2.5 rounded-full bg-canvas px-4 py-2.5 transition-shadow focus-within:shadow-[0_0_0_2px_var(--focus)]">
           <AIcon name="MagnifyingGlass" :size="17" class="shrink-0 text-ink-3" />
           <input
             v-model="searchQuery"
-            class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3"
+            class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3 focus-visible:shadow-none"
             :placeholder="t('messaging.inbox.searchPlaceholder')"
             type="text"
           />
@@ -690,9 +683,12 @@ onUnmounted(() => {
 
         <div
           id="chat-messages-container"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions text"
           class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-5 py-5 scroll-smooth"
         >
-          <div v-if="isLoadingMessages" class="py-4 text-center text-sm font-semibold text-ink-3">
+          <div v-if="isLoadingMessages" role="status" class="py-4 text-center text-sm font-semibold text-ink-3">
             {{ t("messaging.chat.loadingMessages") }}
           </div>
           <template v-else>
@@ -782,7 +778,7 @@ onUnmounted(() => {
           </button>
           <button
             type="button"
-            class="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white transition-all hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)]"
+            class="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)]"
             @click="handleSendMessage"
           >
             <AIcon name="PaperPlaneTilt" :size="15" />

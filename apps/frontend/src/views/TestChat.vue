@@ -14,6 +14,7 @@ import AIcon from "../components/ui/AIcon.vue";
 import AAvatar from "../components/ui/AAvatar.vue";
 import ABubble from "../components/ui/ABubble.vue";
 import APill from "../components/ui/APill.vue";
+import { renderMarkdown } from "../lib/markdown";
 
 // El chat público es independiente del idioma del dashboard: usa un
 // composer aislado cuyo locale se fija según el idioma del agente del proyecto.
@@ -64,14 +65,6 @@ onUnmounted(() => {
   socketService.offMessageUpdated(onMessageUpdated);
   socketService.offConversationStatus(onConversationStatus);
 });
-
-function renderMarkdown(content: string) {
-  if (!content) return '';
-  return content
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br/>');
-}
 
 /**
  * El CLIENTE inicia una conversación enviando un primer mensaje.
@@ -326,7 +319,7 @@ function scrollToBottom() {
         </APill>
       </div>
 
-      <div id="chat-container" class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-5 py-5">
+      <div id="chat-container" role="log" aria-live="polite" aria-relevant="additions text" class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-5 py-5">
         <div v-if="messages.length === 0" class="flex flex-1 items-center justify-center text-sm text-ink-3">
           {{ t("publicChat.empty") }}
         </div>
@@ -381,7 +374,7 @@ function scrollToBottom() {
           <button
             type="button"
             :disabled="!newMessage.trim() || isLoading || !isSlugReady"
-            class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-[13px] font-semibold text-white transition-all hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)] disabled:opacity-45"
+            class="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-[13px] font-semibold text-white transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(11,11,12,0.2)] disabled:opacity-45"
             @click="handleSend"
           >
             <AIcon name="PaperPlaneTilt" :size="15" />

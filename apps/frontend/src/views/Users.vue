@@ -7,6 +7,7 @@ import AIcon from '../components/ui/AIcon.vue';
 import AAvatar from '../components/ui/AAvatar.vue';
 import APill from '../components/ui/APill.vue';
 import AButton from '../components/ui/AButton.vue';
+import AModal from '../components/ui/AModal.vue';
 
 const { t } = useI18n();
 
@@ -164,13 +165,13 @@ function formatDate(dateStr: string) {
     </div>
 
     <div class="flex gap-2.5">
-      <div class="flex flex-1 items-center gap-2.5 rounded-full bg-surface px-4 py-2.5 shadow-card">
+      <div class="flex flex-1 items-center gap-2.5 rounded-full bg-surface px-4 py-2.5 shadow-card transition-shadow focus-within:shadow-[0_0_0_2px_var(--focus)]">
         <AIcon name="MagnifyingGlass" :size="17" class="shrink-0 text-ink-3" />
         <input
           v-model="searchQuery"
           type="text"
           :placeholder="t('users.searchPlaceholder')"
-          class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3"
+          class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3 focus-visible:shadow-none"
           @keydown.enter="handleSearch"
         />
       </div>
@@ -240,6 +241,7 @@ function formatDate(dateStr: string) {
                     type="button"
                     class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
                     :title="t('common.edit')"
+                    :aria-label="t('common.edit')"
                     @click="openEditModal(user)"
                   >
                     <AIcon name="PencilSimple" :size="14" />
@@ -268,8 +270,8 @@ function formatDate(dateStr: string) {
     </div>
 
     <!-- Modal: Crear Usuario -->
-    <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showCreateModal = false">
-      <div class="w-full max-w-lg rounded-card bg-surface p-6 shadow-[var(--shadow-pop)]">
+    <AModal :open="showCreateModal" :label="t('users.create.title')" @close="showCreateModal = false">
+      <div class="p-6">
         <div class="flex items-center justify-between">
           <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('users.create.title') }}</h2>
           <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas" @click="showCreateModal = false">
@@ -314,11 +316,11 @@ function formatDate(dateStr: string) {
           </AButton>
         </div>
       </div>
-    </div>
+    </AModal>
 
     <!-- Modal: Editar Usuario -->
-    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showEditModal = false">
-      <div class="w-full max-w-lg rounded-card bg-surface p-6 shadow-[var(--shadow-pop)]">
+    <AModal :open="showEditModal" :label="t('users.edit.title')" @close="showEditModal = false">
+      <div class="p-6">
         <div class="flex items-center justify-between">
           <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('users.edit.title') }}</h2>
           <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-ink-3 hover:bg-canvas" @click="showEditModal = false">
@@ -366,6 +368,6 @@ function formatDate(dateStr: string) {
           </AButton>
         </div>
       </div>
-    </div>
+    </AModal>
   </div>
 </template>

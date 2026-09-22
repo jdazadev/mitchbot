@@ -12,7 +12,11 @@
     "settings": "Configuración",
     "profile": "Mi Perfil",
     "logout": "Cerrar Sesión",
-    "userPlaceholder": "Usuario"
+    "userPlaceholder": "Usuario",
+    "primary": "Navegación principal"
+  },
+  "a11y": {
+    "skipToContent": "Saltar al contenido"
   },
   "topbar": {
     "dashboard": "Resumen del panel",
@@ -48,10 +52,13 @@
     "loading": "Cargando...",
     "error": "Error",
     "close": "Cerrar",
+    "clear": "Limpiar",
     "confirm": "Confirmar",
     "back": "Atrás",
     "next": "Siguiente",
     "previous": "Anterior",
+    "firstPage": "Primera página",
+    "lastPage": "Última página",
     "all": "Todos",
     "active": "Activo",
     "inactive": "Inactivo",

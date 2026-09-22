@@ -13,6 +13,24 @@ const route = useRoute();
 const router = useRouter();
 const { t, locale } = useI18n();
 
+const emit = defineEmits<{ (e: 'toggle-nav'): void }>();
+
+function closeMenus() {
+  projectOpen.value = false;
+  notificationsOpen.value = false;
+  userOpen.value = false;
+}
+function toggleMenu(menu: 'project' | 'notifications' | 'user') {
+  const next = {
+    project: menu === 'project' ? !projectOpen.value : false,
+    notifications: menu === 'notifications' ? !notificationsOpen.value : false,
+    user: menu === 'user' ? !userOpen.value : false,
+  };
+  projectOpen.value = next.project;
+  notificationsOpen.value = next.notifications;
+  userOpen.value = next.user;
+}
+
 const pageTitle = computed(() => {
   switch (route.name) {
     case 'dashboard':
@@ -176,6 +194,16 @@ onMounted(async () => {
 
 <template>
   <header class="relative z-20 flex flex-wrap items-center gap-2.5 px-3.5 pb-3.5 pt-3.5 md:pl-[242px]">
+    <button
+      type="button"
+      :aria-label="t('nav.primary')"
+      :aria-expanded="false"
+      class="grid h-10 w-10 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink md:hidden"
+      @click="emit('toggle-nav')"
+    >
+      <AIcon name="List" :size="19" />
+    </button>
+
     <h2
       data-testid="page-title"
       class="rounded-full bg-surface px-4 py-2 font-display text-[15px] font-bold tracking-[-0.02em] shadow-card"
@@ -187,12 +215,14 @@ onMounted(async () => {
 
     <div class="ml-auto flex items-center gap-2">
       <!-- Proyectos -->
-      <div class="relative">
+      <div class="relative" @keydown.escape="projectOpen = false">
         <button
           type="button"
           :disabled="switching"
+          aria-haspopup="menu"
+          :aria-expanded="projectOpen"
           class="flex items-center gap-2 rounded-full bg-surface px-3.5 py-2 text-[13px] font-semibold shadow-card transition-colors hover:bg-canvas disabled:opacity-60"
-          @click="projectOpen = !projectOpen"
+          @click="toggleMenu('project')"
         >
           <span class="h-2 w-2 rounded-full" :style="{ background: 'var(--brand)' }" />
           <span class="max-w-[150px] truncate">
@@ -201,9 +231,10 @@ onMounted(async () => {
           <AIcon name="CaretDown" :size="15" class="text-ink-3" />
         </button>
 
-        <div v-if="projectOpen" class="fixed inset-0 z-30" @click="projectOpen = false" />
+        <div v-if="projectOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="projectOpen = false" />
         <div
           v-if="projectOpen"
+          role="menu"
           class="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
         >
           <div class="max-h-64 overflow-y-auto py-1">
@@ -211,6 +242,7 @@ onMounted(async () => {
               v-for="project in projects"
               :key="project._id"
               type="button"
+              role="menuitem"
               class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold hover:bg-canvas"
               @click="selectProject(project)"
             >
@@ -233,6 +265,7 @@ onMounted(async () => {
           </div>
           <button
             type="button"
+            role="menuitem"
             class="flex w-full items-center gap-2 border-t border-line px-4 py-2.5 text-sm font-semibold text-lilac-ink hover:bg-canvas"
             @click="createProject"
           >
@@ -266,12 +299,14 @@ onMounted(async () => {
       </div>
 
       <!-- Notificaciones -->
-      <div class="relative">
+      <div class="relative" @keydown.escape="notificationsOpen = false">
         <button
           type="button"
           :aria-label="t('topbar.notifications')"
+          aria-haspopup="dialog"
+          :aria-expanded="notificationsOpen"
           class="relative grid h-9.5 w-9.5 place-items-center rounded-full bg-surface text-ink-2 shadow-card transition-colors hover:bg-canvas hover:text-ink"
-          @click="notificationsOpen = !notificationsOpen"
+          @click="toggleMenu('notifications')"
         >
           <AIcon name="Bell" :size="18" />
           <span
@@ -281,9 +316,11 @@ onMounted(async () => {
           />
         </button>
 
-        <div v-if="notificationsOpen" class="fixed inset-0 z-30" @click="notificationsOpen = false" />
+        <div v-if="notificationsOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="notificationsOpen = false" />
         <div
           v-if="notificationsOpen"
+          role="dialog"
+          :aria-label="t('topbar.notifications')"
           class="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
         >
           <div class="flex items-center justify-between border-b border-line px-4 py-3">
@@ -338,11 +375,14 @@ onMounted(async () => {
       </div>
 
       <!-- Usuario -->
-      <div class="relative">
+      <div class="relative" @keydown.escape="userOpen = false">
         <button
           type="button"
+          aria-haspopup="menu"
+          :aria-expanded="userOpen"
+          :aria-label="t('nav.profile')"
           class="flex items-center gap-2 rounded-full bg-surface py-1 pl-1 pr-3 shadow-card transition-colors hover:bg-canvas"
-          @click="userOpen = !userOpen"
+          @click="toggleMenu('user')"
         >
           <AAvatar :initials="userInitials" tone="lilac" size="sm" />
           <span class="max-w-[110px] truncate text-[13px] font-semibold">
@@ -351,9 +391,10 @@ onMounted(async () => {
           <AIcon name="CaretDown" :size="15" class="text-ink-3" />
         </button>
 
-        <div v-if="userOpen" class="fixed inset-0 z-30" @click="userOpen = false" />
+        <div v-if="userOpen" class="fixed inset-0 z-30" aria-hidden="true" @click="userOpen = false" />
         <div
           v-if="userOpen"
+          role="menu"
           class="absolute right-0 z-40 mt-2 w-56 overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]"
         >
           <div class="border-b border-line px-4 py-3">
@@ -362,6 +403,7 @@ onMounted(async () => {
           </div>
           <router-link
             to="/profile"
+            role="menuitem"
             class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-ink-2 hover:bg-canvas hover:text-ink"
             @click="userOpen = false"
           >
@@ -371,6 +413,7 @@ onMounted(async () => {
           <div class="h-px bg-line" />
           <button
             type="button"
+            role="menuitem"
             class="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-[color:var(--danger)] hover:bg-[color:var(--danger-soft)]"
             @click="handleLogout"
           >

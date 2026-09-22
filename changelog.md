@@ -5,6 +5,39 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.2.0 — 2026-09-22
+
+> ♿ **Endurecimiento de Aurora**: foco visible, navegación móvil, diálogos accesibles, i18n del rail y limpieza de deuda del sistema
+
+Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimiento**. Se cierran los 5 hallazgos P1 y los P2/P3 de mayor valor sin tocar la identidad visual.
+
+### ✨ Añadido
+- **Navegación móvil**: el topbar incorpora una cápsula de menú (visible <768px) que despliega el rail como drawer flotante con backdrop; el rail ahora emite `navigate` y se cierra al elegir sección. Antes el rail desaparecía sin alternativa.
+- **`AModal.vue`** (`components/ui/`): diálogo reutilizable con `role="dialog"`, `aria-modal`, `aria-label`, **focus trap**, cierre con `Escape`, foco inicial y restauración del foco al cerrar. Reemplaza los 6 overlays manuales de Usuarios, Clientes y Brain.
+- **Skip-link** "Saltar al contenido" (i18n `a11y.skipToContent`) y `id="main-content"` en el layout.
+- **`lib/markdown.ts`**: `renderMarkdown` compartido que **escapa el HTML** antes de aplicar negritas/itálicas y saltos de línea.
+
+### 🔄 Cambios
+- **Foco visible con contraste garantizado**: nuevos tokens `--focus` y `--focus-halo`; `useBrand` deriva la familia `--brand*` con *clamping* real (`brandDerivatives`) para que `--brand-soft` deje de saturar a blanco en marcas claras. El foco global, `.field` y los inputs con `outline-none` (anillo `focus-visible`/`focus-within`) ya no quedan invisibles. Corrige además el `--brand-h` estático (270) y `--brand-ink` contra el `DESIGN.md`.
+- **i18n del rail**: las etiquetas del nav usan `nav.*` (antes hardcodeadas en español); `nav.primary` para el `aria-label`. Se añaden `common.clear`, `common.firstPage/lastPage`, `nav.primary`, `a11y.skipToContent`.
+- **Icono Brain arreglado**: se importa `PhBrain` en `AIcon` (antes caía a un círculo genérico).
+- **Menús del topbar accesibles**: Proyectos/Notificaciones/Usuario con `aria-haspopup`/`aria-expanded`, `role="menu"`/`menu` o `dialog`, `role="menuitem"`, cierre con `Escape` y cierre mutuo al abrir otro.
+- **`ATabs`**: `tabindex` móvil (`0`/`-1`) y navegación por flechas/Home/End.
+- **Mensajería y chat público**: contenedores `role="log"` + `aria-live="polite"`, cargando con `role="status"`.
+- **Botones-icono** de tablas (Clientes, Usuarios, Brain) y paginación con `aria-label` explícito; overlays de paleta vía token `--overlay` (fuera `bg-black/40`).
+- **`prefers-reduced-motion`**: se desactivan animaciones/transiciones; `transition-all` de `.btn` y de los envíos pasa a transiciones de propiedades concretas.
+
+### 🧹 Limpieza
+- **Tokens Tailwind muertos** retirados: bloque shadcn (`border/input/ring/primary/...`), remapeo `blue`, `brand: "hsl(var(--brand) 0 0)"` inválido, `darkMode`, radios `--radius`, keyframes de acordeón y el plugin `tailwindcss-animate`. Se documenta `brand-*`, `line-strong` y la rampa `fontSize` real.
+- **Dependencias sin uso eliminadas**: `class-variance-authority`, `clsx`, `lucide-vue-next`, `radix-vue`, `tailwind-merge`, `tailwindcss-animate`; se elimina `src/lib/utils.ts`.
+- **`DESIGN.md`**: se declara la rampa tipográfica real (`typography.*`) y se reescribe `Hierarchy`, de modo que las 146 advertencias `design-system-font-size` del detector quedan cubiertas.
+
+### ✅ Verificado
+- `vue-tsc --noEmit` y `pnpm --filter @mitchbot/frontend build` en verde.
+- Detector Impeccable sobre `src/`: **0 hallazgos** (antes 148 advisory).
+
+---
+
 ## v4.1.0 — 2026-09-21
 
 > 🏛️ **«Aurora» pasa de mock a sistema**: tokens + componentes base + shell de cápsulas flotantes implementados, y el prototipo rehecho a fidelidad real con las etiquetas del producto

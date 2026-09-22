@@ -90,6 +90,7 @@ import {
   PhLock,
   PhGraduationCap,
   PhFlask,
+  PhBrain,
 } from '@phosphor-icons/vue';
 
 type IconWeight = 'thin' | 'light' | 'regular' | 'bold' | 'fill' | 'duotone';
@@ -195,6 +196,7 @@ const ICONS: Record<string, unknown> = {
   Lock: PhLock,
   GraduationCap: PhGraduationCap,
   Flask: PhFlask,
+  Brain: PhBrain,
 };
 
 /**

@@ -13,6 +13,7 @@ import AIcon from "../components/ui/AIcon.vue";
 import AAvatar from "../components/ui/AAvatar.vue";
 import APill from "../components/ui/APill.vue";
 import AButton from "../components/ui/AButton.vue";
+import AModal from "../components/ui/AModal.vue";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -255,11 +256,11 @@ async function restoreContact(contact: Contact) {
   <div class="flex flex-col gap-3.5">
     <!-- Búsqueda y filtros -->
     <div class="flex flex-wrap items-center gap-2.5">
-      <div class="flex min-w-[240px] flex-1 items-center gap-2.5 rounded-full bg-surface px-4 py-2.5 shadow-card">
+      <div class="flex min-w-[240px] flex-1 items-center gap-2.5 rounded-full bg-surface px-4 py-2.5 shadow-card transition-shadow focus-within:shadow-[0_0_0_2px_var(--focus)]">
         <AIcon name="MagnifyingGlass" :size="17" class="shrink-0 text-ink-3" />
         <input
           v-model="searchQuery"
-          class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3"
+          class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3 focus-visible:shadow-none"
           :placeholder="t('clients.search.placeholder')"
           type="text"
         />
@@ -394,6 +395,7 @@ async function restoreContact(contact: Contact) {
                     type="button"
                     class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
                     :title="t('common.edit')"
+                    :aria-label="t('common.edit')"
                     @click="openEditModal(contact)"
                   >
                     <AIcon name="PencilSimple" :size="14" />
@@ -403,6 +405,7 @@ async function restoreContact(contact: Contact) {
                     type="button"
                     class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-butter-soft hover:text-butter-ink"
                     :title="t('common.archive')"
+                    :aria-label="t('common.archive')"
                     @click="openArchiveModal(contact)"
                   >
                     <AIcon name="Archive" :size="14" />
@@ -412,6 +415,7 @@ async function restoreContact(contact: Contact) {
                     type="button"
                     class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-lime-soft hover:text-lime-ink"
                     :title="t('common.restore')"
+                    :aria-label="t('common.restore')"
                     @click="restoreContact(contact)"
                   >
                     <AIcon name="ArrowCounterClockwise" :size="14" />
@@ -439,6 +443,7 @@ async function restoreContact(contact: Contact) {
             type="button"
             :disabled="currentPage === 1"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :aria-label="t('common.firstPage')"
             @click="goToPage(1)"
           >
             <AIcon name="CaretDoubleLeft" :size="16" />
@@ -447,6 +452,7 @@ async function restoreContact(contact: Contact) {
             type="button"
             :disabled="currentPage === 1"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :aria-label="t('common.previous')"
             @click="goToPage(currentPage - 1)"
           >
             <AIcon name="CaretLeft" :size="16" />
@@ -474,6 +480,7 @@ async function restoreContact(contact: Contact) {
             type="button"
             :disabled="currentPage === totalPages"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :aria-label="t('common.next')"
             @click="goToPage(currentPage + 1)"
           >
             <AIcon name="CaretRight" :size="16" />
@@ -482,6 +489,7 @@ async function restoreContact(contact: Contact) {
             type="button"
             :disabled="currentPage === totalPages"
             class="grid h-7 w-7 place-items-center rounded-full text-ink-2 transition-colors hover:bg-canvas disabled:opacity-30"
+            :aria-label="t('common.lastPage')"
             @click="goToPage(totalPages)"
           >
             <AIcon name="CaretDoubleRight" :size="16" />
@@ -491,12 +499,8 @@ async function restoreContact(contact: Contact) {
     </div>
 
     <!-- Modal: Editar Cliente -->
-    <div
-      v-if="showEditModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      @click.self="showEditModal = false"
-    >
-      <div class="w-full max-w-lg rounded-card bg-surface p-6 shadow-[var(--shadow-pop)]">
+    <AModal :open="showEditModal" :label="t('clients.editModal.title')" @close="showEditModal = false">
+      <div class="p-6">
         <div class="flex items-center justify-between">
           <h2 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t('clients.editModal.title') }}</h2>
           <button
@@ -548,15 +552,16 @@ async function restoreContact(contact: Contact) {
           <AButton variant="primary" @click="saveEdit">{{ t('common.save') }}</AButton>
         </div>
       </div>
-    </div>
+    </AModal>
 
     <!-- Modal: Confirmar Archivar -->
-    <div
-      v-if="showArchiveModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      @click.self="showArchiveModal = false"
+    <AModal
+      :open="showArchiveModal"
+      :label="t('clients.archiveModal.title')"
+      size="sm"
+      @close="showArchiveModal = false"
     >
-      <div class="w-full max-w-sm rounded-card bg-surface p-6 text-center shadow-[var(--shadow-pop)]">
+      <div class="p-6 text-center">
         <div class="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-butter-soft">
           <AIcon name="Archive" :size="26" class="text-butter-ink" />
         </div>
@@ -575,6 +580,6 @@ async function restoreContact(contact: Contact) {
           <AButton variant="primary" @click="confirmArchive">{{ t('common.archive') }}</AButton>
         </div>
       </div>
-    </div>
+    </AModal>
   </div>
 </template>

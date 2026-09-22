@@ -9,6 +9,7 @@ import {
 import AIcon from "../components/ui/AIcon.vue";
 import APill from "../components/ui/APill.vue";
 import AButton from "../components/ui/AButton.vue";
+import AModal from "../components/ui/AModal.vue";
 
 const { t } = useI18n();
 
@@ -457,6 +458,7 @@ function startPolling() {
                       type="button"
                       class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
                       :title="t('brain.sources.viewExtracted')"
+                      :aria-label="t('brain.sources.viewExtracted')"
                       @click="openExtractedText(source._id)"
                     >
                       <AIcon name="FileText" :size="14" />
@@ -465,6 +467,7 @@ function startPolling() {
                       type="button"
                       class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
                       :title="t('brain.sources.viewLogs')"
+                      :aria-label="t('brain.sources.viewLogs')"
                       @click="toggleLogs(source._id)"
                     >
                       <AIcon name="NotePencil" :size="14" />
@@ -473,6 +476,7 @@ function startPolling() {
                       type="button"
                       class="grid h-7 w-7 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-[color:var(--danger-soft)] hover:text-[color:var(--danger)]"
                       :title="t('brain.sources.delete')"
+                      :aria-label="t('brain.sources.delete')"
                       @click="handleDeleteSource(source._id)"
                     >
                       <AIcon name="Trash" :size="14" />
@@ -501,10 +505,8 @@ function startPolling() {
       </div>
     </div>
 
-    <Teleport to="body">
-      <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="closeAddModal">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-        <div class="relative w-full max-w-2xl overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]">
+    <AModal :open="showAddModal" :label="t('brain.modal.title')" size="2xl" @close="closeAddModal">
+      <div>
           <div class="flex items-center justify-between border-b border-line p-5">
             <div>
               <h3 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t("brain.modal.title") }}</h3>
@@ -601,14 +603,11 @@ function startPolling() {
               {{ isSubmitting ? t("brain.modal.processing") : t("common.save") }}
             </AButton>
           </div>
-        </div>
       </div>
-    </Teleport>
+    </AModal>
 
-    <Teleport to="body">
-      <div v-if="extractedModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="closeExtractedText">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-        <div class="relative w-full max-w-3xl overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]">
+    <AModal :open="extractedModalOpen" :label="t('brain.extracted.title')" size="3xl" @close="closeExtractedText">
+      <div>
           <div class="flex items-center justify-between border-b border-line p-5">
             <div>
               <h3 class="font-display text-lg font-bold tracking-[-0.02em]">{{ t("brain.extracted.title") }}</h3>
@@ -630,10 +629,9 @@ function startPolling() {
             </div>
             <pre v-else class="whitespace-pre-wrap text-sm text-ink-2">{{
               extractedModalSourceId ? extractedTextBySource[extractedModalSourceId]?.markdown : ''
-            }}</pre>
+            }}            </pre>
           </div>
-        </div>
       </div>
-    </Teleport>
+    </AModal>
   </div>
 </template>

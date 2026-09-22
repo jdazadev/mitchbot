@@ -1,18 +1,40 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AuroraRail from './AuroraRail.vue';
 import AuroraTopbar from './AuroraTopbar.vue';
 
 defineProps<{
   noPadding?: boolean;
 }>();
+
+const { t } = useI18n();
+const mobileNavOpen = ref(false);
 </script>
 
 <template>
   <div class="relative flex h-screen w-full overflow-hidden">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+    >
+      {{ t('a11y.skipToContent') }}
+    </a>
     <div class="aurora-haze" aria-hidden="true" />
     <AuroraRail />
-    <main class="relative z-10 flex h-full flex-1 flex-col overflow-hidden">
-      <AuroraTopbar />
+    <AuroraRail
+      v-if="mobileNavOpen"
+      variant="mobile"
+      @navigate="mobileNavOpen = false"
+    />
+    <div
+      v-if="mobileNavOpen"
+      class="fixed inset-0 z-30 bg-[color:var(--overlay)] md:hidden"
+      aria-hidden="true"
+      @click="mobileNavOpen = false"
+    />
+    <main id="main-content" class="relative z-10 flex h-full flex-1 flex-col overflow-hidden">
+      <AuroraTopbar @toggle-nav="mobileNavOpen = !mobileNavOpen" />
       <div class="flex-1 overflow-y-auto px-3.5 pb-3.5 md:pl-[242px]">
         <div :class="{ 'h-full': noPadding }">
           <slot />

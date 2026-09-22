@@ -15,6 +15,7 @@
   --sunken: #efebe5;
   --line: #eae4dc;
   --line-2: #ddd5ca;
+  --overlay: rgba(11, 11, 12, 0.4);
 
   /* Tinta en tres pasos */
   --ink-1: #0b0b0c;
@@ -36,16 +37,19 @@
   --butter-ink: #5e5a00;
   --butter-soft: #fbfae0;
 
-  /* Acento de identidad por proyecto: componentes HSL inyectados por useBrand */
-  --brand-h: 280;
+  /* Acento de identidad por proyecto: useBrand recalcula esta familia en vivo */
+  --brand-h: 270;
   --brand-s: 100%;
   --brand-l: 89%;
-  --brand: hsl(var(--brand-h) var(--brand-s) var(--brand-l));
-  --brand-hover: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 6%));
-  --brand-deep: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 14%));
-  --brand-soft: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) + 32%));
-  --brand-softer: hsl(var(--brand-h) 100% 96%);
-  --brand-ink: hsl(var(--brand-h) calc(var(--brand-s) - 30%) calc(var(--brand-l) - 32%));
+  --brand: #e2c6ff;
+  --brand-hover: hsl(270 100% 83%);
+  --brand-deep: hsl(270 100% 71%);
+  --brand-soft: #f3ebff;
+  --brand-softer: hsl(270 100% 97%);
+  --brand-ink: #4a2470;
+  /* Foco: tono de marca con contraste garantizado + halo translúcido visible */
+  --focus: hsl(270 70% 31%);
+  --focus-halo: hsl(270 100% 67% / 0.3);
   --brand-contrast: var(--ink-1);
 
   /* Estados */
@@ -91,9 +95,25 @@
     color: var(--lilac-ink);
   }
   :focus-visible {
-    outline: 2px solid var(--brand);
+    outline: 2px solid var(--focus);
     outline-offset: 2px;
-    border-radius: 6px;
+  }
+  /* Inputs que neutralizan el outline heredan un anillo de foco visible */
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--focus);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
   input::placeholder,
   textarea::placeholder {
@@ -142,8 +162,8 @@
       radial-gradient(46rem 30rem at 88% -6%, rgba(226, 198, 255, 0.62), transparent 62%),
       radial-gradient(38rem 26rem at -8% 8%, rgba(220, 254, 188, 0.55), transparent 60%),
       radial-gradient(40rem 28rem at 50% 108%, rgba(187, 236, 255, 0.5), transparent 62%);
-    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 100%);
-    mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 100%);
+    -webkit-mask-image: linear-gradient(180deg, black 0%, black 62%, transparent 100%);
+    mask-image: linear-gradient(180deg, black 0%, black 62%, transparent 100%);
   }
 
   /* Componentes base del sistema */
@@ -153,7 +173,7 @@
     box-shadow: var(--shadow-card);
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-full cursor-pointer transition-all duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-full cursor-pointer transition-[color,background-color,border-color,box-shadow,transform] duration-200 select-none disabled:opacity-50 disabled:cursor-not-allowed;
     padding: 0.6rem 1.25rem;
   }
   .btn-primary {
@@ -180,7 +200,7 @@
     color: var(--ink);
   }
   .field {
-    @apply w-full text-sm rounded-2xl border transition-all duration-200 outline-none;
+    @apply w-full text-sm rounded-2xl border transition-[color,background-color,border-color,box-shadow] duration-200;
     background: var(--surface);
     border-color: var(--line);
     color: var(--ink-1);
@@ -189,9 +209,11 @@
   .field:hover:not(:disabled) {
     border-color: var(--line-2);
   }
+  .field:focus-visible,
   .field:focus {
-    border-color: var(--brand);
-    box-shadow: 0 0 0 4px var(--brand-soft);
+    outline: none;
+    border-color: var(--focus);
+    box-shadow: 0 0 0 4px var(--focus-halo);
   }
   .stamp {
     @apply inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] rounded-full px-2.5 py-1;

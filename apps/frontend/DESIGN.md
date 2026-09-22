@@ -42,6 +42,70 @@ typography:
     fontSize: "10px"
     fontWeight: 800
     letterSpacing: "0.08em"
+  micro:
+    fontFamily: "Hanken Grotesk, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "11px"
+    fontWeight: 600
+  meta:
+    fontFamily: "Hanken Grotesk, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "11.5px"
+    fontWeight: 600
+  caption:
+    fontFamily: "Hanken Grotesk, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "12px"
+    fontWeight: 500
+  note:
+    fontFamily: "Hanken Grotesk, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "12.5px"
+    fontWeight: 500
+  compact:
+    fontFamily: "Hanken Grotesk, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 500
+  bodyLg:
+    fontFamily: "Hanken Grotesk, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
+  bodyLgStrong:
+    fontFamily: "Hanken Grotesk, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "15.5px"
+    fontWeight: 600
+  title:
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 700
+  titleTight:
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "16.5px"
+    fontWeight: 700
+  heading:
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "19px"
+    fontWeight: 700
+  displaySm:
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "22px"
+    fontWeight: 700
+  displayMd:
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "24px"
+    fontWeight: 700
+  displayLg:
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "30px"
+    fontWeight: 700
+  displayXl:
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "32px"
+    fontWeight: 700
+  display2xl:
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "34px"
+    fontWeight: 700
+  display3xl:
+    fontFamily: "Bricolage Grotesque, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "38px"
+    fontWeight: 700
 spacing:
   control-y: "0.6rem"
   control-x: "1.25rem"
@@ -139,10 +203,13 @@ Lienzo cálido con tinta negra, familia pastel semántica y un acento de identid
 **Character:** Bricolage es expresiva y se aprieta con tracking negativo justo donde hay titulares grandes; Hanken sostiene el cuerpo denso con x-height alta y cifras tabulares. Los títulos aprietan tracking (−0.02em a −0.04em); las etiquetas de estado son sellos uppercase de 10px. Los números comparables usan `tabular-nums`.
 
 ### Hierarchy
-- **Display** (700, tracking −0.02em a −0.04em): titulares de vista, métricas grandes, título de página en el topbar.
-- **Body** (400, 14px, line-height 1.5): tamaño base de todo el dashboard.
-- **Meta** (11–12.5px, tinta terciaria): descripciones, etiquetas de columna, notas al pie.
-- **Label** (800, 10px, tracking +0.08em, uppercase): componente `.stamp` — estados, roles, sellos.
+La rampa real implementada sube en pasos cortos dentro de cuatro familias:
+- **Label / Micro** (10–11px, pesos 800/600): sellos uppercase `.stamp`, badges, microtexto de estado.
+- **Meta / Caption / Note / Compact** (11.5–13px, tinta terciaria y secundaria): descripciones, etiquetas de columna, metadatos de tabla, texto de controles densos.
+- **Body** (14px, line-height 1.5): tamaño base de todo el dashboard. **Body-Lg** (15–15.5px) para el cuerpo de listas y cabeceras de panel.
+- **Title / Heading** (16–19px, Bricolage 700): títulos de tarjeta, cabeceras de sección y display del topbar.
+- **Display** (22–38px, Bricolage 700, tracking −0.02em a −0.04em): titulares de vista y métricas grandes.
+Cada paso declarado en el frontmatter (`typography.*`) es el que aparece en la implementación; no se introducen tamaños fuera de esa lista.
 
 ### Named Rules
 **La Regla del Sello.** Todo microtexto de estado va en sello uppercase de 10px peso 800 dentro de una pill; no se improvisan tamaños de badge.

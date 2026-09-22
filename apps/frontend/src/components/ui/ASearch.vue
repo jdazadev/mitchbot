@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import AIcon from './AIcon.vue';
 
 withDefaults(
@@ -12,12 +13,13 @@ withDefaults(
 );
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
+const { t } = useI18n();
 </script>
 
 <template>
   <span
     :class="[
-      'flex flex-1 items-center gap-2.5 bg-surface px-4.5 py-2.5 shadow-card',
+      'flex flex-1 items-center gap-2.5 bg-surface px-4.5 py-2.5 shadow-card transition-shadow focus-within:shadow-[0_0_0_2px_var(--focus)]',
       pill ? 'rounded-full' : 'rounded-field',
     ]"
   >
@@ -26,12 +28,13 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
       :value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"
-      class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3"
+      class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3 focus-visible:shadow-none"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
     <button
       v-if="modelValue"
       type="button"
+      :aria-label="t('common.clear')"
       class="shrink-0 rounded-full p-0.5 text-ink-3 hover:bg-canvas hover:text-ink"
       @click="emit('update:modelValue', '')"
     >

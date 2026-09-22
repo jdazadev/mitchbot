@@ -6,25 +6,37 @@ import { useConversations } from '../../composables/useConversations';
 import { useBrand } from '../../composables/useBrand';
 import AIcon from '../ui/AIcon.vue';
 
+const props = withDefaults(defineProps<{ variant?: 'desktop' | 'mobile' }>(), {
+  variant: 'desktop',
+});
+
+const emit = defineEmits<{ (e: 'navigate'): void }>();
+
 const { t } = useI18n();
 const route = useRoute();
 const { unreadTotal } = useConversations();
 const { brand } = useBrand();
 
 const OPERATION = [
-  { key: 'dashboard', label: 'Panel', icon: 'SquaresFour', href: '/' },
-  { key: 'conversations', label: 'Conversaciones', icon: 'ChatCircleDots', href: '/messaging' },
-  { key: 'clients', label: 'Clientes', icon: 'Users', href: '/clients' },
-  { key: 'brain', label: 'Brain', icon: 'Brain', href: '/brain' },
-  { key: 'users', label: 'Usuarios', icon: 'UserList', href: '/users' },
+  { key: 'dashboard', icon: 'SquaresFour', href: '/' },
+  { key: 'conversations', icon: 'ChatCircleDots', href: '/messaging' },
+  { key: 'clients', icon: 'Users', href: '/clients' },
+  { key: 'brain', icon: 'Brain', href: '/brain' },
+  { key: 'users', icon: 'UserList', href: '/users' },
 ];
 
 const ORGANIZATION = [
-  { key: 'settings', label: 'Configuración', icon: 'GearSix', href: '/settings' },
-  { key: 'profile', label: 'Mi Perfil', icon: 'User', href: '/profile' },
+  { key: 'settings', icon: 'GearSix', href: '/settings' },
+  { key: 'profile', icon: 'User', href: '/profile' },
 ];
 
 const projectInitial = computed(() => (brand.value.name || 'M').trim().charAt(0).toUpperCase());
+
+const containerClass = computed(() =>
+  props.variant === 'mobile'
+    ? 'fixed inset-y-3.5 left-3.5 z-40 flex w-56 flex-col overflow-hidden rounded-big bg-surface shadow-card md:hidden'
+    : 'fixed inset-y-3.5 left-3.5 z-20 hidden w-56 flex-col overflow-hidden rounded-big bg-surface shadow-card md:flex'
+);
 
 const clock = ref(new Date());
 let clockTimer: ReturnType<typeof setInterval> | undefined;
@@ -32,9 +44,7 @@ let clockTimer: ReturnType<typeof setInterval> | undefined;
 const timeLabel = computed(() =>
   clock.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 );
-const weekdayLabel = computed(() =>
-  clock.value.toLocaleDateString([], { weekday: 'long' })
-);
+const weekdayLabel = computed(() => clock.value.toLocaleDateString([], { weekday: 'long' }));
 const dateLabel = computed(() => {
   const d = clock.value;
   const dd = String(d.getDate()).padStart(2, '0');
@@ -59,9 +69,7 @@ function isActive(href: string) {
 </script>
 
 <template>
-  <aside
-    class="fixed inset-y-3.5 left-3.5 z-20 hidden w-56 flex-col overflow-hidden rounded-big bg-surface shadow-card md:flex"
-  >
+  <aside :class="containerClass">
     <div class="flex flex-col items-center gap-2.5 px-4 pb-4.5 pt-5 text-center">
       <img
         v-if="brand.logo"
@@ -80,7 +88,7 @@ function isActive(href: string) {
       </span>
     </div>
 
-    <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3">
+    <nav :aria-label="t('nav.primary')" class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3">
       <router-link
         v-for="item in OPERATION"
         :key="item.key"
@@ -92,9 +100,10 @@ function isActive(href: string) {
             ? 'bg-lilac-soft font-semibold text-lilac-ink'
             : 'text-ink-2 hover:bg-canvas hover:text-ink',
         ]"
+        @click="emit('navigate')"
       >
         <AIcon :name="item.icon" :size="18" :weight="isActive(item.href) ? 'fill' : 'regular'" />
-        <span class="truncate">{{ item.label }}</span>
+        <span class="truncate">{{ t('nav.' + item.key) }}</span>
         <span
           v-if="item.key === 'conversations' && unreadTotal > 0"
           class="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-ink px-1.5 text-[11px] font-bold text-white [font-variant-numeric:tabular-nums]"
@@ -116,9 +125,10 @@ function isActive(href: string) {
             ? 'bg-lilac-soft font-semibold text-lilac-ink'
             : 'text-ink-2 hover:bg-canvas hover:text-ink',
         ]"
+        @click="emit('navigate')"
       >
         <AIcon :name="item.icon" :size="18" :weight="isActive(item.href) ? 'fill' : 'regular'" />
-        <span class="truncate">{{ item.label }}</span>
+        <span class="truncate">{{ t('nav.' + item.key) }}</span>
       </router-link>
     </nav>
 

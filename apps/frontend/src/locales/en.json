@@ -12,7 +12,11 @@
     "settings": "Settings",
     "profile": "My Profile",
     "logout": "Log out",
-    "userPlaceholder": "User"
+    "userPlaceholder": "User",
+    "primary": "Main navigation"
+  },
+  "a11y": {
+    "skipToContent": "Skip to content"
   },
   "topbar": {
     "dashboard": "Dashboard Overview",
@@ -48,10 +52,13 @@
     "loading": "Loading...",
     "error": "Error",
     "close": "Close",
+    "clear": "Clear",
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
+    "firstPage": "First page",
+    "lastPage": "Last page",
     "all": "All",
     "active": "Active",
     "inactive": "Inactive",

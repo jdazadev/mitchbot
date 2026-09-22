@@ -12,7 +12,22 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.1.0
+**Versión actual del proyecto:** v4.2.0
+
+---
+
+## Endurecimiento de accesibilidad (v4.2.0)
+
+Tras la auditoría Impeccable (`audit`) sobre Aurora se cerraron los hallazgos P1/P2 de mayor valor:
+
+- **Foco visible**: tokens `--focus` / `--focus-halo` (tono de marca con contraste ≥3:1); `useBrand` deriva `--brand*` con *clamping* real (`brandDerivatives`) y el foco global, `.field` y los inputs con `outline-none` (anillo `focus-visible` / `focus-within`) ya no quedan invisibles. `--brand-h` estático = 270 y `--brand-ink` = `#4a2470`.
+- **Móvil**: el topbar tiene una cápsula de menú (<768px) que abre el rail como drawer flotante + backdrop; el rail emite `navigate` para cerrarse.
+- **Diálogos**: `AModal.vue` (role=dialog, aria-modal, focus trap, Escape, foco inicial y restauración) reemplaza los overlays manuales de Usuarios, Clientes y Brain. Overlays con token `--overlay`.
+- **Teclado/a11y**: menús del topbar con `aria-haspopup`/`aria-expanded` + `role` + Escape; `ATabs` con `tabindex` móvil y flechas; `role="log"`/`aria-live` en Conversaciones y chat público; `aria-label` en botones-icono y paginación; skip-link; `prefers-reduced-motion`.
+- **Seguridad**: `lib/markdown.ts` escapa el HTML antes de aplicar el formato (fin del XSS almacenado en `renderMarkdown`); el detalle de actividad del Panel ya no usa `v-html`.
+- **i18n**: el rail y los nuevos controles usan claves (`nav.*`, `nav.primary`, `common.clear/firstPage/lastPage`, `a11y.skipToContent`).
+- **Limpieza**: retirados tokens Tailwind muertos (shadcn, `blue`, `darkMode`, `--radius`, keyframes de acordeón) y dependencias sin uso (`class-variance-authority`, `clsx`, `lucide-vue-next`, `radix-vue`, `tailwind-merge`, `tailwindcss-animate`). La rampa tipográfica real queda declarada en `DESIGN.md`.
+- **Verificación**: `vue-tsc --noEmit` y `build` en verde; detector Impeccable sobre `src/` en 0 hallazgos.
 
 ---
 
@@ -22,8 +37,8 @@
 - **Tokens** (`apps/frontend/src/style.css` + `tailwind.config.js`): `--canvas/surface/sunken/line/ink-1/2/3`, los cuatro pasteles con `-ink`/`-soft`, radios `--r-card 20px` / `--r-big 28px` / `--r-field 16px` / `--r-bubble 20px`, sombras difusas de dos capas (`--shadow-card`, `--shadow-pop`) y utilidades Tailwind `canvas`, `surface`, `sunken`, `line`, `ink`, `sky/lime/lilac/butter`, `rounded-card/big/field`, `font-display/body`, `shadow-card/pop`.
 - **Tipografía**: **Bricolage Grotesque** (display; ejes `opsz`/`wdth`/`wght`) + **Hanken Grotesk** (cuerpo, cifras tabulares). Ya no se usa Nunito ni la webfont de Material Symbols.
 - **Iconografía**: **Phosphor** (`@phosphor-icons/vue`) envuelto en `src/components/ui/AIcon.vue` (6 pesos, `fill` para el nav activo, mapa de nombres Material heredados). El set es intercambiable desde `AIcon`.
-- **Componentes base** (`apps/frontend/src/components/ui/`): `AIcon`, `AButton`, `APill`, `AChip`, `ACard`, `AStat`, `ATable`, `AAvatar`, `AField`, `ASearch`, `ASwitch`, `ATab`, `ATabs`, `ADropdown`, `AEmptyState`, `ABubble`, `ABand`, `ACallout`, `AKpi`.
-- **Shell** (`apps/frontend/src/components/layout/`): `AuroraRail` (rail flotante con marca centrada sin subtítulo, nav con iconos Phosphor y pie con hora/día/fecha `DD/MM/AAAA`) + `AuroraTopbar` + `TopbarContext` (instrumentos por vista), compuestos dentro de `DashboardLayout`. El **topbar es una fila de cápsulas flotantes** (sin fondo/borde/blur): izquierda = instrumento de la vista (título de página + controles), derecha = invariantes (Proyectos · Idiomas · Notificaciones · **Usuario**, que se movió del pie del rail al topbar).
+- **Componentes base** (`apps/frontend/src/components/ui/`): `AIcon`, `AButton`, `APill`, `AChip`, `ACard`, `AStat`, `ATable`, `AAvatar`, `AField`, `ASearch`, `ASwitch`, `ATab`, `ATabs`, `ADropdown`, `AModal`, `AEmptyState`, `ABubble`, `ABand`, `ACallout`, `AKpi`.
+- **Shell** (`apps/frontend/src/components/layout/`): `AuroraRail` (rail flotante con marca centrada sin subtítulo, nav con iconos Phosphor y pie con hora/día/fecha `DD/MM/AAAA`) + `AuroraTopbar` + `TopbarContext` (instrumentos por vista), compuestos dentro de `DashboardLayout`. El **topbar es una fila de cápsulas flotantes** (sin fondo/borde/blur): izquierda = instrumento de la vista (título de página + controles), derecha = invariantes (Proyectos · Idiomas · Notificaciones · **Usuario**, que se movió del pie del rail al topbar). Por debajo de 768px el rail se abre como **drawer** desde una cápsula de menú del topbar.
 - **Acento de marca** (`useBrand.ts`): default `#E2C6FF` (lila). `--brand*` es **identidad y selección** (item activo, avatar, punto de proyecto, foco), **no** primario de acción — el primario es siempre **tinta negra**.
 - **Documentación normativa**: `apps/frontend/DESIGN.md` + `apps/frontend/.impeccable/design.json` (re-documentados para Aurora). Diseñar contra los tokens `--brand*`, nunca contra un hue fijo.
 - **Estado de migración**: el shell Aurora, los componentes base y **todas las vistas del dashboard están migrados** (cero clases `warm-*` en el código). Vistas reales en Aurora: Panel, Conversaciones (con tarjeta de **Sentimiento** y bloque de **Urgencia**), Clientes, Brain, Usuarios, Configuración, Mi Perfil, Login, Setup, TestChat y DevTests. El **Resumen (Dashboard) se conserva tal cual** (datos reales) para refinarlo en una tanda posterior. La persistencia de `project.config.brand` en el backend sigue pendiente.
