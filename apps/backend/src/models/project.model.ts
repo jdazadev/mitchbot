@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { getDatabase } from '../config/database';
+import { ToolProjectConfig } from '../tools/types';
 
 export interface Project {
   _id?: ObjectId;
@@ -23,6 +24,7 @@ export interface Project {
     options: {
       autoCreateContact: boolean;
     };
+    tools?: ToolProjectConfig;
   };
   createdBy: ObjectId; // User ID del creador
   status: 'active' | 'inactive';

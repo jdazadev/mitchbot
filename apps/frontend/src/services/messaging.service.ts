@@ -6,7 +6,7 @@ export interface MessageToolData {
   toolName: string;
   params?: any;
   result?: any;
-  status: 'pending' | 'success' | 'error' | 'needs_confirmation' | 'cancelled';
+  status: 'pending' | 'success' | 'error' | 'needs_confirmation' | 'pending_approval' | 'approved' | 'rejected' | 'cancelled';
   executionId?: string;
   confirmedBy?: string;
 }

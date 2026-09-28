@@ -6,7 +6,7 @@ export interface SystemUser {
   _id: string;
   name: string;
   email: string;
-  role: 'admin' | 'support' | 'assistant';
+  role: 'admin' | 'support' | 'assistant' | 'approver';
   avatar?: string;
   status: 'Active' | 'Inactive';
   projectIds?: string[];
@@ -67,7 +67,7 @@ class UserService {
     name: string;
     email: string;
     password: string;
-    role: 'admin' | 'support' | 'assistant';
+    role: 'admin' | 'support' | 'assistant' | 'approver';
     projectIds?: string[];
   }): Promise<SystemUser> {
     const res = await fetch(`${API_BASE}/users`, {
@@ -84,7 +84,7 @@ class UserService {
   async update(id: string, userData: {
     name?: string;
     email?: string;
-    role?: 'admin' | 'support' | 'assistant';
+    role?: 'admin' | 'support' | 'assistant' | 'approver';
     status?: 'Active' | 'Inactive';
     projectIds?: string[];
   }): Promise<SystemUser> {

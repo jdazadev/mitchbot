@@ -22,6 +22,7 @@ const OPERATION = [
   { key: 'conversations', icon: 'ChatCircleDots', href: '/messaging' },
   { key: 'clients', icon: 'Users', href: '/clients' },
   { key: 'brain', icon: 'Brain', href: '/brain' },
+  { key: 'tools', icon: 'Wrench', href: '/tools' },
   { key: 'users', icon: 'UserList', href: '/users' },
 ];
 

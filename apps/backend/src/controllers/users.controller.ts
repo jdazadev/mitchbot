@@ -33,7 +33,7 @@ const createUserSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
-  role: z.enum(['admin', 'support', 'assistant']),
+  role: z.enum(['admin', 'support', 'assistant', 'approver']),
   projectIds: z.array(z.string()).optional(),
 });
 
@@ -53,7 +53,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
   email: z.string().email().optional(),
-  role: z.enum(['admin', 'support', 'assistant']).optional(),
+  role: z.enum(['admin', 'support', 'assistant', 'approver']).optional(),
   status: z.enum(['Active', 'Inactive']).optional(),
   avatar: z.string().optional().nullable(),
   projectIds: z.array(z.string()).optional(),

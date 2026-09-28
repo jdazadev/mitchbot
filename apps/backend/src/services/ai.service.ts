@@ -196,7 +196,7 @@ export const aiService = {
 
     const startTime = Date.now();
     try {
-      const boundModel = detectingTools ? chatModel.bindTools(toolService.schemas()) : chatModel;
+      const boundModel = detectingTools ? chatModel.bindTools(await toolService.schemas(params.projectId)) : chatModel;
       const stream = await boundModel.stream(messages);
 
       let fullContent = '';

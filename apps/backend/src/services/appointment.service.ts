@@ -66,10 +66,37 @@ export const appointmentService = {
     return getAppointmentsCollection().find(query).sort({ date: 1 }).toArray();
   },
 
-  async updateStatus(id: string, status: AppointmentStatus) {
+  async updateDetails(id: string, projectId: string, changes: Partial<Pick<Appointment, 'date' | 'time' | 'service' | 'notes'>>) {
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(projectId)) throw new Error('ID inválido');
+    const filter = { _id: new ObjectId(id), projectId: new ObjectId(projectId) };
+    const update: Record<string, unknown> = { ...changes, updatedAt: new Date() };
+    if (changes.date || changes.time) {
+      const current = await getAppointmentsCollection().findOne(filter);
+      if (!current) return null;
+      const date = changes.date ? new Date(changes.date) : new Date(current.date);
+      const time = changes.time ?? current.time;
+      if (time) {
+        const [hours, minutes] = time.split(':').map(Number);
+        date.setHours(hours, minutes, 0, 0);
+      }
+      update.date = date;
+    }
+    return getAppointmentsCollection().findOneAndUpdate(
+      filter,
+      { $set: update },
+      { returnDocument: 'after' }
+    );
+  },
+
+  async updateStatus(id: string, status: AppointmentStatus, projectId?: string) {
     if (!ObjectId.isValid(id)) throw new Error('ID inválido');
+    const filter: Record<string, unknown> = { _id: new ObjectId(id) };
+    if (projectId) {
+      if (!ObjectId.isValid(projectId)) throw new Error('ID de proyecto inválido');
+      filter.projectId = new ObjectId(projectId);
+    }
     const result = await getAppointmentsCollection().findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      filter,
       { $set: { status, updatedAt: new Date() } },
       { returnDocument: 'after' }
     );

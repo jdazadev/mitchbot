@@ -12,6 +12,8 @@ import aiModelsRoutes from './ai-models.routes';
 import appointmentsRoutes from './appointments.routes';
 import ordersRoutes from './orders.routes';
 import publicChatRoutes from './public-chat.routes';
+import toolsRoutes from './tools.routes';
+import toolExecutionsRoutes from './tool-executions.routes';
 import { aiService } from '../services/ai.service';
 import { aiModelService } from '../services/ai-model.service';
 import { agentService } from '../services/agent.service';
@@ -34,5 +36,7 @@ router.use('/project', projectRoutes);
 router.use('/ai-models', aiModelsRoutes);
 router.use('/appointments', appointmentsRoutes);
 router.use('/orders', ordersRoutes);
+router.use('/tools', toolsRoutes);
+router.use('/tool-executions', toolExecutionsRoutes);
 
 export default router;

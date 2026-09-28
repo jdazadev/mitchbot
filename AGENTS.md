@@ -13,7 +13,20 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.10.0
+**Versión actual del proyecto:** v4.11.0
+
+---
+
+## Herramientas configurables y aprobaciones (v4.11.0)
+
+El agente expone un catálogo por proyecto en la ruta **`/tools`**, con operaciones distinguibles para Agenda, Conocimiento, Inventario y Pagos.
+
+- **Configuración y bindings**: `projects.config.tools` guarda la matriz módulo → operación → binding. El módulo interno es el único binding disponible; la validación rechaza cualquier integración no implementada. Los proyectos existentes conservan el set equivalente a las herramientas anteriores; los nuevos habilitan las operaciones internas.
+- **Control**: las lecturas no requieren aprobación; crear/editar requiere confirmación del cliente; eliminar y `Pagos·crear` requieren aprobación de operador. El backend verifica el control antes de ejecutar; la aprobación reclama la solicitud atómicamente para impedir dobles ejecuciones.
+- **Roles y auditoría**: el rol `approver` puede aprobar/rechazar, y `admin` funciona como respaldo. `tool_executions` registra operación, binding, estado, resultado, actor y fecha. La nueva colección `payments` almacena intenciones pendientes, nunca movimientos de dinero.
+- **Herramientas de sistema**: `transfer_to_human` y `send_notification` se mantienen siempre disponibles y no se pueden apagar desde el catálogo.
+- **Frontend/API**: `GET /api/tools`, `PUT /api/tools/config`, `GET /api/tool-executions`, `GET /api/tool-executions/pending` y endpoints de aprobar/rechazar. La interfaz incluye Catálogo, Aprobaciones e Historial, con enlaces a conversaciones.
+- **Verificación**: backend `tsc --noEmit` + integración **30/30 (1 omitida)**; frontend `vue-tsc --noEmit` + `build`; paridad es/en; detector Impeccable **0 hallazgos**; e2e **48/48** (`--workers=1`); overflow comprobado a 1440/390.
 
 ---
 
@@ -545,7 +558,7 @@ Ver sección **9. Sistema de Herramientas (Tool Use)** más abajo.
 ### 5. Módulo Usuarios del Sistema
 
 - CRUD completo: crear, editar, buscar, filtrar, ordenar y paginar usuarios.
-- Roles disponibles: **admin**, **support** y **assistant**.
+- Roles disponibles: **admin**, **support**, **assistant** y **approver**. `approver` resuelve solicitudes sensibles de herramientas.
 - El usuario tiene un espacio para editar sus datos y configuraciones (vista Profile).
 - El primer usuario registrado se convierte automáticamente en **admin**.
 
@@ -559,22 +572,22 @@ Ver sección **9. Sistema de Herramientas (Tool Use)** más abajo.
 ### 7. Seguridad
 
 - Autenticación vía JWT en cada request protegido.
-- Middleware de autorización por roles (`admin`, `support`, `assistant`).
+- Middleware de autorización por roles (`admin`, `support`, `assistant`, `approver`).
 - API keys de proveedores **no** se almacenan en la BD: provienen de variables de entorno.
 - Variables de entorno validadas con Zod al arrancar el servidor.
 
 ### 9. Sistema de Herramientas (Tool Use)
 
-El agente puede ejecutar acciones ("tools") además de responder.
+El agente ejecuta operaciones del catálogo según la configuración del proyecto.
 
-- **Registro** (`src/tools/`): cada herramienta implementa `Tool` con `name`, `description`, `parameters` (JSON Schema), `execute(params, context)` y `requiresConfirmation`.
-- **Ejecutor** (`services/tool.service.ts`): esquemas OpenAI-compatible, detección de tool calls en texto libre (`{"tool","parameters"}`) y ejecución normalizada.
-- **Integración LLM** (`ai.service.generateResponseStreamWithTools`): tool calling nativo (`bindTools`) para **OpenRouter**.
-- **Flujo de chat** (`chat.service.handleToolCalls`): detecta tool calls → si requiere confirmación guarda en `tool_executions` y emite un mensaje `confirmation_request` → al confirmar ejecuta y genera la respuesta final con el resultado. La respuesta final recibe el historial de la conversación (los `tool_call`/`tool_result` quedan excluidos del prompt).
-- **Confirmaciones** vía WebSocket `tool:confirm` (`confirm` / `cancel` / `modify`) y evento `tool:confirmed`. Interfaz en **Messaging** y **TestChat**.
-- **Visibilidad por audiencia**: el dashboard (**Messaging**) muestra todas las tarjetas de herramientas; la vista del cliente (**TestChat**) oculta `tool_call`/`tool_result` y solo conserva `confirmation_request` con sus acciones. Ante el fallo de una herramienta el cliente recibe un mensaje genérico, nunca el detalle técnico.
-
-Herramientas incluidas (zero-config): `create_appointment`, `create_order`, `get_product_info`, `get_business_hours`, `get_service_availability`, `transfer_to_human`, `send_notification`, `get_faq_answer`.
+- **Catálogo** (`src/tools/modules/`): Agenda, Conocimiento, Inventario y Pagos ofrecen operaciones canónicas por separado, cada una con esquema propio, binding interno y control (`ninguna`, `confirmacion_cliente`, `aprobacion_operador`).
+- **Configuración**: `projects.config.tools` contiene la matriz módulo → operación → binding. Los proyectos antiguos sin esa matriz usan los valores equivalentes al catálogo previo; los nuevos habilitan las operaciones internas. `transfer_to_human` y `send_notification` son herramientas de sistema siempre disponibles.
+- **Binding dinámico** (`services/tool.service.ts`, `services/ai.service.ts`): el modelo recibe las operaciones activas del proyecto asociado a la conversación. El binding interno es el único implementado; Zod rechaza otras integraciones.
+- **Control cliente**: crear/editar emite `confirmation_request` y el cliente confirma, cancela o modifica vía WebSocket `tool:confirm` (`confirm` / `cancel` / `modify`).
+- **Control operador**: eliminar y `Pagos·crear` quedan en estado `pending_approval`; solo `approver` o `admin` pueden aprobar/rechazar. La solicitud se reclama atómicamente antes de ejecutarse y notifica al proyecto con `admin:notification`.
+- **Persistencia**: `tool_executions` conserva herramienta, operación, binding, parámetros, resultado, estado y actor/fecha de decisión. `payments` almacena intenciones pendientes, no procesa dinero.
+- **Superficie de operador**: `/tools` reúne Catálogo, Aprobaciones e Historial. El historial se filtra por herramienta, operación, binding, estado y fechas, y enlaza a la conversación de origen.
+- **Contexto del modelo**: los mensajes internos `tool_call`/`tool_result` quedan fuera del historial enviado al LLM; el chat público no muestra esos detalles internos.
 
 Config del negocio usada por las tools: `business.hours`, `business.services`, `business.timezone`, `business.slot_minutes`, `business.currency`.
 
@@ -595,7 +608,7 @@ Cada usuario pertenece a uno o más proyectos y tiene un proyecto activo.
 
 ### 11. Shell y navegación
 
-- **Nomenclatura de módulos**: el sidebar y los títulos del Topbar muestran **"Brain"** (no "Brain & RAG") y **"Clients"** (no "Contacts"). La ruta del módulo de clientes es `/clients` y `/contacts` redirige a ella. El renombre es de presentación y de frontend.
+- **Nomenclatura de módulos**: el rail y los títulos del Topbar muestran **"Brain"**, **"Clients"** y **"Tools"**. La ruta de clientes es `/clients` y `/contacts` redirige a ella; herramientas vive en `/tools`.
 - **Rango de fechas del panel**: el widget estático "Last 30 Days" del Topbar se eliminó. El Dashboard ofrece un control real de últimos 7/30/90 días (30 por defecto) que recalcula métricas, canales y volumen; los toggles Diaria/Semanal/Mensual cambian la granularidad del volumen. El backend (`analytics.service`/`dashboard.controller`) acepta `days` o `from`/`to` y `period = daily | weekly | monthly`. Todas las rutas del dashboard exigen autenticación y acotan las métricas (`stats`, `volume`, `channels`, `activities`) al proyecto resuelto (`req.projectId`).
 - **Centro de notificaciones**: el Topbar escucha `admin:notification` (emitido por la tool `send_notification`), acumula las notificaciones en estado local, muestra el indicador solo si hay no leídas y permite marcarlas como leídas o limpiarlas. El alcance es la sesión activa (sin persistencia en base de datos).
 
@@ -687,6 +700,8 @@ Usuario abre la app
 | **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /` | Gestión de proyectos (multi-proyecto por usuario) |
 | **Appointments** | `GET /`, `GET /:id`, `PATCH /:id/status` | Citas agendadas por el agente |
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
+| **Tools** | `GET /`, `PUT /config` | Catálogo de operaciones y configuración por proyecto |
+| **Tool Executions** | `GET /`, `GET /pending`, `POST /:id/approve`, `POST /:id/reject` | Historial, solicitudes pendientes y resolución por rol |
 | **Dashboard** | `GET /stats`, `GET /volume`, `GET /channels`, `GET /activities` | Analytics autenticada y acotada al proyecto activo (`X-Project-Id`/`activeProjectId`) |
 | **Public Chat** | `GET /public/test-chat/:slug/config`, `POST /public/test-chat/:slug/start`, `POST /public/test-chat/:slug/:id/messages` | Chat público (clientes web); `config` expone el idioma del agente (sin auth) |
 
@@ -698,18 +713,19 @@ Usuario abre la app
 
 | Colección | Campos Clave | Notas |
 |:----------|:-------------|:------|
-| `users` | name, email, password (hash), role, status, avatar, projectIds, activeProjectId | Roles: admin, support, assistant. Pertenencia multi-proyecto |
+| `users` | name, email, password (hash), role, status, avatar, projectIds, activeProjectId | Roles: admin, support, assistant, approver. Pertenencia multi-proyecto |
 | `contacts` | projectId, name, phone, email, platform, status, tags, metadata | Aislado por proyecto. Soft delete (archivar) |
 | `conversations` | contactId, platform, status, mode, clientInfo, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores |
 | `messages` | conversationId, sender, content, contentType, isBot, toolData | Sender: contact, ai_agent, human_agent, tool. contentType: text, tool_call, tool_result, confirmation_request |
 | `agents` | projectId, name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
 | `ai_models` | name, value, provider, category, isActive | Catálogo de modelos (los disponibles se listan dinámicamente desde OpenRouter) |
 | `provider_configs` | type (llm/embedding/file/image/audio/ocr), provider, selectedModel, isActive | Sin credenciales: la API key proviene del entorno. `selectedModel` ya no se usa para resolver llm/embedding/file/ocr |
-| `projects` | name, agentId, config (channels, messages, options) | Solo 1 proyecto activo |
+| `projects` | name, agentId, config (channels, messages, options, tools) | Configuración de herramientas aislada por proyecto |
 | `knowledge_sources` | name, type, size, status, vectorCount, filePath, extractionMethod, ocrProvider, extractionTimeMs | Status: Queued, Processing, Indexed, Failed |
 | `appointments` | date, time, service, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
 | `orders` | items, total, currency, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
-| `tool_executions` | conversationId, toolName, params, result, status, messageId | Estados: pending_confirmation, executed, failed, cancelled |
+| `tool_executions` | projectId, conversationId, toolId, operation, binding, params, result, status, decisionBy, decisionAt | Historial y aprobación, aislados por proyecto |
+| `payments` | projectId, conversationId, contactId, amount, currency, method, status | Intenciones de cobro; nunca mueve dinero |
 | `config` | key, value | Key-value store dinámico |
 | `activities` | type, description, createdAt | Log de eventos |
 

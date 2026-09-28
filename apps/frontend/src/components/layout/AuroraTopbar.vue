@@ -33,6 +33,8 @@ const pageTitle = computed(() => {
       return t('topbar.clients');
     case 'users':
       return t('nav.users');
+    case 'tools':
+      return t('nav.tools');
     case 'settings':
       return t('nav.settings');
     case 'profile':

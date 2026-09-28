@@ -16,7 +16,7 @@ export interface MessageToolData {
   toolName: string;
   params?: any;
   result?: any;
-  status: 'pending' | 'success' | 'error' | 'needs_confirmation' | 'cancelled';
+  status: 'pending' | 'success' | 'error' | 'needs_confirmation' | 'pending_approval' | 'approved' | 'rejected' | 'cancelled';
   executionId?: string;   // ID de la ejecución de herramienta (para confirmaciones)
   confirmedBy?: string;   // userId o 'contact'
 }

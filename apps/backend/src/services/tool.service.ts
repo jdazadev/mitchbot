@@ -1,5 +1,8 @@
 import { getTool, getTools, getToolSchemas, getToolInstructionsText } from '../tools';
+import { normalizeToolConfig } from '../tools/config';
 import { Tool, ToolContext, ToolResult } from '../tools/types';
+import { ObjectId } from 'mongodb';
+import { getProjectsCollection } from '../models/project.model';
 import { logger } from '../utils/logger';
 
 export interface ParsedToolCall {
@@ -23,33 +26,48 @@ function coerceArguments(value: any): Record<string, any> {
 }
 
 export const toolService = {
-  list(): Tool[] {
-    return getTools();
+  async projectConfig(projectId?: string) {
+    if (!projectId || !ObjectId.isValid(projectId)) return normalizeToolConfig();
+    const project = await getProjectsCollection().findOne({ _id: new ObjectId(projectId) }, { projection: { 'config.tools': 1 } });
+    return normalizeToolConfig(project?.config?.tools);
   },
 
-  get(name: string): Tool | undefined {
-    return getTool(name);
+  async list(projectId?: string): Promise<Tool[]> {
+    return getTools(await this.projectConfig(projectId));
   },
 
-  schemas() {
-    return getToolSchemas();
+  async schemas(projectId?: string) {
+    return getToolSchemas(await this.projectConfig(projectId));
   },
 
-  instructionsText(): string {
-    return getToolInstructionsText();
+  async instructionsText(projectId?: string): Promise<string> {
+    return getToolInstructionsText(await this.projectConfig(projectId));
   },
 
   requiresConfirmation(name: string): boolean {
-    return !!getTool(name)?.requiresConfirmation;
+    return getTool(name)?.control === 'confirmacion_cliente' || !!getTool(name)?.requiresConfirmation;
+  },
+
+  requiresApproval(name: string): boolean {
+    return getTool(name)?.control === 'aprobacion_operador';
+  },
+
+  control(name: string) {
+    return getTool(name)?.control || (getTool(name)?.requiresConfirmation ? 'confirmacion_cliente' : 'ninguna');
+  },
+
+  details(name: string) {
+    const tool = getTool(name);
+    return tool ? { toolId: tool.toolId, operation: tool.operation, binding: tool.bindingId || 'internal' } : undefined;
   },
 
   /** Descripción legible de una invocación (para pedir confirmación al usuario) */
   describeCall(call: ParsedToolCall): string {
     const args = call.arguments || {};
     switch (call.name) {
-      case 'create_appointment':
+      case 'agenda_crear':
         return `agendar una cita para ${args.service || 'un servicio'} el ${args.date || 'la fecha indicada'}${args.time ? ` a las ${args.time}` : ''}`;
-      case 'create_order': {
+      case 'inventario_crear': {
         const items = Array.isArray(args.items)
           ? args.items.map((item: any) => `${item?.quantity || 1}x ${item?.name || 'artículo'}`).join(', ')
           : 'los artículos indicados';
@@ -106,10 +124,30 @@ export const toolService = {
   },
 
   /** Ejecuta una herramienta y normaliza el resultado */
-  async execute(call: ParsedToolCall, context: ToolContext): Promise<ToolResult> {
+  async execute(
+    call: ParsedToolCall,
+    context: ToolContext,
+    options: { allowDisabled?: boolean; authorization?: 'client_confirmed' | 'operator_approved' } = {},
+  ): Promise<ToolResult> {
     const tool = getTool(call.name);
     if (!tool) {
       return { success: false, message: `Herramienta desconocida: ${call.name}`, error: 'unknown_tool' };
+    }
+
+    if (tool.control === 'confirmacion_cliente' && options.authorization !== 'client_confirmed') {
+      return { success: false, message: 'Esta operación requiere confirmación del cliente.', error: 'confirmation_required' };
+    }
+    if (tool.control === 'aprobacion_operador' && options.authorization !== 'operator_approved') {
+      return { success: false, message: 'Esta operación requiere aprobación de un operador.', error: 'approval_required' };
+    }
+
+    if (!options.allowDisabled && tool.toolId) {
+      const config = await this.projectConfig(context.projectId);
+      const moduleConfig = config[tool.toolId];
+      const operationConfig = tool.operation && moduleConfig?.operations[tool.operation];
+      if (!moduleConfig?.enabled || !operationConfig?.enabled || operationConfig.binding !== tool.bindingId) {
+        return { success: false, message: 'La operación no está habilitada para este proyecto.', error: 'tool_disabled' };
+      }
     }
 
     try {

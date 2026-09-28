@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { getProjectsCollection, Project } from '../models/project.model';
 import { agentService } from './agent.service';
+import { createDefaultToolConfig } from '../tools/config';
 
 export const projectService = {
   async findBySlug(slug: string) {
@@ -115,6 +116,7 @@ export const projectService = {
         options: {
           autoCreateContact: data.config?.options?.autoCreateContact ?? true,
         },
+        tools: createDefaultToolConfig('new'),
       },
       createdBy: new ObjectId(data.createdBy),
       status: 'active',
@@ -131,9 +133,15 @@ export const projectService = {
   async update(id: string, data: Partial<Pick<Project, 'name' | 'slug' | 'description' | 'logo' | 'config'>>) {
     if (!ObjectId.isValid(id)) throw new Error('Invalid ID');
 
+    const changes: Record<string, unknown> = { ...data };
+    if (data.config) {
+      delete changes.config;
+      for (const [key, value] of Object.entries(data.config)) changes[`config.${key}`] = value;
+    }
+
     const result = await getProjectsCollection().findOneAndUpdate(
       { _id: new ObjectId(id) },
-      { $set: { ...data, updatedAt: new Date() } },
+      { $set: { ...changes, updatedAt: new Date() } },
       { returnDocument: 'after' }
     );
     return result;

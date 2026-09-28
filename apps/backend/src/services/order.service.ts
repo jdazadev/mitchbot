@@ -63,10 +63,36 @@ export const orderService = {
     return getOrdersCollection().findOne({ _id: new ObjectId(id) });
   },
 
-  async updateStatus(id: string, status: OrderStatus) {
+  async findByContact(projectId: string, contactId: string) {
+    if (!ObjectId.isValid(projectId) || !ObjectId.isValid(contactId)) throw new Error('ID inválido');
+    return getOrdersCollection().find({ projectId: new ObjectId(projectId), contactId: new ObjectId(contactId) })
+      .sort({ createdAt: -1 }).toArray();
+  },
+
+  async updateDetails(id: string, projectId: string, changes: Partial<Pick<Order, 'items' | 'notes'>>) {
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(projectId)) throw new Error('ID inválido');
+    const update: Record<string, unknown> = { ...changes, updatedAt: new Date() };
+    if (changes.items) {
+      const items = normalizeItems(changes.items);
+      update.items = items;
+      update.total = items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+    }
+    return getOrdersCollection().findOneAndUpdate(
+      { _id: new ObjectId(id), projectId: new ObjectId(projectId) },
+      { $set: update },
+      { returnDocument: 'after' }
+    );
+  },
+
+  async updateStatus(id: string, status: OrderStatus, projectId?: string) {
     if (!ObjectId.isValid(id)) throw new Error('ID inválido');
+    const filter: Record<string, unknown> = { _id: new ObjectId(id) };
+    if (projectId) {
+      if (!ObjectId.isValid(projectId)) throw new Error('ID de proyecto inválido');
+      filter.projectId = new ObjectId(projectId);
+    }
     const result = await getOrdersCollection().findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      filter,
       { $set: { status, updatedAt: new Date() } },
       { returnDocument: 'after' }
     );

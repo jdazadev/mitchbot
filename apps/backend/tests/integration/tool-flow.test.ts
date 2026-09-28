@@ -10,6 +10,8 @@ import { getMessagesCollection } from '../../src/models/message.model';
 import { getAppointmentsCollection } from '../../src/models/appointment.model';
 import { getOrdersCollection } from '../../src/models/order.model';
 import { getToolExecutionsCollection } from '../../src/models/tool-execution.model';
+import { getTools, systemTools } from '../../src/tools';
+import { toolModules, createDefaultToolConfig } from '../../src/tools/config';
 
 const TEST_TAG = `itest-${Date.now()}`;
 const createdConversationIds: ObjectId[] = [];
@@ -39,9 +41,15 @@ after(async () => {
   await closeDatabase();
 });
 
-test('tool registry: expone al menos 8 herramientas con schema', () => {
-  const tools = toolService.list();
-  assert.ok(tools.length >= 8, `esperadas >=8 tools, hay ${tools.length}`);
+test('catálogo: expone operaciones separadas y herramientas de sistema siempre disponibles', () => {
+  const disabledConfig = createDefaultToolConfig('new');
+  for (const module of Object.values(disabledConfig)) {
+    module.enabled = false;
+    for (const operation of Object.values(module.operations)) if (operation) operation.enabled = false;
+  }
+  const tools = getTools(disabledConfig);
+  assert.equal(toolModules.length, 4);
+  assert.equal(tools.length, systemTools.length);
   for (const tool of tools) {
     assert.ok(tool.name, 'nombre');
     assert.ok(tool.description, `descripción de ${tool.name}`);
@@ -49,60 +57,68 @@ test('tool registry: expone al menos 8 herramientas con schema', () => {
     assert.equal(typeof tool.execute, 'function');
   }
   const names = tools.map(t => t.name);
-  for (const expected of [
-    'create_appointment',
-    'create_order',
-    'get_product_info',
-    'get_business_hours',
-    'get_service_availability',
-    'transfer_to_human',
-    'send_notification',
-    'get_faq_answer',
-  ]) {
+  for (const expected of ['transfer_to_human', 'send_notification']) {
     assert.ok(names.includes(expected), `falta la tool ${expected}`);
   }
+  const moduleTools = toolModules.flatMap(module => Object.values(module.operations));
+  assert.deepEqual(moduleTools.map(tool => tool.name).sort(), [
+    'agenda_crear', 'agenda_editar', 'agenda_eliminar', 'agenda_leer',
+    'conocimiento_leer', 'inventario_crear', 'inventario_editar', 'inventario_eliminar', 'inventario_leer',
+    'pagos_crear', 'pagos_leer',
+  ].sort());
 });
 
-test('tool metadata: create_appointment y create_order requieren confirmación', () => {
-  assert.equal(toolService.requiresConfirmation('create_appointment'), true);
-  assert.equal(toolService.requiresConfirmation('create_order'), true);
-  assert.equal(toolService.requiresConfirmation('get_business_hours'), false);
+test('tool metadata declara control por operación', () => {
+  assert.equal(toolService.requiresConfirmation('agenda_crear'), true);
+  assert.equal(toolService.requiresConfirmation('inventario_crear'), true);
+  assert.equal(toolService.requiresApproval('agenda_eliminar'), true);
+  assert.equal(toolService.requiresApproval('pagos_crear'), true);
+  assert.equal(toolService.requiresConfirmation('agenda_leer'), false);
 });
 
 test('detección de tool call en texto libre (LLM sin tool calling nativo)', () => {
   const parsed = toolService.parseToolCallFromText(
-    '{"tool":"get_business_hours","parameters":{}}'
+    '{"tool":"agenda_leer","parameters":{}}'
   );
   assert.ok(parsed);
-  assert.equal(parsed!.name, 'get_business_hours');
+  assert.equal(parsed!.name, 'agenda_leer');
 
   const fenced = toolService.parseToolCallFromText(
-    'Claro, aquí está:\n```json\n{"tool":"create_appointment","parameters":{"date":"2030-01-15","time":"15:00","service":"Corte"}}\n```'
+    'Claro, aquí está:\n```json\n{"tool":"agenda_crear","parameters":{"date":"2030-01-15","time":"15:00","service":"Corte"}}\n```'
   );
   assert.ok(fenced);
-  assert.equal(fenced!.name, 'create_appointment');
+  assert.equal(fenced!.name, 'agenda_crear');
   assert.equal(fenced!.arguments.time, '15:00');
 
   assert.equal(toolService.parseToolCallFromText('Hola, ¿en qué puedo ayudarte?'), null);
 });
 
-test('tool get_business_hours devuelve el horario configurado', async () => {
+test('tool agenda_leer devuelve el horario y puede ejecutarse sin confirmación', async () => {
   const result = await toolService.execute(
-    { name: 'get_business_hours', arguments: {} },
-    { conversationId: new ObjectId().toString(), projectId: new ObjectId().toString(), userMessage: '' }
+    { name: 'agenda_leer', arguments: {} },
+    { conversationId: new ObjectId().toString(), projectId: new ObjectId().toString(), userMessage: '' },
+    { allowDisabled: true },
   );
   assert.equal(result.success, true);
   assert.match(result.message, /Lunes/i);
 });
 
-test('tool create_appointment ejecuta y persiste la cita', async () => {
+test('tool agenda_crear persiste solo con autorización de confirmación del cliente', async () => {
   const projectId = new ObjectId().toString();
+  const denied = await toolService.execute(
+    { name: 'agenda_crear', arguments: { date: '2030-02-20', time: '10:30', service: `Corte ${TEST_TAG}` } },
+    { conversationId: new ObjectId().toString(), projectId, userMessage: 'agenda cita' },
+    { allowDisabled: true },
+  );
+  assert.equal(denied.error, 'confirmation_required');
+
   const result = await toolService.execute(
     {
-      name: 'create_appointment',
+      name: 'agenda_crear',
       arguments: { date: '2030-02-20', time: '10:30', service: `Corte ${TEST_TAG}` },
     },
-    { conversationId: new ObjectId().toString(), projectId, userMessage: 'agenda cita' }
+    { conversationId: new ObjectId().toString(), projectId, userMessage: 'agenda cita' },
+    { allowDisabled: true, authorization: 'client_confirmed' },
   );
 
   assert.equal(result.success, true);
@@ -113,11 +129,11 @@ test('tool create_appointment ejecuta y persiste la cita', async () => {
   assert.equal(stored!.time, '10:30');
 });
 
-test('tool create_order calcula el total y persiste el pedido', async () => {
+test('tool inventario_crear calcula el total y persiste el pedido', async () => {
   const projectId = new ObjectId().toString();
   const result = await toolService.execute(
     {
-      name: 'create_order',
+      name: 'inventario_crear',
       arguments: {
         items: [
           { name: `Producto A ${TEST_TAG}`, quantity: 2, price: 10 },
@@ -125,7 +141,8 @@ test('tool create_order calcula el total y persiste el pedido', async () => {
         ],
       },
     },
-    { conversationId: new ObjectId().toString(), projectId, userMessage: 'quiero un pedido' }
+    { conversationId: new ObjectId().toString(), projectId, userMessage: 'quiero un pedido' },
+    { allowDisabled: true, authorization: 'client_confirmed' },
   );
 
   assert.equal(result.success, true);
@@ -157,7 +174,7 @@ test('flujo de tool cond confirmación: pendiente → confirmar → ejecutada + 
   const execution = await toolExecutionService.create({
     conversationId: conversationId.toString(),
     projectId,
-    toolName: 'create_appointment',
+    toolName: 'agenda_crear',
     params: { date: '2030-03-10', time: '11:00', service: `Reserva ${TEST_TAG}` },
     status: 'pending_confirmation',
     userMessage: 'agenda una reserva',
@@ -184,7 +201,7 @@ test('flujo de tool cond confirmación: pendiente → confirmar → ejecutada + 
     .find({ conversationId })
     .toArray();
   assert.ok(
-    messages.some(m => m.contentType === 'tool_result' && m.toolData?.toolName === 'create_appointment'),
+    messages.some(m => m.contentType === 'tool_result' && m.toolData?.toolName === 'agenda_crear'),
     'debe registrar un mensaje tool_result'
   );
 
@@ -212,7 +229,7 @@ test('flujo de tool con cancelación: no crea la cita y marca cancelled', async 
   const execution = await toolExecutionService.create({
     conversationId: conversationId.toString(),
     projectId,
-    toolName: 'create_appointment',
+    toolName: 'agenda_crear',
     params: { date: '2030-04-11', time: '09:00', service: `Cancelada ${TEST_TAG}` },
     status: 'pending_confirmation',
     userMessage: 'agenda algo',

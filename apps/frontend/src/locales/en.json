@@ -4,6 +4,7 @@
     "conversations": "Conversations",
     "clients": "Clients",
     "brain": "Brain",
+    "tools": "Tools",
     "users": "Users",
     "settings": "Settings",
     "profile": "My Profile",
@@ -386,6 +387,7 @@
     },
     "tools": {
       "confirmationRequired": "Confirmation required",
+      "pendingApproval": "Awaiting operator approval",
       "defaultName": "Tool",
       "modify": "Modify",
       "modifyTitle": "Modify action",
@@ -393,6 +395,9 @@
       "invalidJson": "Invalid JSON",
       "status": {
         "pending": "Pending",
+        "pending_approval": "Pending approval",
+        "approved": "Approved",
+        "rejected": "Rejected",
         "success": "Completed",
         "cancelled": "Cancelled"
       }
@@ -750,8 +755,91 @@
     "roles": {
       "admin": "Admin",
       "support": "Support",
-      "assistant": "Assistant"
+      "assistant": "Assistant",
+      "approver": "Approver"
     }
+  },
+  "tools": {
+    "subtitle": "Choose what the agent can do, review requests that need approval, and inspect the audit history.",
+    "tabs": { "label": "Tool sections", "catalog": "Catalog", "approvals": "Approvals", "history": "History" },
+    "modules": {
+      "agenda": "Schedule",
+      "conocimiento": "Knowledge",
+      "inventario": "Orders",
+      "pagos": "Payments",
+      "agendaDescription": "Business hours, availability, and appointments.",
+      "conocimientoDescription": "Answers grounded in this project's knowledge base.",
+      "inventarioDescription": "Orders linked to customer conversations.",
+      "pagosDescription": "Payment intents only; no money is processed."
+    },
+    "operations": { "leer": "Read", "crear": "Create", "editar": "Edit", "eliminar": "Delete" },
+    "operationDescriptions": {
+      "agenda": {
+        "leer": "Check business hours and appointment availability.",
+        "crear": "Book an appointment after confirming the details with the customer.",
+        "editar": "Reschedule or update an appointment after customer confirmation.",
+        "eliminar": "Cancel an appointment only after an operator approves it."
+      },
+      "conocimiento": { "leer": "Search indexed content for answers, products, and services." },
+      "inventario": {
+        "leer": "Check orders and their status for the current customer.",
+        "crear": "Create an order after confirming its items with the customer.",
+        "editar": "Update an order after confirming the changes with the customer.",
+        "eliminar": "Cancel an order only after an operator approves it."
+      },
+      "pagos": {
+        "leer": "Check the status of the customer's payment intents.",
+        "crear": "Record a payment intent for operator approval; no money moves."
+      }
+    },
+    "control": {
+      "ninguna": "No approval needed",
+      "confirmacion_cliente": "Customer confirms",
+      "aprobacion_operador": "Operator approves"
+    },
+    "binding": { "internal": "Internal module" },
+    "catalog": {
+      "title": "Available operations",
+      "description": "Enable modules and operations for this project. Every action keeps its required control step.",
+      "toggleModule": "Enable or disable {module}",
+      "toggleOperation": "Enable or disable {operation} in {module}",
+      "saving": "Saving configuration..."
+    },
+    "approvals": {
+      "title": "Pending requests",
+      "description": "Cancellations and payment intents wait for an approver or administrator.",
+      "pending": "pending",
+      "noPermission": "Only an approver or administrator can review and resolve requests.",
+      "emptyTitle": "No pending requests",
+      "empty": "Operations that need approval will appear here with their proposed data and source conversation.",
+      "requestedAction": "Action request: {action}",
+      "unknownOperation": "System operation",
+      "approve": "Approve",
+      "reject": "Reject",
+      "confirm": {
+        "approved": { "title": "Approve operation", "body": "Approving will execute the operation with its proposed data.", "action": "Approve and run" },
+        "rejected": { "title": "Reject operation", "body": "The operation will not run, and the decision will be recorded in history.", "action": "Reject request" }
+      }
+    },
+    "history": {
+      "title": "Operation history",
+      "description": "Auditable record of operations, their status, and their source conversations.",
+      "resultCount": "{count} records",
+      "filters": {
+        "tool": "Tool", "operation": "Operation", "status": "Status", "from": "From", "to": "To",
+        "allTools": "All tools", "allOperations": "All operations", "allStatuses": "All statuses"
+      },
+      "columns": { "tool": "Tool", "operation": "Operation", "binding": "Binding", "status": "Status", "date": "Date" },
+      "status": {
+        "pending_confirmation": "Awaiting customer", "pending_approval": "Pending approval", "executing": "Running", "approving": "Approving",
+        "executed": "Executed", "approved": "Approved", "rejected": "Rejected", "failed": "Failed", "cancelled": "Cancelled"
+      },
+      "openConversation": "View conversation",
+      "noConversation": "No conversation",
+      "emptyTitle": "No operations yet",
+      "empty": "Operations appear here when the agent uses a tool. Adjust or clear the filters to review more records."
+    },
+    "errors": { "load": "Could not load tool data. {message}" }
   },
   "publicChat": {
     "simulator": {
@@ -799,6 +887,9 @@
         "success": "Completed",
         "error": "Error",
         "needs_confirmation": "Confirmation required",
+        "pending_approval": "Awaiting approval",
+        "approved": "Approved",
+        "rejected": "Rejected",
         "cancelled": "Cancelled"
       }
     },

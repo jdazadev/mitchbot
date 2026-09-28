@@ -84,13 +84,13 @@ async function benchTools() {
     const started = Date.now();
     if (i % 5 === 0) {
       const result = await toolService.execute(
-        { name: 'create_order', arguments: { items: [{ name: `bench-${i}`, quantity: 1, price: 5 }] } },
+        { name: 'inventario_crear', arguments: { items: [{ name: `bench-${i}`, quantity: 1, price: 5 }] } },
         { conversationId: new ObjectId().toString(), projectId, userMessage: 'bench' }
       );
       if (result.data?.orderId) orderIds.push(new ObjectId(result.data.orderId));
     } else {
       await toolService.execute(
-        { name: 'get_business_hours', arguments: {} },
+        { name: 'agenda_leer', arguments: {} },
         { conversationId: new ObjectId().toString(), projectId, userMessage: 'bench' }
       );
     }

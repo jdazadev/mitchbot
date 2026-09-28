@@ -566,7 +566,11 @@ function toolIcon(msg: ChatMessage) {
 }
 
 function toolLabel(msg: ChatMessage) {
-  if (msg.contentType === 'confirmation_request') return t('messaging.tools.confirmationRequired');
+  if (msg.contentType === 'confirmation_request') {
+    return msg.toolData?.status === 'pending_approval'
+      ? t('tools.history.status.pending_approval')
+      : t('messaging.tools.confirmationRequired');
+  }
   return msg.toolData?.toolName || t('messaging.tools.defaultName');
 }
 
@@ -574,6 +578,9 @@ function statusLabel(status?: string) {
   const map: Record<string, string> = {
     pending: t('messaging.tools.status.pending'),
     needs_confirmation: t('messaging.tools.status.pending'),
+    pending_approval: t('tools.history.status.pending_approval'),
+    approved: t('tools.history.status.approved'),
+    rejected: t('tools.history.status.rejected'),
     success: t('messaging.tools.status.success'),
     error: t('common.error'),
     cancelled: t('messaging.tools.status.cancelled'),
@@ -583,8 +590,9 @@ function statusLabel(status?: string) {
 
 function toolTone(status?: string) {
   if (status === 'error') return 'danger';
-  if (status === 'needs_confirmation' || status === 'pending') return 'butter';
-  if (status === 'success') return 'lime';
+  if (status === 'needs_confirmation' || status === 'pending' || status === 'pending_approval') return 'butter';
+  if (status === 'success' || status === 'approved') return 'lime';
+  if (status === 'rejected') return 'danger';
   return 'ghost';
 }
 

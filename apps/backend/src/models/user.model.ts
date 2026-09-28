@@ -6,7 +6,7 @@ export interface User {
   name: string;
   email: string;
   password: string; // Hash bcrypt
-  role: 'admin' | 'support' | 'assistant';
+  role: 'admin' | 'support' | 'assistant' | 'approver';
   avatar?: string;
   status: 'Active' | 'Inactive';
   projectIds?: ObjectId[];       // Proyectos a los que pertenece el usuario

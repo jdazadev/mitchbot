@@ -4,6 +4,7 @@
     "conversations": "Conversaciones",
     "clients": "Clientes",
     "brain": "Memoria",
+    "tools": "Tools",
     "users": "Usuarios",
     "settings": "Configuración",
     "profile": "Mi Perfil",
@@ -386,6 +387,7 @@
     },
     "tools": {
       "confirmationRequired": "Confirmación requerida",
+      "pendingApproval": "En espera de aprobación",
       "defaultName": "Herramienta",
       "modify": "Modificar",
       "modifyTitle": "Modificar acción",
@@ -393,6 +395,9 @@
       "invalidJson": "JSON inválido",
       "status": {
         "pending": "Pendiente",
+        "pending_approval": "Pendiente de aprobación",
+        "approved": "Aprobado",
+        "rejected": "Rechazado",
         "success": "Completado",
         "cancelled": "Cancelado"
       }
@@ -750,8 +755,91 @@
     "roles": {
       "admin": "Administrador",
       "support": "Soporte",
-      "assistant": "Asistente"
+      "assistant": "Asistente",
+      "approver": "Aprobador"
     }
+  },
+  "tools": {
+    "subtitle": "Configura qué acciones puede ejecutar el agente, revisa las que requieren aprobación y consulta su historial.",
+    "tabs": { "label": "Secciones de herramientas", "catalog": "Catálogo", "approvals": "Aprobaciones", "history": "Historial" },
+    "modules": {
+      "agenda": "Agenda",
+      "conocimiento": "Conocimiento",
+      "inventario": "Inventario",
+      "pagos": "Pagos",
+      "agendaDescription": "Horarios, disponibilidad y citas del negocio.",
+      "conocimientoDescription": "Respuestas basadas en la base de conocimiento del proyecto.",
+      "inventarioDescription": "Pedidos vinculados a las conversaciones de clientes.",
+      "pagosDescription": "Intenciones de cobro, sin procesar movimientos de dinero."
+    },
+    "operations": { "leer": "Leer", "crear": "Crear", "editar": "Editar", "eliminar": "Eliminar" },
+    "operationDescriptions": {
+      "agenda": {
+        "leer": "Consulta horarios de atención y disponibilidad de citas.",
+        "crear": "Agenda una cita después de confirmar los datos con el cliente.",
+        "editar": "Reprograma o actualiza una cita después de confirmarlo con el cliente.",
+        "eliminar": "Cancela una cita solo después de la aprobación de un operador."
+      },
+      "conocimiento": { "leer": "Busca respuestas, productos y servicios en el contenido indexado." },
+      "inventario": {
+        "leer": "Consulta pedidos y su estado para el cliente de la conversación.",
+        "crear": "Registra un pedido después de confirmar los artículos con el cliente.",
+        "editar": "Actualiza un pedido después de confirmar los cambios con el cliente.",
+        "eliminar": "Cancela un pedido solo después de la aprobación de un operador."
+      },
+      "pagos": {
+        "leer": "Consulta el estado de las intenciones de cobro del cliente.",
+        "crear": "Registra una intención de cobro que requiere aprobación; no mueve dinero."
+      }
+    },
+    "control": {
+      "ninguna": "Sin fricción",
+      "confirmacion_cliente": "Confirma el cliente",
+      "aprobacion_operador": "Aprueba el operador"
+    },
+    "binding": { "internal": "Módulo interno" },
+    "catalog": {
+      "title": "Operaciones disponibles",
+      "description": "Activa módulos y operaciones para este proyecto. El nivel de control de cada acción no se puede omitir.",
+      "toggleModule": "Activar o desactivar {module}",
+      "toggleOperation": "Activar o desactivar {operation} en {module}",
+      "saving": "Guardando configuración..."
+    },
+    "approvals": {
+      "title": "Solicitudes pendientes",
+      "description": "Las cancelaciones y las intenciones de cobro esperan a un aprobador o administrador.",
+      "pending": "pendientes",
+      "noPermission": "Solo un aprobador o administrador puede revisar y resolver solicitudes.",
+      "emptyTitle": "No hay solicitudes pendientes",
+      "empty": "Cuando una operación necesite aprobación, aparecerá aquí con sus datos y conversación de origen.",
+      "requestedAction": "Solicitud de acción: {action}",
+      "unknownOperation": "Operación del sistema",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "confirm": {
+        "approved": { "title": "Aprobar operación", "body": "Al aprobar, el sistema ejecutará la operación con los datos propuestos.", "action": "Aprobar y ejecutar" },
+        "rejected": { "title": "Rechazar operación", "body": "La operación no se ejecutará y la decisión quedará registrada en el historial.", "action": "Rechazar solicitud" }
+      }
+    },
+    "history": {
+      "title": "Historial de operaciones",
+      "description": "Registro auditable de las operaciones, sus estados y las conversaciones de origen.",
+      "resultCount": "{count} registros",
+      "filters": {
+        "tool": "Herramienta", "operation": "Operación", "status": "Estado", "from": "Desde", "to": "Hasta",
+        "allTools": "Todas las herramientas", "allOperations": "Todas las operaciones", "allStatuses": "Todos los estados"
+      },
+      "columns": { "tool": "Herramienta", "operation": "Operación", "binding": "Binding", "status": "Estado", "date": "Fecha" },
+      "status": {
+        "pending_confirmation": "Pendiente del cliente", "pending_approval": "Pendiente de aprobación", "executing": "En ejecución", "approving": "Aprobando",
+        "executed": "Ejecutada", "approved": "Aprobada", "rejected": "Rechazada", "failed": "Fallida", "cancelled": "Cancelada"
+      },
+      "openConversation": "Ver conversación",
+      "noConversation": "Sin conversación",
+      "emptyTitle": "Aún no hay operaciones",
+      "empty": "Las operaciones aparecerán aquí cuando el agente use una herramienta. Ajusta o limpia los filtros para revisar más registros."
+    },
+    "errors": { "load": "No se pudieron cargar los datos de herramientas. {message}" }
   },
   "publicChat": {
     "simulator": {
@@ -799,6 +887,9 @@
         "success": "Completado",
         "error": "Error",
         "needs_confirmation": "Confirmación requerida",
+        "pending_approval": "En espera de aprobación",
+        "approved": "Aprobado",
+        "rejected": "Rechazado",
         "cancelled": "Cancelado"
       }
     },

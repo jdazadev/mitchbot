@@ -30,6 +30,35 @@ export interface ToolContext {
   agent?: any;
 }
 
+export type ToolOperation = 'leer' | 'crear' | 'editar' | 'eliminar';
+export type ToolControl = 'ninguna' | 'confirmacion_cliente' | 'aprobacion_operador';
+export type ToolBindingId = 'internal';
+
+export interface ToolOperationConfig {
+  enabled: boolean;
+  binding: string;
+}
+
+export interface ToolModuleConfig {
+  enabled: boolean;
+  operations: Partial<Record<ToolOperation, ToolOperationConfig>>;
+}
+
+export type ToolProjectConfig = Record<string, ToolModuleConfig>;
+
+export interface ToolBinding {
+  id: ToolBindingId | (string & {});
+  label: string;
+  operations: readonly ToolOperation[];
+}
+
+export interface ToolModule {
+  id: string;
+  label: string;
+  bindings: readonly ToolBinding[];
+  operations: Partial<Record<ToolOperation, Tool>>;
+}
+
 export interface ToolResult {
   success: boolean;
   /** Resumen legible para el LLM / usuario */
@@ -42,8 +71,18 @@ export interface Tool {
   name: string;
   description: string;
   parameters: ToolParameters;
+  /** Identidad del módulo y operación expuesta como función independiente. */
+  toolId?: string;
+  operation?: ToolOperation;
+  bindingId?: ToolBindingId | (string & {});
+  control?: ToolControl;
+  /** Compatibilidad temporal con el flujo de confirmación heredado. */
   requiresConfirmation?: boolean;
   execute: (params: Record<string, any>, context: ToolContext) => Promise<ToolResult>;
+}
+
+export interface ToolIntegration extends ToolBinding {
+  id: string;
 }
 
 /** Formato OpenAI-compatible para bindTools() */

@@ -5,6 +5,29 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.11.0 — 2026-09-28
+
+> 🧰 **Tools**: catálogo configurable, aprobaciones de operador e historial de operaciones
+
+### ✨ Añadido
+- **Catálogo de herramientas por proyecto**: Agenda, Conocimiento, Inventario y Pagos exponen operaciones independientes (`leer`, `crear`, `editar`, `eliminar`) con binding interno. El agente recibe únicamente las operaciones habilitadas para el proyecto de la conversación.
+- **Módulos internos**: Agenda consulta horarios y disponibilidad, crea/reprograma/cancela citas; Conocimiento reúne búsquedas de productos y preguntas frecuentes; Inventario administra pedidos; Pagos registra intenciones de cobro pendientes sin mover dinero.
+- **Aprobaciones de operador**: el rol `approver` puede aprobar o rechazar cancelaciones e intenciones de cobro; `admin` conserva acceso de respaldo. Las solicitudes se notifican en vivo.
+- **Auditoría e interfaz**: `/tools` reúne Catálogo, Aprobaciones e Historial con filtros, paginación y enlaces a las conversaciones de origen. `tool_executions` registra operación, binding, resultado, actor y fecha de decisión.
+- **API**: `GET /api/tools`, `PUT /api/tools/config`, `GET /api/tool-executions`, `GET /api/tool-executions/pending` y rutas de aprobación/rechazo.
+
+### 🔧 Cambiado
+- Las creaciones y ediciones solicitan confirmación del cliente; las eliminaciones y `Pagos·crear` esperan aprobación del operador. Lecturas y herramientas de sistema no requieren aprobación.
+- Los proyectos existentes conservan el comportamiento equivalente a las herramientas anteriores; los proyectos nuevos habilitan las operaciones internas del catálogo.
+- `transfer_to_human` y `send_notification` quedan fuera del catálogo configurable y siempre disponibles.
+
+### ✅ Verificación
+- Backend: `tsc --noEmit` y pruebas de integración (**30 pasaron, 1 omitida**); frontend: `vue-tsc --noEmit` y build.
+- E2E: **48/48** (`--workers=1`); paridad i18n es/en; detector Impeccable: **0 hallazgos**.
+- La interfaz no desborda a 1440px en claro ni a 390px en oscuro; las pestañas funcionan con teclado.
+
+---
+
 ## v4.10.0 — 2026-09-22
 
 > 🎯 **Modo enfoque real**: las laterales de Conversaciones colapsan a carriles de iconos

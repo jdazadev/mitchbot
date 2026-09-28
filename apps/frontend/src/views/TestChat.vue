@@ -378,7 +378,9 @@ function scrollToBottom() {
             <div v-if="isConfirmationRequest(msg)" class="flex w-full justify-end">
               <div class="w-full max-w-[80%] rounded-field bg-butter-soft px-4 py-3 text-xs font-semibold text-butter-ink">
                 <div class="mb-1 flex flex-wrap items-center gap-2">
-                  <APill tone="butter" size="sm">{{ t('publicChat.tool.confirmationRequired') }}</APill>
+                  <APill tone="butter" size="sm">
+                    {{ msg.toolData?.status === 'pending_approval' ? t('publicChat.tool.pendingApproval') : t('publicChat.tool.confirmationRequired') }}
+                  </APill>
                   <span v-if="msg.toolData?.status" class="ml-auto text-[10px] font-bold uppercase">
                     {{ toolStatusLabel(msg.toolData.status) }}
                   </span>

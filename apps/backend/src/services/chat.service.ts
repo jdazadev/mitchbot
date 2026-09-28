@@ -606,7 +606,49 @@ export const chatService = {
     placeholderMsgId: ObjectId;
   }): Promise<{ awaitingConfirmation: boolean }> {
     const context = this.buildToolContext(args.conversation, args.projectId, args.userMessage, args.agent);
+    const approvalCall = args.toolCalls.find(call => toolService.requiresApproval(call.name));
     const confirmationCall = args.toolCalls.find(call => toolService.requiresConfirmation(call.name));
+
+    if (approvalCall) {
+      await getMessagesCollection().deleteOne({ _id: args.placeholderMsgId });
+      const details = toolService.details(approvalCall.name);
+      const execution = await toolExecutionService.create({
+        conversationId: args.conversationId,
+        projectId: args.projectId,
+        contactId: args.conversation.contactId?.toString(),
+        toolName: approvalCall.name,
+        toolId: details?.toolId,
+        operation: details?.operation,
+        binding: details?.binding,
+        params: approvalCall.arguments || {},
+        status: 'pending_approval',
+        userMessage: args.userMessage,
+      });
+      const content = `La solicitud para ${toolService.describeCall(approvalCall)} fue enviada a un operador para su aprobación.`;
+      const pendingMessage = await this.createToolMessage({
+        conversationId: args.conversationId,
+        sender: 'tool',
+        senderName: 'Sistema',
+        content,
+        contentType: 'confirmation_request',
+        toolData: {
+          toolName: approvalCall.name,
+          params: approvalCall.arguments || {},
+          status: 'pending_approval',
+          executionId: execution._id!.toString(),
+        },
+      });
+      await toolExecutionService.setMessageId(execution._id!, pendingMessage._id!);
+      emitToProject(args.projectId, 'admin:notification', {
+        message: 'Hay una nueva operación pendiente de aprobación.',
+        level: 'warning',
+        conversationId: args.conversationId,
+        projectId: args.projectId,
+        toolExecutionId: execution._id!.toString(),
+        createdAt: new Date(),
+      });
+      return { awaitingConfirmation: true };
+    }
 
     if (confirmationCall) {
       // El placeholder de streaming no se usará como respuesta final
@@ -616,11 +658,16 @@ export const chatService = {
         logger.warn('Could not delete streaming placeholder', e as any);
       }
 
+      const details = toolService.details(confirmationCall.name);
       const execution = await toolExecutionService.create({
         conversationId: args.conversationId,
         projectId: args.projectId,
         contactId: args.conversation.contactId?.toString(),
         toolName: confirmationCall.name,
+        ...toolService.details(confirmationCall.name),
+        toolId: details?.toolId,
+        operation: details?.operation,
+        binding: details?.binding,
         params: confirmationCall.arguments || {},
         status: 'pending_confirmation',
         userMessage: args.userMessage,
@@ -648,7 +695,21 @@ export const chatService = {
 
     const results: { name: string; success: boolean; message: string }[] = [];
     for (const call of args.toolCalls) {
+      const details = toolService.details(call.name);
+      const execution = await toolExecutionService.create({
+        conversationId: args.conversationId,
+        projectId: args.projectId,
+        contactId: args.conversation.contactId?.toString(),
+        toolName: call.name,
+        toolId: details?.toolId,
+        operation: details?.operation,
+        binding: details?.binding,
+        params: call.arguments || {},
+        status: 'executing',
+        userMessage: args.userMessage,
+      });
       const result = await toolService.execute(call, context);
+      await toolExecutionService.setStatus(execution._id!, result.success ? 'executed' : 'failed', result.data ?? result.message);
       results.push({ name: call.name, success: result.success, message: result.message });
 
       await this.createToolMessage({
@@ -677,6 +738,51 @@ export const chatService = {
     });
 
     return { awaitingConfirmation: false };
+  },
+
+  async resolveToolApproval(executionId: string, projectId: string, userId: string, decision: 'approved' | 'rejected') {
+    const execution = await toolExecutionService.findInProject(executionId, projectId);
+    if (!execution || execution.status !== 'pending_approval') return null;
+
+    const claimed = await toolExecutionService.claimApproval(executionId, projectId, userId, decision);
+    if (!claimed) return null;
+    const conversationId = execution.conversationId.toString();
+    const conversation = await getConversationsCollection().findOne({ _id: execution.conversationId, projectId: new ObjectId(projectId) });
+    if (!conversation) {
+      await toolExecutionService.setStatus(execution._id!, 'failed', { error: 'Conversación no encontrada' });
+      return { status: 'failed' as const };
+    }
+    const agent = await agentService.getActiveAgent(projectId);
+
+    if (decision === 'rejected') {
+      const result = { decision: 'rejected', message: 'La operación fue rechazada por un operador.' };
+      await toolExecutionService.setStatus(execution._id!, 'rejected', result, userId, userId);
+      await this.updateConfirmationMessage(conversationId, execution.messageId, 'rejected', { content: result.message });
+      await this.createToolMessage({
+        conversationId, sender: 'tool', senderName: 'Sistema', content: result.message,
+        contentType: 'tool_result', toolData: { toolName: execution.toolName, executionId, status: 'rejected' },
+      });
+      await this.sendMessage(conversationId, result.message, 'ai_agent', agent?.name || 'Mitchbot');
+      return { status: 'rejected' as const };
+    }
+
+    const context = this.buildToolContext(conversation, projectId, execution.userMessage || '', agent);
+    const result = await toolService.execute(
+      { name: execution.toolName, arguments: execution.params || {} }, context,
+      { allowDisabled: true, authorization: 'operator_approved' },
+    );
+    const status = result.success ? 'approved' : 'failed';
+    await toolExecutionService.setStatus(execution._id!, status, result.data ?? result.message, userId, userId);
+    await this.updateConfirmationMessage(conversationId, execution.messageId, result.success ? 'success' : 'error', { content: result.message });
+    await this.createToolMessage({
+      conversationId, sender: 'tool', senderName: 'Herramienta', content: result.message,
+      contentType: 'tool_result', toolData: {
+        toolName: execution.toolName, params: execution.params, result: result.data ?? result.message,
+        status: result.success ? 'success' : 'error', executionId,
+      },
+    });
+    await this.sendMessage(conversationId, result.message, 'ai_agent', agent?.name || 'Mitchbot');
+    return { status };
   },
 
   /** Genera la respuesta final del bot usando los resultados de herramientas */
@@ -739,7 +845,7 @@ export const chatService = {
   async updateConfirmationMessage(
     conversationId: string,
     messageId: ObjectId | undefined,
-    status: 'success' | 'error' | 'cancelled' | 'needs_confirmation',
+    status: 'success' | 'error' | 'cancelled' | 'rejected' | 'pending_approval' | 'needs_confirmation',
     extra?: { params?: Record<string, any>; content?: string },
   ) {
     if (!messageId) return;
@@ -826,7 +932,7 @@ export const chatService = {
 
     const call: ParsedToolCall = { name: execution.toolName, arguments: execution.params || {} };
     const context = this.buildToolContext(conversation, projectId, execution.userMessage || '', agent);
-    const result = await toolService.execute(call, context);
+    const result = await toolService.execute(call, context, { authorization: 'client_confirmed' });
 
     await toolExecutionService.setStatus(
       execution._id!,

@@ -72,7 +72,7 @@ export const userService = {
     name: string;
     email: string;
     password: string;
-    role: 'admin' | 'support' | 'assistant';
+    role: 'admin' | 'support' | 'assistant' | 'approver';
     projectIds?: string[];
   }) {
     const usersColl = getUsersCollection();

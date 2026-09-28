@@ -12,8 +12,9 @@
  *
  * Disparadores deterministas:
  *   - Si el último mensaje de usuario contiene "AGENDAR_CITA" se emite un
- *     tool_call de `create_appointment`.
+ *     tool_call de `agenda_crear`.
  *   - "TRANSFERIR" emite `transfer_to_human`; "NOTIFICAR" emite `send_notification`.
+ *   - "INTENCION_PAGO" emite `pagos_crear` si la operación está habilitada.
  *   - En caso contrario se responde el texto fijo STUB_REPLY.
  */
 import http from 'node:http';
@@ -25,6 +26,7 @@ const STUB_REPLY = process.env.STUB_REPLY || 'Respuesta determinista de prueba E
 const TOOL_TRIGGER = /AGENDAR_CITA|agendar cita|crear cita/i;
 const TRANSFER_TRIGGER = /TRANSFERIR|transferir a (un )?(humano|asesor)/i;
 const NOTIFICATION_TRIGGER = /NOTIFICAR|notificar al equipo/i;
+const PAYMENT_TRIGGER = /INTENCION_PAGO|registrar intención de pago/i;
 // Alineado con `rag.qdrant_vector_size` por defecto del backend (768).
 const EMBED_DIM = Number(process.env.STUB_EMBED_DIM || 768);
 
@@ -110,15 +112,18 @@ function buildToolArgs() {
 /** Determina la herramienta a invocar según el mensaje del cliente. */
 function pickTool(userText, tools) {
   if (!Array.isArray(tools) || tools.length === 0) return null;
-  if (TOOL_TRIGGER.test(userText)) return 'create_appointment';
-  if (TRANSFER_TRIGGER.test(userText)) return 'transfer_to_human';
-  if (NOTIFICATION_TRIGGER.test(userText)) return 'send_notification';
+  const available = new Set(tools.map((tool) => tool?.function?.name).filter(Boolean));
+  if (TOOL_TRIGGER.test(userText) && available.has('agenda_crear')) return 'agenda_crear';
+  if (PAYMENT_TRIGGER.test(userText) && available.has('pagos_crear')) return 'pagos_crear';
+  if (TRANSFER_TRIGGER.test(userText) && available.has('transfer_to_human')) return 'transfer_to_human';
+  if (NOTIFICATION_TRIGGER.test(userText) && available.has('send_notification')) return 'send_notification';
   return null;
 }
 
 function toolArguments(name) {
   if (name === 'transfer_to_human') return { reason: 'Prueba E2E' };
   if (name === 'send_notification') return { message: 'Notificación E2E', level: 'warning' };
+  if (name === 'pagos_crear') return { amount: 25, method: 'transferencia' };
   return buildToolArgs();
 }
 
@@ -175,7 +180,11 @@ async function handleChatCompletions(req, res, body) {
     });
   }
 
-  log({ kind: 'chat.completions', model, stream: wantsStream, tool: useTool, toolName, insights: wantsInsights });
+  log({
+    kind: 'chat.completions', model, stream: wantsStream, tool: useTool, toolName, insights: wantsInsights,
+    toolNames: (body.tools || []).map((tool) => tool?.function?.name).filter(Boolean),
+    userText,
+  });
 
   if (useTool) {
     const args = toolArguments(toolName);

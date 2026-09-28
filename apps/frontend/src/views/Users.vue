@@ -24,7 +24,7 @@ const sortBy = ref('createdAt');
 const sortOrder = ref<'asc' | 'desc'>('desc');
 const projects = ref<Project[]>([]);
 
-const roles = ['admin', 'support', 'assistant'] as const;
+const roles = ['admin', 'support', 'assistant', 'approver'] as const;
 const pageSizeOptions = [5, 10, 25, 50];
 
 const roleOptions = computed(() => roles.map((r) => ({ value: r, label: t('users.roles.' + r) })));
@@ -46,7 +46,7 @@ const editStatusLabel = computed(
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const editingUser = ref<SystemUser | null>(null);
-const createForm = ref({ name: '', email: '', password: '', role: 'support' as 'admin' | 'support' | 'assistant', projectIds: [] as string[] });
+const createForm = ref({ name: '', email: '', password: '', role: 'support' as 'admin' | 'support' | 'assistant' | 'approver', projectIds: [] as string[] });
 const editForm = ref<{ name: string; email: string; role: string; status: string; projectIds: string[] }>({ name: '', email: '', role: '', status: '', projectIds: [] });
 const formLoading = ref(false);
 const formError = ref('');
@@ -177,10 +177,11 @@ async function handleUpdate() {
   }
 }
 
-const ROLE_TONES: Record<string, 'sky' | 'lilac' | 'lime' | 'ghost'> = {
+const ROLE_TONES: Record<string, 'sky' | 'lilac' | 'lime' | 'butter' | 'ghost'> = {
   admin: 'sky',
   support: 'lilac',
   assistant: 'lime',
+  approver: 'butter',
 };
 
 function roleTone(role: string) {
