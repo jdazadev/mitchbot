@@ -12,6 +12,8 @@ import {
   createConversationContact,
   getInsights,
   analyzeInsights,
+  getStubStats,
+  updateConversationMode,
   listContacts,
 } from '../helpers/api';
 import { uniqueId, uniqueName, uniquePhone } from '../helpers/data';
@@ -54,6 +56,35 @@ function waitForDashboardSocket(page: Page): Promise<void> {
         });
       })
   );
+}
+
+function captureDashboardInsights(page: Page) {
+  const counts = new Map<string, number>();
+  page.on('websocket', (ws) => {
+    ws.on('framereceived', (frame) => {
+      const payload = typeof frame.payload === 'string' ? frame.payload : frame.payload.toString();
+      if (!payload.startsWith('42')) return;
+      try {
+        const [event, data] = JSON.parse(payload.slice(2));
+        if (event === 'chat:insights' && data?.conversationId) {
+          counts.set(data.conversationId, (counts.get(data.conversationId) || 0) + 1);
+        }
+      } catch {
+        // Ignora frames Socket.io que no sean eventos JSON.
+      }
+    });
+  });
+  return (conversationId: string) => counts.get(conversationId) || 0;
+}
+
+async function waitForStubInsight(api: any, marker: string, timeoutMs = 15_000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const stats = await getStubStats(api);
+    if (stats.requests.some((request: any) => request.insights && request.userText.includes(marker))) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`El stub no recibió el análisis con "${marker}" en ${timeoutMs}ms`);
 }
 
 test.describe('Mensajería', () => {
@@ -241,6 +272,13 @@ test.describe('Mensajería', () => {
   test('calcula y muestra insights reales (automático y manual)', async ({ page, api }) => {
     const id = uniqueId();
     const clientName = uniqueName('Cliente Insights');
+    const insightEventCount = captureDashboardInsights(page);
+    const socketReady = waitForDashboardSocket(page);
+
+    await page.goto('/messaging');
+    await socketReady;
+    await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
+
     const started = await startPublicConversation(api, {
       slug: E2E.project.slug,
       clientIdentifier: `insights-${id}`,
@@ -248,15 +286,20 @@ test.describe('Mensajería', () => {
       initialMessage: `Estoy muy contento con el servicio ${id}`,
     });
     const conversationId = started.conversation._id;
+    const row = inboxRow(page, clientName);
+    await expect(row).toBeVisible({ timeout: 20_000 });
 
-    // El análisis automático corre en segundo plano tras la respuesta del bot.
+    // El análisis automático corre desde el primer mensaje y llega al dashboard una sola vez.
     await expect
       .poll(async () => (await getInsights(api, conversationId))?.sentiment, { timeout: 25_000 })
       .toBeTruthy();
+    await expect.poll(() => insightEventCount(conversationId)).toBe(1);
+    await expect(row.getByRole('img', { name: 'Urgencia: Media' })).toBeVisible();
 
     const auto = await getInsights(api, conversationId);
     expect(['positive', 'neutral', 'negative']).toContain(auto.sentiment);
     expect(auto.summary).toBeUndefined();
+    expect(auto.urgency).toEqual({ level: 'medium', reason: 'deadline' });
     const scores = auto.sentimentScores;
     const sum = scores.positive + scores.neutral + scores.negative;
     expect(Math.abs(sum - 1)).toBeLessThan(0.01);
@@ -264,13 +307,100 @@ test.describe('Mensajería', () => {
     // Recálculo manual desde el botón "Analizar".
     const manual = await analyzeInsights(api, conversationId);
     expect(manual.sentiment).toBe('positive');
+    expect(manual.urgency).toEqual({ level: 'medium', reason: 'deadline' });
     expect(manual.summary).toBeUndefined();
+    await expect.poll(() => insightEventCount(conversationId)).toBe(2);
 
     // El panel muestra el sentimiento real (no valores fijos).
+    await row.getByText(clientName).click();
+    await expect(page.getByText('Positivo').first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('plazo próximo')).toBeVisible();
+  });
+
+  test('serializa análisis solapados y conserva el resultado del mensaje más reciente', async ({ api }) => {
+    const id = uniqueId();
+    const started = await startPublicConversation(api, {
+      slug: E2E.project.slug,
+      clientIdentifier: `insight-order-${id}`,
+      clientName: uniqueName('Cliente Orden Insights'),
+      initialMessage: `OLD_INSIGHT_DELAY ${id}`,
+    });
+    const conversationId = started.conversation._id;
+
+    // El stub retarda deliberadamente este análisis para que se solape con el siguiente.
+    await waitForStubInsight(api, `OLD_INSIGHT_DELAY ${id}`);
+    await sendPublicMessage(api, E2E.project.slug, conversationId, `NEW_INSIGHT_LOW ${id}`);
+
+    await expect
+      .poll(async () => (await getInsights(api, conversationId))?.urgency?.level, { timeout: 15_000 })
+      .toBe('low');
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    const latest = await getInsights(api, conversationId);
+    expect(latest.sentiment).toBe('positive');
+    expect(latest.urgency).toEqual({ level: 'low', reason: 'none' });
+  });
+
+  test('recalcula insights en human_takeover sin generar respuesta del bot', async ({ api }) => {
+    const id = uniqueId();
+    const started = await startPublicConversation(api, {
+      slug: E2E.project.slug,
+      clientIdentifier: `insight-takeover-${id}`,
+      clientName: uniqueName('Cliente Insights Takeover'),
+      initialMessage: `Inicio takeover ${id}`,
+    });
+    const conversationId = started.conversation._id;
+
+    await expect
+      .poll(async () => (await getInsights(api, conversationId))?.urgency?.level, { timeout: 25_000 })
+      .toBe('medium');
+    await waitForBotReplies(api, conversationId, 1);
+    await updateConversationMode(api, conversationId, 'human_takeover');
+
+    const botRepliesBefore = (await getConversationMessages(api, conversationId))
+      .filter((message: any) => message.sender === 'ai_agent' && message.content?.trim()).length;
+    const marker = `TAKEOVER_INSIGHT ${id}`;
+    await sendPublicMessage(api, E2E.project.slug, conversationId, marker);
+    await waitForStubInsight(api, marker);
+    await expect
+      .poll(async () => (await getConversationMessages(api, conversationId))
+        .filter((message: any) => message.sender === 'ai_agent' && message.content?.trim()).length)
+      .toBe(botRepliesBefore);
+  });
+
+  test('muestra los tres niveles y eleva una urgencia baja ante confirmación pendiente', async ({ page, api }) => {
+    const id = uniqueId();
+    const clientName = uniqueName('Cliente Niveles Urgencia');
+    const started = await startPublicConversation(api, {
+      slug: E2E.project.slug,
+      clientIdentifier: `urgency-levels-${id}`,
+      clientName,
+      initialMessage: `NEW_INSIGHT_LOW ${id}`,
+    });
+    const conversationId = started.conversation._id;
+
+    await expect
+      .poll(async () => (await getInsights(api, conversationId))?.urgency?.level, { timeout: 25_000 })
+      .toBe('low');
     await page.goto('/messaging');
     await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
-    await page.getByText(clientName).first().click();
-    await expect(page.getByText('Positivo').first()).toBeVisible({ timeout: 20_000 });
+    const row = inboxRow(page, clientName);
+    await expect(row.getByRole('img', { name: /Urgencia:/ })).toHaveCount(0);
+    await row.getByText(clientName).click();
+    await expect(page.getByText('Baja', { exact: true }).last()).toBeVisible();
+    await expect(page.getByText('sin señal específica')).toBeVisible();
+
+    await sendPublicMessage(api, E2E.project.slug, conversationId, `AGENDAR_CITA NEW_INSIGHT_LOW ${id}`);
+    await expect(page.getByText('Confirmación requerida').last()).toBeVisible({ timeout: 25_000 });
+    await expect(page.getByText('Media', { exact: true }).last()).toBeVisible();
+    await expect(page.getByText('espera visto bueno')).toBeVisible();
+
+    await sendPublicMessage(api, E2E.project.slug, conversationId, `OLD_INSIGHT_DELAY ${id}`);
+    await expect
+      .poll(async () => (await getInsights(api, conversationId))?.urgency?.level, { timeout: 15_000 })
+      .toBe('high');
+    await expect(page.getByText('Alta', { exact: true }).last()).toBeVisible();
+    await expect(page.getByText('escalamiento')).toBeVisible();
+    await expect(row.getByRole('img', { name: 'Urgencia: Alta' })).toBeVisible();
   });
 
   test('el no leído sube con el cliente, baja al abrir y persiste tras recargar', async ({ page, api }) => {

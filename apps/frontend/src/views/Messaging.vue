@@ -181,6 +181,15 @@ function collapsedChatTitle(chat: ChatConversation) {
   return parts.filter(Boolean).join(" · ");
 }
 
+function inboxUrgency(chat: ChatConversation) {
+  const level = chat.aiInsights?.urgency?.level;
+  if (level !== "medium" && level !== "high") return null;
+  return {
+    label: t(`messaging.urgency.level.${level}`),
+    tone: level === "high" ? "danger" as const : "butter" as const,
+  };
+}
+
 const sentimentPct = computed(() => {
   const sentiment = insights.value?.sentiment;
   const scores = insights.value?.sentimentScores;
@@ -459,10 +468,28 @@ const lastCustomerMessageUnanswered = computed(() => {
   return !!last && last.sender === "contact";
 });
 
-// Urgencia: dato derivado de señales visibles (sentimiento, confirmaciones y respuesta pendiente).
+// El análisis manda; una confirmación pendiente solo puede elevarlo a Media.
 const urgency = computed(() => {
   const chat = selectedChat.value;
   if (!chat) return { level: t("messaging.urgency.level.low"), tone: "lime" as const, step: 1, reason: "" };
+
+  const pending = messages.value.some(
+    (m) => m.contentType === "confirmation_request" && m.toolData?.status === "needs_confirmation",
+  );
+  const analyzed = insights.value?.urgency;
+  if (analyzed) {
+    const level = pending && analyzed.level === "low" ? "medium" : analyzed.level;
+    const step = level === "high" ? 3 : level === "medium" ? 2 : 1;
+    const reason = pending && analyzed.level === "low"
+      ? t("messaging.urgency.reasonPending")
+      : t(`messaging.urgency.motive.${analyzed.reason}`);
+    return {
+      level: t(`messaging.urgency.level.${level}`),
+      tone: level === "high" ? "danger" as const : level === "medium" ? "butter" as const : "lime" as const,
+      step,
+      reason,
+    };
+  }
 
   const negativeSentiment = insights.value?.sentiment === "negative";
   if (negativeSentiment && lastCustomerMessageUnanswered.value) {
@@ -474,9 +501,6 @@ const urgency = computed(() => {
     };
   }
 
-  const pending = messages.value.some(
-    (m) => m.contentType === "confirmation_request" && m.toolData?.status === "needs_confirmation",
-  );
   if (pending) {
     return { level: t("messaging.urgency.level.medium"), tone: "butter" as const, step: 2, reason: t("messaging.urgency.reasonPending") };
   }
@@ -810,6 +834,16 @@ onUnmounted(() => {
             <span class="min-w-0">
               <span class="flex items-center gap-2">
                 <span class="truncate text-[13.5px] font-semibold">{{ chat.name }}</span>
+                <span
+                  v-if="inboxUrgency(chat)"
+                  role="img"
+                  :aria-label="`${t('messaging.urgency.title')}: ${inboxUrgency(chat)?.label}`"
+                  :title="`${t('messaging.urgency.title')}: ${inboxUrgency(chat)?.label}`"
+                  class="grid h-5 w-5 shrink-0 place-items-center rounded-full"
+                  :class="TONE_BOX[inboxUrgency(chat)!.tone]"
+                >
+                  <AIcon name="WarningCircle" :size="13" weight="fill" />
+                </span>
                 <APill v-if="!chat.isContactCreated" tone="butter" size="sm">
                   {{ t("messaging.contact.noContact") }}
                 </APill>

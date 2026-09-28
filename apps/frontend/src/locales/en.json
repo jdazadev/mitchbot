@@ -427,13 +427,22 @@
     },
     "urgency": {
       "title": "Urgency",
-      "level.low": "Low",
-      "level.medium": "Medium",
-      "level.high": "High",
+      "level": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
       "reasonPending": "awaiting approval",
       "reasonOpen": "open conversation",
       "reasonClosed": "conversation closed",
-      "reasonEscalated": "negative sentiment unanswered"
+      "reasonEscalated": "negative sentiment unanswered",
+      "motive": {
+        "none": "no specific urgency signal",
+        "deadline": "upcoming deadline",
+        "incident": "incident",
+        "escalation": "escalation",
+        "repetition": "recurring issue"
+      }
     },
     "errors": {
       "send": "Couldn't send the message. Your draft was kept; try again.",

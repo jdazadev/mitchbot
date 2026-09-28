@@ -427,13 +427,22 @@
     },
     "urgency": {
       "title": "Urgencia",
-      "level.low": "Baja",
-      "level.medium": "Media",
-      "level.high": "Alta",
+      "level": {
+        "low": "Baja",
+        "medium": "Media",
+        "high": "Alta"
+      },
       "reasonPending": "espera visto bueno",
       "reasonOpen": "conversación abierta",
       "reasonClosed": "conversación cerrada",
-      "reasonEscalated": "sentimiento negativo sin responder"
+      "reasonEscalated": "sentimiento negativo sin responder",
+      "motive": {
+        "none": "sin señal específica",
+        "deadline": "plazo próximo",
+        "incident": "incidente",
+        "escalation": "escalamiento",
+        "repetition": "problema recurrente"
+      }
     },
     "errors": {
       "send": "No se pudo enviar el mensaje. Conservamos tu borrador; inténtalo de nuevo.",

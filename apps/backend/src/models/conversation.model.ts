@@ -19,6 +19,7 @@ export interface Conversation {
   aiInsights?: {
     sentiment: "positive" | "neutral" | "negative";
     sentimentScores: { positive: number; neutral: number; negative: number };
+    urgency?: { level: "low" | "medium" | "high"; reason: "none" | "deadline" | "incident" | "escalation" | "repetition" };
     confidence?: string;
   };
   // Datos temporales del cliente antes de crear el contacto

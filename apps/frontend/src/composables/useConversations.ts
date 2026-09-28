@@ -91,6 +91,12 @@ function handleConversationRead(data: { conversationId: string }) {
   setConversationRead(data.conversationId);
 }
 
+function handleSocketInsights(data: { conversationId: string; insights: ChatConversation['aiInsights'] }) {
+  if (!data?.conversationId || !data.insights) return;
+  const chat = conversations.value.find((c) => c._id === data.conversationId);
+  if (chat) chat.aiInsights = data.insights;
+}
+
 function handleSocketChunk(data: { conversationId: string; content: string; isDone?: boolean }) {
   // El bot no emite fragmentos parciales: solo se aplica el mensaje final.
   if (!data.isDone) return;
@@ -119,6 +125,7 @@ function bindConversationSocket() {
   socket.on('chat:message_chunk', handleSocketChunk);
   socket.on('chat:new_conversation', handleSocketNewConversation);
   socket.on('chat:read', handleConversationRead);
+  socket.on('chat:insights', handleSocketInsights);
 }
 
 export function useConversations() {

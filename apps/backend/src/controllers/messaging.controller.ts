@@ -312,8 +312,12 @@ export const getInsights = async (req: Request, res: Response, next: NextFunctio
     });
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });
     const insights = convo.aiInsights;
-    // Solo sentimiento y su distribución: nunca un resumen (aunque exista en datos antiguos).
-    res.json(insights ? { sentiment: insights.sentiment, sentimentScores: insights.sentimentScores } : null);
+    // Solo sentimiento y urgencia: nunca un resumen (aunque exista en datos antiguos).
+    res.json(insights ? {
+      sentiment: insights.sentiment,
+      sentimentScores: insights.sentimentScores,
+      ...(insights.urgency ? { urgency: insights.urgency } : {}),
+    } : null);
   } catch (error) {
     next(error);
   }

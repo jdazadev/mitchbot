@@ -41,6 +41,7 @@ export interface ChatConversation {
   lastMessage: string;
   lastMessageAt: string;
   unreadCount?: number;
+  aiInsights?: ConversationInsights;
   tag?: string;
   tagColor?: string;
   isContactCreated?: boolean;
@@ -61,6 +62,10 @@ export interface ChatConversation {
 export interface ConversationInsights {
   sentiment: 'positive' | 'neutral' | 'negative';
   sentimentScores: { positive: number; neutral: number; negative: number };
+  urgency?: {
+    level: 'low' | 'medium' | 'high';
+    reason: 'none' | 'deadline' | 'incident' | 'escalation' | 'repetition';
+  };
 }
 
 export const messagingService = {

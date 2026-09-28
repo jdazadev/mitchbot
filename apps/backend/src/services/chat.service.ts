@@ -254,6 +254,7 @@ export const chatService = {
           logger.error('[Chat] Bot response CATCH:', err?.message || err)
         );
       }
+      void insightsService.refreshInBackground(conversationId);
     }
 
     return newMessage;
@@ -511,9 +512,6 @@ export const chatService = {
       if (options?.closeAfter) {
         await this.markConversationClosed(conversationId);
       }
-
-      // Análisis de insights fire-and-forget: no bloquea ni altera la respuesta.
-      void insightsService.refreshInBackground(conversationId);
 
       logger.info(`[Bot] ===== END generateBotResponse (success) =====`);
     } catch (error: any) {
@@ -837,8 +835,6 @@ export const chatService = {
       // ignore
     }
 
-    // Análisis de insights fire-and-forget tras la respuesta final con herramientas.
-    void insightsService.refreshInBackground(args.conversationId);
   },
 
   /** Actualiza el estado de un mensaje de confirmation_request y notifica al cliente */

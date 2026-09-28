@@ -5,6 +5,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.12.0 — 2026-09-28
+
+> 🚦 **Urgencia analizada**: prioridad del cliente visible en el hilo y la bandeja
+
+### ✨ Añadido
+- **Urgencia en AI Insights**: el análisis conjunto con sentimiento persiste un nivel (`low`, `medium`, `high`) y un motivo localizado (`none`, `deadline`, `incident`, `escalation`, `repetition`). La lectura y el análisis manual de insights también devuelven el campo cuando existe.
+- **Indicador en la bandeja**: Media y Alta se distinguen en la fila y se actualizan en vivo; Baja y conversaciones sin análisis no añaden señal visual.
+- **Motivos localizados** en español e inglés para el panel de urgencia.
+
+### 🔧 Cambiado
+- Los insights se recalculan al recibir cada mensaje del cliente, desde el primero y tanto en piloto automático como en toma de control humana. Los análisis de una conversación se serializan y dejan de ejecutarse después de las respuestas del bot.
+- El panel muestra el nivel analizado, elevado a Media si hay una confirmación pendiente; sin urgencia analizada conserva la estimación heurística existente.
+- `chat:insights` actualiza tanto la conversación abierta como la bandeja del dashboard sin duplicar el evento.
+
+### ✅ Verificación
+- Backend `build` y frontend `build` completados; paridad de traducciones **668/668**.
+- E2E de Mensajería: **14/14**; comprobación en Chromium con navegador visible de Baja/Media/Alta, confirmación pendiente e indicador en vivo.
+
+---
+
 ## v4.11.0 — 2026-09-28
 
 > 🧰 **Tools**: catálogo configurable, aprobaciones de operador e historial de operaciones

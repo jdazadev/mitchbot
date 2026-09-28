@@ -13,7 +13,18 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.11.0
+**Versión actual del proyecto:** v4.12.0
+
+---
+
+## Urgencia analizada en Conversaciones (v4.12.0)
+
+- **Análisis y persistencia**: AI Insights devuelve sentimiento y `urgency: { level, reason }` en una única llamada. `level` es `low | medium | high`; `reason` es `none | deadline | incident | escalation | repetition`. Un nivel inválido falla el análisis y un motivo inválido se normaliza a `none`. El campo es opcional en conversaciones anteriores.
+- **Actualización automática**: el análisis se dispara al recibir cada mensaje del cliente, desde el primero y también en `human_takeover`; no depende de una respuesta del bot. Una cola de promesas serializa análisis por conversación.
+- **Tiempo real**: `chat:insights` se emite a la room de conversación y al dashboard del proyecto, excluyendo la conversación abierta de la segunda entrega. La bandeja actualiza `aiInsights` y solo marca urgencias Media/Alta.
+- **Presentación**: el panel usa el mayor nivel entre el análisis y una confirmación pendiente (mínimo Media); sin urgencia analizada conserva la heurística. Las etiquetas de motivos están en `messaging.urgency.motive.*` (es/en).
+- **API**: `GET /api/conversations/:id/insights` devuelve urgencia solo si existe; el recálculo `POST` la incluye.
+- **Verificación**: backend y frontend `build`; paridad es/en **668/668**; E2E de Mensajería **14/14**; prueba en Chromium visible para niveles, confirmación pendiente y actualización en vivo.
 
 ---
 

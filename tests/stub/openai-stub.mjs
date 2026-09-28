@@ -166,6 +166,7 @@ async function handleChatCompletions(req, res, body) {
   // anterior, la respuesta confirma si el historial llegó al modelo.
   const memoryMatch = userText.match(/RECUERDA\s+([\w-]+)/i);
   let reply = echoMatch ? `ECO ${echoMatch[1]} respuesta determinista de prueba E2E.` : STUB_REPLY;
+  let insightDelayMs = 0;
   if (memoryMatch) {
     const token = memoryMatch[1];
     const earlier = (body.messages || [])
@@ -174,9 +175,23 @@ async function handleChatCompletions(req, res, body) {
     reply = earlier ? `MEMORIA_OK ${token}` : `MEMORIA_FALLO ${token}`;
   }
   if (wantsInsights) {
+    const latestCustomerMessage = userText
+      .split('\n')
+      .filter((line) => line.startsWith('Cliente:'))
+      .at(-1) || '';
+    const delayedOldInsight = latestCustomerMessage.includes('OLD_INSIGHT_DELAY');
+    const lowInsight = latestCustomerMessage.includes('NEW_INSIGHT_LOW');
+    insightDelayMs = delayedOldInsight ? 1000 : 0;
     reply = JSON.stringify({
-      sentiment: 'positive',
-      sentimentScores: { positive: 0.65, neutral: 0.25, negative: 0.1 },
+      sentiment: delayedOldInsight ? 'negative' : 'positive',
+      sentimentScores: delayedOldInsight
+        ? { positive: 0.1, neutral: 0.2, negative: 0.7 }
+        : { positive: 0.65, neutral: 0.25, negative: 0.1 },
+      urgency: lowInsight
+        ? { level: 'low', reason: 'none' }
+        : delayedOldInsight
+          ? { level: 'high', reason: 'escalation' }
+          : { level: 'medium', reason: 'deadline' },
     });
   }
 
@@ -185,6 +200,8 @@ async function handleChatCompletions(req, res, body) {
     toolNames: (body.tools || []).map((tool) => tool?.function?.name).filter(Boolean),
     userText,
   });
+
+  if (insightDelayMs) await new Promise((resolve) => setTimeout(resolve, insightDelayMs));
 
   if (useTool) {
     const args = toolArguments(toolName);
