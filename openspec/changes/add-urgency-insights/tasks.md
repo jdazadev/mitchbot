@@ -37,4 +37,4 @@
 
 - [x] 7.1 Correr `vue-tsc --noEmit` y `build` del frontend más el typecheck del backend y verificar que pasan
 - [x] 7.2 Verificar manualmente en navegador: urgencia desde el primer mensaje, refresco en takeover, indicador en la bandeja y composición con confirmación pendiente
-- [ ] 7.3 Actualizar `changelog.md` y `AGENTS.md` con la fecha y el bump semántico desde v4.11.0 a v4.12.0 y realizar el commit del cambio
+- [x] 7.3 Actualizar `changelog.md` y `AGENTS.md` con la fecha y el bump semántico desde v4.11.0 a v4.12.0 y realizar el commit del cambio
