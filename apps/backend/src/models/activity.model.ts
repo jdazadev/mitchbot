@@ -9,7 +9,9 @@ export interface Activity {
     | "bot_handoff"
     | "campaign_sent"
     | "new_contact"
-    | "conversation_closed";
+    | "conversation_closed"
+    | "conversation_created"
+    | "tool_executed";
   title: string;
   detail: string;
   icon: string;

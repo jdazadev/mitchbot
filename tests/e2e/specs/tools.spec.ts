@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures';
 import type { APIRequestContext } from '@playwright/test';
 import { E2E } from '../helpers/config';
-import { startPublicConversation } from '../helpers/api';
+import { listActivities, startPublicConversation } from '../helpers/api';
 import { uniqueEmail, uniqueId } from '../helpers/data';
 
 async function createProject(api: APIRequestContext, suffix: string) {
@@ -162,6 +162,16 @@ test.describe('Módulo Tools', () => {
     });
     expect(approved.ok()).toBeTruthy();
     expect((await approved.json()).status).toBe('approved');
+    await expect.poll(async () => {
+      const response = await projectRequest(api, project._id, 'dashboard/activities', undefined, project.token);
+      const activities = await response.json();
+      return activities.some((activity: any) =>
+        activity.type === 'tool_executed' && activity.metadata?.conversationId === first.conversationId,
+      );
+    }).toBe(true);
+    const automationResponse = await projectRequest(api, project._id, 'dashboard/automation?days=30', undefined, project.token);
+    const automation = await automationResponse.json();
+    expect(automation.tools).toContainEqual({ name: first.toolName, count: 1, successRate: 0 });
 
     const historyParams = new URLSearchParams({
       tool: 'pagos', operation: 'crear', binding: 'internal', status: 'approved',

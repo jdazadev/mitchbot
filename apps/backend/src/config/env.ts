@@ -23,6 +23,8 @@ const envSchema = z.object({
   OPENROUTER_RERANKER_MODEL: z.string().optional(),
   // Modelo opcional para el análisis de conversaciones (insights); si no se define, se usa el de chat.
   OPENROUTER_INSIGHTS_MODEL: z.string().optional(),
+  DASHBOARD_RESPONSE_CONVERSATION_LIMIT: z.coerce.number().int().positive().default(5000),
+  DASHBOARD_RESPONSE_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
 
   // Auth
   JWT_SECRET: z.string().default('mitchbot-secret-change-in-production'),

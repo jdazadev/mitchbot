@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures';
 import { E2E } from '../helpers/config';
-import { startPublicConversation, sendPublicMessage } from '../helpers/api';
+import { listActivities, startPublicConversation, sendPublicMessage } from '../helpers/api';
 import { uniqueId, uniqueName } from '../helpers/data';
 
 test.describe('Tiempo real', () => {
@@ -62,6 +62,14 @@ test.describe('Tiempo real', () => {
     await expect(page.getByText('Confirmación requerida').last()).toBeVisible({ timeout: 25_000 });
     await page.getByRole('button', { name: /^Confirmar$/ }).last().click();
     await expect(page.getByText(/Cita agendada/i).last()).toBeVisible({ timeout: 25_000 });
+    await expect.poll(async () => {
+      const activities = await listActivities(api);
+      return activities.some((activity: any) =>
+        activity.type === 'tool_executed' &&
+        activity.metadata?.conversationId === conversationId &&
+        activity.metadata?.toolName === 'agenda_crear',
+      );
+    }).toBe(true);
 
     // --- Cancelación de herramienta ---
     await sendPublicMessage(api, E2E.project.slug, conversationId, `AGENDAR_CITA cancelar ${id}`);

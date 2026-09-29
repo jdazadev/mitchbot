@@ -184,8 +184,18 @@ export async function listConversations(api: APIRequestContext) {
   return res.json();
 }
 
-export async function getConversationMessages(api: APIRequestContext, conversationId: string) {
-  const res = await api.get(`conversations/${conversationId}/messages`);
+export async function listActivities(api: APIRequestContext, projectId?: string) {
+  const res = await api.get('dashboard/activities', {
+    ...(projectId ? { headers: { 'X-Project-Id': projectId } } : {}),
+  });
+  if (!res.ok()) throw new Error(`listActivities falló (${res.status()})`);
+  return res.json();
+}
+
+export async function getConversationMessages(api: APIRequestContext, conversationId: string, projectId?: string) {
+  const res = await api.get(`conversations/${conversationId}/messages`, {
+    ...(projectId ? { headers: { 'X-Project-Id': projectId } } : {}),
+  });
   if (!res.ok()) throw new Error(`getConversationMessages falló (${res.status()})`);
   return res.json();
 }

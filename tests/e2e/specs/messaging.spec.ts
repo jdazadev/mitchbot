@@ -8,6 +8,7 @@ import {
   listConversations,
   getConversationMessages,
   getConversation,
+  listActivities,
   getProjectBySlug,
   createConversationContact,
   getInsights,
@@ -129,6 +130,12 @@ test.describe('Mensajería', () => {
     const conversations = await listConversations(api);
     const found = conversations.find((c: any) => c._id === conversationId);
     expect(found?.isContactCreated).toBeTruthy();
+    await expect.poll(async () => {
+      const activities = await listActivities(api);
+      return activities.some((activity: any) =>
+        activity.type === 'new_contact' && activity.metadata?.conversationId === conversationId,
+      );
+    }).toBe(true);
   });
 
   test('el envío de mensaje humano persiste vía API', async ({ api }) => {

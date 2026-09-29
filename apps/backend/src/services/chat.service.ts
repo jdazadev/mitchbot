@@ -3,6 +3,7 @@ import { HumanMessage, AIMessage, SystemMessage, BaseMessage } from '@langchain/
 import { getConversationsCollection, Conversation } from '../models/conversation.model';
 import { getMessagesCollection, Message } from '../models/message.model';
 import { getContactsCollection, Contact } from '../models/contact.model';
+import { Activity } from '../models/activity.model';
 import { getProjectsCollection } from '../models/project.model';
 import { ragService } from './rag.service';
 import { aiService } from './ai.service';
@@ -15,6 +16,14 @@ import { insightsService } from './insights.service';
 import { emitToRoom, emitToProject, emitToProjectDashboard } from '../websocket/socket';
 import { ToolContext } from '../tools/types';
 import { logger } from '../utils/logger';
+import { analyticsService } from './analytics.service';
+
+function trackActivitySafely(activity: Omit<Activity, '_id' | 'createdAt'>) {
+  if (!activity.projectId) return;
+  void analyticsService.trackActivity(activity).catch((error) => {
+    logger.warn('[Analytics] Could not record activity', error);
+  });
+}
 
 export const chatService = {
   isGoodbyeMessage(message: string, keywords: string[] = []) {
@@ -82,10 +91,22 @@ export const chatService = {
     const goodbyeText = '¡Gracias por tu consulta! Hasta pronto.';
     await this.sendMessage(conversationId, goodbyeText, 'ai_agent', agent.name || 'Mitchbot');
     try {
+      const conversation = await getConversationsCollection().findOne({ _id: new ObjectId(conversationId) });
       await getConversationsCollection().updateOne(
         { _id: new ObjectId(conversationId) },
         { $set: { status: 'closed', updatedAt: new Date() } }
       );
+      if (conversation?.status !== 'closed') {
+        trackActivitySafely({
+          projectId: conversation?.projectId,
+          type: 'conversation_closed',
+          title: 'Conversación cerrada',
+          detail: conversation?.clientInfo.name || 'Cliente',
+          icon: 'CheckCircle',
+          color: 'lime',
+          metadata: { conversationId },
+        });
+      }
     } catch (e) {
       logger.warn('[Chat] Could not update conversation status after goodbye', e);
     }
@@ -100,6 +121,17 @@ export const chatService = {
         { $set: { status: 'closed', updatedAt: new Date() } }
       );
       emitToRoom(conversationId, 'chat:status', { mode: conversation?.mode, status: 'closed' });
+      if (conversation?.status !== 'closed') {
+        trackActivitySafely({
+          projectId: conversation?.projectId,
+          type: 'conversation_closed',
+          title: 'Conversación cerrada',
+          detail: conversation?.clientInfo.name || 'Cliente',
+          icon: 'CheckCircle',
+          color: 'lime',
+          metadata: { conversationId },
+        });
+      }
     } catch (e) {
       logger.warn('[Chat] Could not close conversation', e);
     }
@@ -157,6 +189,16 @@ export const chatService = {
     };
 
     await conversationsColl.insertOne(conversation);
+
+    trackActivitySafely({
+      projectId: conversation.projectId,
+      type: 'conversation_created',
+      title: 'Nueva conversación',
+      detail: data.clientName || 'Cliente nuevo',
+      icon: 'ChatTeardropText',
+      color: 'sky',
+      metadata: { conversationId: conversation._id!.toString(), platform: data.platform },
+    });
 
     const message = await this.sendMessage(
       conversation._id!.toString(),
@@ -334,6 +376,15 @@ export const chatService = {
       contact = { ...newContact, _id: result.insertedId };
       created = true;
       logger.info(`New contact created: ${contact._id} for conversation ${conversationId}`);
+      trackActivitySafely({
+        projectId: conversation.projectId,
+        type: 'new_contact',
+        title: 'Nuevo contacto',
+        detail: contact.name,
+        icon: 'UserPlus',
+        color: 'lilac',
+        metadata: { contactId: contact._id!.toString(), conversationId },
+      });
     }
 
     await conversationsColl.updateOne(
@@ -708,6 +759,15 @@ export const chatService = {
       });
       const result = await toolService.execute(call, context);
       await toolExecutionService.setStatus(execution._id!, result.success ? 'executed' : 'failed', result.data ?? result.message);
+      trackActivitySafely({
+        projectId: args.conversation.projectId,
+        type: 'tool_executed',
+        title: 'Herramienta ejecutada',
+        detail: call.name,
+        icon: 'Wrench',
+        color: result.success ? 'lime' : 'butter',
+        metadata: { toolName: call.name, conversationId: args.conversationId, success: result.success },
+      });
       results.push({ name: call.name, success: result.success, message: result.message });
 
       await this.createToolMessage({
@@ -769,6 +829,15 @@ export const chatService = {
       { name: execution.toolName, arguments: execution.params || {} }, context,
       { allowDisabled: true, authorization: 'operator_approved' },
     );
+    trackActivitySafely({
+      projectId: execution.projectId || conversation.projectId,
+      type: 'tool_executed',
+      title: 'Herramienta ejecutada',
+      detail: execution.toolName,
+      icon: 'Wrench',
+      color: result.success ? 'lime' : 'butter',
+      metadata: { toolName: execution.toolName, conversationId, success: result.success },
+    });
     const status = result.success ? 'approved' : 'failed';
     await toolExecutionService.setStatus(execution._id!, status, result.data ?? result.message, userId, userId);
     await this.updateConfirmationMessage(conversationId, execution.messageId, result.success ? 'success' : 'error', { content: result.message });
@@ -929,6 +998,16 @@ export const chatService = {
     const call: ParsedToolCall = { name: execution.toolName, arguments: execution.params || {} };
     const context = this.buildToolContext(conversation, projectId, execution.userMessage || '', agent);
     const result = await toolService.execute(call, context, { authorization: 'client_confirmed' });
+
+    trackActivitySafely({
+      projectId: execution.projectId || conversation.projectId,
+      type: 'tool_executed',
+      title: 'Herramienta ejecutada',
+      detail: execution.toolName,
+      icon: 'Wrench',
+      color: result.success ? 'lime' : 'butter',
+      metadata: { toolName: execution.toolName, conversationId, success: result.success },
+    });
 
     await toolExecutionService.setStatus(
       execution._id!,

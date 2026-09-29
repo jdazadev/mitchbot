@@ -99,21 +99,47 @@
     "collapse": "Contraer"
   },
   "dashboard": {
+    "sections": {
+      "outcomes": "Resultados",
+      "botHealth": "Salud del bot"
+    },
     "stats": {
       "totalConversations": "Conversaciones totales",
       "activeChats": "Conversaciones activas",
-      "responseRate": "Tasa de respuesta"
+      "responseRate": "Tasa de respuesta",
+      "activeDetail": "{count} activas"
+    },
+    "outcomes": {
+      "leads": "Leads capturados",
+      "appointments": "Citas agendadas",
+      "appointmentBreakdown": "Pendientes {pending} | Confirmadas {confirmed} | Completadas {completed} | Canceladas {cancelled}",
+      "conversionRate": "Conversión a lead"
+    },
+    "health": {
+      "responseRate": "Tasa de respuesta",
+      "firstResponse": "Primera respuesta",
+      "botCoverage": "Cobertura del bot",
+      "backlog": "En espera de agente",
+      "unreadCount": "{count} mensajes sin leer",
+      "noResponses": "Sin respuestas en este rango",
+      "seconds": "{count} s",
+      "minutes": "{count} min"
     },
     "volume": {
       "title": "Volumen de conversaciones",
-      "subtitle": "Conversaciones iniciadas en el tiempo",
+      "subtitle": "Conversaciones iniciadas y mensajes por emisor",
       "lastDays": "Últimos {days} días",
       "daily": "Diaria",
       "weekly": "Semanal",
       "monthly": "Mensual",
       "noData": "Sin datos en este rango",
       "tableDate": "Fecha",
-      "tableCount": "Conversaciones"
+      "tableCount": "Conversaciones",
+      "senderBreakdown": "Mensajes por período",
+      "senderContact": "Cliente",
+      "senderBot": "Bot",
+      "senderHuman": "Agente",
+      "senderRow": "{date}: {contact} del cliente, {bot} del bot y {human} del agente"
     },
     "channels": {
       "title": "Distribución por canal"
@@ -121,6 +147,20 @@
     "activity": {
       "title": "Actividad reciente",
       "empty": "Sin actividad reciente"
+    },
+    "sentiment": {
+      "title": "Sentimiento de conversaciones",
+      "analyzed": "{count} analizadas",
+      "positive": "Positivo",
+      "neutral": "Neutral",
+      "negative": "Negativo",
+      "empty": "Sin análisis de sentimiento en este rango"
+    },
+    "tools": {
+      "title": "Herramientas más usadas",
+      "empty": "Sin herramientas ejecutadas en este rango",
+      "executions": "{count} ejecuciones",
+      "successRate": "{rate}% éxito"
     },
     "time": {
       "justNow": "ahora mismo",

@@ -5,6 +5,7 @@ import {
   sendPublicMessage,
   listConversations,
   getConversationMessages,
+  listActivities,
 } from '../helpers/api';
 import { uniqueId, uniqueName } from '../helpers/data';
 
@@ -69,6 +70,30 @@ test.describe('Memoria y flujo de conversación', () => {
     const found = conversations.find((c) => c._id === conversationId);
     expect(found?.status).toBe('active');
     expect(found?.mode).toBe('auto_pilot');
+  });
+
+  test('registra la actividad cuando una despedida cierra la conversación', async ({ api }) => {
+    const id = uniqueId();
+    const started = await startPublicConversation(api, {
+      slug: E2E.project.slug,
+      clientIdentifier: `goodbye-${id}`,
+      initialMessage: `Hola ${id}`,
+    });
+    const conversationId = started.conversation._id;
+    await waitForBotReplies(api, conversationId, 1);
+
+    await sendPublicMessage(api, E2E.project.slug, conversationId, `adios ${id}`);
+    await expect.poll(async () => {
+      const conversations = await listConversations(api) as any[];
+      return conversations.find((conversation) => conversation._id === conversationId)?.status;
+    }, { timeout: 25_000 }).toBe('closed');
+
+    await expect.poll(async () => {
+      const activities = await listActivities(api);
+      return activities.some((activity: any) =>
+        activity.type === 'conversation_closed' && activity.metadata?.conversationId === conversationId,
+      );
+    }).toBe(true);
   });
 
   test('la transferencia a un asesor se refleja en vivo en el dashboard', async ({ page, api }) => {

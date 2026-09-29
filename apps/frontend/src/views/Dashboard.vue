@@ -4,6 +4,8 @@ import { useI18n } from "vue-i18n";
 import {
   dashboardService,
   type DashboardStats,
+  type DashboardOutcomes,
+  type DashboardAutomation,
   type Activity,
   type ChannelDistribution,
   type VolumeData,
@@ -11,9 +13,12 @@ import {
 } from "../services/dashboard.service";
 import AIcon from "../components/ui/AIcon.vue";
 import AButton from "../components/ui/AButton.vue";
+import DashboardMetricBand from "../components/dashboard/DashboardMetricBand.vue";
+import DashboardSentimentPanel from "../components/dashboard/DashboardSentimentPanel.vue";
+import DashboardToolsPanel from "../components/dashboard/DashboardToolsPanel.vue";
 import { CHANNEL_META, channelFill } from "../lib/channels";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 
@@ -32,7 +37,24 @@ const dashboardStats = ref<DashboardStats>({
   total: 0,
   active: 0,
   closed: 0,
-  responseRate: "0%",
+  responseRate: 0,
+  firstResponseMs: null,
+  botCoverage: 0,
+  backlog: { pendingHuman: 0, unread: 0 },
+});
+
+const dashboardOutcomes = ref<DashboardOutcomes>({
+  leads: 0,
+  appointments: {
+    total: 0,
+    byStatus: { pending: 0, confirmed: 0, completed: 0, cancelled: 0 },
+  },
+  conversionRate: 0,
+});
+
+const dashboardAutomation = ref<DashboardAutomation>({
+  sentiment: { positive: 0, neutral: 0, negative: 0, analyzed: 0 },
+  tools: [],
 });
 
 const channelData = ref<ChannelDistribution>({
@@ -43,29 +65,82 @@ const channelData = ref<ChannelDistribution>({
 
 const activityList = ref<Activity[]>([]);
 
-const stats = computed(() => [
+const formatNumber = (value: number) => new Intl.NumberFormat(locale.value).format(value);
+const formatPercent = (value: number) => `${formatNumber(value)}%`;
+
+function formatFirstResponse(value: number | null) {
+  if (value === null) return t("dashboard.health.noResponses");
+  if (value < 60_000) {
+    return t("dashboard.health.seconds", { count: new Intl.NumberFormat(locale.value, { maximumFractionDigits: 1 }).format(value / 1000) });
+  }
+  return t("dashboard.health.minutes", { count: new Intl.NumberFormat(locale.value, { maximumFractionDigits: 1 }).format(value / 60_000) });
+}
+
+const resultMetrics = computed(() => [
   {
     label: t("dashboard.stats.totalConversations"),
     testId: "total-conversations",
-    value: new Intl.NumberFormat().format(dashboardStats.value.total),
+    value: formatNumber(dashboardStats.value.total),
+    detail: t("dashboard.stats.activeDetail", { count: formatNumber(dashboardStats.value.active) }),
     icon: "ChatTeardropText",
   },
   {
-    label: t("dashboard.stats.activeChats"),
-    testId: "active-chats",
-    value: dashboardStats.value.active.toString(),
-    icon: "ChatsCircle",
+    label: t("dashboard.outcomes.leads"),
+    testId: "leads",
+    value: formatNumber(dashboardOutcomes.value.leads),
+    icon: "UserPlus",
   },
   {
-    label: t("dashboard.stats.responseRate"),
+    label: t("dashboard.outcomes.appointments"),
+    testId: "appointments",
+    value: formatNumber(dashboardOutcomes.value.appointments.total),
+    detail: t("dashboard.outcomes.appointmentBreakdown", {
+      pending: formatNumber(dashboardOutcomes.value.appointments.byStatus.pending),
+      confirmed: formatNumber(dashboardOutcomes.value.appointments.byStatus.confirmed),
+      completed: formatNumber(dashboardOutcomes.value.appointments.byStatus.completed),
+      cancelled: formatNumber(dashboardOutcomes.value.appointments.byStatus.cancelled),
+    }),
+    icon: "CalendarCheck",
+  },
+  {
+    label: t("dashboard.outcomes.conversionRate"),
+    testId: "conversion-rate",
+    value: formatPercent(dashboardOutcomes.value.conversionRate),
+    icon: "ChartLineUp",
+  },
+]);
+
+const healthMetrics = computed(() => [
+  {
+    label: t("dashboard.health.responseRate"),
     testId: "response-rate",
-    value: dashboardStats.value.responseRate,
+    value: formatPercent(dashboardStats.value.responseRate),
     icon: "Lightning",
+  },
+  {
+    label: t("dashboard.health.firstResponse"),
+    testId: "first-response",
+    value: formatFirstResponse(dashboardStats.value.firstResponseMs),
+    icon: "Clock",
+  },
+  {
+    label: t("dashboard.health.botCoverage"),
+    testId: "bot-coverage",
+    value: formatPercent(dashboardStats.value.botCoverage),
+    icon: "Robot",
+  },
+  {
+    label: t("dashboard.health.backlog"),
+    testId: "backlog",
+    value: formatNumber(dashboardStats.value.backlog.pendingHuman),
+    detail: t("dashboard.health.unreadCount", { count: formatNumber(dashboardStats.value.backlog.unread) }),
+    icon: "Tray",
   },
 ]);
 
 const activities = computed(() =>
   activityList.value.map((act) => ({
+    id: act._id || `${act.title}-${act.createdAt}`,
     title: act.title,
     detail: act.detail,
     time: timeAgo(act.createdAt),
@@ -88,6 +163,22 @@ function timeAgo(dateString: string) {
   return t("dashboard.time.daysAgo", { count: days });
 }
 
+function formatPeriodDate(value: string) {
+  let date: Date;
+  if (period.value === "weekly") {
+    const [year, week] = value.split("-").map(Number);
+    const januaryFourth = new Date(Date.UTC(year, 0, 4));
+    const mondayOffset = (januaryFourth.getUTCDay() + 6) % 7;
+    date = new Date(januaryFourth.getTime() - mondayOffset * 86_400_000 + (week - 1) * 7 * 86_400_000);
+  } else {
+    date = new Date(`${value}${period.value === "monthly" ? "-01" : ""}T00:00:00Z`);
+  }
+  const options: Intl.DateTimeFormatOptions = period.value === "monthly"
+    ? { month: "short", year: "numeric", timeZone: "UTC" }
+    : { month: "short", day: "numeric", timeZone: "UTC" };
+  return new Intl.DateTimeFormat(locale.value, options).format(date);
+}
+
 const whatsappPercent = computed(() => channelData.value.whatsapp);
 const instagramPercent = computed(() => channelData.value.instagram);
 const webPercent = computed(() => channelData.value.web);
@@ -98,16 +189,37 @@ const channelBars = computed(() => [
   { key: "web", label: CHANNEL_META.Web.label, pct: webPercent.value, color: channelFill("Web") },
 ]);
 
+const volumeSenderTotals = computed(() => volumeData.value.reduce(
+  (totals, row) => ({
+    contact: totals.contact + row.bySender.contact,
+    bot: totals.bot + row.bySender.bot,
+    human: totals.human + row.bySender.human,
+  }),
+  { contact: 0, bot: 0, human: 0 },
+));
+
+const volumeSenderRows = computed(() => volumeData.value.slice(-7).map((row) => {
+  const total = row.bySender.contact + row.bySender.bot + row.bySender.human;
+  return {
+    ...row,
+    total,
+    contactPercent: total ? (row.bySender.contact / total) * 100 : 0,
+    botPercent: total ? (row.bySender.bot / total) * 100 : 0,
+    humanPercent: total ? (row.bySender.human / total) * 100 : 0,
+  };
+}));
+
 // === Gráfico de volumen (a partir de los datos del rango/periodo) ===
 const volumePoints = computed(() => {
   const data = volumeData.value;
-  if (data.length === 0) return [] as { x: number; y: number; date: string; count: number }[];
+  if (data.length === 0) return [] as { x: number; y: number; date: string; dateKey: string; count: number }[];
   const max = Math.max(...data.map((d) => d.count), 1);
   const denominator = data.length > 1 ? data.length - 1 : 1;
   return data.map((d, i) => ({
     x: data.length > 1 ? (i / denominator) * 1000 : 500,
     y: 280 - (d.count / max) * 260,
-    date: d.date,
+    date: formatPeriodDate(d.date),
+    dateKey: d.date,
     count: d.count,
   }));
 });
@@ -150,14 +262,18 @@ async function loadDashboard() {
     isLoading.value = true;
     error.value = null;
 
-    const [statsRes, channelsRes, activitiesRes, volumeRes] = await Promise.all([
+    const [statsRes, outcomesRes, automationRes, channelsRes, activitiesRes, volumeRes] = await Promise.all([
       dashboardService.getStats(rangeDays.value),
+      dashboardService.getOutcomes(rangeDays.value),
+      dashboardService.getAutomation(rangeDays.value),
       dashboardService.getChannelDistribution(rangeDays.value),
       dashboardService.getActivities(),
       dashboardService.getVolume(period.value, rangeDays.value),
     ]);
 
     dashboardStats.value = statsRes;
+    dashboardOutcomes.value = outcomesRes;
+    dashboardAutomation.value = automationRes;
     channelData.value = channelsRes;
     activityList.value = activitiesRes;
     volumeData.value = volumeRes;
@@ -196,36 +312,10 @@ onMounted(() => {
     </div>
 
     <template v-else>
-      <!-- Stats -->
-      <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:[grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
-        <div
-          v-for="stat in stats"
-          :key="stat.label"
-          :data-testid="'stat-' + stat.testId"
-          class="rounded-card bg-surface p-5 px-6 shadow-card"
-        >
-          <div class="flex items-center gap-2.5">
-            <span class="grid h-8 w-8 place-items-center rounded-[11px] bg-sunken text-ink-2">
-              <AIcon :name="stat.icon" :size="16" weight="bold" />
-            </span>
-            <span class="text-xs font-semibold text-ink-3">{{ stat.label }}</span>
-          </div>
-          <div
-            v-if="isLoading"
-            class="mt-3 h-9 w-24 animate-pulse rounded-lg bg-sunken"
-            aria-hidden="true"
-          />
-          <div
-            v-else
-            class="mt-3 font-display text-[38px] font-bold leading-none tracking-[-0.04em] [font-variant-numeric:tabular-nums]"
-          >
-            {{ stat.value }}
-          </div>
-        </div>
-      </div>
+      <DashboardMetricBand :title="t('dashboard.sections.outcomes')" :metrics="resultMetrics" :is-loading="isLoading" />
+      <DashboardMetricBand :title="t('dashboard.sections.botHealth')" :metrics="healthMetrics" :is-loading="isLoading" />
 
-    <!-- Charts -->
-    <div class="grid grid-cols-1 gap-3.5 xl:grid-cols-[1.7fr_1fr]">
+      <!-- Conversation volume and message mix -->
       <div class="rounded-card bg-surface p-5 px-6 shadow-card">
         <div class="flex flex-wrap items-center gap-3">
           <div>
@@ -351,7 +441,7 @@ onMounted(() => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="p in volumePoints" :key="p.date">
+              <tr v-for="p in volumePoints" :key="p.dateKey">
                 <th scope="row">{{ p.date }}</th>
                 <td>{{ p.count }}</td>
               </tr>
@@ -361,11 +451,43 @@ onMounted(() => {
         <div class="mt-4 flex justify-between px-2 text-xs font-medium text-ink-3">
           <span v-for="(label, i) in volumeLabels" :key="i">{{ label }}</span>
         </div>
+
+        <div class="mt-5 border-t border-line pt-4">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-2">
+            <span class="font-semibold">{{ t("dashboard.volume.senderBreakdown") }}</span>
+            <span>{{ t("dashboard.volume.senderContact") }} {{ formatNumber(volumeSenderTotals.contact) }}</span>
+            <span>{{ t("dashboard.volume.senderBot") }} {{ formatNumber(volumeSenderTotals.bot) }}</span>
+            <span>{{ t("dashboard.volume.senderHuman") }} {{ formatNumber(volumeSenderTotals.human) }}</span>
+          </div>
+          <div v-if="volumeSenderRows.length" class="mt-3 space-y-2">
+            <div
+              v-for="row in volumeSenderRows"
+              :key="row.date"
+              class="grid grid-cols-[minmax(58px,auto)_1fr] items-center gap-3 text-[11px] text-ink-3"
+            >
+              <span class="truncate">{{ formatPeriodDate(row.date) }}</span>
+              <div
+                class="flex h-2.5 overflow-hidden rounded-full bg-sunken"
+                role="img"
+                :aria-label="t('dashboard.volume.senderRow', {
+                  date: row.date,
+                  contact: formatNumber(row.bySender.contact),
+                  bot: formatNumber(row.bySender.bot),
+                  human: formatNumber(row.bySender.human),
+                })"
+              >
+                <span class="h-full bg-sky" :style="{ width: `${row.contactPercent}%` }" />
+                <span class="h-full bg-lime" :style="{ width: `${row.botPercent}%` }" />
+                <span class="h-full bg-lilac" :style="{ width: `${row.humanPercent}%` }" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="flex flex-col gap-3.5">
+      <div class="grid grid-cols-1 gap-3.5 xl:grid-cols-2">
         <!-- Channel distribution -->
-        <div class="flex-1 rounded-card bg-surface p-5 px-6 shadow-card">
+        <div class="rounded-card bg-surface p-5 px-6 shadow-card">
           <h3 data-testid="channels-title" class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">
             {{ t("dashboard.channels.title") }}
           </h3>
@@ -382,8 +504,12 @@ onMounted(() => {
           </div>
         </div>
 
+        <DashboardSentimentPanel :sentiment="dashboardAutomation.sentiment" />
+      </div>
+
+      <div class="grid grid-cols-1 gap-3.5 xl:grid-cols-2">
         <!-- Recent activity -->
-        <div class="flex-1 rounded-card bg-surface p-5 px-6 shadow-card">
+        <div class="rounded-card bg-surface p-5 px-6 shadow-card">
           <h3 data-testid="activity-title" class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">
             {{ t("dashboard.activity.title") }}
           </h3>
@@ -393,7 +519,7 @@ onMounted(() => {
           <div v-else class="mt-3 flex flex-col">
             <div
               v-for="act in activities"
-              :key="act.title"
+              :key="act.id"
               class="flex items-start gap-3 border-b border-line py-3 last:border-b-0"
             >
               <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-canvas text-ink-2">
@@ -407,8 +533,9 @@ onMounted(() => {
             </div>
           </div>
         </div>
+
+        <DashboardToolsPanel :tools="dashboardAutomation.tools" />
       </div>
-    </div>
     </template>
   </div>
 </template>

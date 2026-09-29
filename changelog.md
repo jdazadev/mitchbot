@@ -5,6 +5,29 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.13.0 — 2026-09-28
+
+> 📊 **Resumen funcional**: resultados del negocio y salud del bot con datos reales
+
+### ✨ Añadido
+- **Resultados**: el Resumen presenta conversaciones, leads capturados, citas por estado y conversión de conversaciones a leads.
+- **Salud del bot**: muestra tasa real de respuesta, mediana del tiempo de primera respuesta, cobertura en piloto automático y backlog de atención/no leídos.
+- **Automatización y volumen**: agrega sentimiento analizado y herramientas más usadas con tasa de éxito; el volumen separa mensajes de clientes, bot y agentes.
+- **Actividad reciente**: se registran las conversaciones creadas/cerradas, contactos nuevos y herramientas ejecutadas. Un fallo de tracking no interrumpe el chat.
+- **Estados vacíos localizados** en español e inglés para datos de respuesta, sentimiento y herramientas.
+
+### 🔧 Cambiado
+- `GET /api/dashboard/stats` devuelve métricas reales de mensajería, cobertura y backlog; se añaden `GET /api/dashboard/outcomes` y `GET /api/dashboard/automation`.
+- Las métricas conservan el aislamiento por proyecto y aceptan `days` o `from`/`to`. El cálculo de respuesta limita la ventana a 5000 conversaciones por defecto y a 5000 ms; se puede ajustar con `DASHBOARD_RESPONSE_CONVERSATION_LIMIT` y `DASHBOARD_RESPONSE_TIMEOUT_MS`.
+- El Resumen se organiza en las bandas **Resultados** y **Salud del bot**, con desglose de mensajes por emisor y formatos del locale activo.
+
+### ✅ Verificación
+- Backend `build`; frontend `vue-tsc --noEmit` y `build`.
+- Suite E2E: **53/53**; paridad es/en: **698/698**.
+- Chromium comprobó estados vacíos, cambio de idioma, tema oscuro y layout sin overflow a 1440/390.
+
+---
+
 ## v4.12.0 — 2026-09-28
 
 > 🚦 **Urgencia analizada**: prioridad del cliente visible en el hilo y la bandeja

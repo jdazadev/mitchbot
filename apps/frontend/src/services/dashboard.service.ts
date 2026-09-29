@@ -6,12 +6,30 @@ export interface DashboardStats {
   total: number;
   active: number;
   closed: number;
-  responseRate: string;
+  responseRate: number;
+  firstResponseMs: number | null;
+  botCoverage: number;
+  backlog: { pendingHuman: number; unread: number };
 }
 
 export interface VolumeData {
   date: string;
   count: number;
+  bySender: { contact: number; bot: number; human: number };
+}
+
+export interface DashboardOutcomes {
+  leads: number;
+  appointments: {
+    total: number;
+    byStatus: { pending: number; confirmed: number; completed: number; cancelled: number };
+  };
+  conversionRate: number;
+}
+
+export interface DashboardAutomation {
+  sentiment: { positive: number; neutral: number; negative: number; analyzed: number };
+  tools: { name: string; count: number; successRate: number }[];
 }
 
 export interface ChannelDistribution {
@@ -21,6 +39,7 @@ export interface ChannelDistribution {
 }
 
 export interface Activity {
+  _id?: string;
   type: string;
   title: string;
   detail: string;
@@ -38,6 +57,24 @@ export const dashboardService = {
       headers: authService.getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to fetch stats');
+    return res.json();
+  },
+
+  async getOutcomes(days?: number): Promise<DashboardOutcomes> {
+    const query = days ? `?days=${days}` : '';
+    const res = await fetch(`${API_URL}/dashboard/outcomes${query}`, {
+      headers: authService.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch outcomes');
+    return res.json();
+  },
+
+  async getAutomation(days?: number): Promise<DashboardAutomation> {
+    const query = days ? `?days=${days}` : '';
+    const res = await fetch(`${API_URL}/dashboard/automation${query}`, {
+      headers: authService.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch automation');
     return res.json();
   },
 

@@ -13,7 +13,21 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.12.0
+**Versión actual del proyecto:** v4.13.0
+
+---
+
+## Resumen funcional (v4.13.0)
+
+- **Resultados**: el Resumen incluye conversaciones, leads capturados (contactos no archivados), citas por estado y conversión `leads / conversaciones`.
+- **Salud del bot**: `GET /api/dashboard/stats` calcula tasa real de respuesta, mediana de primera respuesta, cobertura `auto_pilot / total` y `backlog { pendingHuman, unread }`. La mediana excluye conversaciones sin respuesta.
+- **Automatización**: `GET /api/dashboard/automation` devuelve la distribución de sentimiento analizado y las cinco herramientas más ejecutadas con recuento y éxito (`status: executed / total`).
+- **Volumen**: `GET /api/dashboard/volume` conserva el conteo de conversaciones y añade `bySender { contact, bot, human }` por período; excluye mensajes y contenido interno de herramientas.
+- **Actividad real**: se registran conversaciones creadas/cerradas, contactos creados y herramientas ejecutadas. El tracking es fire-and-forget y registra el error sin alterar el flujo del chat.
+- **Rango y aislamiento**: `stats`, `outcomes`, `automation` y `volume` aceptan `days` o `from`/`to` y se limitan al proyecto resuelto por `authenticate`. Los nuevos endpoints son `GET /api/dashboard/outcomes` y `GET /api/dashboard/automation`.
+- **Límite del análisis de respuesta**: `DASHBOARD_RESPONSE_CONVERSATION_LIMIT` (5000 por defecto) y `DASHBOARD_RESPONSE_TIMEOUT_MS` (5000 ms) configuran la ventana reciente y el límite de consulta en MongoDB.
+- **Presentación**: Dashboard agrupa métricas bajo Resultados y Salud del bot, y añade paneles de sentimiento y herramientas. Los estados vacíos y números/fechas usan el locale activo.
+- **Verificación**: backend `build`; frontend `vue-tsc --noEmit` + `build`; paridad es/en **698/698**; E2E **53/53**; layout y tema oscuro comprobados en Chromium a 1440/390.
 
 ---
 
@@ -620,7 +634,7 @@ Cada usuario pertenece a uno o más proyectos y tiene un proyecto activo.
 ### 11. Shell y navegación
 
 - **Nomenclatura de módulos**: el rail y los títulos del Topbar muestran **"Brain"**, **"Clients"** y **"Tools"**. La ruta de clientes es `/clients` y `/contacts` redirige a ella; herramientas vive en `/tools`.
-- **Rango de fechas del panel**: el widget estático "Last 30 Days" del Topbar se eliminó. El Dashboard ofrece un control real de últimos 7/30/90 días (30 por defecto) que recalcula métricas, canales y volumen; los toggles Diaria/Semanal/Mensual cambian la granularidad del volumen. El backend (`analytics.service`/`dashboard.controller`) acepta `days` o `from`/`to` y `period = daily | weekly | monthly`. Todas las rutas del dashboard exigen autenticación y acotan las métricas (`stats`, `volume`, `channels`, `activities`) al proyecto resuelto (`req.projectId`).
+- **Rango de fechas del panel**: el widget estático "Last 30 Days" del Topbar se eliminó. El Dashboard ofrece un control real de últimos 7/30/90 días (30 por defecto) que recalcula métricas, canales y volumen; los toggles Diaria/Semanal/Mensual cambian la granularidad del volumen. El backend (`analytics.service`/`dashboard.controller`) acepta `days` o `from`/`to` y `period = daily | weekly | monthly`. Todas las rutas del dashboard exigen autenticación y acotan las métricas (`stats`, `outcomes`, `automation`, `volume`, `channels`, `activities`) al proyecto resuelto (`req.projectId`).
 - **Centro de notificaciones**: el Topbar escucha `admin:notification` (emitido por la tool `send_notification`), acumula las notificaciones en estado local, muestra el indicador solo si hay no leídas y permite marcarlas como leídas o limpiarlas. El alcance es la sesión activa (sin persistencia en base de datos).
 
 ### 12. Internacionalización (i18n)
@@ -713,7 +727,7 @@ Usuario abre la app
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
 | **Tools** | `GET /`, `PUT /config` | Catálogo de operaciones y configuración por proyecto |
 | **Tool Executions** | `GET /`, `GET /pending`, `POST /:id/approve`, `POST /:id/reject` | Historial, solicitudes pendientes y resolución por rol |
-| **Dashboard** | `GET /stats`, `GET /volume`, `GET /channels`, `GET /activities` | Analytics autenticada y acotada al proyecto activo (`X-Project-Id`/`activeProjectId`) |
+| **Dashboard** | `GET /stats`, `GET /outcomes`, `GET /automation`, `GET /volume`, `GET /channels`, `GET /activities` | Analytics autenticada y acotada al proyecto activo (`X-Project-Id`/`activeProjectId`) |
 | **Public Chat** | `GET /public/test-chat/:slug/config`, `POST /public/test-chat/:slug/start`, `POST /public/test-chat/:slug/:id/messages` | Chat público (clientes web); `config` expone el idioma del agente (sin auth) |
 
 > Todos los endpoints están bajo el prefijo `/api/<módulo>`.
@@ -839,9 +853,13 @@ OPENROUTER_OCR_MODEL=google/gemini-3.8-flash
 OPENROUTER_FILE_MODEL=<opcional-conversion-csv>
 OPENROUTER_RERANKER_MODEL=<opcional-fallback-embedding>
 OPENROUTER_INSIGHTS_MODEL=<opcional-fallback-llm>
+DASHBOARD_RESPONSE_CONVERSATION_LIMIT=5000
+DASHBOARD_RESPONSE_TIMEOUT_MS=5000
 ```
 
 > ⚠️ `OPENROUTER_LLM_MODEL` es obligatorio (sin default): si falta, la generación falla con un mensaje que indica definirlo. `OPENROUTER_FILE_MODEL`, `OPENROUTER_RERANKER_MODEL` y `OPENROUTER_INSIGHTS_MODEL` son opcionales (el CSV se indexa crudo, el re-ranker usa el modelo de embeddings y los insights usan `OPENROUTER_LLM_MODEL`, respectivamente).
+>
+> `DASHBOARD_RESPONSE_CONVERSATION_LIMIT` y `DASHBOARD_RESPONSE_TIMEOUT_MS` son límites positivos para el cálculo de respuesta del Dashboard; sus valores por defecto son 5000 conversaciones y 5000 ms.
 >
 > ⚠️ Cambiar `OPENROUTER_EMBEDDING_MODEL` **invalida los vectores existentes** y requiere reindexar con `pnpm --filter @mitchbot/backend tsx src/scripts/reindex-rag.ts`.
 

@@ -49,6 +49,28 @@ export const getStats = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
+export const getOutcomes = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = resolveProjectId(req, res);
+    if (!projectId) return;
+    const outcomes = await analyticsService.getOutcomes(projectId, parseRange(req));
+    res.json(outcomes);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAutomation = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = resolveProjectId(req, res);
+    if (!projectId) return;
+    const automation = await analyticsService.getAutomation(projectId, parseRange(req));
+    res.json(automation);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getVolume = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const projectId = resolveProjectId(req, res);

@@ -100,6 +100,8 @@ export default defineConfig({
         OPENROUTER_LLM_MODEL: E2E.stub.model,
         OPENROUTER_INSIGHTS_MODEL: E2E.stub.insightsModel,
         OPENROUTER_EMBEDDING_MODEL: E2E.stub.embedModel,
+        DASHBOARD_RESPONSE_CONVERSATION_LIMIT: '1',
+        DASHBOARD_RESPONSE_TIMEOUT_MS: '5000',
         FRONTEND_URL: E2E.frontendUrl,
       },
     },

@@ -99,21 +99,47 @@
     "collapse": "Collapse"
   },
   "dashboard": {
+    "sections": {
+      "outcomes": "Results",
+      "botHealth": "Bot health"
+    },
     "stats": {
       "totalConversations": "Total Conversations",
       "activeChats": "Active Chats",
-      "responseRate": "Response Rate"
+      "responseRate": "Response Rate",
+      "activeDetail": "{count} active"
+    },
+    "outcomes": {
+      "leads": "Leads captured",
+      "appointments": "Appointments booked",
+      "appointmentBreakdown": "Pending {pending} | Confirmed {confirmed} | Completed {completed} | Cancelled {cancelled}",
+      "conversionRate": "Lead conversion"
+    },
+    "health": {
+      "responseRate": "Response rate",
+      "firstResponse": "First response",
+      "botCoverage": "Bot coverage",
+      "backlog": "Waiting for an agent",
+      "unreadCount": "{count} unread messages",
+      "noResponses": "No responses in this range",
+      "seconds": "{count} sec",
+      "minutes": "{count} min"
     },
     "volume": {
       "title": "Conversation Volume",
-      "subtitle": "Conversations started over time",
+      "subtitle": "Conversations started and messages by sender",
       "lastDays": "Last {days} Days",
       "daily": "Daily",
       "weekly": "Weekly",
       "monthly": "Monthly",
       "noData": "No data in this range",
       "tableDate": "Date",
-      "tableCount": "Conversations"
+      "tableCount": "Conversations",
+      "senderBreakdown": "Messages per period",
+      "senderContact": "Customer",
+      "senderBot": "Bot",
+      "senderHuman": "Agent",
+      "senderRow": "{date}: {contact} from customers, {bot} from the bot, and {human} from agents"
     },
     "channels": {
       "title": "Channel Distribution"
@@ -121,6 +147,20 @@
     "activity": {
       "title": "Recent Activity",
       "empty": "No recent activity"
+    },
+    "sentiment": {
+      "title": "Conversation sentiment",
+      "analyzed": "{count} analyzed",
+      "positive": "Positive",
+      "neutral": "Neutral",
+      "negative": "Negative",
+      "empty": "No sentiment analysis in this range"
+    },
+    "tools": {
+      "title": "Most used tools",
+      "empty": "No tools executed in this range",
+      "executions": "{count} executions",
+      "successRate": "{rate}% success"
     },
     "time": {
       "justNow": "just now",
