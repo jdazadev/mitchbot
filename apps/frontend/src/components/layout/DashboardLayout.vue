@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AuroraRail from './AuroraRail.vue';
 import AuroraTopbar from './AuroraTopbar.vue';
@@ -10,6 +10,16 @@ defineProps<{
 
 const { t } = useI18n();
 const mobileNavOpen = ref(false);
+
+function closeMobileNav(navigated = false) {
+  mobileNavOpen.value = false;
+  nextTick(() => {
+    const target = navigated
+      ? document.getElementById('main-content')
+      : document.querySelector<HTMLElement>('[data-testid="nav-toggle"]');
+    target?.focus();
+  });
+}
 </script>
 
 <template>
@@ -25,15 +35,16 @@ const mobileNavOpen = ref(false);
     <AuroraRail
       v-if="mobileNavOpen"
       variant="mobile"
-      @navigate="mobileNavOpen = false"
+      @navigate="closeMobileNav(true)"
+      @close="closeMobileNav()"
     />
     <div
       v-if="mobileNavOpen"
       class="fixed inset-0 z-30 bg-[color:var(--overlay)] md:hidden"
       aria-hidden="true"
-      @click="mobileNavOpen = false"
+      @click="closeMobileNav()"
     />
-    <main id="main-content" class="relative z-10 flex h-full flex-1 flex-col overflow-hidden">
+    <main id="main-content" tabindex="-1" class="relative z-10 flex h-full flex-1 flex-col overflow-hidden">
       <AuroraTopbar :nav-open="mobileNavOpen" @toggle-nav="mobileNavOpen = !mobileNavOpen" />
       <div class="flex-1 overflow-y-auto px-[var(--shell-pad)] pb-[var(--shell-pad)] pt-[var(--shell-pad)] md:pl-[var(--rail-offset)]">
         <div

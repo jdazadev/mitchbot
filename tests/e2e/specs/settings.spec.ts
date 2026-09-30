@@ -57,4 +57,51 @@ test.describe('Configuración y agentes', () => {
     });
     expect(res.status()).toBe(400);
   });
+
+  test('carga el inglés bajo demanda y expone nombres y selecciones accesibles', async ({ page }) => {
+    await page.goto('/settings');
+    await expect(page.getByRole('heading', { name: 'Configuración' })).toBeVisible();
+
+    await page.getByTestId('language-selector').click();
+    await page.getByRole('menuitemradio', { name: 'Inglés' }).click();
+    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+    await page.getByTestId('language-selector').click();
+    await page.getByRole('menuitemradio', { name: 'Spanish' }).click();
+    await expect(page.getByRole('heading', { name: 'Configuración' })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Información' }).click();
+    await expect(page.getByLabel('Slug del Proyecto')).toBeVisible();
+    await expect(page.getByTestId('brand-color-hex')).toHaveAccessibleName('Color de la marca');
+
+    await page.getByRole('tab', { name: 'Agente IA' }).click();
+    await page.getByRole('button', { name: 'Conocimiento' }).click();
+    await page.getByRole('button', { name: 'Generación' }).click();
+    for (const groupName of ['Rol', 'Idioma', 'Longitud de respuesta', 'Comportamiento de búsqueda (RAG)']) {
+      const group = page.getByRole('group', { name: groupName });
+      await expect(group.getByRole('button', { pressed: true })).toHaveCount(1);
+    }
+    await expect(page.getByLabel(/Creatividad —/)).toBeVisible();
+    await expect(page.getByLabel(/Tokens máximos —/)).toBeVisible();
+
+    await page.goto('/profile');
+    await expect(page.getByLabel('Contraseña actual')).toBeVisible();
+    await expect(page.getByLabel('Nueva contraseña')).toBeVisible();
+    await expect(page.getByLabel('Confirmar nueva contraseña')).toBeVisible();
+  });
+
+  test('el drawer móvil devuelve el foco al cerrar y lo mueve al contenido al navegar', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    const trigger = page.getByTestId('nav-toggle');
+
+    await trigger.click();
+    await expect(page.getByRole('dialog', { name: 'Navegación principal' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
+
+    await trigger.click();
+    await page.getByRole('dialog', { name: 'Navegación principal' }).getByTestId('nav-users').click();
+    await expect(page).toHaveURL(/\/users$/);
+    await expect(page.locator('#main-content')).toBeFocused();
+  });
 });

@@ -402,7 +402,9 @@
     },
     "chat": {
       "selectPrompt": "Select a chat to start replying",
-      "loadingMessages": "Loading messages..."
+      "loadingMessages": "Loading messages...",
+      "loadOlderMessages": "Load earlier messages",
+      "loadingOlderMessages": "Loading earlier messages..."
     },
     "mode": {
       "autoPilotOn": "Auto-Pilot On",
@@ -493,6 +495,7 @@
     "errors": {
       "inboxLoad": "Couldn't load the conversation inbox.",
       "messagesLoad": "Couldn't load messages for this conversation.",
+      "olderMessagesLoad": "Couldn't load earlier messages.",
       "send": "Couldn't send the message. Your draft was kept; try again.",
       "mode": "Couldn't change the conversation mode. Try again.",
       "contact": "Couldn't save the contact. Try again.",

@@ -43,6 +43,9 @@ const {
 const messages = ref<ChatMessage[]>([]);
 const selectedChat = ref<ChatConversation | null>(null);
 const isLoadingMessages = ref(false);
+const hasOlderMessages = ref(false);
+const isLoadingOlderMessages = ref(false);
+const olderMessagesLoadError = ref(false);
 const messageLoadError = ref(false);
 const inboxLoadError = ref(false);
 const newMessage = ref("");
@@ -124,6 +127,9 @@ async function fetchChats() {
 async function selectChat(chat: ChatConversation) {
   selectedChat.value = chat;
   messages.value = [];
+  hasOlderMessages.value = false;
+  olderMessagesLoadError.value = false;
+  isLoadingOlderMessages.value = false;
   messageLoadError.value = false;
   actionError.value = null;
   setOpenConversation(chat._id);
@@ -221,7 +227,9 @@ async function fetchMessages(chat: ChatConversation) {
   try {
     const res = await messagingService.getMessages(chat._id);
     if (requestId !== messagesRequestId || selectedChat.value?._id !== chat._id) return;
-    messages.value = res.map((m) => processMessage(m, chat));
+    messages.value = res.messages.map((m) => processMessage(m, chat));
+    hasOlderMessages.value = res.hasMore;
+    olderMessagesLoadError.value = false;
     scrollToBottom();
   } catch (error) {
     console.error("Failed to fetch messages", error);
@@ -230,6 +238,36 @@ async function fetchMessages(chat: ChatConversation) {
     }
   } finally {
     if (requestId === messagesRequestId) isLoadingMessages.value = false;
+  }
+}
+
+async function loadOlderMessages() {
+  const chat = selectedChat.value;
+  const before = messages.value[0]?._id;
+  if (!chat || !before || !hasOlderMessages.value || isLoadingOlderMessages.value) return;
+
+  const requestId = messagesRequestId;
+  isLoadingOlderMessages.value = true;
+  olderMessagesLoadError.value = false;
+  try {
+    const page = await messagingService.getMessages(chat._id, before);
+    if (requestId !== messagesRequestId || selectedChat.value?._id !== chat._id) return;
+
+    const container = document.getElementById("chat-messages-container");
+    const previousHeight = container?.scrollHeight ?? 0;
+    const previousTop = container?.scrollTop ?? 0;
+    const olderMessages = page.messages.map((message) => processMessage(message, chat));
+    messages.value = [...olderMessages, ...messages.value];
+    hasOlderMessages.value = page.hasMore;
+    await nextTick();
+    if (container) container.scrollTop = previousTop + container.scrollHeight - previousHeight;
+  } catch (error) {
+    console.error("Failed to fetch older messages", error);
+    if (requestId === messagesRequestId && selectedChat.value?._id === chat._id) {
+      olderMessagesLoadError.value = true;
+    }
+  } finally {
+    if (requestId === messagesRequestId) isLoadingOlderMessages.value = false;
   }
 }
 
@@ -1257,6 +1295,21 @@ onUnmounted(() => {
             </button>
           </div>
           <template v-else>
+            <div v-if="olderMessagesLoadError" role="alert" class="flex items-center justify-center gap-2 text-xs text-[color:var(--danger)]">
+              <span>{{ t("messaging.errors.olderMessagesLoad") }}</span>
+              <button type="button" class="font-bold underline underline-offset-2" @click="loadOlderMessages">
+                {{ t("common.retry") }}
+              </button>
+            </div>
+            <button
+              v-else-if="hasOlderMessages"
+              type="button"
+              class="mx-auto rounded-full bg-sunken px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus)]"
+              :disabled="isLoadingOlderMessages"
+              @click="loadOlderMessages"
+            >
+              {{ isLoadingOlderMessages ? t("messaging.chat.loadingOlderMessages") : t("messaging.chat.loadOlderMessages") }}
+            </button>
             <div
               v-for="group in messageGroups"
               :key="group.key"

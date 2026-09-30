@@ -534,7 +534,8 @@ async function handleSaveOptions() {
           </div>
 
           <div class="mt-3 flex flex-wrap items-center gap-2.5">
-            <input v-model="projectSlugDraft" class="field flex-1" :placeholder="t('settings.info.slugPlaceholder')" />
+            <label for="project-slug" class="sr-only">{{ t('settings.info.slugLabel') }}</label>
+            <input id="project-slug" v-model="projectSlugDraft" class="field flex-1" :placeholder="t('settings.info.slugPlaceholder')" />
             <AButton variant="primary" :loading="saving" @click="handleSaveProjectSlug">{{ t('common.save') }}</AButton>
             <AButton variant="ghost" :disabled="saving || !projectSlugDraft.trim()" @click="copyTestChatLink">
               {{ t('settings.info.copyLink') }}
@@ -553,7 +554,7 @@ async function handleSaveOptions() {
             </label>
 
             <div class="flex flex-col gap-1.5">
-              <span class="text-xs font-semibold text-ink-2">{{ t('settings.brand.colorLabel') }}</span>
+              <label for="brand-color-hex" class="text-xs font-semibold text-ink-2">{{ t('settings.brand.colorLabel') }}</label>
               <div class="flex flex-wrap items-center gap-3">
                 <label
                   class="relative h-11 w-11 cursor-pointer overflow-hidden rounded-field shadow-card"
@@ -562,7 +563,7 @@ async function handleSaveOptions() {
                 >
                   <input v-model="brandForm.color" type="color" class="absolute inset-0 cursor-pointer opacity-0" data-testid="brand-color" />
                 </label>
-                <input v-model="brandForm.color" class="field w-32 font-mono uppercase" maxlength="7" data-testid="brand-color-hex" />
+                <input id="brand-color-hex" v-model="brandForm.color" class="field w-32 font-mono uppercase" maxlength="7" data-testid="brand-color-hex" />
                 <div class="flex flex-wrap gap-1.5">
                   <button
                     v-for="swatch in brandSwatches"
@@ -680,11 +681,12 @@ async function handleSaveOptions() {
               </div>
               <div class="mt-6">
                 <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.roleLabel') }}</span>
-                <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div role="group" :aria-label="t('settings.agent.roleLabel')" class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   <button
                     v-for="r in roleOptions"
                     :key="r.id"
                     type="button"
+                    :aria-pressed="agentForm.personality.role === r.id"
                     class="flex flex-col items-start rounded-field border-[1.5px] p-3 text-left transition-colors"
                     :class="agentForm.personality.role === r.id ? 'border-lilac bg-lilac-soft' : 'border-line hover:border-line-strong'"
                     @click="agentForm.personality.role = r.id as AgentPersonality['role']"
@@ -700,11 +702,12 @@ async function handleSaveOptions() {
                   {{ t('settings.agent.traitsLabel') }} <span class="font-normal text-ink-3">{{ t('settings.agent.traitsMax') }}</span>
                 </span>
                 <p class="mb-2 mt-1 text-[10px] text-ink-3">{{ t('settings.agent.traitsHint') }}</p>
-                <div class="flex flex-wrap gap-2">
+                <div role="group" :aria-label="t('settings.agent.traitsLabel')" class="flex flex-wrap gap-2">
                   <button
                     v-for="trait in traitOptions"
                     :key="trait.value"
                     type="button"
+                    :aria-pressed="isTraitSelected(trait.value)"
                     class="rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
                     :class="isTraitSelected(trait.value)
                       ? 'bg-lilac-soft text-lilac-ink'
@@ -719,11 +722,12 @@ async function handleSaveOptions() {
               </div>
               <div class="mt-6">
                 <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.emojiLabel') }}</span>
-                <div class="grid grid-cols-3 gap-2">
+                <div role="group" :aria-label="t('settings.agent.emojiLabel')" class="grid grid-cols-3 gap-2">
                   <button
                     v-for="e in emojiOptions"
                     :key="e.id"
                     type="button"
+                    :aria-pressed="agentForm.personality.emojiUsage === e.id"
                     class="flex items-center justify-center gap-2 rounded-field border-[1.5px] p-3 text-[13px] font-semibold transition-colors"
                     :class="agentForm.personality.emojiUsage === e.id ? 'border-lilac bg-lilac-soft text-lilac-ink' : 'border-line text-ink-2 hover:border-line-strong'"
                     @click="agentForm.personality.emojiUsage = e.id as AgentPersonality['emojiUsage']"
@@ -757,11 +761,12 @@ async function handleSaveOptions() {
             <div v-show="expandedSections.voice" id="agent-section-voice" class="flex flex-col gap-6 px-6 pb-6">
               <div>
                 <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('common.language') }}</span>
-                <div class="grid grid-cols-2 gap-2">
+                <div role="group" :aria-label="t('common.language')" class="grid grid-cols-2 gap-2">
                   <button
                     v-for="l in languageOptions"
                     :key="l.id"
                     type="button"
+                    :aria-pressed="agentForm.personality.language === l.id"
                     class="flex items-center justify-center gap-1.5 rounded-field border-[1.5px] p-3 text-[13px] font-semibold transition-colors"
                     :class="agentForm.personality.language === l.id ? 'border-lilac bg-lilac-soft text-lilac-ink' : 'border-line text-ink-2 hover:border-line-strong'"
                     @click="agentForm.personality.language = l.id as AgentPersonality['language']"
@@ -772,11 +777,12 @@ async function handleSaveOptions() {
               </div>
               <div>
                 <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.responseLengthLabel') }}</span>
-                <div class="grid grid-cols-3 gap-2">
+                <div role="group" :aria-label="t('settings.agent.responseLengthLabel')" class="grid grid-cols-3 gap-2">
                   <button
                     v-for="rl in responseLengthOptions"
                     :key="rl.id"
                     type="button"
+                    :aria-pressed="agentForm.personality.responseLength === rl.id"
                     class="flex flex-col items-center rounded-field border-[1.5px] p-3 transition-colors"
                     :class="agentForm.personality.responseLength === rl.id ? 'border-lilac bg-lilac-soft' : 'border-line hover:border-line-strong'"
                     @click="agentForm.personality.responseLength = rl.id as AgentPersonality['responseLength']"
@@ -810,11 +816,12 @@ async function handleSaveOptions() {
             </div>
             <div v-show="expandedSections.knowledge" id="agent-section-knowledge" class="px-6 pb-6">
               <span class="mb-2 block text-xs font-semibold text-ink-2">{{ t('settings.agent.ragBehaviorLabel') }}</span>
-              <div class="grid grid-cols-3 gap-2">
+              <div role="group" :aria-label="t('settings.agent.ragBehaviorLabel')" class="grid grid-cols-3 gap-2">
                 <button
                   v-for="rg in ragOptions"
                   :key="rg.id"
                   type="button"
+                  :aria-pressed="agentForm.personality.ragBehavior === rg.id"
                   class="flex flex-col items-center gap-1 rounded-field border-[1.5px] p-3 transition-colors"
                   :class="agentForm.personality.ragBehavior === rg.id ? 'border-lilac bg-lilac-soft' : 'border-line hover:border-line-strong'"
                   @click="agentForm.personality.ragBehavior = rg.id as AgentPersonality['ragBehavior']"
@@ -848,10 +855,10 @@ async function handleSaveOptions() {
             </div>
             <div v-show="expandedSections.generation" id="agent-section-generation" class="flex flex-col gap-6 px-6 pb-6">
               <div>
-                <span class="block text-xs font-semibold text-ink-2">
+                <label for="agent-temperature" class="block text-xs font-semibold text-ink-2">
                   {{ t('settings.agent.temperatureLabel', { level: temperatureLabel, value: agentForm.temperature }) }}
-                </span>
-                <input v-model.number="agentForm.temperature" type="range" min="0" max="1" step="0.1" class="mt-2 w-full accent-[color:var(--brand)]" />
+                </label>
+                <input id="agent-temperature" v-model.number="agentForm.temperature" type="range" min="0" max="1" step="0.1" class="mt-2 w-full accent-[color:var(--brand)]" />
                 <div class="mt-1 flex justify-between text-[10px] text-ink-3">
                   <span class="inline-flex items-center gap-1"><AIcon name="Target" :size="12" /> {{ t('settings.agent.temperaturePrecise') }}</span>
                   <span class="inline-flex items-center gap-1">{{ t('settings.agent.temperatureCreative') }} <AIcon name="PaintBrush" :size="12" /></span>
@@ -862,10 +869,11 @@ async function handleSaveOptions() {
                 </div>
               </div>
               <div>
-                <span class="block text-xs font-semibold text-ink-2">
+                <label for="agent-max-tokens" class="block text-xs font-semibold text-ink-2">
                   {{ t('settings.agent.maxTokensLabel', { level: maxTokensLabel, value: agentForm.maxTokens }) }}
-                </span>
+                </label>
                 <input
+                  id="agent-max-tokens"
                   type="range"
                   min="0"
                   max="3"

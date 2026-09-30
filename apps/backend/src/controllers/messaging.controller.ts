@@ -92,6 +92,18 @@ export const listMessages = async (req: Request, res: Response, next: NextFuncti
       projectId: new ObjectId(projectId),
     });
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });
+    if (req.query.limit !== undefined) {
+      const limit = Number(req.query.limit);
+      const before = req.query.before;
+      if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+        return res.status(400).json({ error: 'limit debe ser un entero entre 1 y 100' });
+      }
+      if (before !== undefined && (typeof before !== 'string' || !ObjectId.isValid(before))) {
+        return res.status(400).json({ error: 'before debe ser un id de mensaje válido' });
+      }
+      const page = await chatService.getMessagesPage(req.params.id, limit, before as string | undefined);
+      return res.json(page);
+    }
     const messages = await chatService.getMessages(req.params.id);
     res.json(messages);
   } catch (error) {

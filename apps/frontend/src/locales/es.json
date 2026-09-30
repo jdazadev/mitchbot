@@ -402,7 +402,9 @@
     },
     "chat": {
       "selectPrompt": "Selecciona una conversación para empezar a responder",
-      "loadingMessages": "Cargando mensajes..."
+      "loadingMessages": "Cargando mensajes...",
+      "loadOlderMessages": "Cargar mensajes anteriores",
+      "loadingOlderMessages": "Cargando mensajes anteriores..."
     },
     "mode": {
       "autoPilotOn": "Piloto automático activo",
@@ -493,6 +495,7 @@
     "errors": {
       "inboxLoad": "No se pudo cargar la bandeja de conversaciones.",
       "messagesLoad": "No se pudieron cargar los mensajes de esta conversación.",
+      "olderMessagesLoad": "No se pudieron cargar los mensajes anteriores.",
       "send": "No se pudo enviar el mensaje. Conservamos tu borrador; inténtalo de nuevo.",
       "mode": "No se pudo cambiar el modo de la conversación. Inténtalo de nuevo.",
       "contact": "No se pudo guardar el contacto. Inténtalo de nuevo.",

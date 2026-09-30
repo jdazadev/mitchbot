@@ -83,9 +83,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true));
         aria-modal="true"
         :aria-label="label"
         :class="[
-          'relative max-h-[90vh] w-full overflow-hidden rounded-card bg-surface shadow-[var(--shadow-pop)]',
+          'relative max-h-[90vh] w-full overflow-y-auto overscroll-contain rounded-card bg-surface shadow-[var(--shadow-pop)]',
           SIZES[size],
         ]"
+        :style="{ maxHeight: 'min(90vh, 90dvh)' }"
       >
         <slot />
       </div>

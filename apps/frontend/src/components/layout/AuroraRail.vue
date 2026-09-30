@@ -10,7 +10,10 @@ const props = withDefaults(defineProps<{ variant?: 'desktop' | 'mobile' }>(), {
   variant: 'desktop',
 });
 
-const emit = defineEmits<{ (e: 'navigate'): void }>();
+const emit = defineEmits<{
+  (e: 'navigate'): void;
+  (e: 'close'): void;
+}>();
 
 const { t } = useI18n();
 const route = useRoute();
@@ -40,7 +43,7 @@ const railRef = ref<HTMLElement | null>(null);
 function onDrawerKeydown(event: KeyboardEvent) {
   if (props.variant !== 'mobile') return;
   if (event.key === 'Escape') {
-    emit('navigate');
+    emit('close');
     return;
   }
   if (event.key !== 'Tab' || !railRef.value) return;

@@ -10,6 +10,9 @@ export const connectDatabase = async () => {
     await client.connect();
     console.log('✅ MongoDB connected successfully');
     db = client.db(); // Connect to default database in URI
+    void db.collection('messages')
+      .createIndex({ conversationId: 1, createdAt: -1, _id: -1 })
+      .catch((error) => console.warn('⚠️ Could not create the messages pagination index:', error));
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
     process.exit(1);

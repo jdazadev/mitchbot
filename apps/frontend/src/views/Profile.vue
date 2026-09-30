@@ -158,9 +158,18 @@ async function handleUpdateProfile() {
           {{ t('profile.password.title') }}
         </h2>
         <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <input v-model="profileForm.currentPassword" type="password" class="field" :placeholder="t('profile.password.current')" />
-          <input v-model="profileForm.newPassword" type="password" class="field" :placeholder="t('profile.password.new')" />
-          <input v-model="profileForm.confirmPassword" type="password" class="field" :placeholder="t('profile.password.confirm')" />
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('profile.password.current') }}</span>
+            <input v-model="profileForm.currentPassword" type="password" class="field" autocomplete="current-password" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('profile.password.new') }}</span>
+            <input v-model="profileForm.newPassword" type="password" class="field" autocomplete="new-password" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-ink-2">{{ t('profile.password.confirm') }}</span>
+            <input v-model="profileForm.confirmPassword" type="password" class="field" autocomplete="new-password" />
+          </label>
         </div>
 
         <div class="mt-6 flex justify-end">

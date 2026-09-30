@@ -50,7 +50,7 @@ export const chatService = {
    *   cuando la pausa respecto al mensaje anterior supera las 6 horas.
    */
   async buildConversationHistory(conversationId: string, currentUserMessage?: string): Promise<BaseMessage[]> {
-    const messages = await this.getMessages(conversationId);
+    const messages = await this.getRecentMessages(conversationId, this.HISTORY_WINDOW + 1);
     const EXCLUDED_CONTENT_TYPES = new Set(['tool_call', 'tool_result', 'confirmation_request']);
 
     const eligible = messages.filter(m => {
@@ -1076,7 +1076,50 @@ export const chatService = {
   async getMessages(conversationId: string) {
     return getMessagesCollection()
       .find({ conversationId: new ObjectId(conversationId) })
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: 1, _id: 1 })
       .toArray();
+  },
+
+  async getRecentMessages(conversationId: string, limit: number) {
+    return getMessagesCollection()
+      .find({
+        conversationId: new ObjectId(conversationId),
+        sender: { $ne: 'tool' },
+        contentType: { $nin: ['tool_call', 'tool_result', 'confirmation_request'] },
+        content: { $regex: /\S/ },
+      })
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit)
+      .toArray()
+      .then((messages) => messages.reverse());
+  },
+
+  async getMessagesPage(conversationId: string, limit: number, before?: string) {
+    const collection = getMessagesCollection();
+    const conversationObjectId = new ObjectId(conversationId);
+    const filter: Record<string, any> = { conversationId: conversationObjectId };
+
+    if (before) {
+      const cursor = await collection.findOne(
+        { _id: new ObjectId(before), conversationId: conversationObjectId },
+        { projection: { createdAt: 1 } },
+      );
+      if (!cursor) return { messages: [], hasMore: false };
+      filter.$or = [
+        { createdAt: { $lt: cursor.createdAt } },
+        { createdAt: cursor.createdAt, _id: { $lt: cursor._id } },
+      ];
+    }
+
+    const results = await collection
+      .find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit + 1)
+      .toArray();
+
+    return {
+      messages: results.slice(0, limit).reverse(),
+      hasMore: results.length > limit,
+    };
   },
 };

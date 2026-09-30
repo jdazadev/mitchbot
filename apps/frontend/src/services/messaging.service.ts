@@ -28,6 +28,13 @@ export interface ChatMessage {
   avatar?: string;
 }
 
+export interface ChatMessagePage {
+  messages: ChatMessage[];
+  hasMore: boolean;
+}
+
+export const MESSAGE_PAGE_SIZE = 50;
+
 export interface ChatConversation {
   _id: string;
   contactId?: string;
@@ -91,8 +98,11 @@ export const messagingService = {
     return res.json();
   },
 
-  async getMessages(conversationId: string): Promise<ChatMessage[]> {
-     const res = await fetch(`${API_URL}/conversations/${conversationId}/messages`, {
+  async getMessages(conversationId: string, before?: string): Promise<ChatMessagePage> {
+     const url = new URL(`${API_URL}/conversations/${conversationId}/messages`);
+     url.searchParams.set('limit', String(MESSAGE_PAGE_SIZE));
+     if (before) url.searchParams.set('before', before);
+     const res = await fetch(url.toString(), {
        headers: authService.getHeaders(),
      });
      if (!res.ok) throw new Error('Failed to fetch messages');

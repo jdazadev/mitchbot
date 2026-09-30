@@ -5,6 +5,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.14.0 — 2026-09-30
+
+> **Conversaciones más ligeras y accesibles**: historial bajo demanda, controles etiquetados y foco predecible
+
+### ✨ Añadido
+- El hilo muestra los 50 mensajes más recientes y permite cargar anteriores sin perder la posición de lectura; la operación admite reintento si falla.
+- La API acepta `limit` y `before` para paginar por cursor; las llamadas existentes sin esos parámetros conservan su respuesta completa.
+- Los controles de selección anuncian su estado, los campos tienen nombres accesibles y los modales largos se desplazan sin recortar contenido.
+- El drawer móvil devuelve el foco al disparador al cerrarse y lo coloca en el contenido al navegar.
+
+### 🔧 Cambiado
+- El agente consulta una ventana acotada de mensajes elegibles; ya no recorre el hilo completo para construir sus últimos 20 turnos.
+- El locale inglés se carga al seleccionarlo y los iconos Phosphor se generan en un chunk aparte; la entrada principal queda en 200,64 kB (66,99 kB gzip).
+
+### ✅ Verificación
+- Backend `build`; frontend `vue-tsc` + `build`; paridad es/en: **709/709**; detector Impeccable sin hallazgos.
+- E2E focalizado de reintento/paginación: **2/2**. La suite completa de Mensajería quedó en **16/17** por timeout en insights; las siguientes pruebas no pudieron completarse cuando MongoDB E2E dejó de responder.
+
+---
+
 ## v4.13.1 — 2026-09-30
 
 > **Conversaciones más recuperables**: errores claros, reintentos y confirmación de acciones

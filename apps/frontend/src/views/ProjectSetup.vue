@@ -264,11 +264,12 @@ async function handleSubmit() {
           <div>
             <span class="block text-xs font-semibold text-ink-2">{{ t('setup.agent.roleLabel') }}</span>
             <p class="mb-2 mt-1 text-[10px] text-ink-3">{{ t('setup.agent.roleHelp') }}</p>
-            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div role="group" :aria-label="t('setup.agent.roleLabel')" class="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <button
                 v-for="r in setupRoleOptions"
                 :key="r.id"
                 type="button"
+                :aria-pressed="agentForm.role === r.id"
                 class="flex flex-col items-start rounded-field border-[1.5px] p-3 text-left transition-colors"
                 :class="agentForm.role === r.id ? 'border-lilac bg-lilac-soft' : 'border-line hover:border-line-strong'"
                 @click="agentForm.role = r.id as typeof agentForm.role"

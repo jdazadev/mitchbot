@@ -126,7 +126,7 @@ test.describe('Mensajería', () => {
     });
     let failedOnce = false;
 
-    await page.route('**/api/conversations/**/messages', async (route) => {
+    await page.route('**/api/conversations/**/messages**', async (route) => {
       if (!failedOnce && route.request().method() === 'GET') {
         failedOnce = true;
         await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
@@ -144,6 +144,31 @@ test.describe('Mensajería', () => {
     await expect(page.locator('main').getByText(initial)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByLabel('Escribe un mensaje...')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  });
+
+  test('carga el historial en páginas y conserva visible el contexto al traer mensajes anteriores', async ({ page, api }) => {
+    const id = uniqueId();
+    const clientName = uniqueName('Cliente Historial');
+    const initial = `Mensaje más antiguo ${id}`;
+    const started = await startPublicConversation(api, {
+      slug: E2E.project.slug,
+      clientIdentifier: `history-pages-${id}`,
+      clientName,
+      initialMessage: initial,
+    });
+
+    for (let index = 0; index < 50; index += 1) {
+      await sendHumanMessage(api, started.conversation._id, `Respuesta de historial ${index} ${id}`);
+    }
+
+    await page.goto(`/messaging?conversation=${started.conversation._id}`);
+    const thread = page.locator('#chat-messages-container');
+    await expect(thread.getByText(`Respuesta de historial 49 ${id}`)).toBeVisible({ timeout: 20_000 });
+    await expect(thread.getByText(initial)).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Cargar mensajes anteriores' }).click();
+    await expect(thread.getByText(initial)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('button', { name: 'Cargar mensajes anteriores' })).toHaveCount(0);
   });
 
   test('lista conversaciones (sin spinner permanente), abre un chat y responde', async ({ page, api }) => {

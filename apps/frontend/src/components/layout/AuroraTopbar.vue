@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { setLocale } from '../../i18n';
 import { projectService, type Project } from '../../services/project.service';
 import { authService, type User } from '../../services/auth.service';
 import { socketService } from '../../services/socket.service';
@@ -171,8 +172,8 @@ const localeOptions = computed(() =>
   ]
 );
 
-function selectLocale(value: 'es' | 'en') {
-  locale.value = value;
+async function selectLocale(value: 'es' | 'en') {
+  await setLocale(value);
 }
 
 // === Usuario ===

@@ -13,7 +13,18 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.13.1
+**Versión actual del proyecto:** v4.14.0
+
+---
+
+## Accesibilidad y carga incremental (v4.14.0)
+
+- **Formularios y opciones**: slug, color hexadecimal, controles de generación y contraseñas tienen etiquetas persistentes; las opciones de rol, idioma, longitud y RAG exponen `aria-pressed`.
+- **Superficies móviles**: el contenido de los modales largos puede desplazarse; el drawer devuelve el foco al disparador al cerrarse y lo mueve al contenido al navegar.
+- **Historial de conversación**: la vista carga 50 mensajes recientes y trae anteriores por cursor, preservando la posición de lectura. `GET /api/conversations/:id/messages?limit=&before=` devuelve `{ messages, hasMore }`; sin `limit` conserva la respuesta completa existente. MongoDB mantiene un índice por conversación, fecha e id.
+- **Memoria del agente**: el historial de conversación consulta los últimos 21 mensajes elegibles en vez de recorrer todo el hilo para construir la ventana de 20 turnos.
+- **Carga frontend**: el catálogo inglés se carga al seleccionarlo; los iconos Phosphor se aíslan en un chunk reutilizable. La entrada medida es 200,64 kB (66,99 kB gzip); el chunk de iconos es 305,72 kB (82,64 kB gzip).
+- **Verificación**: builds backend/frontend; paridad es/en **709/709**; E2E focalizado de reintento y paginación **2/2**. Una corrida completa de Mensajería terminó **16/17** por timeout en insights; después MongoDB dejó de responder a E2E.
 
 ---
 
@@ -726,7 +737,7 @@ Usuario abre la app
 | **Auth** | `POST /register`, `POST /login`, `GET /me`, `PUT /profile`, `PUT /password` | Autenticación y perfil |
 | **Users** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Gestión de usuarios |
 | **Contacts** | `GET /`, `GET /:id`, `PUT /:id`, `PATCH /:id/archive`, `PATCH /:id/restore` | Gestión de contactos |
-| **Conversations** | `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages`, `POST /:id/messages`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, resolver conversación por contacto, marcar leída, guardar contacto e insights |
+| **Conversations** | `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages` (paginación opcional `?limit=&before=`), `POST /:id/messages`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, historial paginado, resolver conversación por contacto, marcar leída, guardar contacto e insights |
 | **Brain** | `GET /sources`, `POST /upload`, `POST /text`, `DELETE /sources/:id`, `POST /search` | Base de conocimiento RAG |
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
