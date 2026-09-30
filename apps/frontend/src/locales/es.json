@@ -433,6 +433,12 @@
       "modifyTitle": "Modificar acción",
       "modifyPrompt": "Edita los datos de la acción (JSON):",
       "invalidJson": "JSON inválido",
+      "decisionSending": "Enviando decisión...",
+      "decisionError": "No recibimos confirmación. Reintentar no duplicará una acción ya procesada.",
+      "decisionModified": "Datos actualizados. Revisa la acción antes de confirmarla.",
+      "decisionSucceeded": "La acción se completó.",
+      "decisionCancelled": "La acción se canceló.",
+      "decisionFailed": "No se pudo completar la acción.",
       "status": {
         "pending": "Pendiente",
         "pending_approval": "Pendiente de aprobación",
@@ -485,6 +491,8 @@
       }
     },
     "errors": {
+      "inboxLoad": "No se pudo cargar la bandeja de conversaciones.",
+      "messagesLoad": "No se pudieron cargar los mensajes de esta conversación.",
       "send": "No se pudo enviar el mensaje. Conservamos tu borrador; inténtalo de nuevo.",
       "mode": "No se pudo cambiar el modo de la conversación. Inténtalo de nuevo.",
       "contact": "No se pudo guardar el contacto. Inténtalo de nuevo.",

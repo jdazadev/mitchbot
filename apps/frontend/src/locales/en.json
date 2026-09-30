@@ -433,6 +433,12 @@
       "modifyTitle": "Modify action",
       "modifyPrompt": "Edit the action data (JSON):",
       "invalidJson": "Invalid JSON",
+      "decisionSending": "Sending your decision...",
+      "decisionError": "We didn't receive confirmation. Retrying won't duplicate an action already processed.",
+      "decisionModified": "Details updated. Review the action before confirming it.",
+      "decisionSucceeded": "The action was completed.",
+      "decisionCancelled": "The action was cancelled.",
+      "decisionFailed": "The action couldn't be completed.",
       "status": {
         "pending": "Pending",
         "pending_approval": "Pending approval",
@@ -485,6 +491,8 @@
       }
     },
     "errors": {
+      "inboxLoad": "Couldn't load the conversation inbox.",
+      "messagesLoad": "Couldn't load messages for this conversation.",
       "send": "Couldn't send the message. Your draft was kept; try again.",
       "mode": "Couldn't change the conversation mode. Try again.",
       "contact": "Couldn't save the contact. Try again.",

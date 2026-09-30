@@ -5,6 +5,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.13.1 — 2026-09-30
+
+> **Conversaciones más recuperables**: errores claros, reintentos y confirmación de acciones
+
+### ✨ Añadido
+- La bandeja y el hilo muestran errores de carga separados de los estados vacíos y permiten reintentar sin salir de la vista.
+- Confirmar, cancelar o modificar una herramienta muestra el estado de envío; si el socket falla o no responde, la interfaz ofrece reintentar y evita repetir acciones ya procesadas.
+- Etiquetas accesibles para el compositor y el editor JSON; categorías del gráfico de sentimiento traducidas al español e inglés.
+
+### 🔧 Cambiado
+- Los errores de `tool:confirm` incluyen `executionId` para asociar el fallo con la acción pendiente correcta.
+- Las cargas de mensajes descartan respuestas atrasadas cuando el operador cambia de conversación.
+
+### ✅ Verificación
+- Backend `build` y frontend `vue-tsc` + `build`.
+- E2E de Mensajería: **16/16**; paridad es/en: **706/706**; detector Impeccable sin hallazgos.
+
+---
+
 ## v4.13.0 — 2026-09-28
 
 > 📊 **Resumen funcional**: resultados del negocio y salud del bot con datos reales

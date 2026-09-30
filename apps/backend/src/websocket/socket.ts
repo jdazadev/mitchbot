@@ -160,12 +160,20 @@ export const initSocket = (httpServer: HttpServer) => {
       try {
         const allowed = await wsRateLimiter.check(socket, 'tool_confirm', 20, 60);
         if (!allowed) {
-          socket.emit('error', { message: 'Demasiadas solicitudes. Intenta más tarde.', code: 'RATE_LIMITED' });
+          socket.emit('error', {
+            message: 'Demasiadas solicitudes. Intenta más tarde.',
+            code: 'RATE_LIMITED',
+            executionId: data?.executionId,
+          });
           return;
         }
 
         if (!data?.executionId) {
-          socket.emit('error', { message: 'Datos de confirmación inválidos', code: 'INVALID_DATA' });
+          socket.emit('error', {
+            message: 'Datos de confirmación inválidos',
+            code: 'INVALID_DATA',
+            executionId: data?.executionId,
+          });
           return;
         }
 
@@ -180,7 +188,11 @@ export const initSocket = (httpServer: HttpServer) => {
         socket.emit('tool:confirmed', { executionId: data.executionId, status: result?.status });
       } catch (error: any) {
         logger.error(`[WS] Error in tool:confirm: ${error.message}`, { socketId: socket.id });
-        socket.emit('error', { message: error.message || 'Error al confirmar la acción', code: 'TOOL_CONFIRM_ERROR' });
+        socket.emit('error', {
+          message: error.message || 'Error al confirmar la acción',
+          code: 'TOOL_CONFIRM_ERROR',
+          executionId: data?.executionId,
+        });
       }
     });
 

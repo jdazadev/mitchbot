@@ -43,10 +43,13 @@ const {
 const messages = ref<ChatMessage[]>([]);
 const selectedChat = ref<ChatConversation | null>(null);
 const isLoadingMessages = ref(false);
+const messageLoadError = ref(false);
+const inboxLoadError = ref(false);
 const newMessage = ref("");
 const isSending = ref(false);
 const actionError = ref<string | null>(null);
 const liveAnnouncement = ref("");
+let messagesRequestId = 0;
 
 const searchQuery = ref("");
 
@@ -100,6 +103,7 @@ async function resolveRequestedChat(id: string): Promise<ChatConversation | null
 }
 
 async function fetchChats() {
+  inboxLoadError.value = false;
   try {
     await loadConversations(true);
     const requestedId = typeof route.query.conversation === "string"
@@ -113,11 +117,14 @@ async function fetchChats() {
     }
   } catch (error) {
     console.error("Failed to fetch chats", error);
+    inboxLoadError.value = true;
   }
 }
 
 async function selectChat(chat: ChatConversation) {
   selectedChat.value = chat;
+  messages.value = [];
+  messageLoadError.value = false;
   actionError.value = null;
   setOpenConversation(chat._id);
   socketService.joinRoom(chat._id);
@@ -208,16 +215,30 @@ const urgencyTitle = computed(
 );
 
 async function fetchMessages(chat: ChatConversation) {
+  const requestId = ++messagesRequestId;
+  messageLoadError.value = false;
+  isLoadingMessages.value = true;
   try {
-    isLoadingMessages.value = true;
     const res = await messagingService.getMessages(chat._id);
+    if (requestId !== messagesRequestId || selectedChat.value?._id !== chat._id) return;
     messages.value = res.map((m) => processMessage(m, chat));
     scrollToBottom();
   } catch (error) {
     console.error("Failed to fetch messages", error);
+    if (requestId === messagesRequestId && selectedChat.value?._id === chat._id) {
+      messageLoadError.value = true;
+    }
   } finally {
-    isLoadingMessages.value = false;
+    if (requestId === messagesRequestId) isLoadingMessages.value = false;
   }
+}
+
+function retryMessagesLoad() {
+  if (selectedChat.value) void fetchMessages(selectedChat.value);
+}
+
+function retryInboxLoad() {
+  void fetchChats();
 }
 
 function processMessage(m: ChatMessage, chat: ChatConversation) {
@@ -455,6 +476,10 @@ const sentimentBars = computed(() => {
   ].map((b) => ({ ...b, width: `${b.pct}%` }));
 });
 
+function sentimentBarLabel(key: string) {
+  return t(`messaging.insights.sentiment.${key}`);
+}
+
 // Último mensaje real del cliente sin respuesta posterior del bot o de un humano.
 const lastCustomerMessageUnanswered = computed(() => {
   const list = messages.value.filter(
@@ -620,13 +645,114 @@ function toolTone(status?: string) {
   return 'ghost';
 }
 
-function confirmTool(msg: ChatMessage, action: 'confirm' | 'cancel') {
-  if (!selectedChat.value || !msg.toolData?.executionId) return;
-  socketService.confirmTool({
-    conversationId: selectedChat.value._id,
-    executionId: msg.toolData.executionId,
+type ToolDecisionAction = "confirm" | "cancel" | "modify";
+type ToolDecisionState = {
+  action: ToolDecisionAction;
+  messageId: string;
+  conversationId: string;
+  params?: Record<string, any>;
+  status: "sending" | "error";
+};
+
+const toolDecisions = ref<Record<string, ToolDecisionState>>({});
+const toolDecisionTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const TOOL_DECISION_TIMEOUT_MS = 15_000;
+
+function toolDecisionState(executionId?: string) {
+  return executionId ? toolDecisions.value[executionId] : undefined;
+}
+
+function clearToolDecisionTimer(executionId: string) {
+  const timer = toolDecisionTimers.get(executionId);
+  if (timer) clearTimeout(timer);
+  toolDecisionTimers.delete(executionId);
+}
+
+function setToolDecisionError(executionId: string) {
+  const decision = toolDecisions.value[executionId];
+  if (!decision) return;
+  clearToolDecisionTimer(executionId);
+  toolDecisions.value = {
+    ...toolDecisions.value,
+    [executionId]: { ...decision, status: "error" },
+  };
+  liveAnnouncement.value = t("messaging.tools.decisionError");
+}
+
+function submitToolDecision(
+  msg: ChatMessage,
+  action: ToolDecisionAction,
+  params?: Record<string, any>,
+) {
+  const executionId = msg.toolData?.executionId;
+  if (!selectedChat.value || !executionId || toolDecisions.value[executionId]?.status === "sending") return;
+
+  const decision: ToolDecisionState = {
     action,
+    messageId: msg._id,
+    conversationId: selectedChat.value._id,
+    params,
+    status: "sending",
+  };
+  toolDecisions.value = { ...toolDecisions.value, [executionId]: decision };
+
+  if (!socketService.socket?.connected) {
+    setToolDecisionError(executionId);
+    return;
+  }
+
+  socketService.confirmTool({
+    conversationId: decision.conversationId,
+    executionId,
+    action,
+    params,
   });
+  liveAnnouncement.value = t("messaging.tools.decisionSending");
+  clearToolDecisionTimer(executionId);
+  toolDecisionTimers.set(
+    executionId,
+    setTimeout(() => setToolDecisionError(executionId), TOOL_DECISION_TIMEOUT_MS),
+  );
+}
+
+function confirmTool(msg: ChatMessage, action: "confirm" | "cancel") {
+  submitToolDecision(msg, action);
+}
+
+function retryToolDecision(executionId: string) {
+  const decision = toolDecisions.value[executionId];
+  const msg = messages.value.find((message) => message._id === decision?.messageId);
+  if (!decision || !msg || selectedChat.value?._id !== decision.conversationId) return;
+  submitToolDecision(msg, decision.action, decision.params);
+}
+
+function resolveToolDecision(executionId: string, status: string) {
+  const decision = toolDecisions.value[executionId];
+  if (!decision) return;
+  clearToolDecisionTimer(executionId);
+  const nextStatus = status === "executed"
+    ? "success"
+    : status === "failed"
+      ? "error"
+      : status === "pending_confirmation"
+        ? "needs_confirmation"
+        : status;
+  const msg = messages.value.find((message) => message._id === decision.messageId);
+  if (msg?.toolData && ["success", "error", "cancelled", "needs_confirmation"].includes(nextStatus)) {
+    msg.toolData.status = nextStatus as NonNullable<ChatMessage["toolData"]>["status"];
+  }
+  const { [executionId]: _resolved, ...remaining } = toolDecisions.value;
+  toolDecisions.value = remaining;
+
+  if (decision.action === "modify") {
+    liveAnnouncement.value = t("messaging.tools.decisionModified");
+  } else if (nextStatus === "success") {
+    liveAnnouncement.value = t("messaging.tools.decisionSucceeded");
+  } else if (nextStatus === "cancelled") {
+    liveAnnouncement.value = t("messaging.tools.decisionCancelled");
+  } else if (nextStatus === "error") {
+    liveAnnouncement.value = t("messaging.tools.decisionFailed");
+  }
 }
 
 // === Edición de parámetros de una herramienta (reemplaza window.prompt) ===
@@ -649,15 +775,10 @@ function closeModifyModal() {
 
 function confirmModifyTool() {
   const msg = modifyTarget.value;
-  if (!msg?.toolData?.executionId) return;
+  if (!msg?.toolData?.executionId || !selectedChat.value) return;
   try {
     const params = JSON.parse(modifyInput.value);
-    socketService.confirmTool({
-      conversationId: selectedChat.value!._id,
-      executionId: msg.toolData.executionId,
-      action: "modify",
-      params,
-    });
+    submitToolDecision(msg, "modify", params);
     closeModifyModal();
   } catch {
     modifyError.value = t("messaging.tools.invalidJson");
@@ -672,6 +793,15 @@ function onMessageUpdated(data: { messageId: string; status: string; params?: an
     if (data.params) existing.toolData.params = data.params;
   }
   if (data.content) existing.content = data.content;
+  const executionId = existing.toolData?.executionId;
+  const decision = executionId ? toolDecisions.value[executionId] : undefined;
+  if (executionId && decision && (data.status !== "needs_confirmation" || decision.action === "modify")) {
+    resolveToolDecision(executionId, data.status);
+  }
+}
+
+function onToolConfirmed(data: { executionId: string; status: string }) {
+  resolveToolDecision(data.executionId, data.status);
 }
 
 function onConversationStatus(data: { mode?: string; status?: string; tag?: string; tagColor?: string }) {
@@ -699,12 +829,18 @@ function scrollToBottom() {
   });
 }
 
-function onSocketError(error: any) {
+function onSocketError(error: { executionId?: string; message?: string; code?: string }) {
+  if (error.executionId && toolDecisions.value[error.executionId]) {
+    setToolDecisionError(error.executionId);
+    return;
+  }
   console.error("WebSocket error:", error);
 }
 
-function onNotification(data: any) {
-  console.log("Admin notification:", data);
+function onSocketDisconnect() {
+  for (const [executionId, decision] of Object.entries(toolDecisions.value)) {
+    if (decision.status === "sending") setToolDecisionError(executionId);
+  }
 }
 
 onMounted(async () => {
@@ -717,12 +853,13 @@ onMounted(async () => {
     socketService.onMessage(onNewMessage);
     socketService.onMessageChunk(onMessageChunk);
     socketService.onMessageUpdated(onMessageUpdated);
+    socketService.onToolConfirmed(onToolConfirmed);
     socketService.onConversationStatus(onConversationStatus);
     socketService.onInsights(onInsights);
 
     if (socketService.socket) {
       socketService.socket.on('error', onSocketError);
-      socketService.socket.on('admin:notification', onNotification);
+      socketService.socket.on('disconnect', onSocketDisconnect);
     }
   } catch (error) {
     console.error("Failed to initialize socket service", error);
@@ -738,12 +875,15 @@ onUnmounted(() => {
   socketService.offMessage(onNewMessage);
   socketService.offMessageChunk(onMessageChunk);
   socketService.offMessageUpdated(onMessageUpdated);
+  socketService.offToolConfirmed(onToolConfirmed);
   socketService.offConversationStatus(onConversationStatus);
   socketService.offInsights(onInsights);
   if (socketService.socket) {
     socketService.socket.off('error', onSocketError);
-    socketService.socket.off('admin:notification', onNotification);
+    socketService.socket.off('disconnect', onSocketDisconnect);
   }
+  for (const timer of toolDecisionTimers.values()) clearTimeout(timer);
+  toolDecisionTimers.clear();
 });
 </script>
 
@@ -797,8 +937,23 @@ onUnmounted(() => {
         </div>
 
         <div class="flex-1 overflow-y-auto p-1.5">
-          <div v-if="isLoadingChats" class="px-3 py-8 text-center text-sm font-semibold text-ink-3">
+          <div v-if="isLoadingChats" role="status" class="px-3 py-8 text-center text-sm font-semibold text-ink-3">
             {{ t("messaging.inbox.loading") }}
+          </div>
+          <div
+            v-else-if="inboxLoadError"
+            role="alert"
+            class="mx-2 my-3 flex flex-col items-center gap-2 rounded-card bg-[color:var(--danger-soft)] p-4 text-center text-[13px] text-[color:var(--danger)]"
+          >
+            <AIcon name="WarningCircle" :size="20" />
+            <span>{{ t("messaging.errors.inboxLoad") }}</span>
+            <button
+              type="button"
+              class="rounded-full bg-surface px-3.5 py-1.5 text-xs font-bold text-ink-1 shadow-card transition-shadow hover:shadow-pop focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus)]"
+              @click="retryInboxLoad"
+            >
+              {{ t("common.retry") }}
+            </button>
           </div>
           <AEmptyState
             v-else-if="chats.length === 0"
@@ -939,6 +1094,22 @@ onUnmounted(() => {
             <AIcon name="SpinnerGap" :size="20" class="animate-spin" />
           </div>
           <div
+            v-else-if="inboxLoadError"
+            role="alert"
+            :title="t('messaging.errors.inboxLoad')"
+            class="grid h-10 w-10 flex-none place-items-center"
+          >
+            <button
+              type="button"
+              :aria-label="`${t('messaging.errors.inboxLoad')} ${t('common.retry')}`"
+              :title="t('common.retry')"
+              class="grid h-10 w-10 place-items-center rounded-full bg-[color:var(--danger-soft)] text-[color:var(--danger)] transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus)]"
+              @click="retryInboxLoad"
+            >
+              <AIcon name="WarningCircle" :size="20" />
+            </button>
+          </div>
+          <div
             v-else-if="chats.length === 0"
             class="grid flex-1 place-items-center py-6 text-ink-3"
             :title="t('messaging.inbox.empty')"
@@ -1065,9 +1236,25 @@ onUnmounted(() => {
         <div
           id="chat-messages-container"
           class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-5 py-5 scroll-smooth"
+          :aria-busy="isLoadingMessages"
         >
           <div v-if="isLoadingMessages" role="status" class="py-4 text-center text-sm font-semibold text-ink-3">
             {{ t("messaging.chat.loadingMessages") }}
+          </div>
+          <div
+            v-else-if="messageLoadError"
+            role="alert"
+            class="m-auto flex max-w-sm flex-col items-center gap-3 rounded-card bg-[color:var(--danger-soft)] p-5 text-center text-[13px] text-[color:var(--danger)]"
+          >
+            <AIcon name="WarningCircle" :size="22" />
+            <span>{{ t("messaging.errors.messagesLoad") }}</span>
+            <button
+              type="button"
+              class="rounded-full bg-surface px-4 py-2 text-xs font-bold text-ink-1 shadow-card transition-shadow hover:shadow-pop focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus)]"
+              @click="retryMessagesLoad"
+            >
+              {{ t("common.retry") }}
+            </button>
           </div>
           <template v-else>
             <div
@@ -1093,27 +1280,52 @@ onUnmounted(() => {
                       {{ statusLabel(msg.toolData.status) || toolLabel(msg) }}
                     </APill>
                     <span>{{ toolLabel(msg) }} · {{ msg.content }}</span>
-                    <span v-if="msg.contentType === 'confirmation_request' && msg.toolData?.status === 'needs_confirmation'" class="flex flex-wrap gap-2">
+                    <span
+                      v-if="msg.contentType === 'confirmation_request' && msg.toolData?.status === 'needs_confirmation' && !toolDecisionState(msg.toolData?.executionId)"
+                      class="flex flex-wrap gap-2"
+                    >
                       <button
                         type="button"
-                        class="rounded-full bg-lime px-3 py-1 text-[11px] font-bold text-lime-ink"
+                        class="rounded-full bg-lime px-3 py-1 text-[11px] font-bold text-lime-ink transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus)]"
                         @click="confirmTool(msg, 'confirm')"
                       >
                         {{ t("common.confirm") }}
                       </button>
                       <button
                         type="button"
-                        class="rounded-full bg-surface px-3 py-1 text-[11px] font-bold text-ink-2 ring-1 ring-line"
+                        class="rounded-full bg-surface px-3 py-1 text-[11px] font-bold text-ink-2 ring-1 ring-line transition-colors hover:bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus)]"
                         @click="confirmTool(msg, 'cancel')"
                       >
                         {{ t("common.cancel") }}
                       </button>
                       <button
                         type="button"
-                        class="rounded-full bg-surface px-3 py-1 text-[11px] font-bold text-ink-2 ring-1 ring-line"
+                        class="rounded-full bg-surface px-3 py-1 text-[11px] font-bold text-ink-2 ring-1 ring-line transition-colors hover:bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus)]"
                         @click="modifyTool(msg)"
                       >
                         {{ t("messaging.tools.modify") }}
+                      </button>
+                    </span>
+                    <span
+                      v-if="toolDecisionState(msg.toolData?.executionId)?.status === 'sending'"
+                      role="status"
+                      class="flex items-center gap-1.5 text-[11px] font-semibold text-ink-2"
+                    >
+                      <AIcon name="SpinnerGap" :size="13" class="animate-spin" />
+                      {{ t("messaging.tools.decisionSending") }}
+                    </span>
+                    <span
+                      v-else-if="toolDecisionState(msg.toolData?.executionId)?.status === 'error'"
+                      role="alert"
+                      class="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[color:var(--danger)]"
+                    >
+                      {{ t("messaging.tools.decisionError") }}
+                      <button
+                        type="button"
+                        class="rounded-full bg-surface px-3 py-1 font-bold text-ink-1 shadow-card transition-shadow hover:shadow-pop focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--focus)]"
+                        @click="retryToolDecision(msg.toolData!.executionId!)"
+                      >
+                        {{ t("common.retry") }}
                       </button>
                     </span>
                   </div>
@@ -1156,7 +1368,9 @@ onUnmounted(() => {
         </div>
 
         <footer class="flex flex-none items-center gap-2.5 border-t-[1.5px] border-line px-5 py-3.5">
+          <label class="sr-only" for="message-composer">{{ t("messaging.composer.sendPlaceholder") }}</label>
           <input
+            id="message-composer"
             v-model="newMessage"
             type="text"
             class="min-w-0 flex-1 border-none bg-transparent font-body text-[13.5px] text-ink outline-none placeholder:text-ink-3"
@@ -1333,9 +1547,9 @@ onUnmounted(() => {
               :style="{ width: bar.width, background: bar.color }"
             />
           </div>
-          <div class="mt-2 flex flex-wrap gap-3 text-[11px] text-ink-3">
+          <div data-testid="sentiment-breakdown" class="mt-2 flex flex-wrap gap-3 text-[11px] text-ink-3">
             <span v-for="bar in sentimentBars" :key="bar.key">
-              <b class="[font-variant-numeric:tabular-nums]">{{ bar.pct }}%</b> {{ bar.key }}
+              <b class="[font-variant-numeric:tabular-nums]">{{ bar.pct }}%</b> {{ sentimentBarLabel(bar.key) }}
             </span>
           </div>
         </div>
@@ -1404,7 +1618,7 @@ onUnmounted(() => {
             <AIcon name="X" :size="18" />
           </button>
         </div>
-        <p class="mt-2 text-xs text-ink-3">{{ t('messaging.tools.modifyPrompt') }}</p>
+        <label for="tool-params" class="mt-2 block text-xs text-ink-3">{{ t('messaging.tools.modifyPrompt') }}</label>
         <div
           v-if="modifyError"
           class="mt-3 flex items-center gap-2 rounded-field bg-[color:var(--danger-soft)] p-3 text-[13px] text-[color:var(--danger)]"
@@ -1413,6 +1627,7 @@ onUnmounted(() => {
           {{ modifyError }}
         </div>
         <textarea
+          id="tool-params"
           v-model="modifyInput"
           class="field mt-3 h-48 resize-none font-mono text-[13px]"
           spellcheck="false"

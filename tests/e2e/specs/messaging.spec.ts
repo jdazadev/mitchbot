@@ -89,6 +89,63 @@ async function waitForStubInsight(api: any, marker: string, timeoutMs = 15_000) 
 }
 
 test.describe('Mensajería', () => {
+  test('muestra un error recuperable cuando no carga la bandeja', async ({ page }) => {
+    let failedOnce = false;
+    await page.route('**/api/conversations**', async (route) => {
+      const url = new URL(route.request().url());
+      if (
+        !failedOnce &&
+        route.request().method() === 'GET' &&
+        url.pathname.endsWith('/api/conversations')
+      ) {
+        failedOnce = true;
+        await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto('/messaging');
+    const loadError = page.getByRole('alert').filter({ hasText: 'No se pudo cargar la bandeja de conversaciones.' });
+    await expect(loadError).toBeVisible();
+    await loadError.getByRole('button', { name: 'Reintentar' }).click();
+    await expect(loadError).toHaveCount(0);
+    await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
+  });
+
+  test('permite reintentar la carga de mensajes de una conversación', async ({ page, api }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const id = uniqueId();
+    const clientName = uniqueName('Cliente Reintento');
+    const initial = `Mensaje para recuperar ${id}`;
+    await startPublicConversation(api, {
+      slug: E2E.project.slug,
+      clientIdentifier: `retry-messages-${id}`,
+      clientName,
+      initialMessage: initial,
+    });
+    let failedOnce = false;
+
+    await page.route('**/api/conversations/**/messages', async (route) => {
+      if (!failedOnce && route.request().method() === 'GET') {
+        failedOnce = true;
+        await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto('/messaging');
+    await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
+    await page.getByText(clientName).first().click();
+    const loadError = page.getByRole('alert').filter({ hasText: 'No se pudieron cargar los mensajes de esta conversación.' });
+    await expect(loadError).toBeVisible();
+    await loadError.getByRole('button', { name: 'Reintentar' }).click();
+    await expect(page.locator('main').getByText(initial)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByLabel('Escribe un mensaje...')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  });
+
   test('lista conversaciones (sin spinner permanente), abre un chat y responde', async ({ page, api }) => {
     const id = uniqueId();
     const clientName = uniqueName('Cliente Msg');
@@ -321,6 +378,10 @@ test.describe('Mensajería', () => {
     // El panel muestra el sentimiento real (no valores fijos).
     await row.getByText(clientName).click();
     await expect(page.getByText('Positivo').first()).toBeVisible({ timeout: 20_000 });
+    const sentimentBreakdown = page.getByTestId('sentiment-breakdown');
+    await expect(sentimentBreakdown.getByText('Negativo')).toBeVisible();
+    await expect(sentimentBreakdown.getByText('Neutral')).toBeVisible();
+    await expect(sentimentBreakdown.getByText('Positivo')).toBeVisible();
     await expect(page.getByText('plazo próximo')).toBeVisible();
   });
 
@@ -400,6 +461,11 @@ test.describe('Mensajería', () => {
     await expect(page.getByText('Confirmación requerida').last()).toBeVisible({ timeout: 25_000 });
     await expect(page.getByText('Media', { exact: true }).last()).toBeVisible();
     await expect(page.getByText('espera visto bueno')).toBeVisible();
+
+    // Confirmar una herramienta muestra su resultado y quita las acciones pendientes.
+    await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
+    await expect(page.getByText('Completado').last()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('button', { name: 'Confirmar', exact: true })).toHaveCount(0);
 
     await sendPublicMessage(api, E2E.project.slug, conversationId, `OLD_INSIGHT_DELAY ${id}`);
     await expect

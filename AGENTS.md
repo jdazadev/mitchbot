@@ -13,7 +13,16 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.13.0
+**Versión actual del proyecto:** v4.13.1
+
+---
+
+## Recuperación y feedback en Conversaciones (v4.13.1)
+
+- **Errores de carga recuperables**: la bandeja y el hilo distinguen el fallo de un estado vacío y ofrecen reintento; las cargas sucesivas de mensajes descartan respuestas obsoletas al cambiar de conversación.
+- **Decisiones de herramientas**: confirmar, cancelar o modificar muestra espera inmediata; la actualización del mensaje y el evento `tool:confirmed` comunican el resultado. Los errores del socket incluyen `executionId`; si la conexión falla o no llega respuesta en 15 segundos, aparece un reintento que no duplica una ejecución ya procesada.
+- **Claridad y accesibilidad**: el reparto de sentimiento usa etiquetas es/en; el compositor y el editor JSON tienen etiquetas persistentes y las superficies de error anuncian estado y recuperación.
+- **Verificación**: backend y frontend `build`; E2E de Mensajería **16/16**; paridad es/en **706/706**; detector Impeccable sin hallazgos.
 
 ---
 
