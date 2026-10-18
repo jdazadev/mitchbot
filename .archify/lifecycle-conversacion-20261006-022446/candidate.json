@@ -1,0 +1,169 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Ciclo de vida de una conversación",
+    "output": ".archify/lifecycle-conversacion-20261006-022446/conversacion.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "start": {
+          "label": "Inicio"
+        },
+        "active": {
+          "label": "En curso"
+        },
+        "waiting": {
+          "label": "En espera"
+        },
+        "decision": {
+          "label": "Decisión"
+        },
+        "success": {
+          "label": "Éxito"
+        },
+        "failure": {
+          "label": "Fallo"
+        },
+        "neutral": {
+          "label": "Neutro"
+        },
+        "external": {
+          "label": "Externo"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Conversación activa"
+    },
+    {
+      "id": "waiting",
+      "label": "Espera de operador"
+    },
+    {
+      "id": "terminal",
+      "label": "Cierre"
+    }
+  ],
+  "states": [
+    {
+      "id": "auto",
+      "type": "start",
+      "label": "Piloto automático",
+      "sublabel": "active · auto_pilot",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "el bot responde"
+    },
+    {
+      "id": "human",
+      "type": "active",
+      "label": "Control humano",
+      "sublabel": "active · human_takeover",
+      "lane": "main",
+      "col": 2,
+      "step": "02",
+      "tag": "el bot calla"
+    },
+    {
+      "id": "pending",
+      "type": "waiting",
+      "label": "Pendiente de humano",
+      "sublabel": "pending_human",
+      "lane": "waiting",
+      "col": 1,
+      "tag": "HUMAN NEEDED"
+    },
+    {
+      "id": "closed",
+      "type": "success",
+      "label": "Cerrada",
+      "sublabel": "closed",
+      "lane": "terminal",
+      "col": 3,
+      "tag": "terminal"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "take-control",
+      "from": "auto",
+      "to": "human",
+      "label": "tomar control",
+      "variant": "emphasis"
+    },
+    {
+      "id": "return-autopilot",
+      "from": "human",
+      "to": "auto",
+      "label": "piloto automático",
+      "variant": "dashed",
+      "route": "top-channel"
+    },
+    {
+      "id": "transfer",
+      "from": "auto",
+      "to": "pending",
+      "label": "transfer_to_human",
+      "variant": "security"
+    },
+    {
+      "id": "claim",
+      "from": "pending",
+      "to": "human",
+      "label": "status active"
+    },
+    {
+      "id": "auto-closes",
+      "from": "auto",
+      "to": "closed",
+      "label": "despedida",
+      "variant": "dashed"
+    },
+    {
+      "id": "human-closes",
+      "from": "human",
+      "to": "closed",
+      "label": "cerrar"
+    },
+    {
+      "id": "pending-closes",
+      "from": "pending",
+      "to": "closed",
+      "label": "cerrar",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Origen",
+      "items": [
+        "La inicia el cliente: nace active y en auto_pilot con 1 mensaje sin leer",
+        "El operador no puede abrir una conversación manualmente"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Quién responde",
+      "items": [
+        "En auto_pilot responde el bot",
+        "En human_takeover solo responde el operador",
+        "El cambio se propaga en vivo con chat:status"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Cierre",
+      "items": [
+        "Una despedida del cliente cierra la conversación tras la respuesta del bot",
+        "Un mensaje posterior del mismo cliente abre una conversación nueva"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "119f5885-d9f5-4924-ba24-a9dc62662ba1",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/sequence-confirmacion-herramienta-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/sequence-confirmacion-herramienta-20261006-022446/review-2/confirmacion-herramienta.html",
+  "specification": {
+    "sha256": "2108d2618597a4e38e13e28e99d97b5e4f23c64ac51e96916dca977d3e0fd344",
+    "bytes": 6361
+  },
+  "artifact": {
+    "sha256": "c453dfdd7cf70e04ed24f4e972275b1b9395825788e6a058b4ca3e5e2a19e376",
+    "bytes": 765631
+  }
+}

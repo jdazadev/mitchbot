@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Ingesta de conocimiento (RAG)",
+    "output": ".archify/dataflow-ingesta-rag-20261006-022446/ingesta-rag.html",
+    "viewBox": [
+      1080,
+      660
+    ],
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "Flujo"
+        },
+        "emphasis": {
+          "label": "Camino principal"
+        },
+        "security": {
+          "label": "Control"
+        },
+        "dashed": {
+          "label": "Asíncrono o secundario"
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "label": "Recepción"
+    },
+    {
+      "label": "Cola"
+    },
+    {
+      "label": "Extracción"
+    },
+    {
+      "label": "Procesamiento"
+    },
+    {
+      "label": "Índice y uso"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file",
+      "type": "frontend",
+      "label": "Brain · UI",
+      "sublabel": "archivo o texto manual",
+      "stage": 0,
+      "row": 0
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Brain",
+      "sublabel": "multer + proyecto",
+      "stage": 0,
+      "row": 1
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Cola rag-upload",
+      "sublabel": "BullMQ · Redis",
+      "stage": 1,
+      "row": 0,
+      "tag": "202"
+    },
+    {
+      "id": "sources",
+      "type": "database",
+      "label": "knowledge_sources",
+      "sublabel": "estado + logs",
+      "stage": 1,
+      "row": 2
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker",
+      "sublabel": "ragService.processFile",
+      "stage": 2,
+      "row": 0
+    },
+    {
+      "id": "ocr",
+      "type": "cloud",
+      "label": "OCR unificado",
+      "sublabel": "PDF → imágenes → visión",
+      "stage": 2,
+      "row": 2,
+      "tag": "OpenRouter"
+    },
+    {
+      "id": "chunk",
+      "type": "backend",
+      "label": "Chunking",
+      "sublabel": "800 tok · overlap 100",
+      "stage": 3,
+      "row": 1,
+      "tag": "por proyecto"
+    },
+    {
+      "id": "embed",
+      "type": "cloud",
+      "label": "Embeddings",
+      "sublabel": "OpenRouter",
+      "stage": 3,
+      "row": 0
+    },
+    {
+      "id": "qdrant",
+      "type": "database",
+      "label": "Qdrant",
+      "sublabel": "colección del proyecto",
+      "stage": 4,
+      "row": 0,
+      "tag": "payload"
+    },
+    {
+      "id": "bot",
+      "type": "backend",
+      "label": "chat.service",
+      "sublabel": "top 10 → re-rank top 3",
+      "stage": 4,
+      "row": 2
+    }
+  ],
+  "flows": [
+    {
+      "id": "file-upload",
+      "from": "file",
+      "to": "api",
+      "label": "archivo / texto",
+      "classification": "multipart · JSON",
+      "variant": "emphasis",
+      "labelAt": [
+        100,
+        201
+      ]
+    },
+    {
+      "id": "enqueue",
+      "from": "api",
+      "to": "queue",
+      "label": "job",
+      "classification": "attempts 1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "queued-state",
+      "from": "api",
+      "to": "sources",
+      "label": "Queued",
+      "classification": "estado",
+      "variant": "dashed"
+    },
+    {
+      "id": "job-to-worker",
+      "from": "queue",
+      "to": "worker",
+      "label": "job",
+      "classification": "async",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pdf-ocr",
+      "from": "worker",
+      "to": "ocr",
+      "label": "PDF / imagen",
+      "classification": "extracción",
+      "variant": "default",
+      "labelAt": [
+        530,
+        201
+      ]
+    },
+    {
+      "id": "plain-text",
+      "from": "worker",
+      "to": "chunk",
+      "label": "TXT / CSV",
+      "classification": "texto directo",
+      "variant": "default"
+    },
+    {
+      "id": "ocr-text",
+      "from": "ocr",
+      "to": "chunk",
+      "label": "texto",
+      "classification": "fallback pdf-parse",
+      "variant": "default"
+    },
+    {
+      "id": "manual-text",
+      "from": "api",
+      "to": "chunk",
+      "label": "texto manual",
+      "classification": "síncrono",
+      "variant": "dashed",
+      "route": "bottom-channel",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "channelY": 560
+    },
+    {
+      "id": "chunks-to-embed",
+      "from": "chunk",
+      "to": "embed",
+      "label": "chunks",
+      "classification": "metadatos",
+      "variant": "emphasis",
+      "labelAt": [
+        745,
+        222
+      ]
+    },
+    {
+      "id": "vectors",
+      "from": "embed",
+      "to": "qdrant",
+      "label": "vectores",
+      "classification": "indexa",
+      "variant": "emphasis"
+    },
+    {
+      "id": "context",
+      "from": "qdrant",
+      "to": "bot",
+      "label": "contexto",
+      "classification": "5 s timeout",
+      "variant": "default",
+      "labelAt": [
+        960,
+        201
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Camino principal",
+      "items": [
+        "El archivo se registra como Queued y responde 202",
+        "Un worker lo extrae, fragmenta, vectoriza e indexa en Qdrant",
+        "El estado pasa por extracting, chunking, embedding e indexing"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Variantes",
+      "items": [
+        "PDF e imagen pasan por OCR con fallback a pdf-parse",
+        "TXT y CSV entran directo al chunking",
+        "El texto manual se procesa sin cola"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Fallos",
+      "items": [
+        "Si el worker falla, la fuente queda Failed con su mensaje",
+        "Si el RAG falla al responder, el bot sigue sin contexto"
+      ]
+    }
+  ]
+}

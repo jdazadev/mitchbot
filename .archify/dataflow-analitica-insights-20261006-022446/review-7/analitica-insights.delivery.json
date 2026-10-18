@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "6b128fa8-9e09-48de-94ed-45ebb5bf7736",
+  "status": "current",
+  "command": "deliver",
+  "type": "dataflow",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/review-7/analitica-insights.html",
+  "specification": {
+    "sha256": "8a34eaaf341e263772c04bd8d36f597660f3c53884796833d9bf40016868f2fb",
+    "bytes": 4393
+  },
+  "artifact": {
+    "sha256": "add30bcdd0cfecc71e191fc2a2453a668362fe1b14cddcb3f1e2e57d766a72f2",
+    "bytes": 756357
+  }
+}

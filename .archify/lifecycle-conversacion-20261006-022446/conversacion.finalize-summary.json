@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "lifecycle",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-conversacion-20261006-022446/candidate.json",
+    "sha256": "eaa5f537d1cd52b2f512716b15e34feaa22d583c8d4e1263ff1731898b97b31a",
+    "bytes": 3055
+  },
+  "artifact": {
+    "path": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-conversacion-20261006-022446/conversacion.html",
+    "sha256": "92a8dccf42aba4e92a8623ccb921ee50ec861269233121b4c1ee19b30f67c54a",
+    "bytes": 755144
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "fail"
+  },
+  "failedStage": "browser-check",
+  "diagnostics": [
+    {
+      "code": "viewer/evidence-path-conflict",
+      "severity": "error",
+      "message": "browser-check will not replace the existing unowned evidence path \"/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-conversacion-20261006-022446/conversacion.browser-check.json\".",
+      "subject": {
+        "artifact": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-conversacion-20261006-022446/conversacion.html",
+        "evidencePath": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-conversacion-20261006-022446/conversacion.browser-check.json"
+      },
+      "evidence": {
+        "reason": {
+          "code": "ownership-artifact-mismatch"
+        }
+      },
+      "supportedFixes": [
+        "move the conflicting file aside, or choose a separate --out-dir, then rerun browser-check"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-conversacion-20261006-022446/conversacion.finalize.json",
+    "summaryReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-conversacion-20261006-022446/conversacion.finalize-summary.json",
+    "browserCheckReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-conversacion-20261006-022446/conversacion.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.0.1",
+    "availableVersion": "3.0.1",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-06T03:53:43.304Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 2442
+}

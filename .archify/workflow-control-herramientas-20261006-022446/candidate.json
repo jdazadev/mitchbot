@@ -1,0 +1,286 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Control de herramientas: ninguna, cliente u operador",
+    "output": ".archify/workflow-control-herramientas-20261006-022446/control-herramientas.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Interfaz"
+        },
+        "backend": {
+          "label": "Servicio"
+        },
+        "database": {
+          "label": "Base de datos"
+        },
+        "cloud": {
+          "label": "Servicio externo"
+        },
+        "security": {
+          "label": "Control / política"
+        },
+        "messagebus": {
+          "label": "Cola / evento"
+        },
+        "external": {
+          "label": "Actor externo"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "cli",
+      "label": "Cliente"
+    },
+    {
+      "id": "bot",
+      "label": "Agente y tool.service"
+    },
+    {
+      "id": "ops",
+      "label": "Operador (approver / admin)"
+    }
+  ],
+  "mainPath": [
+    "call",
+    "route",
+    "exec",
+    "final"
+  ],
+  "nodes": [
+    {
+      "id": "call",
+      "lane": "bot",
+      "col": 0,
+      "type": "messagebus",
+      "label": "Tool call",
+      "sublabel": "decidido por el LLM",
+      "width": 132
+    },
+    {
+      "id": "route",
+      "lane": "bot",
+      "col": 1,
+      "type": "security",
+      "label": "¿Qué control?",
+      "sublabel": "catálogo del proyecto",
+      "tag": "operación habilitada",
+      "width": 140
+    },
+    {
+      "id": "exec",
+      "lane": "bot",
+      "col": 4,
+      "type": "backend",
+      "label": "Ejecutar",
+      "sublabel": "binding interno",
+      "tag": "tool_executions",
+      "width": 132
+    },
+    {
+      "id": "final",
+      "lane": "bot",
+      "col": 5,
+      "type": "backend",
+      "label": "Respuesta final",
+      "sublabel": "tool_result + bot",
+      "width": 132
+    },
+    {
+      "id": "ask",
+      "lane": "cli",
+      "col": 2,
+      "type": "frontend",
+      "label": "«¿Confirmas?»",
+      "sublabel": "pending_confirmation",
+      "width": 140
+    },
+    {
+      "id": "decideC",
+      "lane": "cli",
+      "col": 3,
+      "type": "external",
+      "label": "Cliente decide",
+      "sublabel": "confirma · modifica · cancela",
+      "width": 150
+    },
+    {
+      "id": "cancelled",
+      "lane": "cli",
+      "col": 4,
+      "type": "security",
+      "label": "Cancelada",
+      "sublabel": "estado cancelled",
+      "width": 132
+    },
+    {
+      "id": "pend",
+      "lane": "ops",
+      "col": 2,
+      "type": "messagebus",
+      "label": "Pendiente",
+      "sublabel": "pending_approval",
+      "tag": "admin:notification",
+      "width": 140
+    },
+    {
+      "id": "decideO",
+      "lane": "ops",
+      "col": 3,
+      "type": "security",
+      "label": "Operador decide",
+      "sublabel": "reclamo atómico",
+      "width": 140
+    },
+    {
+      "id": "rejected",
+      "lane": "ops",
+      "col": 4,
+      "type": "security",
+      "label": "Rechazada",
+      "sublabel": "estado rejected",
+      "width": 132
+    }
+  ],
+  "edges": [
+    {
+      "id": "call-route",
+      "from": "call",
+      "to": "route"
+    },
+    {
+      "id": "route-exec",
+      "from": "route",
+      "to": "exec",
+      "label": "ninguna (lecturas)",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "exec-final",
+      "from": "exec",
+      "to": "final",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route-ask",
+      "from": "route",
+      "to": "ask",
+      "label": "confirmación del cliente",
+      "role": "branch",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "ask-decideC",
+      "from": "ask",
+      "to": "decideC",
+      "role": "branch"
+    },
+    {
+      "id": "decideC-exec",
+      "from": "decideC",
+      "to": "exec",
+      "label": "confirma",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "decideC-ask",
+      "from": "decideC",
+      "to": "ask",
+      "label": "modifica",
+      "variant": "dashed",
+      "role": "return",
+      "fromSide": "top",
+      "toSide": "top",
+      "route": "up-channel"
+    },
+    {
+      "id": "decideC-cancelled",
+      "from": "decideC",
+      "to": "cancelled",
+      "label": "cancela",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "cancelled-final",
+      "from": "cancelled",
+      "to": "final",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "route-pend",
+      "from": "route",
+      "to": "pend",
+      "label": "aprobación del operador",
+      "variant": "security",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "pend-decideO",
+      "from": "pend",
+      "to": "decideO",
+      "variant": "security",
+      "role": "branch"
+    },
+    {
+      "id": "decideO-exec",
+      "from": "decideO",
+      "to": "exec",
+      "label": "aprueba",
+      "variant": "security",
+      "role": "branch",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "decideO-rejected",
+      "from": "decideO",
+      "to": "rejected",
+      "label": "rechaza",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "rejected-final",
+      "from": "rejected",
+      "to": "final",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Qué control aplica",
+      "items": [
+        "Lecturas: sin aprobación",
+        "Crear o editar: confirma el cliente",
+        "Eliminar y Pagos·crear: aprueba un operador"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Garantías",
+      "items": [
+        "tool.service vuelve a verificar el control antes de ejecutar",
+        "Aprobar reclama la solicitud de forma atómica: sin dobles ejecuciones",
+        "Pagos guarda intenciones, nunca mueve dinero"
+      ]
+    }
+  ]
+}

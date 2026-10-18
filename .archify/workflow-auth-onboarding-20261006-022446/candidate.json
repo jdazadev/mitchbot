@@ -1,0 +1,227 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Inicio de sesión y onboarding de proyecto",
+    "output": ".archify/workflow-auth-onboarding-20261006-022446/auth-onboarding.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Interfaz"
+        },
+        "backend": {
+          "label": "Servicio"
+        },
+        "database": {
+          "label": "Base de datos"
+        },
+        "cloud": {
+          "label": "Servicio externo"
+        },
+        "security": {
+          "label": "Control / política"
+        },
+        "messagebus": {
+          "label": "Cola / evento"
+        },
+        "external": {
+          "label": "Actor externo"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "login",
+      "label": "Desvíos: sin sesión o sin proyecto",
+      "variant": "exception"
+    },
+    {
+      "id": "spa",
+      "label": "SPA y guard del router"
+    },
+    {
+      "id": "api",
+      "label": "Backend API"
+    }
+  ],
+  "mainPath": [
+    "open",
+    "token",
+    "check",
+    "decide",
+    "dash"
+  ],
+  "nodes": [
+    {
+      "id": "open",
+      "lane": "spa",
+      "col": 0,
+      "type": "external",
+      "label": "Abre la app",
+      "sublabel": "usuario",
+      "width": 132
+    },
+    {
+      "id": "token",
+      "lane": "spa",
+      "col": 1,
+      "type": "security",
+      "label": "¿Token local?",
+      "sublabel": "isAuthenticated",
+      "width": 132
+    },
+    {
+      "id": "check",
+      "lane": "api",
+      "col": 2,
+      "type": "backend",
+      "label": "GET /project/check",
+      "sublabel": "hasProject",
+      "width": 150
+    },
+    {
+      "id": "decide",
+      "lane": "spa",
+      "col": 3,
+      "type": "frontend",
+      "label": "¿Tiene proyecto?",
+      "sublabel": "guard del router",
+      "width": 140
+    },
+    {
+      "id": "dash",
+      "lane": "spa",
+      "col": 5,
+      "type": "frontend",
+      "label": "Dashboard",
+      "sublabel": "proyecto activo",
+      "width": 132
+    },
+    {
+      "id": "setup",
+      "lane": "login",
+      "col": 3,
+      "type": "frontend",
+      "label": "Setup · 3 pasos",
+      "sublabel": "proyecto · agente · canales",
+      "width": 150
+    },
+    {
+      "id": "create",
+      "lane": "api",
+      "col": 4,
+      "type": "backend",
+      "label": "POST /project",
+      "sublabel": "proyecto + agente",
+      "width": 140
+    },
+    {
+      "id": "login",
+      "lane": "login",
+      "col": 1,
+      "type": "frontend",
+      "label": "/login",
+      "sublabel": "POST /auth/login · JWT 24 h",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "open-token",
+      "from": "open",
+      "to": "token"
+    },
+    {
+      "id": "token-check",
+      "from": "token",
+      "to": "check",
+      "label": "sí",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check-decide",
+      "from": "check",
+      "to": "decide",
+      "label": "hasProject",
+      "variant": "emphasis"
+    },
+    {
+      "id": "decide-dash",
+      "from": "decide",
+      "to": "dash",
+      "label": "sí",
+      "variant": "emphasis"
+    },
+    {
+      "id": "decide-setup",
+      "from": "decide",
+      "to": "setup",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "id": "setup-create",
+      "from": "setup",
+      "to": "create",
+      "role": "branch"
+    },
+    {
+      "id": "create-dash",
+      "from": "create",
+      "to": "dash",
+      "label": "proyecto activo",
+      "role": "branch"
+    },
+    {
+      "id": "token-login",
+      "from": "token",
+      "to": "login",
+      "label": "no",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "check-login",
+      "from": "check",
+      "to": "login",
+      "label": "401/403: limpia sesión",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "login-check",
+      "from": "login",
+      "to": "check",
+      "label": "JWT",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Fuente de verdad",
+      "items": [
+        "El servidor decide si hay proyecto; localStorage ya no cuenta",
+        "Un 401/403 limpia la sesión y vuelve al login sin avisos"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Onboarding",
+      "items": [
+        "Setup valida de nuevo al montarse: con proyecto y sin ?mode=new redirige al dashboard",
+        "El creador queda como miembro y su proyecto pasa a activo"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Registro",
+      "items": [
+        "Esta app solo inicia sesión; el registro ocurre en otro sitio"
+      ]
+    }
+  ]
+}

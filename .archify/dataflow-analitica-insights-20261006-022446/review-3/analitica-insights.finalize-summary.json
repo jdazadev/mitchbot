@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "dataflow",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/candidate.json",
+    "sha256": "55da46ead4754abde1c2b7560cb678b166b579d963ab0b91510776989002a5ca",
+    "bytes": 3756
+  },
+  "artifact": {
+    "path": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/review-3/analitica-insights.html"
+  },
+  "gates": {
+    "validate": "fail",
+    "deliver": "not-run",
+    "check": "not-run",
+    "browser-check": "not-run"
+  },
+  "failedStage": "validate",
+  "diagnostics": [
+    {
+      "code": "composition/micro-segment",
+      "severity": "error",
+      "message": "[composition/micro-segment] showcase dataflow flows[1] id \"client-message\" \"chat\" -> \"insights\" has a 7px interior segment 1 [207.5, 150] -> [207.5, 157] that is below the 8px micro-segment floor — adjust route/via or channelX/channelY so each turn uses a clear inter-stage corridor.",
+      "subject": {
+        "diagramType": "dataflow",
+        "collection": "flows",
+        "index": 1,
+        "id": "client-message",
+        "from": "chat",
+        "to": "insights"
+      },
+      "evidence": {
+        "segmentIndex": 1,
+        "position": "interior",
+        "lengthPx": 7,
+        "minimumPx": 8,
+        "from": [
+          207.5,
+          150
+        ],
+        "to": [
+          207.5,
+          157
+        ]
+      },
+      "supportedFixes": [
+        "adjust route/via or channelX/channelY so each turn uses a clear inter-stage corridor"
+      ]
+    },
+    {
+      "code": "layout/constraint",
+      "severity": "error",
+      "message": "Label \"aiInsights\" overlaps node \"insights\" — adjust labelDx/labelDy/labelSegment or set labelAt.\n  label rect: [285, 165, 61, 16]\n  node \"insights\" rect: [259, 128, 112, 58]\n  Suggested fix: set labelAt [315, 201] or set labelDy 25 (below); or set labelAt [315, 119] or set labelDy -57 (above)",
+      "subject": {
+        "diagramType": "dataflow"
+      }
+    },
+    {
+      "code": "composition/micro-segment",
+      "severity": "error",
+      "message": "[composition/micro-segment] showcase dataflow flows[7] id \"socket-to-spa\" \"socket\" -> \"spa\" has a 7px interior segment 1 [852.5, 157] -> [852.5, 150] that is below the 8px micro-segment floor — adjust route/via or channelX/channelY so each turn uses a clear inter-stage corridor.",
+      "subject": {
+        "diagramType": "dataflow",
+        "collection": "flows",
+        "index": 7,
+        "id": "socket-to-spa",
+        "from": "socket",
+        "to": "spa"
+      },
+      "evidence": {
+        "segmentIndex": 1,
+        "position": "interior",
+        "lengthPx": 7,
+        "minimumPx": 8,
+        "from": [
+          852.5,
+          157
+        ],
+        "to": [
+          852.5,
+          150
+        ]
+      },
+      "supportedFixes": [
+        "adjust route/via or channelX/channelY so each turn uses a clear inter-stage corridor"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 3,
+    "shown": 3,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/review-3/analitica-insights.finalize.json",
+    "summaryReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/review-3/analitica-insights.finalize-summary.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.0.1",
+    "availableVersion": "3.0.1",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-06T03:53:43.304Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 782,
+  "nextAction": {
+    "action": "edit-in-place",
+    "candidate": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/candidate.json",
+    "constraint": "Preserve unaffected semantics and geometry; do not replace the whole candidate.",
+    "then": "finalize-once"
+  }
+}

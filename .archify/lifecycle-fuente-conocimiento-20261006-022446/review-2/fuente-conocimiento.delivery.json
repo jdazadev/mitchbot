@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "a6fc708b-6143-4f96-bfd3-6504e3df52dd",
+  "status": "current",
+  "command": "deliver",
+  "type": "lifecycle",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-fuente-conocimiento-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-fuente-conocimiento-20261006-022446/review-2/fuente-conocimiento.html",
+  "specification": {
+    "sha256": "69ef267711eb3ddac423b84c7cadb9e9552eba5db86d922b504ca12dc85cab16",
+    "bytes": 4655
+  },
+  "artifact": {
+    "sha256": "59a423a190bf070333dd7fd655a9b641433fa085af8c8cb392b4735234065151",
+    "bytes": 761088
+  }
+}

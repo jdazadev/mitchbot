@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "59a2bb4b-0ce9-4375-b77e-64acab977d58",
+  "status": "current",
+  "command": "deliver",
+  "type": "lifecycle",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-conversacion-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-conversacion-20261006-022446/conversacion.html",
+  "specification": {
+    "sha256": "eaa5f537d1cd52b2f512716b15e34feaa22d583c8d4e1263ff1731898b97b31a",
+    "bytes": 3055
+  },
+  "artifact": {
+    "sha256": "92a8dccf42aba4e92a8623ccb921ee50ec861269233121b4c1ee19b30f67c54a",
+    "bytes": 755144
+  }
+}

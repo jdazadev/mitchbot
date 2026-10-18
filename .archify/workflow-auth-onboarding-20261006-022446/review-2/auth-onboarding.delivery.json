@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "881e848a-8b8b-4b03-8188-bf40f126d3ae",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-auth-onboarding-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-auth-onboarding-20261006-022446/review-2/auth-onboarding.html",
+  "specification": {
+    "sha256": "ef88a0cfda3f662dba0d90e8cb52561a076054446ecb2fc83a9c5ffbc00ca980",
+    "bytes": 4686
+  },
+  "artifact": {
+    "sha256": "9f40b9ba64175f423637fbae2e11472b1ece59dc525f5acec21afdda60bd7f78",
+    "bytes": 758271
+  }
+}

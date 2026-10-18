@@ -5,6 +5,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.14.1 — 2026-10-06
+
+> **Diagramas del sistema**: flujos, casos de uso y procesos internos documentados con Archify
+
+### ✨ Añadido
+- Diez diagramas interactivos en `.archify/` (HTML autocontenido, tema claro/oscuro, exportables): arquitectura del sistema; inicio de sesión y onboarding; mensaje del cliente a respuesta del bot; herramienta con confirmación del cliente; control de herramientas (ninguna, cliente u operador); ingesta de conocimiento RAG; analítica del Dashboard e insights; y los ciclos de vida de conversación, fuente de conocimiento y ejecución de herramienta.
+- Cada diagrama conserva su `candidate.json` (fuente editable) junto al HTML final en su carpeta `review-N`.
+
+### ✅ Verificación
+- Los diez pasan validación, entrega, comprobación estricta y navegador real (`finalize --quality showcase`) y se revisaron capturas a 1440×900. Sin cambios de código.
+- Los diagramas se redactaron a partir del código del backend, no de una revisión fijada: el repositorio no tiene remoto `origin`, así que Archify no puede verificar fuentes con commit.
+
+---
+
 ## v4.14.0 — 2026-09-30
 
 > **Conversaciones más ligeras y accesibles**: historial bajo demanda, controles etiquetados y foco predecible

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "command": "deliver",
+  "status": "pending",
+  "receiptId": "d79e2d7d-1902-4f19-88d6-3f6d997d8d47",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/review-3/analitica-insights.html"
+}

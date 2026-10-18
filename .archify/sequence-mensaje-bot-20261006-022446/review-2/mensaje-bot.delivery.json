@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "c35bcdba-dd24-4e67-b105-b25ec83b0ef7",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/sequence-mensaje-bot-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/sequence-mensaje-bot-20261006-022446/review-2/mensaje-bot.html",
+  "specification": {
+    "sha256": "6820ebd92c8fb175a5cc9f9ae959e3c2ec3c8966a1e34366e8404c801d2dc061",
+    "bytes": 6185
+  },
+  "artifact": {
+    "sha256": "797416c62ce0ef08685022facd34f35df07801c18f9373c371e63381db45d05b",
+    "bytes": 764192
+  }
+}

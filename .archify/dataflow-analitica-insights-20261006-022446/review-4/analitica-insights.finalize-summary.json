@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "dataflow",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/candidate.json",
+    "sha256": "ab796dfdae207e5c1aa185f7832313ae73d580108d90de66962f22d8aac3c8b1",
+    "bytes": 3914
+  },
+  "artifact": {
+    "path": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/review-4/analitica-insights.html"
+  },
+  "gates": {
+    "validate": "fail",
+    "deliver": "not-run",
+    "check": "not-run",
+    "browser-check": "not-run"
+  },
+  "failedStage": "validate",
+  "diagnostics": [
+    {
+      "code": "clean-flow/endpoint-side-direction",
+      "severity": "error",
+      "message": "[clean-flow/endpoint-side-direction] dataflow flows[0] id \"events-to-db\" \"chat\" -> \"mongo\" first segment 0 [100, 186] -> [179.5, 186] does not honor fromSide \"bottom\" — it must run vertical downward; keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross node borders perpendicularly.",
+      "subject": {
+        "diagramType": "dataflow",
+        "collection": "flows",
+        "index": 0,
+        "id": "events-to-db",
+        "from": "chat",
+        "to": "mongo"
+      },
+      "evidence": {
+        "endpoint": "source",
+        "authoredField": "fromSide",
+        "sideOrigin": "authored",
+        "side": "bottom",
+        "segmentIndex": 0,
+        "from": [
+          100,
+          186
+        ],
+        "to": [
+          179.5,
+          186
+        ],
+        "expectedAxis": "vertical",
+        "expectedDirection": "downward"
+      },
+      "supportedFixes": [
+        "keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross node borders perpendicularly"
+      ]
+    },
+    {
+      "code": "clean-flow/endpoint-side-direction",
+      "severity": "error",
+      "message": "[clean-flow/endpoint-side-direction] dataflow flows[6] id \"api-to-spa\" \"api\" -> \"spa\" final segment 2 [880.5, 186] -> [960, 186] does not honor toSide \"bottom\" — it must run vertical upward from below; keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross node borders perpendicularly.",
+      "subject": {
+        "diagramType": "dataflow",
+        "collection": "flows",
+        "index": 6,
+        "id": "api-to-spa",
+        "from": "api",
+        "to": "spa"
+      },
+      "evidence": {
+        "endpoint": "target",
+        "authoredField": "toSide",
+        "sideOrigin": "authored",
+        "side": "bottom",
+        "segmentIndex": 2,
+        "from": [
+          880.5,
+          186
+        ],
+        "to": [
+          960,
+          186
+        ],
+        "expectedAxis": "vertical",
+        "expectedDirection": "upward from below"
+      },
+      "supportedFixes": [
+        "keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross node borders perpendicularly"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 2,
+    "shown": 2,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/review-4/analitica-insights.finalize.json",
+    "summaryReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/review-4/analitica-insights.finalize-summary.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.0.1",
+    "availableVersion": "3.0.1",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-06T03:53:43.304Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 702,
+  "nextAction": {
+    "action": "edit-in-place",
+    "candidate": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-analitica-insights-20261006-022446/candidate.json",
+    "constraint": "Preserve unaffected semantics and geometry; do not replace the whole candidate.",
+    "then": "finalize-once"
+  }
+}

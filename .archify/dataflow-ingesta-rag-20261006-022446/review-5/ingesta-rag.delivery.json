@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "8a047696-17dd-48ec-966c-31ff41ec8dcd",
+  "status": "current",
+  "command": "deliver",
+  "type": "dataflow",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-ingesta-rag-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-ingesta-rag-20261006-022446/review-5/ingesta-rag.html",
+  "specification": {
+    "sha256": "dc1cc21618c7ee714731b19b1f170ddf07d5dee4617104b7a72d4f9430047b9a",
+    "bytes": 5635
+  },
+  "artifact": {
+    "sha256": "08ae325c43b93f15bbb4604f7c53d3fca369849fe8ce4b11524316469b553608",
+    "bytes": 762999
+  }
+}

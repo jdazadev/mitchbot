@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "ef637b05-ab6a-4464-9610-7ad861920174",
+  "status": "current",
+  "command": "deliver",
+  "type": "lifecycle",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-ejecucion-herramienta-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/lifecycle-ejecucion-herramienta-20261006-022446/review-3/ejecucion-herramienta.html",
+  "specification": {
+    "sha256": "eb5c6f10efe138b9ec7ce440a5fddb35dd2f7009095153e7911820161dbc140f",
+    "bytes": 4473
+  },
+  "artifact": {
+    "sha256": "37a59b5146fa2391e711f4ade667817735e6c607ef9fac589d4f70fbfb2adaaf",
+    "bytes": 762056
+  }
+}

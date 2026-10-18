@@ -1,0 +1,220 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Ciclo de vida de una ejecución de herramienta",
+    "output": ".archify/lifecycle-ejecucion-herramienta-20261006-022446/ejecucion-herramienta.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "start": {
+          "label": "Inicio"
+        },
+        "active": {
+          "label": "En curso"
+        },
+        "waiting": {
+          "label": "En espera"
+        },
+        "decision": {
+          "label": "Decisión"
+        },
+        "success": {
+          "label": "Éxito"
+        },
+        "failure": {
+          "label": "Fallo"
+        },
+        "neutral": {
+          "label": "Neutro"
+        },
+        "external": {
+          "label": "Externo"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Ejecución"
+    },
+    {
+      "id": "waiting",
+      "label": "Pendiente y fallida"
+    },
+    {
+      "id": "terminal",
+      "label": "Resultado"
+    }
+  ],
+  "states": [
+    {
+      "id": "executing",
+      "type": "start",
+      "label": "Executing",
+      "sublabel": "sin control",
+      "lane": "main",
+      "col": 0,
+      "tag": "lectura"
+    },
+    {
+      "id": "approving",
+      "type": "active",
+      "label": "Approving",
+      "sublabel": "operador aprobó",
+      "lane": "main",
+      "col": 3,
+      "tag": "reclamada"
+    },
+    {
+      "id": "pc",
+      "type": "waiting",
+      "label": "Pending confirmation",
+      "sublabel": "cliente",
+      "lane": "waiting",
+      "col": 1,
+      "tag": "inicio"
+    },
+    {
+      "id": "pa",
+      "type": "waiting",
+      "label": "Pending approval",
+      "sublabel": "operador",
+      "lane": "waiting",
+      "col": 4,
+      "tag": "inicio"
+    },
+    {
+      "id": "executed",
+      "type": "success",
+      "label": "Executed",
+      "sublabel": "ok",
+      "lane": "terminal",
+      "col": 0,
+      "tag": "terminal"
+    },
+    {
+      "id": "cancelled",
+      "type": "neutral",
+      "label": "Cancelled",
+      "sublabel": "cliente",
+      "lane": "terminal",
+      "col": 1,
+      "tag": "terminal"
+    },
+    {
+      "id": "failed",
+      "type": "failure",
+      "label": "Failed",
+      "sublabel": "error",
+      "lane": "waiting",
+      "col": 2,
+      "tag": "terminal"
+    },
+    {
+      "id": "rejected",
+      "type": "failure",
+      "label": "Rejected",
+      "sublabel": "operador",
+      "lane": "terminal",
+      "col": 4,
+      "tag": "terminal"
+    },
+    {
+      "id": "approved",
+      "type": "success",
+      "label": "Approved",
+      "sublabel": "ejecutada",
+      "lane": "terminal",
+      "col": 3,
+      "tag": "terminal"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "run-ok",
+      "from": "executing",
+      "to": "executed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "run-fails",
+      "from": "executing",
+      "to": "failed",
+      "variant": "security"
+    },
+    {
+      "id": "confirm-ok",
+      "from": "pc",
+      "to": "executed",
+      "label": "confirma",
+      "variant": "emphasis"
+    },
+    {
+      "id": "confirm-fails",
+      "from": "pc",
+      "to": "failed",
+      "variant": "security"
+    },
+    {
+      "id": "confirm-cancel",
+      "from": "pc",
+      "to": "cancelled",
+      "label": "cancela"
+    },
+    {
+      "id": "approve",
+      "from": "pa",
+      "to": "approving",
+      "label": "aprueba",
+      "variant": "emphasis"
+    },
+    {
+      "id": "reject",
+      "from": "pa",
+      "to": "rejected",
+      "label": "rechaza",
+      "variant": "security"
+    },
+    {
+      "id": "approve-ok",
+      "from": "approving",
+      "to": "approved",
+      "variant": "emphasis"
+    },
+    {
+      "id": "approve-fails",
+      "from": "approving",
+      "to": "failed",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Estado inicial",
+      "items": [
+        "Sin control: nace en executing",
+        "Crear o editar: pending_confirmation",
+        "Eliminar o Pagos·crear: pending_approval"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Decisiones",
+      "items": [
+        "Modificar parámetros mantiene pending_confirmation",
+        "Aprobar reclama la solicitud de forma atómica (approving)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Auditoría",
+      "items": [
+        "Cada cambio guarda resultado, actor y fecha en tool_executions"
+      ]
+    }
+  ]
+}

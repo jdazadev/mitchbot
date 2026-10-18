@@ -13,7 +13,16 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.14.0
+**Versión actual del proyecto:** v4.14.1
+
+---
+
+## Diagramas del sistema (v4.14.1)
+
+- **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y el HTML final en la subcarpeta `review-N` más reciente (las salidas de la raíz de cada carpeta son borradores superados).
+- **Contenido**: arquitectura del sistema; workflows de auth/onboarding y de control de herramientas; secuencias de mensaje→bot y de confirmación del cliente; dataflows de ingesta RAG y de analítica/insights; lifecycles de conversación, fuente de conocimiento y ejecución de herramienta.
+- **Regenerar**: `node ~/.claude/skills/archify/bin/archify.mjs finalize <tipo> candidate.json <salida.html> --quality showcase --out-dir <carpeta>/review-N`. Un candidato modificado necesita un `--out-dir` nuevo.
+- **Límites**: sin remoto `origin` no se pueden fijar fuentes con commit; los diagramas se basan en el código y este documento. Si cambia el flujo, actualiza el `candidate.json` correspondiente.
 
 ---
 

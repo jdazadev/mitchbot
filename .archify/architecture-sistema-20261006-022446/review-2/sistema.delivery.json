@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "84f7109c-72c5-4004-bc47-21bae62ae3bf",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/architecture-sistema-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/architecture-sistema-20261006-022446/review-2/sistema.html",
+  "specification": {
+    "sha256": "818d4f20539b10842a4453231ce51537a7095fe1dbeb2e7210c5c1fc48f0bf1a",
+    "bytes": 6814
+  },
+  "artifact": {
+    "sha256": "bd6e4a5c4a47fdbbe6fc1e885671152cabb3e4e28d606a5861021d24f25b076f",
+    "bytes": 774131
+  }
+}

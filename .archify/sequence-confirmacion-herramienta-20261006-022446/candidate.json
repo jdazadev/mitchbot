@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Herramienta con confirmación del cliente",
+    "output": ".archify/sequence-confirmacion-herramienta-20261006-022446/confirmacion-herramienta.html",
+    "viewBox": [
+      1080,
+      690
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "Flujo"
+        },
+        "emphasis": {
+          "label": "Camino principal"
+        },
+        "security": {
+          "label": "Control"
+        },
+        "dashed": {
+          "label": "Asíncrono o secundario"
+        },
+        "return": {
+          "label": "Respuesta"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "customer",
+      "type": "external",
+      "label": "Cliente",
+      "sublabel": "chat web"
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "TestChat",
+      "sublabel": "SPA"
+    },
+    {
+      "id": "ws",
+      "type": "backend",
+      "label": "Socket.io",
+      "sublabel": "tool:confirm"
+    },
+    {
+      "id": "chat",
+      "type": "backend",
+      "label": "chat.service",
+      "sublabel": "orquestador"
+    },
+    {
+      "id": "llm",
+      "type": "cloud",
+      "label": "ai.service",
+      "sublabel": "OpenRouter LLM"
+    },
+    {
+      "id": "tools",
+      "type": "security",
+      "label": "tool.service",
+      "sublabel": "control + binding"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "MongoDB",
+      "sublabel": "tool_executions"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 254,
+      "label": "Solicitud"
+    },
+    {
+      "from": 262,
+      "to": 366,
+      "label": "Decisión del cliente"
+    },
+    {
+      "from": 374,
+      "to": 590,
+      "label": "Ejecución y cierre"
+    }
+  ],
+  "messages": [
+    {
+      "id": "ask-llm",
+      "from": "chat",
+      "to": "llm",
+      "y": 160,
+      "label": "generar con tools",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tool-call",
+      "from": "llm",
+      "to": "chat",
+      "y": 188,
+      "label": "tool_call agenda_crear",
+      "variant": "return"
+    },
+    {
+      "id": "check-control",
+      "from": "chat",
+      "to": "tools",
+      "y": 216,
+      "label": "¿control del tool?",
+      "variant": "security",
+      "note": "responde confirmacion_cliente"
+    },
+    {
+      "id": "save-pending",
+      "from": "chat",
+      "to": "db",
+      "y": 244,
+      "label": "pending_confirmation"
+    },
+    {
+      "id": "confirmation-request",
+      "from": "chat",
+      "to": "web",
+      "y": 272,
+      "label": "«¿Confirmas?»",
+      "variant": "emphasis",
+      "note": "mensaje confirmation_request"
+    },
+    {
+      "id": "customer-confirms",
+      "from": "customer",
+      "to": "web",
+      "y": 300,
+      "label": "confirma"
+    },
+    {
+      "id": "tool-confirm",
+      "from": "web",
+      "to": "ws",
+      "y": 328,
+      "label": "tool:confirm",
+      "variant": "emphasis",
+      "note": "cancelar y modificar toman otro camino"
+    },
+    {
+      "id": "handle-confirmation",
+      "from": "ws",
+      "to": "chat",
+      "y": 356,
+      "label": "handleToolConfirmation"
+    },
+    {
+      "id": "check-pending",
+      "from": "chat",
+      "to": "db",
+      "y": 384,
+      "label": "¿sigue pendiente?",
+      "note": "si no, error y reintento sin duplicar"
+    },
+    {
+      "id": "execute-tool",
+      "from": "chat",
+      "to": "tools",
+      "y": 412,
+      "label": "execute(client_confirmed)",
+      "variant": "security"
+    },
+    {
+      "id": "create-record",
+      "from": "tools",
+      "to": "db",
+      "y": 440,
+      "label": "crea la cita"
+    },
+    {
+      "id": "save-result",
+      "from": "chat",
+      "to": "db",
+      "y": 468,
+      "label": "executed + tool_result"
+    },
+    {
+      "id": "final-ask",
+      "from": "chat",
+      "to": "llm",
+      "y": 496,
+      "label": "respuesta final",
+      "variant": "dashed",
+      "note": "sin tools; con el resultado"
+    },
+    {
+      "id": "final-text",
+      "from": "llm",
+      "to": "chat",
+      "y": 524,
+      "label": "texto",
+      "variant": "return"
+    },
+    {
+      "id": "final-chunk",
+      "from": "chat",
+      "to": "web",
+      "y": 552,
+      "label": "message_chunk isDone",
+      "variant": "return"
+    },
+    {
+      "id": "confirmed-event",
+      "from": "ws",
+      "to": "web",
+      "y": 580,
+      "label": "tool:confirmed",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "chat",
+      "from": 156,
+      "to": 556,
+      "type": "backend"
+    },
+    {
+      "participant": "llm",
+      "from": 156,
+      "to": 192,
+      "type": "cloud"
+    },
+    {
+      "participant": "llm",
+      "from": 492,
+      "to": 528,
+      "type": "cloud"
+    },
+    {
+      "participant": "tools",
+      "from": 212,
+      "to": 220,
+      "type": "security"
+    },
+    {
+      "participant": "tools",
+      "from": 408,
+      "to": 444,
+      "type": "security"
+    },
+    {
+      "participant": "db",
+      "from": 240,
+      "to": 248,
+      "type": "database"
+    },
+    {
+      "participant": "db",
+      "from": 380,
+      "to": 388,
+      "type": "database"
+    },
+    {
+      "participant": "db",
+      "from": 436,
+      "to": 472,
+      "type": "database"
+    },
+    {
+      "participant": "ws",
+      "from": 324,
+      "to": 584,
+      "type": "backend"
+    },
+    {
+      "participant": "web",
+      "from": 268,
+      "to": 584,
+      "type": "frontend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Control antes de ejecutar",
+      "items": [
+        "Crear o editar requiere confirmación del cliente",
+        "tool.service rechaza la ejecución si falta esa autorización",
+        "La operación debe estar habilitada en el proyecto"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Otras decisiones",
+      "items": [
+        "Cancelar: estado cancelled y mensaje del bot",
+        "Modificar: actualiza los parámetros y vuelve a pedir confirmación"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Sin dobles ejecuciones",
+      "items": [
+        "Solo se procesa una ejecución en pending_confirmation",
+        "Si el socket falla, el cliente puede reintentar"
+      ]
+    }
+  ]
+}

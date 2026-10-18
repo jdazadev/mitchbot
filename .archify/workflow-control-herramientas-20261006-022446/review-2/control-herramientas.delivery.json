@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "c92896d7-1cf1-429b-bffa-dc2d1f26c145",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-control-herramientas-20261006-022446/candidate.json",
+  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-control-herramientas-20261006-022446/review-2/control-herramientas.html",
+  "specification": {
+    "sha256": "ff279eba7b63c914035ac6aa6ae2a6e604d4b6458e0b386b8023cf94b3a49fa4",
+    "bytes": 6058
+  },
+  "artifact": {
+    "sha256": "6c67c04cd2c9289a1a45004ad8e695684c76e7459d6499e86bb260405f9baef8",
+    "bytes": 762488
+  }
+}

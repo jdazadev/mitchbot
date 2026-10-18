@@ -1,0 +1,359 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MitchBot v2 — Arquitectura del sistema",
+    "output": ".archify/architecture-sistema-20261006-022446/sistema.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Interfaz"
+        },
+        "backend": {
+          "label": "Servicio"
+        },
+        "database": {
+          "label": "Base de datos"
+        },
+        "cloud": {
+          "label": "Servicio externo"
+        },
+        "security": {
+          "label": "Control / política"
+        },
+        "messagebus": {
+          "label": "Cola / evento"
+        },
+        "external": {
+          "label": "Actor externo"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "customer",
+      "type": "external",
+      "label": "Cliente",
+      "sublabel": "chat público web",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "external",
+      "label": "Operador",
+      "sublabel": "admin / soporte / approver",
+      "pos": [
+        40,
+        410
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "spa",
+      "type": "frontend",
+      "label": "SPA Vue 3",
+      "sublabel": "dashboard + TestChat",
+      "pos": [
+        250,
+        290
+      ],
+      "size": [
+        140,
+        80
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API + Socket.io",
+      "sublabel": "Express :3000 · JWT",
+      "tag": "X-Project-Id",
+      "pos": [
+        500,
+        290
+      ],
+      "size": [
+        140,
+        80
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "messagebus",
+      "label": "Redis",
+      "sublabel": "BullMQ + rate limit",
+      "pos": [
+        500,
+        150
+      ],
+      "size": [
+        140,
+        70
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Workers BullMQ",
+      "sublabel": "rag-upload · reindex",
+      "pos": [
+        780,
+        150
+      ],
+      "size": [
+        140,
+        70
+      ]
+    },
+    {
+      "id": "chat",
+      "type": "backend",
+      "label": "chat.service",
+      "sublabel": "orquestador del bot",
+      "pos": [
+        780,
+        270
+      ],
+      "size": [
+        150,
+        120
+      ]
+    },
+    {
+      "id": "ai",
+      "type": "backend",
+      "label": "ai.service",
+      "sublabel": "llm-provider + tools",
+      "pos": [
+        1090,
+        290
+      ],
+      "size": [
+        140,
+        80
+      ]
+    },
+    {
+      "id": "rag",
+      "type": "backend",
+      "label": "rag.service",
+      "sublabel": "búsqueda + re-rank + OCR",
+      "pos": [
+        1090,
+        140
+      ],
+      "size": [
+        140,
+        90
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "tool.service",
+      "sublabel": "catálogo por proyecto",
+      "tag": "control",
+      "pos": [
+        1090,
+        480
+      ],
+      "size": [
+        140,
+        80
+      ]
+    },
+    {
+      "id": "qdrant",
+      "type": "database",
+      "label": "Qdrant",
+      "sublabel": "vectores por proyecto",
+      "pos": [
+        1090,
+        20
+      ],
+      "size": [
+        140,
+        70
+      ]
+    },
+    {
+      "id": "openrouter",
+      "type": "cloud",
+      "label": "OpenRouter",
+      "sublabel": "LLM · embeddings · OCR",
+      "pos": [
+        1390,
+        160
+      ],
+      "size": [
+        140,
+        230
+      ]
+    },
+    {
+      "id": "mongo",
+      "type": "database",
+      "label": "MongoDB 8",
+      "sublabel": "conversaciones, contactos…",
+      "pos": [
+        1090,
+        640
+      ],
+      "size": [
+        140,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "customer-to-spa",
+      "from": "customer",
+      "to": "spa",
+      "label": "HTTPS"
+    },
+    {
+      "id": "operator-to-spa",
+      "from": "operator",
+      "to": "spa",
+      "label": "HTTPS"
+    },
+    {
+      "id": "spa-to-api",
+      "from": "spa",
+      "to": "api",
+      "label": "REST + WS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-chat",
+      "from": "api",
+      "to": "chat",
+      "label": "sendMessage",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-redis",
+      "from": "api",
+      "to": "redis",
+      "label": "encola upload",
+      "variant": "dashed"
+    },
+    {
+      "id": "redis-to-worker",
+      "from": "redis",
+      "to": "worker",
+      "label": "job rag-upload",
+      "variant": "dashed"
+    },
+    {
+      "id": "worker-to-rag",
+      "from": "worker",
+      "to": "rag",
+      "label": "processFile",
+      "variant": "dashed"
+    },
+    {
+      "id": "chat-to-rag",
+      "from": "chat",
+      "to": "rag",
+      "label": "contexto RAG"
+    },
+    {
+      "id": "chat-to-ai",
+      "from": "chat",
+      "to": "ai",
+      "label": "prompt + historial",
+      "variant": "emphasis"
+    },
+    {
+      "id": "chat-to-tools",
+      "from": "chat",
+      "to": "tools",
+      "label": "tool calls",
+      "variant": "security"
+    },
+    {
+      "id": "chat-to-mongo",
+      "from": "chat",
+      "to": "mongo",
+      "label": "mensajes",
+      "variant": "dashed"
+    },
+    {
+      "id": "tools-to-mongo",
+      "from": "tools",
+      "to": "mongo",
+      "label": "persiste",
+      "variant": "dashed"
+    },
+    {
+      "id": "rag-to-qdrant",
+      "from": "rag",
+      "to": "qdrant",
+      "label": "vectores"
+    },
+    {
+      "id": "rag-to-openrouter",
+      "from": "rag",
+      "to": "openrouter",
+      "label": "embeddings + OCR"
+    },
+    {
+      "id": "ai-to-openrouter",
+      "from": "ai",
+      "to": "openrouter",
+      "label": "chat LLM",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Multi-proyecto",
+      "items": [
+        "El proyecto sale de X-Project-Id o del proyecto activo",
+        "Rooms Socket.io por proyecto y conversación",
+        "Contactos, fuentes RAG y agentes aislados por proyecto"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Un solo proveedor de IA",
+      "items": [
+        "OpenRouter para LLM, embeddings y OCR",
+        "La API key viene del entorno, nunca de la BD",
+        "Si el RAG falla, el bot responde sin contexto"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Herramientas controladas",
+      "items": [
+        "Confirmación del cliente o aprobación de operador antes de ejecutar",
+        "Historial en tool_executions"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Canales",
+      "items": [
+        "Hoy: chat web público",
+        "WhatsApp e Instagram siguen en el roadmap"
+      ]
+    }
+  ]
+}

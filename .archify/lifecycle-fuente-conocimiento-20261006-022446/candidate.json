@@ -1,0 +1,210 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Ciclo de vida de una fuente de conocimiento",
+    "output": ".archify/lifecycle-fuente-conocimiento-20261006-022446/fuente-conocimiento.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "start": {
+          "label": "Inicio"
+        },
+        "active": {
+          "label": "En curso"
+        },
+        "waiting": {
+          "label": "En espera"
+        },
+        "decision": {
+          "label": "Decisión"
+        },
+        "success": {
+          "label": "Éxito"
+        },
+        "failure": {
+          "label": "Fallo"
+        },
+        "neutral": {
+          "label": "Neutro"
+        },
+        "external": {
+          "label": "Externo"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Procesamiento"
+    },
+    {
+      "id": "reindex",
+      "label": "Reindexado"
+    },
+    {
+      "id": "terminal",
+      "label": "Resultado"
+    }
+  ],
+  "states": [
+    {
+      "id": "queued",
+      "type": "start",
+      "label": "Queued",
+      "sublabel": "encolada",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "202"
+    },
+    {
+      "id": "extracting",
+      "type": "active",
+      "label": "Extracting",
+      "sublabel": "OCR o lectura",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "Processing"
+    },
+    {
+      "id": "chunking",
+      "type": "active",
+      "label": "Chunking",
+      "sublabel": "800 tok",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "Processing"
+    },
+    {
+      "id": "embedding",
+      "type": "active",
+      "label": "Embedding + índice",
+      "sublabel": "OpenRouter → Qdrant",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "Processing"
+    },
+    {
+      "id": "reindexing",
+      "type": "active",
+      "label": "Reindexing",
+      "sublabel": "cola rag-reindex",
+      "lane": "reindex",
+      "col": 3,
+      "tag": "Processing"
+    },
+    {
+      "id": "failed",
+      "type": "failure",
+      "label": "Failed",
+      "sublabel": "errorMessage",
+      "lane": "terminal",
+      "col": 2,
+      "tag": "terminal"
+    },
+    {
+      "id": "indexed",
+      "type": "success",
+      "label": "Indexed",
+      "sublabel": "vectorCount",
+      "lane": "terminal",
+      "col": 4,
+      "tag": "listo para RAG"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "to-extracting",
+      "from": "queued",
+      "to": "extracting"
+    },
+    {
+      "id": "to-chunking",
+      "from": "extracting",
+      "to": "chunking"
+    },
+    {
+      "id": "to-embedding",
+      "from": "chunking",
+      "to": "embedding"
+    },
+    {
+      "id": "to-indexed",
+      "from": "embedding",
+      "to": "indexed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "extracting-fails",
+      "from": "extracting",
+      "to": "failed",
+      "variant": "security",
+      "label": "error"
+    },
+    {
+      "id": "chunking-fails",
+      "from": "chunking",
+      "to": "failed",
+      "variant": "security"
+    },
+    {
+      "id": "embedding-fails",
+      "from": "embedding",
+      "to": "failed",
+      "variant": "security"
+    },
+    {
+      "id": "reindex-start",
+      "from": "indexed",
+      "to": "reindexing",
+      "variant": "dashed",
+      "label": "reindexar"
+    },
+    {
+      "id": "reindex-ok",
+      "from": "reindexing",
+      "to": "indexed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "reindex-fails",
+      "from": "reindexing",
+      "to": "failed",
+      "variant": "security",
+      "label": "rollback"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Estado visible",
+      "items": [
+        "Queued, Processing, Indexed o Failed",
+        "La etapa fina (extracting, chunking, embedding, indexing) y el progreso se guardan en la fuente",
+        "Cada paso queda en los logs de la fuente"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Fallos",
+      "items": [
+        "Un error del worker marca Failed con su mensaje",
+        "Un fallo al reindexar revierte los vectores parciales"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Reindexado",
+      "items": [
+        "Cambiar el modelo de embeddings obliga a reindexar",
+        "Se procesa en background con progreso por fuente"
+      ]
+    }
+  ]
+}

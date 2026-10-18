@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "dataflow",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-ingesta-rag-20261006-022446/candidate.json",
+    "sha256": "9250288e836f9f751b986e21b5f3befafb10fdcba29881dcf5f9b7f153881ae2",
+    "bytes": 5061
+  },
+  "artifact": {
+    "path": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-ingesta-rag-20261006-022446/review-2/ingesta-rag.html"
+  },
+  "gates": {
+    "validate": "fail",
+    "deliver": "not-run",
+    "check": "not-run",
+    "browser-check": "not-run"
+  },
+  "failedStage": "validate",
+  "diagnostics": [
+    {
+      "code": "composition/proper-crossing",
+      "severity": "error",
+      "message": "[composition/proper-crossing] showcase dataflow flows[4] id \"pdf-ocr\" \"worker\" -> \"ocr\" crosses flows[7] id \"manual-text\" \"api\" -> \"chunk\" at [530, 326] (segments 0 and 1) — if the authored route/fromSide/toSide are not required by the user, remove them so the renderer can re-plan; otherwise preserve that intent and adjust route/via or channelX/channelY so the flows use separate stage corridors.",
+      "subject": {
+        "diagramType": "dataflow",
+        "collection": "flows",
+        "index": 4,
+        "id": "pdf-ocr",
+        "from": "worker",
+        "to": "ocr"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "dataflow",
+          "collection": "flows",
+          "index": 7,
+          "id": "manual-text",
+          "from": "api",
+          "to": "chunk"
+        },
+        "point": [
+          530,
+          326
+        ],
+        "segmentIndex": 0,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "if the authored route/fromSide/toSide are not required by the user, remove them so the renderer can re-plan; otherwise preserve that intent and adjust route/via or channelX/channelY so the flows use separate stage corridors"
+      ]
+    },
+    {
+      "code": "composition/label-route-clearance",
+      "severity": "error",
+      "message": "[composition/label-route-clearance] showcase dataflow label \"Queued\" on flows[2] id \"queued-state\" \"api\" -> \"sources\" label \"Queued\" is 0px from flows[7] id \"manual-text\" \"api\" -> \"chunk\" label \"texto manual\" segment 1 [100, 326] -> [745, 326] (label rect [187, 311, 41, 27]; minimum 4px) — if the authored route/fromSide/toSide are not required by the user, remove them so the renderer can re-plan; otherwise preserve that intent and adjust labelAt, labelDx, labelDy, or labelSegment; otherwise adjust the other flow route/via/channelX/channelY.",
+      "subject": {
+        "diagramType": "dataflow",
+        "collection": "flows",
+        "index": 2,
+        "id": "queued-state",
+        "from": "api",
+        "to": "sources"
+      },
+      "evidence": {
+        "label": "Queued",
+        "otherRelationship": {
+          "diagramType": "dataflow",
+          "collection": "flows",
+          "index": 7,
+          "id": "manual-text",
+          "from": "api",
+          "to": "chunk"
+        },
+        "segmentIndex": 1,
+        "clearancePx": 0,
+        "minimumPx": 4,
+        "labelRect": {
+          "relation": {
+            "id": "queued-state",
+            "from": "api",
+            "to": "sources",
+            "label": "Queued",
+            "classification": "estado",
+            "variant": "dashed"
+          },
+          "relationIndex": 2,
+          "label": "Queued",
+          "x": 186.8,
+          "y": 310.5,
+          "width": 41.4,
+          "height": 27,
+          "lx": 207.5,
+          "ly": 321.5
+        },
+        "from": [
+          100,
+          326
+        ],
+        "to": [
+          745,
+          326
+        ]
+      },
+      "supportedFixes": [
+        "if the authored route/fromSide/toSide are not required by the user, remove them so the renderer can re-plan; otherwise preserve that intent and adjust labelAt, labelDx, labelDy, or labelSegment; otherwise adjust the other flow route/via/channelX/channelY"
+      ]
+    },
+    {
+      "code": "layout/constraint",
+      "severity": "error",
+      "message": "Label \"archivo / texto\" overlaps node \"file\" — adjust labelDx/labelDy/labelSegment or set labelAt.\n  label rect: [55, 165, 90, 27]\n  node \"file\" rect: [44, 128, 112, 58]\n  Suggested fix: set labelAt [100, 201] or set labelDy 25 (below); or set labelAt [100, 108] or set labelDy -68 (above)",
+      "subject": {
+        "diagramType": "dataflow"
+      }
+    },
+    {
+      "code": "composition/label-route-clearance",
+      "severity": "error",
+      "message": "[composition/label-route-clearance] showcase dataflow label \"texto\" on flows[6] id \"ocr-text\" \"ocr\" -> \"chunk\" label \"texto\" is 0px from flows[7] id \"manual-text\" \"api\" -> \"chunk\" label \"texto manual\" segment 1 [100, 326] -> [745, 326] (label rect [587, 311, 100, 27]; minimum 4px) — if the authored route/fromSide/toSide are not required by the user, remove them so the renderer can re-plan; otherwise preserve that intent and adjust labelAt, labelDx, labelDy, or labelSegment; otherwise adjust the other flow route/via/channelX/channelY.",
+      "subject": {
+        "diagramType": "dataflow",
+        "collection": "flows",
+        "index": 6,
+        "id": "ocr-text",
+        "from": "ocr",
+        "to": "chunk"
+      },
+      "evidence": {
+        "label": "texto",
+        "otherRelationship": {
+          "diagramType": "dataflow",
+          "collection": "flows",
+          "index": 7,
+          "id": "manual-text",
+          "from": "api",
+          "to": "chunk"
+        },
+        "segmentIndex": 1,
+        "clearancePx": 0,
+        "minimumPx": 4,
+        "labelRect": {
+          "relation": {
+            "id": "ocr-text",
+            "from": "ocr",
+            "to": "chunk",
+            "label": "texto",
+            "classification": "fallback pdf-parse",
+            "variant": "default"
+          },
+          "relationIndex": 6,
+          "label": "texto",
+          "x": 587.4,
+          "y": 310.5,
+          "width": 100.2,
+          "height": 27,
+          "lx": 637.5,
+          "ly": 321.5
+        },
+        "from": [
+          100,
+          326
+        ],
+        "to": [
+          745,
+          326
+        ]
+      },
+      "supportedFixes": [
+        "if the authored route/fromSide/toSide are not required by the user, remove them so the renderer can re-plan; otherwise preserve that intent and adjust labelAt, labelDx, labelDy, or labelSegment; otherwise adjust the other flow route/via/channelX/channelY"
+      ]
+    },
+    {
+      "code": "layout/constraint",
+      "severity": "error",
+      "message": "Label \"PDF / imagen\" overlaps node \"worker\" — adjust labelDx/labelDy/labelSegment or set labelAt.\n  label rect: [495, 165, 71, 27]\n  node \"worker\" rect: [474, 128, 112, 58]\n  Suggested fix: set labelAt [530, 201] or set labelDy 25 (below); or set labelAt [530, 108] or set labelDy -68 (above)",
+      "subject": {
+        "diagramType": "dataflow"
+      }
+    },
+    {
+      "code": "layout/constraint",
+      "severity": "error",
+      "message": "Label \"chunks\" overlaps node \"chunk\" — adjust labelDx/labelDy/labelSegment or set labelAt.\n  label rect: [717, 221, 56, 27]\n  node \"chunk\" rect: [689, 242, 112, 58]\n  Suggested fix: set labelAt [745, 315] or set labelDy 83 (below); or set labelAt [745, 222] or set labelDy -10 (above)",
+      "subject": {
+        "diagramType": "dataflow"
+      }
+    },
+    {
+      "code": "layout/constraint",
+      "severity": "error",
+      "message": "Label \"contexto\" overlaps node \"qdrant\" — adjust labelDx/labelDy/labelSegment or set labelAt.\n  label rect: [927, 165, 66, 27]\n  node \"qdrant\" rect: [904, 128, 112, 58]\n  Suggested fix: set labelAt [960, 201] or set labelDy 25 (below); or set labelAt [960, 108] or set labelDy -68 (above)",
+      "subject": {
+        "diagramType": "dataflow"
+      }
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 7,
+    "shown": 7,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-ingesta-rag-20261006-022446/review-2/ingesta-rag.finalize.json",
+    "summaryReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-ingesta-rag-20261006-022446/review-2/ingesta-rag.finalize-summary.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.0.1",
+    "availableVersion": "3.0.1",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-06T03:53:43.304Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 612,
+  "nextAction": {
+    "action": "edit-in-place",
+    "candidate": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-ingesta-rag-20261006-022446/candidate.json",
+    "constraint": "Preserve unaffected semantics and geometry; do not replace the whole candidate.",
+    "then": "finalize-once"
+  }
+}
