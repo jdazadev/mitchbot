@@ -8,12 +8,18 @@ Define el conjunto de roles del sistema y las reglas de autorización asociadas,
 
 ### Requirement: Conjunto de roles del sistema
 
-El sistema SHALL reconocer únicamente los roles `admin`, `support` y `assistant`. El sistema SHALL NOT reconocer, crear ni asignar el rol `devadmin`.
+El sistema SHALL reconocer únicamente los roles `admin`, `support`, `assistant` y `approver`. El sistema SHALL NOT reconocer, crear ni asignar el rol `devadmin`. El rol `approver` SHALL habilitar la aprobación de las operaciones sensibles de las herramientas del agente.
 
 #### Scenario: Roles válidos
 
 - **WHEN** se crea o actualiza un usuario con un rol
-- **THEN** solo se aceptan `admin`, `support` o `assistant`
+- **THEN** solo se aceptan `admin`, `support`, `assistant` o `approver`
+
+#### Scenario: Rol aprobador aceptado
+
+- **WHEN** se crea o actualiza un usuario con el rol `approver`
+- **THEN** el sistema persiste el usuario con ese rol
+- **AND** lo habilita para aprobar operaciones sensibles
 
 #### Scenario: Rol devadmin rechazado
 

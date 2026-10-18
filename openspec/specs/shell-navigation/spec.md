@@ -8,12 +8,12 @@ Define la navegación y los elementos del shell de la aplicación: la nomenclatu
 
 ### Requirement: Nomenclatura de módulos
 
-El sistema SHALL presentar los módulos como "Brain" y "Clients" en el menú lateral y en los títulos de la barra superior, de forma consistente. La ruta del módulo de clientes SHALL ser `/clients` y la ruta anterior `/contacts` SHALL redirigir a ella. El sistema SHALL NOT mostrar las etiquetas "Brain & RAG" ni "Contacts" en la interfaz.
+El sistema SHALL presentar los módulos como "Brain", "Clients" y "Tools" en el menú lateral y en los títulos de la barra superior, de forma consistente. La ruta del módulo de clientes SHALL ser `/clients` y la ruta anterior `/contacts` SHALL redirigir a ella. La ruta del módulo de herramientas SHALL ser `/tools`. El sistema SHALL NOT mostrar las etiquetas "Brain & RAG" ni "Contacts" en la interfaz.
 
 #### Scenario: Etiquetas consistentes
 
 - **WHEN** el usuario abre el menú lateral
-- **THEN** ve los módulos "Brain" y "Clients"
+- **THEN** ve los módulos "Brain", "Clients" y "Tools"
 - **AND** no ve "Brain & RAG" ni "Contacts"
 
 #### Scenario: Ruta renombrada con redirección
@@ -25,6 +25,12 @@ El sistema SHALL presentar los módulos como "Brain" y "Clients" en el menú lat
 
 - **WHEN** el usuario abre el módulo de clientes
 - **THEN** la barra superior muestra "Clients"
+
+#### Scenario: Acceso al módulo de herramientas
+
+- **WHEN** el usuario abre el módulo de herramientas
+- **THEN** la barra superior muestra "Tools"
+- **AND** el menú lateral marca "Tools" como el módulo activo
 
 ### Requirement: Rango de fechas del panel
 
