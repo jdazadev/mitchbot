@@ -5,6 +5,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v4.14.2 — 2026-10-19
+
+> **README del proyecto**: visión, capacidades y puesta en marcha en un solo lugar
+
+### 📝 Documentación
+- Nuevo `README.md` en la raíz: visión y público del producto, principios, capacidades por módulo, arquitectura y stack, puesta en marcha, variables de entorno, pruebas E2E, hoja de ruta y convenciones de contribución. Enlaza `PRODUCT.md`, `DESIGN.md`, `AGENTS.md` y los diagramas de `.archify/`.
+
+---
+
 ## v4.14.1 — 2026-10-06
 
 > **Diagramas del sistema**: flujos, casos de uso y procesos internos documentados con Archify

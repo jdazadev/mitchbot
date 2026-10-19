@@ -13,7 +13,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.14.1
+**Versión actual del proyecto:** v4.14.2
 
 ---
 
@@ -367,6 +367,7 @@ mitchbot_v2/
 │   └── shared/           # Tipos y utilidades compartidas
 ├── docker-compose.yml    # Servicios: MongoDB, Redis, Qdrant
 ├── pnpm-workspace.yaml   # Configuración del monorepo pnpm
+├── README.md             # Visión, capacidades y puesta en marcha (cara pública; mantener versión y roadmap al día)
 ├── AGENTS.md             # Este archivo
 └── changelog.md          # Historial de cambios detallado
 ```

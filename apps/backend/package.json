@@ -1,6 +1,6 @@
 {
   "name": "@mitchbot/backend",
-  "version": "4.14.1",
+  "version": "4.14.2",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
