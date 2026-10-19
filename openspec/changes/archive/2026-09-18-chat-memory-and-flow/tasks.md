@@ -32,7 +32,7 @@
 ## 6. Documentación y versión
 
 - [x] 6.1 Actualizar `AGENTS.md` (secciones 1 y 9: memoria de conversación, saludo/despedida naturales, propagación de `chat:status`, visibilidad de mensajes de tools) y la tabla de eventos WebSocket.
-- [x] 6.2 Registrar el cambio en `changelog.md` con la fecha actual y subir la versión a `v3.5.0`.
+- [x] 6.2 Registrar el cambio en `changelog.md` con la fecha actual y subir la versión a `v0.3.5`.
 
 ## 7. Verificación final
 

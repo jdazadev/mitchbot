@@ -24,7 +24,7 @@
 
 ## 4. Documentación y versión
 
-- [x] 4.1 Actualizar `AGENTS.md`: lista de servicios Docker, tabla de stack (quitar NATS de Mensajería), bloque de variables de entorno (quitar `NATS_URL`/`OLLAMA_URL`) y comandos; bump de versión a **v3.2.0**. Verificar que no queden menciones operativas a ollama/open-webui/nats como servicios activos.
+- [x] 4.1 Actualizar `AGENTS.md`: lista de servicios Docker, tabla de stack (quitar NATS de Mensajería), bloque de variables de entorno (quitar `NATS_URL`/`OLLAMA_URL`) y comandos; bump de versión a **v0.3.2**. Verificar que no queden menciones operativas a ollama/open-webui/nats como servicios activos.
 - [x] 4.2 Actualizar `changelog.md` con la entrada `[3.2.0]` (Added/Changed/Removed) siguiendo Keep a Changelog, incluyendo los comandos de limpieza operativa. Verificar que la entrada existe bajo la fecha actual.
 
 ## 5. Limpieza operativa y verificación end-to-end

@@ -7,17 +7,17 @@
 ## Reglas para el Agente de IA
 
 - Cada vez que termines unos cambios, actualiza el `changelog.md` (usa la fecha actual) y este archivo `AGENTS.md`.
-- También actualiza la versión dependiendo del tipo de cambio (semver).
+- También actualiza la versión dependiendo del tipo de cambio (semver). **El proyecto está en pre-1.0 (`0.y.z`)**: las funcionalidades nuevas y los cambios incompatibles suben `y`, y las correcciones y la documentación suben `z`. No pases a `1.0.0` sin que lo pidan. La numeración v1–v4 anterior se renumeró a `0.1`–`0.4` (ver changelog `v0.4.31`).
 - **Al terminar de implementar un cambio de OpenSpec, realiza el commit correspondiente** (sin esperar a que se lo pidan).
 - **Al terminar cualquier tanda de Impeccable** (diseño, critique, audit, polish, etc.), **realiza el commit correspondiente sin esperar a que te lo pidan**.
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v4.14.2
+**Versión actual del proyecto:** v0.4.31
 
 ---
 
-## Diagramas del sistema (v4.14.1)
+## Diagramas del sistema (v0.4.30)
 
 - **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y el HTML final en la subcarpeta `review-N` más reciente (las salidas de la raíz de cada carpeta son borradores superados).
 - **Contenido**: arquitectura del sistema; workflows de auth/onboarding y de control de herramientas; secuencias de mensaje→bot y de confirmación del cliente; dataflows de ingesta RAG y de analítica/insights; lifecycles de conversación, fuente de conocimiento y ejecución de herramienta.
@@ -26,7 +26,7 @@
 
 ---
 
-## Accesibilidad y carga incremental (v4.14.0)
+## Accesibilidad y carga incremental (v0.4.29)
 
 - **Formularios y opciones**: slug, color hexadecimal, controles de generación y contraseñas tienen etiquetas persistentes; las opciones de rol, idioma, longitud y RAG exponen `aria-pressed`.
 - **Superficies móviles**: el contenido de los modales largos puede desplazarse; el drawer devuelve el foco al disparador al cerrarse y lo mueve al contenido al navegar.
@@ -37,7 +37,7 @@
 
 ---
 
-## Recuperación y feedback en Conversaciones (v4.13.1)
+## Recuperación y feedback en Conversaciones (v0.4.28)
 
 - **Errores de carga recuperables**: la bandeja y el hilo distinguen el fallo de un estado vacío y ofrecen reintento; las cargas sucesivas de mensajes descartan respuestas obsoletas al cambiar de conversación.
 - **Decisiones de herramientas**: confirmar, cancelar o modificar muestra espera inmediata; la actualización del mensaje y el evento `tool:confirmed` comunican el resultado. Los errores del socket incluyen `executionId`; si la conexión falla o no llega respuesta en 15 segundos, aparece un reintento que no duplica una ejecución ya procesada.
@@ -46,7 +46,7 @@
 
 ---
 
-## Resumen funcional (v4.13.0)
+## Resumen funcional (v0.4.27)
 
 - **Resultados**: el Resumen incluye conversaciones, leads capturados (contactos no archivados), citas por estado y conversión `leads / conversaciones`.
 - **Salud del bot**: `GET /api/dashboard/stats` calcula tasa real de respuesta, mediana de primera respuesta, cobertura `auto_pilot / total` y `backlog { pendingHuman, unread }`. La mediana excluye conversaciones sin respuesta.
@@ -60,7 +60,7 @@
 
 ---
 
-## Urgencia analizada en Conversaciones (v4.12.0)
+## Urgencia analizada en Conversaciones (v0.4.26)
 
 - **Análisis y persistencia**: AI Insights devuelve sentimiento y `urgency: { level, reason }` en una única llamada. `level` es `low | medium | high`; `reason` es `none | deadline | incident | escalation | repetition`. Un nivel inválido falla el análisis y un motivo inválido se normaliza a `none`. El campo es opcional en conversaciones anteriores.
 - **Actualización automática**: el análisis se dispara al recibir cada mensaje del cliente, desde el primero y también en `human_takeover`; no depende de una respuesta del bot. Una cola de promesas serializa análisis por conversación.
@@ -71,7 +71,7 @@
 
 ---
 
-## Herramientas configurables y aprobaciones (v4.11.0)
+## Herramientas configurables y aprobaciones (v0.4.25)
 
 El agente expone un catálogo por proyecto en la ruta **`/tools`**, con operaciones distinguibles para Agenda, Conocimiento, Inventario y Pagos.
 
@@ -84,7 +84,7 @@ El agente expone un catálogo por proyecto en la ruta **`/tools`**, con operacio
 
 ---
 
-## Modo enfoque en carriles de iconos (v4.10.0)
+## Modo enfoque en carriles de iconos (v0.4.24)
 
 El modo enfoque de Conversaciones deja de "estrechar" las laterales y pasa a **colapsarlas a iconos**, dando casi todo el ancho al hilo.
 
@@ -92,12 +92,12 @@ El modo enfoque de Conversaciones deja de "estrechar" las laterales y pasa a **c
 - **Bandeja colapsada**: los controles son dos botones-icono — `MagnifyingGlass` que abre un **popover de búsqueda** (`ADropdown` con `role="dialog"`; filtra en vivo) y `Funnel` que abre la **lista de canales** (`role="listbox"` con marca del activo y punto lila en el disparador). La lista se queda en avatar + insignia de canal + no leídos (anillo) + punto mantequilla si el cliente no está guardado.
 - **Ficha colapsada**: avatar, y tres bloques de solo lectura —**sentimiento** (tinte `danger`/`butter`/`lime` según el análisis; gris si no hay), **urgencia** (icono + medidor de 3 tramos) y **estado de contacto**— más el único control: **guardar contacto** con las iniciales del cliente y una insignia `Plus` (una vez creado pasa a un indicador `CheckCircle` lima). Los indicadores son `role="img"` + `aria-label`, nunca botones muertos.
 - **Solo escritorio**: `focusCollapsed = isFocusMode && matchMedia('(min-width: 1024px)')`; en móvil el modo se ignora (las laterales ya se ocultan). El carril usa `overflow-visible` para que los popovers escapen del redondeo de la tarjeta; la bandeja sin enfoque conserva `overflow-hidden`.
-- **i18n**: `messaging.inbox.search`, `messaging.inbox.filter`, `messaging.inbox.unread`; `messaging.focus.hint` reescrito. Icono `Funnel` reincorporado a `AIcon` (se retiró como muerto en v4.7.1).
+- **i18n**: `messaging.inbox.search`, `messaging.inbox.filter`, `messaging.inbox.unread`; `messaging.focus.hint` reescrito. Icono `Funnel` reincorporado a `AIcon` (se retiró como muerto en v0.4.21).
 - **Verificación**: `vue-tsc --noEmit` + `build` en verde; paridad es/en **571/571**; detector Impeccable sobre `src` en **0 hallazgos**; e2e **44/44**; medición en navegador a 1440 (carriles 74/74, popovers 256px fuera del carril, consola limpia) y a 390 (modo ignorado, sin overflow).
 
 ---
 
-## Rail desnudo: sello desregistrado + eco (v4.9.0)
+## Rail desnudo: sello desregistrado + eco (v0.4.23)
 
 El rail deja de ser una tarjeta blanca flotante y se apoya en el lienzo, igual que el título de cada vista.
 
@@ -111,7 +111,7 @@ El rail deja de ser una tarjeta blanca flotante y se apoya en el lienzo, igual q
 
 ---
 
-## Disciplina del sistema del frontend (v4.8.0)
+## Disciplina del sistema del frontend (v0.4.22)
 
 Cierre de los 5 hallazgos del critique Impeccable (25/40): que las reglas de `DESIGN.md` se cumplan también en los bordes (onboarding, settings, modales).
 
@@ -126,7 +126,7 @@ Cierre de los 5 hallazgos del critique Impeccable (25/40): que las reglas de `DE
 
 ---
 
-## Limpieza de código muerto (v4.7.1)
+## Limpieza de código muerto (v0.4.21)
 
 Tanda de destilado sin cambios de comportamiento: se retira todo lo que no se estaba usando.
 
@@ -140,7 +140,7 @@ Tanda de destilado sin cambios de comportamiento: se retira todo lo que no se es
 
 ---
 
-## Shell consistente: modal de proyecto, idioma unificado y Memoria (v4.7.0)
+## Shell consistente: modal de proyecto, idioma unificado y Memoria (v0.4.20)
 
 - **Modal de creación de proyecto**: el ítem **"Crear nuevo proyecto"** del menú de proyectos del topbar abre un `AModal` (nombre + descripción) y crea el proyecto con agente y canales por defecto, sin navegar a `/setup`; al crear sincroniza el perfil, reconecta el socket y recarga. El disparador lleva `data-testid="project-selector"`.
 - **`ADropdown`** (`components/ui/ADropdown.vue`): primitivo único de **cápsula + popover** (trigger por slot, `align`, cierre por clic fuera/Escape, foco inicial, roles `menu`/`listbox`/`dialog`, `wrapper-class`/`panel-class`). Unifica las cuatro implementaciones a mano del topbar (Proyectos · Idiomas · Notificaciones · Usuario) y los selectores de filtro/tamaño de página de **Clientes** y **Usuarios** (antes `<select>` nativos). Regla: un solo componente por objetivo.
@@ -154,7 +154,7 @@ Tanda de destilado sin cambios de comportamiento: se retira todo lo que no se es
 
 ---
 
-## Shell afinado: reloj al topbar, título honesto y spanglish (v4.6.0)
+## Shell afinado: reloj al topbar, título honesto y spanglish (v0.4.19)
 
 - **Reloj del topbar**: sale del pie del rail y vive **anclado al clúster derecho**, pegado al botón de proyecto (`mx-auto` se retiró porque lo recentraba y se movía al cambiar de vista; visible desde `1360px`). Formato largo del idioma activo (`Tue, Sep 22, 2026 12:33 PM` / `mar, 22 sept 2026 12:33`) con `Intl`, `tabular-nums` y actualización cada 10s. Ya no queda una tarjeta de hora en el rail.
 - **Configuración y Mi Perfil al menú del usuario**: el rail queda solo con marca + navegación (Panel · Conversaciones · Clientes · Brain · Usuarios); el dropdown del Usuario en el topbar gana **Configuración** y conserva **Mi Perfil** / **Cerrar sesión**.
@@ -165,11 +165,11 @@ Tanda de destilado sin cambios de comportamiento: se retira todo lo que no se es
 
 ---
 
-## Tema oscuro y endurecimiento del critique (v4.5.0)
+## Tema oscuro y endurecimiento del critique (v0.4.18)
 
 Cierre de la tanda completa de remediación del critique Impeccable (harden → audit → distill → colorize → polish).
 
-- **Modo oscuro "Aurora de noche"**: tokens propios en `src/style.css` bajo `:root[data-theme="dark"]` que **recomponen** el mundo (papel púrpura cálido, tinta clara, pasteles profundos, sombras densas, `aurora-haze` tenue), no lo invierten. Toggle en `AuroraTopbar` (`data-testid="theme-toggle"`), persistencia `localStorage` (`mitchbot.theme`), arranque sin flash (script inline en `index.html`; claro por defecto desde v4.6.0). Nuevo `composables/useTheme.ts`; `useBrand` recalcula `--brand*`/`--focus` con el tema activo (`brandDerivatives(hsl, theme)`). Par de acción `--ink-solid`/`--ink-solid-contrast`.
+- **Modo oscuro "Aurora de noche"**: tokens propios en `src/style.css` bajo `:root[data-theme="dark"]` que **recomponen** el mundo (papel púrpura cálido, tinta clara, pasteles profundos, sombras densas, `aurora-haze` tenue), no lo invierten. Toggle en `AuroraTopbar` (`data-testid="theme-toggle"`), persistencia `localStorage` (`mitchbot.theme`), arranque sin flash (script inline en `index.html`; claro por defecto desde v0.4.19). Nuevo `composables/useTheme.ts`; `useBrand` recalcula `--brand*`/`--focus` con el tema activo (`brandDerivatives(hsl, theme)`). Par de acción `--ink-solid`/`--ink-solid-contrast`.
 - **Estados de error con recuperación**: Usuarios y Brain muestran error + **Reintentar** (el polling de Brain ya no se traga fallos); TestChat con banner inline, reintento, borrador conservado y anti doble-submit; el cambio de proyecto del topbar muestra su error.
 - **Urgencia de 3 niveles**: el nivel **Alta** (rojo) se enciende con sentimiento negativo + último mensaje del cliente sin responder.
 - **Accesibilidad**: `ASwitch` con `aria-label` (10 instancias), `scope="col"` en Brain/Usuarios, orden accesible en Usuarios, alternativa textual (`sr-only`) del gráfico de volumen y anuncio acotado (`role="status"`) en el chat público.
@@ -179,7 +179,7 @@ Cierre de la tanda completa de remediación del critique Impeccable (harden → 
 
 ---
 
-## Honestidad de datos y limpieza del Panel (v4.4.7)
+## Honestidad de datos y limpieza del Panel (v0.4.17)
 
 Cierre de los minors baratos que el critique dejó abiertos.
 
@@ -191,7 +191,7 @@ Cierre de los minors baratos que el critique dejó abiertos.
 
 ---
 
-## Accesibilidad del "modo serio" (v4.4.6)
+## Accesibilidad del "modo serio" (v0.4.16)
 
 Cierre de los red flags de teclado y foco que el critique marcó alrededor de las acciones de alto riesgo.
 
@@ -203,7 +203,7 @@ Cierre de los red flags de teclado y foco que el critique marcó alrededor de la
 
 ---
 
-## Brain como conocimiento, no como gestor de archivos (v4.4.5)
+## Brain como conocimiento, no como gestor de archivos (v0.4.15)
 
 El critique señaló que el foso del producto (RAG) se presentaba como una tabla genérica con tres tarjetas de stat al pie.
 
@@ -214,7 +214,7 @@ El critique señaló que el foso del producto (RAG) se presentaba como una tabla
 
 ---
 
-## Modo serio en Conversaciones (v4.4.4)
+## Modo serio en Conversaciones (v0.4.14)
 
 Tomar el control era la acción más importante del producto y la menos confirmada: un click inmediato sin aviso ni acuse.
 
@@ -226,7 +226,7 @@ Tomar el control era la acción más importante del producto y la menos confirma
 
 ---
 
-## Mensajería a prueba de fallos (v4.4.3)
+## Mensajería a prueba de fallos (v0.4.13)
 
 El critique halló que las tres acciones de mayor riesgo de Conversaciones se tragaban el error en `console.error`, indistinguible del éxito para el operador.
 
@@ -237,7 +237,7 @@ El critique halló que las tres acciones de mayor riesgo de Conversaciones se tr
 
 ---
 
-## Shell honesto: adiós a los instrumentos falsos del topbar (v4.4.2)
+## Shell honesto: adiós a los instrumentos falsos del topbar (v0.4.12)
 
 El critique Impeccable halló un **P0**: `TopbarContext.vue` renderizaba instrumentos de vista (rango/granularidad, contadores de Messaging, chips de canal, vectores de Brain, roles de Usuarios) con **datos inventados** (`12 activas`, `61 trozos`) y **sin handlers** —botones y chips que no hacían nada—, violando el Principio 3 de `PRODUCT.md` ("solo elementos con comportamiento real").
 
@@ -247,7 +247,7 @@ El critique Impeccable halló un **P0**: `TopbarContext.vue` renderizaba instrum
 
 ---
 
-## Margen uniforme del shell (v4.4.1)
+## Margen uniforme del shell (v0.4.11)
 
 El contenedor `pl-[242px]` dejaba solo **4px** entre el rail y las tarjetas, frente a los **14px (3.5)** del resto del lienzo. Se tokeniza el shell en `style.css` y se unifica el respiro a `--shell-pad` (14px) en las cuatro direcciones:
 
@@ -259,7 +259,7 @@ El contenedor `pl-[242px]` dejaba solo **4px** entre el rail y las tarjetas, fre
 
 ---
 
-## Modo enfoque en Conversaciones (v4.4.0)
+## Modo enfoque en Conversaciones (v0.4.10)
 
 Un toggle en la **cabecera del hilo** de Conversaciones (`Messaging.vue`) estrecha las tarjetas laterales para dar más ancho al hilo:
 
@@ -272,7 +272,7 @@ Un toggle en la **cabecera del hilo** de Conversaciones (`Messaging.vue`) estrec
 
 ---
 
-## Cierre del critique Impeccable (v4.3.0)
+## Cierre del critique Impeccable (v0.4.9)
 
 Tras el critique (`/impeccable critique`, 24/40) sobre Aurora se implementaron los 8 arreglos priorizados:
 
@@ -287,7 +287,7 @@ Tras el critique (`/impeccable critique`, 24/40) sobre Aurora se implementaron l
 
 ---
 
-## Layout de contenido centrado (v4.2.1)
+## Layout de contenido centrado (v0.4.8)
 
 La estructura del dashboard no tenía ancho máximo: en pantallas ultrawide el contenido se estiraba de borde a borde (tarjetas/gráficos enormes, tablas con columnas separadísimas) y en Configuración el formulario quedaba pegado a la izquierda. Se implementa la norma de `DESIGN.md` (contenido a **1400px centrado**):
 
@@ -299,7 +299,7 @@ La estructura del dashboard no tenía ancho máximo: en pantallas ultrawide el c
 
 ---
 
-## Endurecimiento de accesibilidad (v4.2.0)
+## Endurecimiento de accesibilidad (v0.4.7)
 
 Tras la auditoría Impeccable (`audit`) sobre Aurora se cerraron los hallazgos P1/P2 de mayor valor:
 
@@ -314,9 +314,9 @@ Tras la auditoría Impeccable (`audit`) sobre Aurora se cerraron los hallazgos P
 
 ---
 
-## Sistema de Diseño (v4.1.0 "Aurora")
+## Sistema de Diseño (v0.4.6 "Aurora")
 
-- **Mundo adoptado**: **«Aurora»** (antes mock, ahora sistema implementado). Reemplaza a «App Cálida» (v4.0.0, congelado). Norte: *"El Estudio Optimista"* — lienzo de papel cálido `#F7F3EF` con niebla de pasteles en los bordes (`aurora-haze`), tinta negra `#0B0B0C`, tipografía display enorme y una **familia pastel que significa algo**: lila=persona/selección · lima=bot/éxito · cielo=Web · mantequilla=espera.
+- **Mundo adoptado**: **«Aurora»** (antes mock, ahora sistema implementado). Reemplaza a «App Cálida» (v0.4.0, congelado). Norte: *"El Estudio Optimista"* — lienzo de papel cálido `#F7F3EF` con niebla de pasteles en los bordes (`aurora-haze`), tinta negra `#0B0B0C`, tipografía display enorme y una **familia pastel que significa algo**: lila=persona/selección · lima=bot/éxito · cielo=Web · mantequilla=espera.
 - **Tokens** (`apps/frontend/src/style.css` + `tailwind.config.js`): `--canvas/surface/sunken/line/ink-1/2/3`, los cuatro pasteles con `-ink`/`-soft`, radios `--r-card 20px` / `--r-big 28px` / `--r-field 16px` / `--r-bubble 20px`, sombras difusas de dos capas (`--shadow-card`, `--shadow-pop`) y utilidades Tailwind `canvas`, `surface`, `sunken`, `line`, `ink`, `sky/lime/lilac/butter`, `rounded-card/big/field`, `font-display/body`, `shadow-card/pop`.
 - **Tipografía**: **Bricolage Grotesque** (display; ejes `opsz`/`wdth`/`wght`) + **Hanken Grotesk** (cuerpo, cifras tabulares). Ya no se usa Nunito ni la webfont de Material Symbols.
 - **Iconografía**: **Phosphor** (`@phosphor-icons/vue`) envuelto en `src/components/ui/AIcon.vue` (6 pesos, `fill` para el nav activo, mapa de nombres Material heredados). El set es intercambiable desde `AIcon`.
@@ -330,27 +330,27 @@ Tras la auditoría Impeccable (`audit`) sobre Aurora se cerraron los hallazgos P
 
 ---
 
-## Documentación de diseño histórica (v4.0.3)
+## Documentación de diseño histórica (v0.4.3)
 
-- El mundo "App Cálida" quedó documentado en DESIGN.md desde su adopción (v4.0.0) hasta su reemplazo por Aurora (v4.1.0). Sus clases `warm-*` ya **no existen** en el código (migración completa en v4.1.0).
+- El mundo "App Cálida" quedó documentado en DESIGN.md desde su adopción (v0.4.0) hasta su reemplazo por Aurora (v0.4.6). Sus clases `warm-*` ya **no existen** en el código (migración completa en v0.4.6).
 
 ---
 
-## Rediseño total (v4.0.2 "Mesa de Exposición") — Estado
+## Rediseño total (v0.4.2 "Mesa de Exposición") — Estado
 
 - **Dirección decidida**: reemplazo completo del mundo visual por la fusión **"Mesa de Exposición"** — topología de tablero de despacho (circuitos de conversación con lámpara: verde=bot, magenta=humano, hueco=cerrado; llave "TOMAR CONTROL") + materialidad de imprenta (papel #F1EDE6/#FBF9F3, tinta #1C1E22, carga por hatching, magenta #C13A7C único acento de acción, regla tachada al cerrar, cruz 90° para conflictos). Tipografía: Barlow Condensed (etiquetas), IBM Plex Mono (datos tabulares), Spline Sans (cuerpo).
 - **Prototipo navegable previo a migrar** en `apps/frontend/.impeccable/mocks/rediseño/` (12 vistas de ejemplo + `style.css` compartido; servible con `python3 -m http.server` en esa carpeta). El código real del frontend AÚN NO ha sido migrado.
-- **Ronda 4 de exploración (v4.0.5)**: dos mundos nuevos con prototipo completo de 12 vistas cada uno — **«Aurora»** (`mocks/aurora/`, del pastel optimista de *orivo.webflow.io*: suelo cálido, tinta negra, tipografía enorme, pasteles con papel semántico) y **«Bóveda»** (`mocks/boveda/`, del cool premium de *per-ment.webflow.io*: blanco frío, azul noche + violeta único, rejilla fina, nav en cápsula flotante, serif itálica). **`mocks/comparador.html`** reúne los 12 mundos de las 4 rondas con su ADN (paleta, tipografía, forma, clima) y enlaces. Ambos son material de comparación, no compromisos.
+- **Ronda 4 de exploración (v0.4.5)**: dos mundos nuevos con prototipo completo de 12 vistas cada uno — **«Aurora»** (`mocks/aurora/`, del pastel optimista de *orivo.webflow.io*: suelo cálido, tinta negra, tipografía enorme, pasteles con papel semántico) y **«Bóveda»** (`mocks/boveda/`, del cool premium de *per-ment.webflow.io*: blanco frío, azul noche + violeta único, rejilla fina, nav en cápsula flotante, serif itálica). **`mocks/comparador.html`** reúne los 12 mundos de las 4 rondas con su ADN (paleta, tipografía, forma, clima) y enlaces. Ambos son material de comparación, no compromisos.
 - Contrato de dirección en `apps/frontend/.impeccable/surfaces/…` (brief de Messaging). La identidad de marca por proyecto sigue siendo decisión abierta hacia el backend: persistencia en `project.config.brand` pendiente (se resuelve en la migración).
-- El resto del sistema actual "App Cálida" (v4.0.0) queda congelado: no mezclar estilos nuevos con los mapeos `warm-*` existentes hasta la migración completa.
+- El resto del sistema actual "App Cálida" (v0.4.0) queda congelado: no mezclar estilos nuevos con los mapeos `warm-*` existentes hasta la migración completa.
 
 ---
 
-## Sistema de Diseño (v4.0.0 "App Cálida")
+## Sistema de Diseño (v0.4.0 "App Cálida")
 
 - **Tokens** (`apps/frontend/src/style.css`): paleta CSS con suelo cálido (`--ground` `#fbf7f2`), tinta parda (`--ink-1 #2e2a26`), hairlines cálidas y componentes base (`.card`, `.btn`, `.btn-primary`, `.btn-ghost`, `.field`, `.stamp`). Tipografía Nunito, radios por rol (`--r-card`, `--r-bubble`, `--r-seal`) y sombras difusas.
 - **Identidad de marca por proyecto** (`apps/frontend/src/composables/useBrand.ts`): nombre, color y logo se configuran en **Configuración → Identidad** y persisten en `project.config.brand` (validado con Zod en `project.controller.ts`, logo hasta 200 KB). `useBrand` inyecta las variables `--brand-*` en `:root` (HSL + variantes `hover`/`deep`/`soft`/`softer`/`ink`), calcula `--brand-contrast` según luminancia y teñe el favicon con canvas. Se carga el config del proyecto al iniciar la app, así que cambiar el color re-tematiza la app completa en vivo.
-- **Migración gradual de vistas**: las clases `blue-*` de Tailwind se mapean al acento de marca y las utilidades `warm-*` exponían los tokens (`tailwind.config.js`, hoy retirados). En v4.1.0 todas las vistas migraron a Aurora y las clases `warm-*` ya no existen.
+- **Migración gradual de vistas**: las clases `blue-*` de Tailwind se mapean al acento de marca y las utilidades `warm-*` exponían los tokens (`tailwind.config.js`, hoy retirados). En v0.4.6 todas las vistas migraron a Aurora y las clases `warm-*` ya no existen.
 
 ---
 
@@ -503,7 +503,7 @@ apps/frontend/src/
 - **No leídos reales**: el badge del sidebar suma los `unreadCount` del proyecto activo mediante el composable `useConversations` (estado de módulo compartido). Solo los mensajes entrantes del cliente (`contact`) incrementan el contador; los del bot y del agente humano **no** suman. Al abrir una conversación se persiste la lectura vía `PUT /api/conversations/:id/read` (`unreadCount = 0`) y se emite `chat:read` a la room del proyecto para sincronizar el resto de sesiones; un mensaje entrante en la conversación abierta se re-marca como leída de inmediato (estilo WhatsApp), sin que el badge suba. La actualización en vivo del sidebar llega por `chat:message` (también entregado a la room exclusiva del dashboard `project:<id>:dashboard`) y `chat:new_conversation`. Una conversación nueva creada por el cliente nace con 1 no leído.
 - **Sin selección por defecto**: al entrar a Messaging **no** se autoselecciona ninguna conversación; se muestra el estado vacío hasta que el agente elija una. El deep-link `?conversation=<id>` sigue resolviendo la conversación solicitada (botón "Ver conversación" de Clients).
 - **Compositor honesto**: solo expone acciones funcionales (enviar, tomar control); se retiraron chips de sugerencia, emoji, adjuntos, menú y el indicador "online" simulado.
-- **Modo enfoque**: toggle en la cabecera del hilo que estrecha la bandeja y el detalle del cliente para dar ancho al hilo (solo `lg+`, persistido en `localStorage`). Ver v4.4.0.
+- **Modo enfoque**: toggle en la cabecera del hilo que estrecha la bandeja y el detalle del cliente para dar ancho al hilo (solo `lg+`, persistido en `localStorage`). Ver v0.4.10.
 - **AI Insights**: análisis de **sentimiento y su distribución** (sin resumen) persistido en `conversation.aiInsights`. `GET /:id/insights` devuelve solo sentimiento y `sentimentScores` (aunque existan resúmenes antiguos en la BD) y `POST /:id/insights` recalcula (el `$set` limpia `aiInsights.summary` con `$unset`); se emite `chat:insights`. El análisis automático corre fire-and-forget tras cada respuesta del bot (un fallo no afecta la respuesta). El modelo se resuelve desde `OPENROUTER_INSIGHTS_MODEL` con fallback a `OPENROUTER_LLM_MODEL`.
 
 ### 2. Módulo de Clientes (Contactos)
@@ -788,7 +788,7 @@ Usuario abre la app
 
 ## WebSocket Events (Socket.io)
 
-### 🔒 Seguridad WebSocket (v1.16.0)
+### 🔒 Seguridad WebSocket (v0.1.35)
 
 Todas las conexiones WebSocket requieren autenticación JWT:
 - **Dashboard**: Token JWT enviado en `socket.handshake.auth.token` y proyecto en `socket.handshake.auth.projectId` (validando pertenencia)

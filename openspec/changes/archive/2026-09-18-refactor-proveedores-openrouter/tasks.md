@@ -42,4 +42,4 @@
 
 ## 9. Cierre
 
-- [x] 9.1 Actualizar `changelog.md` y `AGENTS.md` (proveedor único, variables de entorno, roles, ruta de pruebas) y subir la versión según semver. **BREAKING** sobre v2.0.0 → **v3.0.0** (ajustado respecto al 1.18.0 original, desactualizado por el change `multi-proyecto-usuarios`).
+- [x] 9.1 Actualizar `changelog.md` y `AGENTS.md` (proveedor único, variables de entorno, roles, ruta de pruebas) y subir la versión según semver. **BREAKING** sobre v0.2.0 → **v0.3.0** (ajustado respecto al 1.18.0 original, desactualizado por el change `multi-proyecto-usuarios`).

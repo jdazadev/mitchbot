@@ -57,7 +57,7 @@ Se usa `mongo:8` (major fijo, recibe parches de la serie 8). **Contexto descubie
 
 Compose no borra volúmenes al eliminar su declaración. **Alternativa:** `docker compose down -v` — descartada por destructiva (borraría también `mongo_data`/`qdrant_data`). Se documentan comandos específicos: `docker rm nats`, `docker volume rm <proj>_ollama_data <proj>_open-webui_data`, `docker compose up -d --remove-orphans`.
 
-### 7. Bump a v3.2.0 (minor)
+### 7. Bump a v0.3.2 (minor)
 
 Elimina servicios y una variable de entorno documentados → minor según semver.
 

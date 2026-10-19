@@ -8,7 +8,7 @@ Ver `proposal.md` para la motivación. El punto de partida relevante para el dis
 - Las colecciones `contacts`, `appointments`, `tool_executions` y `messages` ya existen y tienen `projectId` (salvo `messages`, que se vincula vía `conversationId`), pero el servicio de analytics solo consulta `conversations` y `activities`.
 - `analyticsService.trackActivity()` existe y nunca se invoca, y el seed no puebla `activities`.
 - La actividad reciente no tiene un enum de tipos que cubra "conversación creada" ni "herramienta ejecutada" (`activity.model.ts`).
-- El frontend formatea números con `Intl.NumberFormat()` sin locale; v4.6.0 estableció usar el locale de la app.
+- El frontend formatea números con `Intl.NumberFormat()` sin locale; v0.4.19 estableció usar el locale de la app.
 
 ## Goals / Non-Goals
 

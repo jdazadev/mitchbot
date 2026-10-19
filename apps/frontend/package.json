@@ -1,7 +1,7 @@
 {
   "name": "@mitchbot/frontend",
   "private": true,
-  "version": "4.14.2",
+  "version": "0.4.31",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -406,7 +406,7 @@
 - [x] Document new tool system architecture
 - [x] Document OCR pipeline
 - [x] Document WebSocket security
-- [x] Update version to v1.16.0
+- [x] Update version to v0.1.35
 
 ### Task 5.3: Update Changelog
 **Priority:** 🟡 Medium
@@ -414,7 +414,7 @@
 **Files:** `changelog.md`
 
 **Acceptance Criteria:**
-- [x] Add v1.16.0 entry
+- [x] Add v0.1.35 entry
 - [x] List all 4 major features
 - [x] Document breaking changes (if any)
 - [x] Add migration notes

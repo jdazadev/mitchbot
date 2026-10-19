@@ -10,7 +10,7 @@ Tras el refactor a OpenRouter (change `refactor-proveedores-openrouter`), `docke
 - **Redis para producción**: activar persistencia AOF (`--appendonly yes`), volumen `redis_data:/data` y `--maxmemory-policy noeviction` (requisito de BullMQ).
 - **Limpieza de código muerto NATS**: eliminar `apps/backend/src/config/nats.ts`, su import y llamada en el bootstrap (`src/index.ts`), la fila NATS del reporte de infraestructura, la variable `NATS_URL` de `src/config/env.ts`, la dependencia npm `nats` y `NATS_URL` de `.env`/`.env.example`.
 - **Limpieza de residuos Ollama**: eliminar `OLLAMA_URL` de `apps/backend/.env` y `playwright.config.ts`.
-- Actualizar `AGENTS.md` y `changelog.md`; bump de versión a **v3.2.0**.
+- Actualizar `AGENTS.md` y `changelog.md`; bump de versión a **v0.3.2**.
 
 ## Capabilities
 

@@ -5,16 +5,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
-## v4.14.2 — 2026-10-19
+## v0.4.31 — 2026-10-19
 
 > **README del proyecto**: visión, capacidades y puesta en marcha en un solo lugar
+
+### 🔄 Cambiado
+- **Renumeración pre-1.0**: el proyecto aún no ha llegado a la versión 1.0.0, así que todo el historial pasa a `0.x`. Cada versión mayor anterior se convierte en una menor (`v1`→`0.1`, `v2`→`0.2`, `v3`→`0.3`, `v4`→`0.4`) y sus entregas se numeran en el patch por orden cronológico (p. ej. `v4.14.1`→`v0.4.30`). Se actualizaron los `package.json`, este changelog, `AGENTS.md`, `README.md`, `DESIGN.md`, los critiques de Impeccable y las propuestas de OpenSpec archivadas. Los mensajes de commit anteriores conservan la numeración antigua.
 
 ### 📝 Documentación
 - Nuevo `README.md` en la raíz: visión y público del producto, principios, capacidades por módulo, arquitectura y stack, puesta en marcha, variables de entorno, pruebas E2E, hoja de ruta y convenciones de contribución. Enlaza `PRODUCT.md`, `DESIGN.md`, `AGENTS.md` y los diagramas de `.archify/`.
 
 ---
 
-## v4.14.1 — 2026-10-06
+## v0.4.30 — 2026-10-06
 
 > **Diagramas del sistema**: flujos, casos de uso y procesos internos documentados con Archify
 
@@ -28,7 +31,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
-## v4.14.0 — 2026-09-30
+## v0.4.29 — 2026-09-30
 
 > **Conversaciones más ligeras y accesibles**: historial bajo demanda, controles etiquetados y foco predecible
 
@@ -48,7 +51,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
-## v4.13.1 — 2026-09-30
+## v0.4.28 — 2026-09-30
 
 > **Conversaciones más recuperables**: errores claros, reintentos y confirmación de acciones
 
@@ -67,7 +70,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
-## v4.13.0 — 2026-09-28
+## v0.4.27 — 2026-09-28
 
 > 📊 **Resumen funcional**: resultados del negocio y salud del bot con datos reales
 
@@ -90,7 +93,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
-## v4.12.0 — 2026-09-28
+## v0.4.26 — 2026-09-28
 
 > 🚦 **Urgencia analizada**: prioridad del cliente visible en el hilo y la bandeja
 
@@ -110,7 +113,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
-## v4.11.0 — 2026-09-28
+## v0.4.25 — 2026-09-28
 
 > 🧰 **Tools**: catálogo configurable, aprobaciones de operador e historial de operaciones
 
@@ -133,14 +136,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
-## v4.10.0 — 2026-09-22
+## v0.4.24 — 2026-09-22
 
 > 🎯 **Modo enfoque real**: las laterales de Conversaciones colapsan a carriles de iconos
 
 ### ✨ Añadido
 - **Carril de iconos en modo enfoque (`Messaging.vue`)**: con enfoque activo en escritorio las dos laterales pasan a carriles de **74px** (`lg:grid-cols-[74px_1fr_74px]`; sin selección, `[74px_1fr]`). La **bandeja** muestra solo avatar + insignia de canal, no leídos (anillo sobre el avatar) y punto mantequilla si el cliente no está guardado; la **ficha** muestra avatar, sentimiento, urgencia con medidor de 3 tramos, estado del contacto y el botón de guardar con las iniciales + insignia `Plus`. Todo con `title`/`aria-label` descriptivos (`nombre · canal · no leídos · sin contacto`, `Sentimiento: … (%)`, `Urgencia: … — …`).
 - **Búsqueda y filtro como iconos** dentro del carril: `MagnifyingGlass` abre un popover (`ADropdown` con `role="dialog"`) con el campo de búsqueda (filtra en vivo) y `Funnel` abre la lista de canales (`role="listbox"`, marca del activo y punto lila en el disparador).
-- **`AIcon`**: se reincorpora `Funnel` (`PhFunnel`), retirado como muerto en v4.7.1.
+- **`AIcon`**: se reincorpora `Funnel` (`PhFunnel`), retirado como muerto en v0.4.21.
 - Claves i18n `messaging.inbox.search`, `messaging.inbox.filter` y `messaging.inbox.unread` (es/en).
 
 ### 🔧 Cambiado
@@ -153,7 +156,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
-## v4.9.0 — 2026-09-22
+## v0.4.23 — 2026-09-22
 
 > 🧭 **Rail desnudo**: el sidebar deja de ser tarjeta y el item activo se marca con sello desregistrado + eco
 
@@ -164,14 +167,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ### 📝 Documentación
 - **`DESIGN.md`**: Layout, Elevation y Navigation actualizados (rail sin tarjeta ni sombra; el sello/eco documentado como marca del activo).
-- **AGENTS.md** actualizado con la sección v4.9.0.
+- **AGENTS.md** actualizado con la sección v0.4.23.
 
 ### ✅ Verificación
 - `vue-tsc --noEmit` y `build` en verde; suite e2e **44/44** (incluida la auditoría de overflow y consola en 1440/390); medición en navegador de las propiedades computadas del sello y el eco y capturas en claro, oscuro y drawer móvil.
 
 ---
 
-## v4.8.0 — 2026-09-22
+## v0.4.22 — 2026-09-22
 
 > 🎨 **Disciplina del sistema**: pastel que significa, un solo set de iconos, selects unificados y recuperación de errores
 
@@ -191,14 +194,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 - **`Profile`**: el rol se traduce con `users.roles.*` en lugar de mostrar el valor crudo.
 
 ### 📝 Documentación
-- **AGENTS.md** actualizado con la sección v4.8.0.
+- **AGENTS.md** actualizado con la sección v0.4.22.
 
 ### ✅ Verificación
 - `vue-tsc --noEmit` y `build` (frontend) en verde; paridad es/en **568/568**; detector Impeccable sobre `src` en **0 hallazgos**; suite e2e completa **44/44**; auditoría de overflow en 1440 y 390 sin desborde.
 
 ---
 
-## v4.7.1 — 2026-09-22
+## v0.4.21 — 2026-09-22
 
 > 🧹 **Limpieza**: fuera dependencias, tipos, iconos, tokens, clases y claves i18n sin uso
 
@@ -215,7 +218,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
-## v4.7.0 — 2026-09-22
+## v0.4.20 — 2026-09-22
 
 > 🧩 **Shell consistente**: modal de proyecto, idioma como el de proyecto, Memoria y tooltips
 
@@ -235,14 +238,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 - **Spanglish del catálogo es**: `Memoria` por "Brain", `Sin correo`/`Correo` por "Sin email"/"Email", `Conversaciones activas` por "Chats activos", `Buscar conversaciones…` / `Selecciona una conversación…` por "chats", `Mitchbot (IA)` por "(AI)", `responde desde el panel` por "dashboard", `Correo y contraseña son requeridos` por "Email y contraseña…".
 
 ### 📝 Documentación
-- **AGENTS.md** actualizado con la sección v4.7.0.
+- **AGENTS.md** actualizado con la sección v0.4.20.
 
 ### ✅ Verificación
 - `vue-tsc` + `build` en verde; paridad es/en **635/635**; detector Impeccable sobre lo tocado en **0 hallazgos**; suite e2e completa **41/41** (cubre el modal de proyecto, el dropdown de idioma y los filtros de Clientes); capturas de verificación en escritorio (1440) y móvil (390) sin desborde horizontal.
 
 ---
 
-## v4.6.0 — 2026-09-22
+## v0.4.19 — 2026-09-22
 
 > 🕒 **Shell afinado**: reloj al topbar, título honesto, Configuración/Mi Perfil al menú del usuario y adiós al spanglish
 
@@ -268,7 +271,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
-## v4.5.0 — 2026-09-22
+## v0.4.18 — 2026-09-22
 
 > 🌙 **Tema oscuro y endurecimiento del critique**: Aurora de noche, errores que se ven y accesibilidad real
 
@@ -299,7 +302,7 @@ Cierre de la tanda completa de remediación del critique Impeccable (#1→#6): m
 
 ---
 
-## v4.4.7 — 2026-09-22
+## v0.4.17 — 2026-09-22
 
 > 📊 **Honestidad de datos y limpieza del Panel**: el gráfico se puede leer y el shell deja de fingir
 
@@ -316,7 +319,7 @@ Cierre de los "minors" que el critique dejó abiertos tras los arreglos de fondo
 
 ---
 
-## v4.4.6 — 2026-09-22
+## v0.4.16 — 2026-09-22
 
 > ♿ **Accesibilidad del "modo serio"**: teclado y foco en las acciones de alto riesgo
 
@@ -333,7 +336,7 @@ Cierre de los red flags que el critique marcó alrededor de la toma de control y
 
 ---
 
-## v4.4.5 — 2026-09-22
+## v0.4.15 — 2026-09-22
 
 > 🧠 **Brain como conocimiento**: el RAG deja de parecer un gestor de archivos
 
@@ -351,7 +354,7 @@ El critique señaló que el foso del producto (el RAG) se presentaba como una ta
 
 ---
 
-## v4.4.4 — 2026-09-22
+## v0.4.14 — 2026-09-22
 
 > 🖐️ **Modo serio en Conversaciones**: tomar el control se confirma, se pinta en lila y se acusa
 
@@ -370,7 +373,7 @@ Tomar el control de una conversación era la acción más importante del product
 
 ---
 
-## v4.4.3 — 2026-09-22
+## v0.4.13 — 2026-09-22
 
 > 🛟 **Mensajería a prueba de fallos**: enviar, tomar control y guardar contacto ya no fallan en silencio
 
@@ -389,7 +392,7 @@ El critique detectó que las tres acciones de mayor riesgo de Conversaciones se 
 
 ---
 
-## v4.4.2 — 2026-09-22
+## v0.4.12 — 2026-09-22
 
 > 🫥 **Shell honesto**: el topbar deja de mostrar instrumentos falsos (controles muertos y métricas inventadas)
 
@@ -407,7 +410,7 @@ El critique Impeccable detectó un **P0** en el shell: `TopbarContext.vue` rende
 
 ---
 
-## v4.4.1 — 2026-09-22
+## v0.4.11 — 2026-09-22
 
 > 📐 **Margen uniforme del shell**: las tarjetas dejan de pegarse al rail y todo el lienzo respira 14px en las cuatro direcciones
 
@@ -428,7 +431,7 @@ El contenedor de contenido y el topbar usaban `md:pl-[242px]`, dejando solo **4p
 
 ---
 
-## v4.4.0 — 2026-09-22
+## v0.4.10 — 2026-09-22
 
 > 🔎 **Modo enfoque en Conversaciones**: un toggle estrecha las tarjetas laterales para dar espacio al hilo
 
@@ -452,7 +455,7 @@ Se añade un control de **modo enfoque** en la cabecera del hilo de Conversacion
 
 ---
 
-## v4.3.0 — 2026-09-22
+## v0.4.9 — 2026-09-22
 
 > 🔍 **Cierre del critique Impeccable**: Panel honesto, semántica de canal unificada, Conversaciones móviles y Configuración por tareas
 
@@ -492,7 +495,7 @@ Se implementan, en orden de impacto, los 8 arreglos del critique (`/impeccable c
 
 ---
 
-## v4.2.1 — 2026-09-22
+## v0.4.8 — 2026-09-22
 
 > 📐 **Contenedor de contenido centrado**: el área principal se acota y centra en pantallas ultrawide
 
@@ -511,7 +514,7 @@ La estructura del dashboard no tenía ancho máximo: en monitores ultrawide el c
 
 ---
 
-## v4.2.0 — 2026-09-22
+## v0.4.7 — 2026-09-22
 
 > ♿ **Endurecimiento de Aurora**: foco visible, navegación móvil, diálogos accesibles, i18n del rail y limpieza de deuda del sistema
 
@@ -544,7 +547,7 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 
 ---
 
-## v4.1.0 — 2026-09-21
+## v0.4.6 — 2026-09-21
 
 > 🏛️ **«Aurora» pasa de mock a sistema**: tokens + componentes base + shell de cápsulas flotantes implementados, y el prototipo rehecho a fidelidad real con las etiquetas del producto
 
@@ -582,7 +585,7 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 ### 📝 Notas
 - El **Resumen (Dashboard) se conserva tal cual** (datos reales del backend) para adaptarlo con más fidelidad en una tanda posterior. La persistencia de `project.config.brand` sigue como decisión abierta hacia el backend.
 
-## v4.0.5 — 2026-09-21
+## v0.4.5 — 2026-09-21
 
 > 🎨 **Dos mundos nuevos de exploración («Aurora» y «Bóveda») con prototipo completo de 12 vistas, y un comparador que reúne todos los mundos**
 
@@ -603,25 +606,25 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 ### 📝 Notas
 - Ninguno de los dos mundos nuevos es un compromiso: son material de comparación. «Mesa de Exposición» sigue fijada y **aún no migrada** al código del frontend.
 
-## v4.0.4 — 2026-09-21
+## v0.4.4 — 2026-09-21
 
 ### 🔄 Verificado
 - **Re-ejecución de `$impeccable document` (modo scan, refresh)** sobre el mundo "App Cálida": los tokens de `apps/frontend/src/style.css`, `tailwind.config.js` y `useBrand.ts` coinciden 1:1 con el frontmatter de `DESIGN.md` y el sidecar `.impeccable/design.json` (sin drift). El sistema congelado se mantiene intacto; se refrescó el `generatedAt` del sidecar. Sin cambios de valores ni de estilos.
 
-## v4.0.3 — 2026-09-21
+## v0.4.3 — 2026-09-21
 
 > 📐 **El sistema "App Cálida" queda documentado**: `DESIGN.md` + sidecar de tokens para que cualquier agente genere pantallas on-brand
 
 ---
 
 ### ✨ Añadido
-- **`apps/frontend/DESIGN.md`**: documentación del mundo visual "App Cálida" extraída en modo scan del código real (`style.css`, `tailwind.config.js`, `useBrand.ts`) — tokens normativos en frontmatter YML, colores con carácter ("Naranja Mandarina", "Suelo Papel"), reglas nominadas (La Regla de una Voz, La Regla del Suelo Cálido, La Regla del Sello, La Regla Sin Halo), componentes y Do's/Don'ts. Incluye nota de dirección: el sucesor "Mesa de Exposición" (v4.0.2) está decidido pero no migrado.
+- **`apps/frontend/DESIGN.md`**: documentación del mundo visual "App Cálida" extraída en modo scan del código real (`style.css`, `tailwind.config.js`, `useBrand.ts`) — tokens normativos en frontmatter YML, colores con carácter ("Naranja Mandarina", "Suelo Papel"), reglas nominadas (La Regla de una Voz, La Regla del Suelo Cálido, La Regla del Sello, La Regla Sin Halo), componentes y Do's/Don'ts. Incluye nota de dirección: el sucesor "Mesa de Exposición" (v0.4.2) está decidido pero no migrado.
 - **`apps/frontend/.impeccable/design.json`** (sidecar schemaVersion 2): tonal ramps por color, sombras/motion/breakpoints y 6 componentes autocontenidos (botón primario, ghost, campo, tarjeta, sello de estado y burbuja de chat) renderizables en shadow DOM.
 - No se modificó ningún estilo ni componente: es documentación del sistema congelado.
 
 ---
 
-## v4.0.2 — 2026-09-21
+## v0.4.2 — 2026-09-21
 
 > 🎨 **Rediseño total decidido: mundo "Mesa de Exposición"** (estructura de Mesa de Señales + material de Ficha de Exposición), con prototipo navegable de todas las vistas antes de migrar
 
@@ -639,7 +642,7 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 
 ---
 
-## v4.0.1 — 2026-09-21
+## v0.4.1 — 2026-09-21
 
 > 🔔 **El contador de no leídos deja de "resucitar": solo suma mensajes del cliente, la lectura se persiste y la bandeja ya no autoselecciona un chat**
 
@@ -662,11 +665,11 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 - `messaging.spec.ts`: casos nuevos que cubren que el mensaje del cliente sube el badge y se persiste al recargar, que un mensaje del bot/agente humano no incrementa, que entrar sin `?conversation=` no selecciona nada y que el deep-link selecciona la conversación correcta.
 
 ### 📚 Documentación
-- `AGENTS.md` (regla de no leídos, `PUT /:id/read`, evento `chat:read`, room de dashboard, sin selección por defecto) y `changelog.md` actualizados. Versión del proyecto a **v4.0.1**.
+- `AGENTS.md` (regla de no leídos, `PUT /:id/read`, evento `chat:read`, room de dashboard, sin selección por defecto) y `changelog.md` actualizados. Versión del proyecto a **v0.4.1**.
 
 ---
 
-## v4.0.0 — 2026-09-19
+## v0.4.0 — 2026-09-19
 
 > 🎨 **Rediseño visual completo de la plataforma: sistema de diseño cálido con identidad de marca personalizable**
 
@@ -688,7 +691,7 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 
 ---
 
-## v3.9.0 — 2026-09-19
+## v0.3.10 — 2026-09-19
 
 > 💬 **El bot responde de una vez, los insights dejan de resumir y desde cada cliente se abre su conversación**
 
@@ -708,11 +711,11 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 - `contacts.spec.ts` cubre abrir la conversación desde una fila y que un cliente sin conversación no muestra la acción (fixture de contacto sin conversación en el seed e2e).
 
 ### 📚 Documentación
-- `AGENTS.md` (respuesta como mensaje completo, insights solo sentimiento, acceso a la conversación desde Clients, contrato de `chat:message_chunk`, filtro `?contactId=`) y `changelog.md` actualizados. Versión del proyecto a **v3.9.0**.
+- `AGENTS.md` (respuesta como mensaje completo, insights solo sentimiento, acceso a la conversación desde Clients, contrato de `chat:message_chunk`, filtro `?contactId=`) y `changelog.md` actualizados. Versión del proyecto a **v0.3.10**.
 
 ---
 
-## v3.8.1 — 2026-09-19
+## v0.3.9 — 2026-09-19
 
 > 🔒 **El Dashboard deja de mezclar datos de todos los proyectos: métricas autenticadas y acotadas al proyecto activo**
 
@@ -729,11 +732,11 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 - Spec e2e del dashboard ampliado: crea dos proyectos dedicados, genera tráfico en uno y comprueba que las métricas del otro no se alteran; además verifica que una petición sin autenticación es rechazada (`401`). Suite `pnpm test:e2e dashboard` en verde (4/4).
 
 ### 📚 Documentación
-- `AGENTS.md` (endpoints del dashboard autenticados y acotados al proyecto) y `changelog.md` actualizados. Versión del proyecto a **v3.8.1**.
+- `AGENTS.md` (endpoints del dashboard autenticados y acotados al proyecto) y `changelog.md` actualizados. Versión del proyecto a **v0.3.9**.
 
 ---
 
-## v3.8.0 — 2026-09-19
+## v0.3.8 — 2026-09-19
 
 > 🌐 **La interfaz deja de mezclar idiomas: i18n con español por defecto e inglés, selector en vivo y chat público con idioma propio**
 
@@ -753,11 +756,11 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 - Specs e2e alineados al español por defecto y estabilizados con `data-testid`; nuevo `i18n.spec.ts` (español por defecto, cambio a inglés, `lang` y persistencia) y verificación de que el chat público conserva el idioma del agente.
 
 ### 📚 Documentación
-- `AGENTS.md` (frontend: vue-i18n, catálogos es/en, selector en Topbar, idioma del chat público) y `changelog.md` actualizados. Versión del proyecto a **v3.8.0**.
+- `AGENTS.md` (frontend: vue-i18n, catálogos es/en, selector en Topbar, idioma del chat público) y `changelog.md` actualizados. Versión del proyecto a **v0.3.8**.
 
 ---
 
-## v3.7.0 — 2026-09-19
+## v0.3.7 — 2026-09-19
 
 > 🧭 **La navegación deja de mezclar nombres, los controles de fecha por fin filtran de verdad y el centro de notificaciones deja de estar muerto**
 
@@ -781,11 +784,11 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 - Suite e2e completa en verde (32/32) y pruebas de integración del backend en verde (25/25).
 
 ### 📚 Documentación
-- `AGENTS.md` (nueva sección "Shell y navegación", módulo de clientes, idioma del agente es/en y estructura del frontend) actualizado. Versión del proyecto a **v3.7.0**.
+- `AGENTS.md` (nueva sección "Shell y navegación", módulo de clientes, idioma del agente es/en y estructura del frontend) actualizado. Versión del proyecto a **v0.3.7**.
 
 ---
 
-## v3.6.0 — 2026-09-19
+## v0.3.6 — 2026-09-19
 
 > 🧹 **La bandeja de mensajería deja de aparentar: cada control funciona o desaparece, y llegan los AI Insights reales**
 
@@ -815,11 +818,11 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 - Suite e2e completa en verde (28/28) y pruebas de integración del backend en verde (25/25).
 
 ### 📚 Documentación
-- `AGENTS.md` (sección 1 de mensajería, estructura backend/frontend, tabla de endpoints, modelo `conversations`, evento `chat:insights` y variables de entorno con `OPENROUTER_INSIGHTS_MODEL`) actualizado. Versión del proyecto a **v3.6.0**.
+- `AGENTS.md` (sección 1 de mensajería, estructura backend/frontend, tabla de endpoints, modelo `conversations`, evento `chat:insights` y variables de entorno con `OPENROUTER_INSIGHTS_MODEL`) actualizado. Versión del proyecto a **v0.3.6**.
 
 ---
 
-## v3.5.0 — 2026-09-18
+## v0.3.5 — 2026-09-18
 
 > 🧠 **El chatbot ahora recuerda la conversación, saluda y se despide con naturalidad, y el estado de la conversación se refleja en vivo**
 
@@ -844,11 +847,11 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 - Suite e2e completa en verde (24/24).
 
 ### 📚 Documentación
-- `AGENTS.md` (secciones 1 y 9 y tabla de eventos WebSocket) actualizado. Versión del proyecto a **v3.5.0**.
+- `AGENTS.md` (secciones 1 y 9 y tabla de eventos WebSocket) actualizado. Versión del proyecto a **v0.3.5**.
 
 ---
 
-## v3.4.0 — 2026-09-18
+## v0.3.4 — 2026-09-18
 
 > 🧠 **Los modelos de IA pasan a ser configuración de despliegue: se resuelven desde variables de entorno y desaparece la selección de modelo en la interfaz**
 
@@ -866,14 +869,14 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 - **Pruebas**: filas de `provider_configs` de modelos en `seed-e2e.ts` y pasos de selección de modelo en `onboarding.spec.ts`.
 
 ### 📚 Documentación
-- `apps/backend/.env.example` y `AGENTS.md` actualizados (secciones 4.1/4.2/4.3, pipeline OCR, re-ranking, flujo de setup y tabla de variables) incluyendo el caveat de reindexado al cambiar `OPENROUTER_EMBEDDING_MODEL`. Versión del proyecto a **v3.4.0**.
+- `apps/backend/.env.example` y `AGENTS.md` actualizados (secciones 4.1/4.2/4.3, pipeline OCR, re-ranking, flujo de setup y tabla de variables) incluyendo el caveat de reindexado al cambiar `OPENROUTER_EMBEDDING_MODEL`. Versión del proyecto a **v0.3.4**.
 
 ### 🧪 Pruebas
 - Suite e2e completa en verde (20/20) con `OPENROUTER_LLM_MODEL` apuntando al stub.
 
 ---
 
-## v3.3.0 — 2026-09-18
+## v0.3.3 — 2026-09-18
 
 > 🔐 **Validación del setup: la primera vez lleva al wizard, la sesión inválida vuelve al login y el login queda limpio**
 
@@ -888,14 +891,14 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 - **Sesión "zombie" (token local válido pero rechazado por el servidor)**: `checkProject()` ahora distingue `401/403` (`SessionInvalidError`) de "sin proyecto". El guard y el setup limpian la sesión y redirigen silenciosamente al login, en vez de enviar al usuario al wizard con errores de "Cuenta desactivada".
 
 ### 📚 Documentación
-- `AGENTS.md` actualizado (flujo de onboarding, módulo Login y versión a **v3.3.0**).
+- `AGENTS.md` actualizado (flujo de onboarding, módulo Login y versión a **v0.3.3**).
 
 ### 🧪 Pruebas
 - Nuevo spec e2e `setup-validation.spec.ts`: usuario con proyecto entra a `/setup` → dashboard; el botón del Topbar abre el wizard con `?mode=new`; sesión inválida → login.
 
 ---
 
-## v3.2.0 — 2026-09-18
+## v0.3.2 — 2026-09-18
 
 > 🧹 **Pulido de `docker-compose`: solo los servicios en uso, MongoDB anclado, healthchecks y Redis durable (AOF)**
 
@@ -913,7 +916,7 @@ Auditoría Impeccable `audit` sobre Aurora: **12/20 → trabajo de endurecimient
 - **Residuos de Ollama**: `OLLAMA_URL` de `apps/backend/.env` y `playwright.config.ts`.
 
 ### 📚 Documentación
-- `AGENTS.md` actualizado (servicios Docker, stack, variables de entorno y comandos) y versión del proyecto a **v3.2.0**.
+- `AGENTS.md` actualizado (servicios Docker, stack, variables de entorno y comandos) y versión del proyecto a **v0.3.2**.
 
 ### 🧰 Limpieza operativa (una sola vez)
 ```bash
@@ -925,7 +928,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v3.1.0 — 2026-09-18
+## v0.3.1 — 2026-09-18
 
 > 🧪 **Suite de pruebas end-to-end con Playwright: entorno aislado, autenticación reutilizable y proveedor de IA determinista (stub)**
 
@@ -952,7 +955,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v3.0.0 — 2026-09-18
+## v0.3.0 — 2026-09-18
 
 > 🔒 **Proveedor único OpenRouter: credenciales fuera de la base de datos y eliminación del rol `devadmin`**
 
@@ -982,7 +985,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v2.0.0 — 2026-09-18
+## v0.2.0 — 2026-09-18
 
 > 🏢 **Modelo multi-proyecto: pertenencia usuario↔proyecto, resolución de contexto por request y aislamiento total**
 
@@ -1015,7 +1018,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.17.1 — 2026-09-18
+## v0.1.38 — 2026-09-18
 
 > 🐛 **Fix: resolución de módulos del frontend (artefactos compilados obsoletos)**
 
@@ -1033,7 +1036,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.17.0 — 2026-09-17
+## v0.1.37 — 2026-09-17
 
 > 🤖 **Agent Tool Use, OCR unificado y RAG multilingüe**
 
@@ -1082,7 +1085,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.16.1 — 2026-09-17
+## v0.1.36 — 2026-09-17
 
 > 🐛 **Fix: carga de variables de entorno en scripts**
 
@@ -1095,7 +1098,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.16.0 — 2026-06-13
+## v0.1.35 — 2026-06-13
 
 > 🔒 **WebSocket Security Hardening**
 
@@ -1125,7 +1128,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.15.0 — 2026-04-08
+## v0.1.34 — 2026-04-08
 
 > 🧪 **Extraccion PDF completa por imagenes**
 
@@ -1143,7 +1146,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.14.2 — 2026-04-08
+## v0.1.33 — 2026-04-08
 
 > 🧪 **DevAdmin: PDF a imagenes con preview**
 
@@ -1171,7 +1174,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.14.1 — 2026-04-08
+## v0.1.32 — 2026-04-08
 
 ### 🐛 Fixes & Optimizations
 
@@ -1180,7 +1183,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.14.0 — 2026-04-08
+## v0.1.31 — 2026-04-08
 
 > 🧠 **RAG: Extraccion por imagenes en PDFs**
 
@@ -1204,7 +1207,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.13.2 — 2026-04-01
+## v0.1.30 — 2026-04-01
 
 > 🧠 **RAG: Document inputs dinamicos**
 
@@ -1228,7 +1231,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.13.0 — 2026-04-01
+## v0.1.29 — 2026-04-01
 
 > 🧠 **RAG: Extraccion multimodal para PDFs e imagenes**
 
@@ -1252,7 +1255,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.12.0 — 2026-03-25
+## v0.1.28 — 2026-03-25
 
 > 🧪 **DevAdmin: Modulo de pruebas y extraccion sin indexar**
 
@@ -1269,7 +1272,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.11.3 — 2026-03-21
+## v0.1.27 — 2026-03-21
 
 > 🧹 **RAG: Eliminacion garantizada en Qdrant**
 
@@ -1286,7 +1289,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.11.2 — 2026-03-21
+## v0.1.26 — 2026-03-21
 
 > 🧠 **RAG: Texto extraido y prompt estricto**
 
@@ -1302,7 +1305,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.11.1 — 2026-03-21
+## v0.1.25 — 2026-03-21
 
 > 🧠 **RAG: Extraccion Markdown via LLM**
 
@@ -1318,7 +1321,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.11.0 — 2026-03-21
+## v0.1.24 — 2026-03-21
 
 > 🧠 **RAG: OCR local para PDFs escaneados**
 
@@ -1337,7 +1340,7 @@ docker compose up -d --remove-orphans
 #### Backend
 - **Deteccion PDF** — Se detecta si el PDF es imagen o texto antes de ejecutar OCR.
 
-## v1.10.3 — 2026-03-21
+## v0.1.23 — 2026-03-21
 
 > 🐛 **RAG: Worker estable + progreso real**
 
@@ -1353,7 +1356,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.10.2 — 2026-03-21
+## v0.1.22 — 2026-03-21
 
 > 🐛 **RAG: Colecciones por modelo de embeddings**
 
@@ -1366,7 +1369,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.10.1 — 2026-03-21
+## v0.1.21 — 2026-03-21
 
 > 🐛 **RAG: Cola BullMQ estable**
 
@@ -1379,7 +1382,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.10.0 — 2026-03-21
+## v0.1.20 — 2026-03-21
 
 > ⚙️ **RAG: Subida en background con progreso y logs**
 
@@ -1402,7 +1405,7 @@ docker compose up -d --remove-orphans
 #### Backend
 - **BullMQ** — Redis config ahora setea `maxRetriesPerRequest: null` para evitar error de worker.
 
-## v1.9.4 — 2026-03-21
+## v0.1.19 — 2026-03-21
 
 > 🐛 **RAG: Mejor uso de base64 en PDF**
 
@@ -1415,7 +1418,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.9.3 — 2026-03-21
+## v0.1.18 — 2026-03-21
 
 > 🧹 **RAG: Rollback en uploads fallidos**
 
@@ -1428,7 +1431,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.9.2 — 2026-03-21
+## v0.1.17 — 2026-03-21
 
 > 🐛 **RAG: Mejor extraccion para PDFs sin texto**
 
@@ -1441,7 +1444,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.9.1 — 2026-03-21
+## v0.1.16 — 2026-03-21
 
 > 🧩 **RAG: Bloqueo de uploads sin modelo file**
 
@@ -1454,7 +1457,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.9.0 — 2026-03-21
+## v0.1.15 — 2026-03-21
 
 > 🧠 **RAG: Extraccion LLM + payload con indices dinamicos**
 
@@ -1470,7 +1473,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.8.1 — 2026-03-20
+## v0.1.14 — 2026-03-20
 
 > 🧹 **UX: Simplificación de pestaña LLM**
 
@@ -1484,7 +1487,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.8.0 — 2026-03-20
+## v0.1.13 — 2026-03-20
 
 > 🧩 **UX: Flujo unificado de proveedores y modelos**
 
@@ -1498,7 +1501,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.7.0 — 2026-03-19
+## v0.1.12 — 2026-03-19
 
 > 🛡️ **Refactor: Modo DevAdmin y Proveedores Avanzados**
 
@@ -1520,7 +1523,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.6.5 — 2026-03-18
+## v0.1.11 — 2026-03-18
 
 > 🧹 **Herramientas: Limpieza y reindex de RAG**
 
@@ -1535,7 +1538,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.6.0 — 2026-03-17
+## v0.1.10 — 2026-03-17
 
 > 🧠 **Feature: Sistema de Personalidad Dinámica para el Chatbot**
 
@@ -1577,7 +1580,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.5.13 — 2026-03-16
+## v0.1.9 — 2026-03-16
 
 > 📝 **Documentación: Reescritura completa de AGENTS.md**
 
@@ -1600,7 +1603,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.5.12 — 2026-03-13
+## v0.1.8 — 2026-03-13
 
 > 🧪 **Test chat sin sidebar**
 
@@ -1612,11 +1615,11 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.5.0 — 2026-03-11
+## v0.1.7 — 2026-03-11
 
 ---
 
-## v1.4.1 — 2026-03-11
+## v0.1.6 — 2026-03-11
 
 #### Streaming de Respuestas (WebSockets)
 - **Generación en Tiempo Real**: Se reemplazó la espera bloqueante por una emisión continua de tokens (`generateResponseStream` usando `.stream()`).
@@ -1632,7 +1635,7 @@ docker compose up -d --remove-orphans
 
 
 
-## v1.4.0 — 2026-03-11
+## v0.1.5 — 2026-03-11
 
 > 🧠 **Feature/Fix: Capa de Abstracción AI, Enrutador e Integración nativa de OpenRouter**
 
@@ -1680,7 +1683,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.2.1 — 2026-03-10
+## v0.1.4 — 2026-03-10
 
 > 🐛 **Bugfixes: Test conexión, flujo local, OpenRouter y auto-respuesta del bot**
 
@@ -1716,7 +1719,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.2.0 — 2026-03-10
+## v0.1.3 — 2026-03-10
 
 > 🔄 **Refactorización del flujo de proveedores: LLM + Embeddings separados, APIs dinámicas**
 
@@ -1785,7 +1788,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.1.0 — 2026-02-28
+## v0.1.2 — 2026-02-28
 
 > 🔧 **Refactorización de librerías deprecadas + Soporte multi-proveedor LLM**
 
@@ -1870,7 +1873,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.0.1 — 2026-02-28
+## v0.1.1 — 2026-02-28
 
 ### ✨ New
 
@@ -1878,7 +1881,7 @@ docker compose up -d --remove-orphans
 
 ---
 
-## v1.0.0 — 2026-02-28
+## v0.1.0 — 2026-02-28
 
 > 🚀 **Release inicial del MVP completo** — Backend + Frontend + Infraestructura Docker
 

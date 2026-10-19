@@ -34,7 +34,7 @@
 
 - [x] 6.1 Documentar las nuevas variables en `apps/backend/.env.example` y verificar que todas las variables del entorno están listadas.
 - [x] 6.2 Actualizar `AGENTS.md` (secciones 4.1/4.2/4.3, flujo de setup, tabla de variables de entorno) incluyendo el caveat de reindexado al cambiar el modelo de embeddings.
-- [x] 6.3 Registrar el cambio en `changelog.md` con la fecha actual y subir la versión a `v3.4.0`.
+- [x] 6.3 Registrar el cambio en `changelog.md` con la fecha actual y subir la versión a `v0.3.4`.
 
 ## 7. Verificación final
 

@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v4.14.2** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.4.31** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
