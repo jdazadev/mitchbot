@@ -1,8 +1,0 @@
-{
-  "schemaVersion": 1,
-  "command": "deliver",
-  "status": "pending",
-  "receiptId": "43838e60-f3af-45b8-a9aa-df8b2eae6ad3",
-  "input": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-ingesta-rag-20261006-022446/candidate.json",
-  "output": "/Users/jdaza/projects/mitchbot_v2/.archify/dataflow-ingesta-rag-20261006-022446/review-2/ingesta-rag.html"
-}

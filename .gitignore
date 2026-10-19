@@ -39,7 +39,6 @@ apps/frontend/src/**/*.vue.js
 *.swp
 *.swo
 *~
-.DS_Store
 Thumbs.db
 
 # ================================
@@ -68,14 +67,6 @@ apps/backend/uploads/*
 !apps/backend/uploads/.gitkeep
 
 # ================================
-# LLM & Embedding Assets (model files)
-# ================================
-apps/backend/src/assets/llm/*
-!apps/backend/src/assets/llm/.gitkeep
-apps/backend/src/assets/embedding/*
-!apps/backend/src/assets/embedding/.gitkeep
-
-# ================================
 # Docker (volumes & runtime)
 # ================================
 docker-compose.override.yml
@@ -93,13 +84,6 @@ coverage/
 .cache/
 .temp/
 .tmp/
-
-# Playwright
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
 
 # ================================
 # AI Tooling (local, includes large binaries)

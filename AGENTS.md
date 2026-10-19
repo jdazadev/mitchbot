@@ -13,13 +13,13 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.4.31
+**Versión actual del proyecto:** v0.4.32
 
 ---
 
 ## Diagramas del sistema (v0.4.30)
 
-- **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y el HTML final en la subcarpeta `review-N` más reciente (las salidas de la raíz de cada carpeta son borradores superados).
+- **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y **un solo HTML final**: en la subcarpeta `review-N` o, si no la hay, en la raíz de la carpeta. Los borradores superados se eliminaron en v0.4.32; al regenerar, borra la revisión anterior.
 - **Contenido**: arquitectura del sistema; workflows de auth/onboarding y de control de herramientas; secuencias de mensaje→bot y de confirmación del cliente; dataflows de ingesta RAG y de analítica/insights; lifecycles de conversación, fuente de conocimiento y ejecución de herramienta.
 - **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta de nuevo el SVG desde el menú Export del visor y actualiza la sección "Estado y hoja de ruta" del README.
 - **Regenerar**: `node ~/.claude/skills/archify/bin/archify.mjs finalize <tipo> candidate.json <salida.html> --quality showcase --out-dir <carpeta>/review-N`. Un candidato modificado necesita un `--out-dir` nuevo. En el sandbox de Claude Code, antepón `NO_PROXY=localhost,127.0.0.1,::1`.
@@ -340,8 +340,8 @@ Tras la auditoría Impeccable (`audit`) sobre Aurora se cerraron los hallazgos P
 ## Rediseño total (v0.4.2 "Mesa de Exposición") — Estado
 
 - **Dirección decidida**: reemplazo completo del mundo visual por la fusión **"Mesa de Exposición"** — topología de tablero de despacho (circuitos de conversación con lámpara: verde=bot, magenta=humano, hueco=cerrado; llave "TOMAR CONTROL") + materialidad de imprenta (papel #F1EDE6/#FBF9F3, tinta #1C1E22, carga por hatching, magenta #C13A7C único acento de acción, regla tachada al cerrar, cruz 90° para conflictos). Tipografía: Barlow Condensed (etiquetas), IBM Plex Mono (datos tabulares), Spline Sans (cuerpo).
-- **Prototipo navegable previo a migrar** en `apps/frontend/.impeccable/mocks/rediseño/` (12 vistas de ejemplo + `style.css` compartido; servible con `python3 -m http.server` en esa carpeta). El código real del frontend AÚN NO ha sido migrado.
-- **Ronda 4 de exploración (v0.4.5)**: dos mundos nuevos con prototipo completo de 12 vistas cada uno — **«Aurora»** (`mocks/aurora/`, del pastel optimista de *orivo.webflow.io*: suelo cálido, tinta negra, tipografía enorme, pasteles con papel semántico) y **«Bóveda»** (`mocks/boveda/`, del cool premium de *per-ment.webflow.io*: blanco frío, azul noche + violeta único, rejilla fina, nav en cápsula flotante, serif itálica). **`mocks/comparador.html`** reúne los 12 mundos de las 4 rondas con su ADN (paleta, tipografía, forma, clima) y enlaces. Ambos son material de comparación, no compromisos.
+- **Prototipo de exploración** (12 vistas): se eliminó del repositorio en v0.4.32 y sigue disponible en el historial de git.
+- **Ronda 4 de exploración (v0.4.5)**: dos mundos nuevos con prototipo completo de 12 vistas cada uno — **«Aurora»** (`mocks/aurora/`, del pastel optimista de *orivo.webflow.io*: suelo cálido, tinta negra, tipografía enorme, pasteles con papel semántico) y **«Bóveda»** (del cool premium de *per-ment.webflow.io*: blanco frío, azul noche + violeta único, rejilla fina, nav en cápsula flotante, serif itálica). En v0.4.32 se eliminaron Bóveda y el comparador de mundos (están en el historial de git); solo se conserva `mocks/aurora/`, el prototipo del sistema adoptado.
 - Contrato de dirección en `apps/frontend/.impeccable/surfaces/…` (brief de Messaging). La identidad de marca por proyecto sigue siendo decisión abierta hacia el backend: persistencia en `project.config.brand` pendiente (se resuelve en la migración).
 - El resto del sistema actual "App Cálida" (v0.4.0) queda congelado: no mezclar estilos nuevos con los mapeos `warm-*` existentes hasta la migración completa.
 

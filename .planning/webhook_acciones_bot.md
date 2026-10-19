@@ -1,1 +1,0 @@
-- Webhooks / Disparadores: La capacidad de que el bot no solo hable, sino que haga cosas. Por ejemplo, si un cliente dice "quiero agendar", que el bot dispare un webhook hacia un flujo de n8n o Make para registrar la cita en un calendario.

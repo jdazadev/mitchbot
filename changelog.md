@@ -5,6 +5,24 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.4.32 — 2026-10-19
+
+> **Limpieza profunda**: fuera la documentación obsoleta, las exploraciones de diseño descartadas y los borradores de diagramas
+
+### 🗑️ Eliminado
+- **Documentación obsoleta**: `examples/` (PDF de menú sin uso), `project.md` (plan inicial con Bun, Hono y Ollama), `backend_plan.md` y `.planning/` (8 planes de funciones ya implementadas).
+- **Exploración de diseño superada**: el `.impeccable/` de la raíz (mocks de App Cálida y Prospecto Cívico, decision-payloads, capturas y `shot.mjs`) y los mundos descartados de `apps/frontend/.impeccable/mocks` (`rediseño`, `boveda`, `ejemplos`, `comparador.html` y `enfoque.html`). Se conservan el prototipo Aurora, `design.json`, los critiques y las surfaces. En Aurora se quitó el enlace al comparador.
+- **Borradores de Archify**: de cada diagrama se eliminan los HTML y las revisiones superadas, y se conserva `candidate.json` con su versión final. `.archify/` pasa de unos 30 MB a 16 MB.
+- **Código muerto**: `middleware/validation.middleware.ts` (`validateRequest` no se usaba).
+
+### 🔧 Cambiado
+- `.gitignore`: sin reglas duplicadas (Playwright, `.DS_Store`) ni las de modelos locales de la etapa Ollama. Se sacan del índice los estados de `.impeccable/questions/` que ya estaban ignorados.
+
+### ✅ Verificación
+- Backend `tsc --noEmit` y frontend `vue-tsc --noEmit` en verde. Cada diagrama conserva un único HTML final y los enlaces del README siguen funcionando. Todo lo eliminado está en el historial de git.
+
+---
+
 ## v0.4.31 — 2026-10-19
 
 > **README del proyecto**: visión, capacidades y puesta en marcha en un solo lugar
