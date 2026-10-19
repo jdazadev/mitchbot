@@ -1,0 +1,286 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Hoja de ruta de Mitchbot hacia la v1.0",
+    "output": ".archify/workflow-roadmap-20261019-175109/roadmap.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Entregado"
+        },
+        "messagebus": {
+          "label": "Siguiente"
+        },
+        "cloud": {
+          "label": "Futuro"
+        },
+        "security": {
+          "label": "Hito"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "plataforma",
+      "label": "Plataforma e IA"
+    },
+    {
+      "id": "canales",
+      "label": "Canales e integraciones"
+    },
+    {
+      "id": "experiencia",
+      "label": "Experiencia y analítica"
+    }
+  ],
+  "phases": [
+    {
+      "id": "entregado",
+      "label": "Entregado · v0.1 – v0.4",
+      "fromCol": 0,
+      "toCol": 3
+    },
+    {
+      "id": "siguiente",
+      "label": "Siguiente · v0.5",
+      "fromCol": 4,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "futuro",
+      "label": "Hacia v1.0",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "mvp",
+    "multiproyecto",
+    "openrouter",
+    "herramientas",
+    "social",
+    "resiliencia",
+    "v1"
+  ],
+  "nodes": [
+    {
+      "id": "mvp",
+      "lane": "plataforma",
+      "col": 0,
+      "type": "backend",
+      "label": "MVP: chat + RAG",
+      "sublabel": "PDF · TXT · CSV · OCR",
+      "tag": "v0.1",
+      "width": 140
+    },
+    {
+      "id": "multiproyecto",
+      "lane": "plataforma",
+      "col": 1,
+      "type": "backend",
+      "label": "Multi-proyecto",
+      "sublabel": "aislamiento total",
+      "tag": "v0.2",
+      "width": 140
+    },
+    {
+      "id": "openrouter",
+      "lane": "plataforma",
+      "col": 2,
+      "type": "backend",
+      "label": "OpenRouter + memoria",
+      "sublabel": "proveedor único · 20 turnos",
+      "tag": "v0.3",
+      "width": 150
+    },
+    {
+      "id": "herramientas",
+      "lane": "plataforma",
+      "col": 3,
+      "type": "backend",
+      "label": "Herramientas",
+      "sublabel": "agenda · inventario · pagos",
+      "tag": "v0.4 · aprobaciones",
+      "width": 150
+    },
+    {
+      "id": "resiliencia",
+      "lane": "plataforma",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Resiliencia",
+      "sublabel": "rate limit · reintentos · failover",
+      "width": 160
+    },
+    {
+      "id": "v1",
+      "lane": "plataforma",
+      "col": 5,
+      "type": "security",
+      "label": "v1.0",
+      "sublabel": "multicanal estable",
+      "tag": "+ tests unitarios",
+      "width": 140
+    },
+    {
+      "id": "web",
+      "lane": "canales",
+      "col": 0,
+      "type": "backend",
+      "label": "Chat web",
+      "sublabel": "Socket.io en vivo",
+      "tag": "v0.1",
+      "width": 140
+    },
+    {
+      "id": "insights",
+      "lane": "experiencia",
+      "col": 2,
+      "type": "backend",
+      "label": "Insights IA",
+      "sublabel": "sentimiento por conversación",
+      "tag": "v0.3",
+      "width": 150
+    },
+    {
+      "id": "aurora",
+      "lane": "experiencia",
+      "col": 3,
+      "type": "backend",
+      "label": "Aurora + Resumen",
+      "sublabel": "diseño · urgencia · métricas",
+      "tag": "v0.4",
+      "width": 150
+    },
+    {
+      "id": "marca",
+      "lane": "experiencia",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Marca por proyecto",
+      "sublabel": "color, nombre y logo",
+      "width": 160
+    },
+    {
+      "id": "widget",
+      "lane": "experiencia",
+      "col": 5,
+      "type": "cloud",
+      "label": "Widget embebible",
+      "sublabel": "+ exportar conversaciones",
+      "width": 160
+    },
+    {
+      "id": "social",
+      "lane": "canales",
+      "col": 4,
+      "type": "messagebus",
+      "label": "WhatsApp + Instagram",
+      "sublabel": "webhooks · broker · normalización",
+      "width": 160
+    },
+    {
+      "id": "crm",
+      "lane": "canales",
+      "col": 5,
+      "type": "cloud",
+      "label": "CRM + push",
+      "sublabel": "integraciones externas",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "mvp-multi",
+      "from": "mvp",
+      "to": "multiproyecto"
+    },
+    {
+      "id": "multi-openrouter",
+      "from": "multiproyecto",
+      "to": "openrouter"
+    },
+    {
+      "id": "openrouter-tools",
+      "from": "openrouter",
+      "to": "herramientas"
+    },
+    {
+      "id": "tools-social",
+      "from": "herramientas",
+      "to": "social",
+      "label": "siguiente",
+      "variant": "emphasis"
+    },
+    {
+      "id": "social-resil",
+      "from": "social",
+      "to": "resiliencia",
+      "label": "estabilizar"
+    },
+    {
+      "id": "resil-v1",
+      "from": "resiliencia",
+      "to": "v1"
+    },
+    {
+      "id": "mvp-web",
+      "from": "mvp",
+      "to": "web",
+      "role": "branch"
+    },
+    {
+      "id": "openrouter-insights",
+      "from": "openrouter",
+      "to": "insights",
+      "role": "branch"
+    },
+    {
+      "id": "insights-aurora",
+      "from": "insights",
+      "to": "aurora"
+    },
+    {
+      "id": "aurora-marca",
+      "from": "aurora",
+      "to": "marca"
+    },
+    {
+      "id": "marca-widget",
+      "from": "marca",
+      "to": "widget",
+      "variant": "dashed"
+    },
+    {
+      "id": "social-crm",
+      "from": "social",
+      "to": "crm",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Dónde estamos · v0.4.31",
+      "items": [
+        "MVP listo para demo: chat web, RAG, agente con herramientas y aprobaciones",
+        "Panel con resultados, salud del bot, sentimiento y urgencia"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Qué falta para la v1.0",
+      "items": [
+        "WhatsApp e Instagram con mensajes normalizados",
+        "Rate limiting por canal, reintentos y failover",
+        "Tests unitarios además de la suite E2E"
+      ]
+    }
+  ]
+}

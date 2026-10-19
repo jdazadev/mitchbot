@@ -152,17 +152,33 @@ Requiere los servicios de Docker activos. Más detalles en [`tests/e2e/README.md
 
 ## Estado y hoja de ruta
 
-**MVP listo para demo ✅:** chat web en tiempo real, RAG, OpenRouter, panel de métricas, contactos, usuarios y agentes, onboarding, herramientas con aprobaciones y analítica de conversación.
+Mitchbot está en **pre-1.0 (v0.4.31)**. El MVP está listo para demo, y la **v1.0** llegará cuando la plataforma atienda de forma estable los canales sociales además de la web.
 
-**Siguiente fase: integración social 🔜**
-- WhatsApp Business API e Instagram Messaging API
-- Normalización de mensajes entre plataformas, rate limiting por canal, reintentos y failover
+<p align="center">
+  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.4, siguiente v0.5 con WhatsApp, Instagram, resiliencia y marca por proyecto, y hacia v1.0 con widget embebible, CRM y notificaciones push" width="100%">
+</p>
 
-**Más adelante 💡**
-- Widget embebible para webs de clientes
-- Identidad de marca por proyecto guardada en el backend
-- Exportación de conversaciones, integración con CRM y notificaciones push
-- Tests unitarios (complementando la suite E2E)
+<sub>Diagrama interactivo en <a href=".archify/workflow-roadmap-20261019-175109/roadmap.html"><code>.archify/workflow-roadmap-…/roadmap.html</code></a>. Su fuente editable es <code>candidate.json</code>, en la misma carpeta.</sub>
+
+### ✅ Entregado
+
+| Etapa | Periodo | Qué trajo |
+|:--|:--|:--|
+| **v0.1 · MVP** | feb → sep 2026 | Chat web en tiempo real, motor RAG (PDF, TXT, CSV, OCR), panel, contactos, usuarios, agentes con personalidad y onboarding |
+| **v0.2 · Multi-proyecto** | sep 2026 | Pertenencia usuario↔proyecto y aislamiento total de datos, agentes y eventos |
+| **v0.3 · IA confiable** | sep 2026 | OpenRouter como proveedor único con credenciales solo en el entorno, memoria de conversación, saludo y despedida naturales e insights de sentimiento |
+| **v0.4 · Aurora y herramientas** | sep → oct 2026 | Sistema de diseño Aurora con tema oscuro y accesibilidad, catálogo de herramientas con aprobaciones, urgencia analizada y Resumen con métricas reales |
+
+### 🔜 Siguiente · v0.5: integración social
+- **WhatsApp Business API** e **Instagram Messaging API** con webhooks y message broker
+- Mensajes normalizados entre plataformas
+- **Resiliencia:** rate limiting por canal, reintentos y failover
+- **Identidad de marca por proyecto** (color, nombre y logo) guardada en el backend
+
+### 🎯 Hacia la v1.0
+- Widget embebible para webs de clientes y exportación de conversaciones
+- Integración con CRM y notificaciones push
+- Tests unitarios que complementen la suite E2E
 
 ---
 

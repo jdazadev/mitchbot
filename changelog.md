@@ -13,6 +13,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 - **Renumeración pre-1.0**: el proyecto aún no ha llegado a la versión 1.0.0, así que todo el historial pasa a `0.x`. Cada versión mayor anterior se convierte en una menor (`v1`→`0.1`, `v2`→`0.2`, `v3`→`0.3`, `v4`→`0.4`) y sus entregas se numeran en el patch por orden cronológico (p. ej. `v4.14.1`→`v0.4.30`). Se actualizaron los `package.json`, este changelog, `AGENTS.md`, `README.md`, `DESIGN.md`, los critiques de Impeccable y las propuestas de OpenSpec archivadas. Los mensajes de commit anteriores conservan la numeración antigua.
 
 ### 📝 Documentación
+- **Hoja de ruta visual**: nuevo diagrama Archify (`.archify/workflow-roadmap-20261019-175109/`) con lo entregado (v0.1–v0.4), lo siguiente (v0.5) y lo pendiente hasta la v1.0, en tres carriles: Plataforma e IA, Canales y Experiencia. Se exporta a `docs/roadmap.svg`, que sigue el tema claro u oscuro del sistema, y el README lo incrusta junto a una tabla de etapas.
 - Nuevo `README.md` en la raíz: visión y público del producto, principios, capacidades por módulo, arquitectura y stack, puesta en marcha, variables de entorno, pruebas E2E, hoja de ruta y convenciones de contribución. Enlaza `PRODUCT.md`, `DESIGN.md`, `AGENTS.md` y los diagramas de `.archify/`.
 
 ---
