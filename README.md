@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.4.32** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.4.33** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -152,7 +152,7 @@ Requiere los servicios de Docker activos. Más detalles en [`tests/e2e/README.md
 
 ## Estado y hoja de ruta
 
-Mitchbot está en **pre-1.0 (v0.4.32)**. El MVP está listo para demo, y la **v1.0** llegará cuando la plataforma atienda de forma estable los canales sociales además de la web.
+Mitchbot está en **pre-1.0 (v0.4.33)**. El MVP está listo para demo, y la **v1.0** llegará cuando la plataforma atienda de forma estable los canales sociales además de la web.
 
 <p align="center">
   <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.4, siguiente v0.5 con WhatsApp, Instagram, resiliencia y marca por proyecto, y hacia v1.0 con widget embebible, CRM y notificaciones push" width="100%">
@@ -191,4 +191,8 @@ Mitchbot está en **pre-1.0 (v0.4.32)**. El MVP está listo para demo, y la **v1
 
 ---
 
-<sub>Proyecto privado · © Mitchbot</sub>
+## Licencia
+
+Mitchbot se distribuye bajo la [Functional Source License 1.1 con licencia futura Apache 2.0](LICENSE.md) (`FSL-1.1-ALv2`). Puedes leer, usar, modificar y redistribuir el código para cualquier fin **salvo ofrecer un producto o servicio que compita con Mitchbot**. Se permiten el uso interno, la investigación y la formación. Dos años después de publicarse, cada versión pasa automáticamente a [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
+<sub>© 2026 J. Daza</sub>

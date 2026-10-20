@@ -13,7 +13,7 @@
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.4.32
+**Versión actual del proyecto:** v0.4.33
 
 ---
 
@@ -369,6 +369,7 @@ mitchbot_v2/
 ├── docker-compose.yml    # Servicios: MongoDB, Redis, Qdrant
 ├── pnpm-workspace.yaml   # Configuración del monorepo pnpm
 ├── README.md             # Visión, capacidades y puesta en marcha (cara pública; mantener versión y roadmap al día)
+├── LICENSE.md            # Functional Source License 1.1 (FSL-1.1-ALv2); pasa a Apache 2.0 a los 2 años
 ├── AGENTS.md             # Este archivo
 └── changelog.md          # Historial de cambios detallado
 ```

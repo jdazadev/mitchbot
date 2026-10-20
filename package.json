@@ -1,6 +1,7 @@
 {
   "name": "mitchbot-v2",
-  "version": "0.4.32",
+  "version": "0.4.33",
+  "license": "FSL-1.1-ALv2",
   "private": true,
   "scripts": {
     "dev": "pnpm -r --parallel dev",

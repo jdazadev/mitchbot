@@ -1,6 +1,7 @@
 {
   "name": "@mitchbot/backend",
-  "version": "0.4.32",
+  "version": "0.4.33",
+  "license": "FSL-1.1-ALv2",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

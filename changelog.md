@@ -5,6 +5,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.4.33 — 2026-10-20
+
+> **Licencia**: el proyecto pasa a la Functional Source License 1.1 con licencia futura Apache 2.0
+
+### ✨ Añadido
+- `LICENSE.md` con la **FSL-1.1-ALv2** (texto oficial de fsl.software, © 2026 J. Daza). Permite leer, usar, modificar y redistribuir el código salvo para ofrecer un producto o servicio que compita con Mitchbot. Dos años después de publicarse, cada versión pasa a Apache 2.0.
+
+### 🔧 Cambiado
+- `package.json` (raíz, backend y frontend): campo `"license": "FSL-1.1-ALv2"`.
+- README: nueva sección "Licencia" en lugar de "Proyecto privado".
+- AGENTS.md: `LICENSE.md` en la estructura del monorepo.
+
+---
+
 ## v0.4.32 — 2026-10-19
 
 > **Limpieza profunda**: fuera la documentación obsoleta, las exploraciones de diseño descartadas y los borradores de diagramas

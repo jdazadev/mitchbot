@@ -1,7 +1,8 @@
 {
   "name": "@mitchbot/frontend",
   "private": true,
-  "version": "0.4.32",
+  "version": "0.4.33",
+  "license": "FSL-1.1-ALv2",
   "type": "module",
   "scripts": {
     "dev": "vite",
