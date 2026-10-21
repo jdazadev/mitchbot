@@ -11,9 +11,20 @@
 - **Al terminar de implementar un cambio de OpenSpec, realiza el commit correspondiente** (sin esperar a que se lo pidan).
 - **Al terminar cualquier tanda de Impeccable** (diseño, critique, audit, polish, etc.), **realiza el commit correspondiente sin esperar a que te lo pidan**.
 - Cuando termines cualquier implementación, descríbelo siempre **en español**.
+- **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.4.33
+**Versión actual del proyecto:** v0.4.34
+
+---
+
+## Pruebas en tres niveles (v0.4.34)
+
+- **Unitarios**: backend con `node:test` + tsx (`apps/backend/tests/unit/`: helpers y configuración de herramientas, chunking, prompt builder); frontend con Vitest + happy-dom (`apps/frontend/tests/unit/`: markdown, canales, derivados de marca, `authService.getProfile`). `vitest.config.ts` reutiliza `vite.config.ts` (alias `@`).
+- **Scripts**: en la raíz `pnpm test` corre unitarios → integración → E2E; `pnpm test:unit` y `pnpm test:integration` por separado. En el backend, `test:unit` y `test:integration` (el antiguo `test` era solo integración).
+- **E2E estable**: el límite de `join:room` sube de 10 a **60 por minuto y usuario**; con 10, un operador que recorría la bandeja dejaba de recibir mensajes en vivo sin aviso. `getProfile` conserva el proyecto activo de la pestaña mientras el usuario siga siendo miembro (antes, abrir Mi Perfil lo sustituía por el del servidor, que otra pestaña podía haber cambiado).
+- **Suite depurada**: fuera `zz-debug-btn` y `zz-critique-shots` (sin aserciones); la auditoría de overflow y consola pasa a `layout-audit.spec.ts` con aserciones e incluye `/tools`. Corregidos dos tests con carreras (selector ambiguo de contraseña y enlaces del historial de herramientas leídos antes de cargar).
+- **Verificación**: unitarios backend **20/20** y frontend **13/13**; integración **30/30 (1 omitida)**; E2E **57/57** en dos corridas completas seguidas; backend `tsc --noEmit` y frontend `build` en verde.
 
 ---
 
@@ -380,14 +391,15 @@ mitchbot_v2/
 |:-----|:------------|
 | **Runtime** | Node.js, TypeScript, tsx (desarrollo) |
 | **Backend** | Express 4, Socket.io, Multer, Zod v4, JWT |
-| **Frontend** | Vue 3 (Composition API + `<script setup>`), Vite, Tailwind CSS 3, Pinia, Vue Router 4, Radix Vue, Lucide Icons, vue-i18n |
+| **Frontend** | Vue 3 (Composition API + `<script setup>`), Vite, Tailwind CSS 3, Pinia, Vue Router 4, Phosphor Icons, vue-i18n |
 | **Base de datos** | MongoDB 8 (principal), Redis (caché y colas BullMQ), Qdrant (vectorial) |
-| **IA / LLM** | LangChain.js v1.x (`@langchain/core`, `@langchain/openai`, `@langchain/qdrant`, `@langchain/textsplitters`) |
+| **IA / LLM** | LangChain.js v1.x (`@langchain/core`, `@langchain/openai`, `@langchain/qdrant`) |
 | **Proveedores IA** | OpenRouter (único proveedor: LLM, embeddings y OCR) |
 | **Embeddings** | OpenRouter (`openai/text-embedding-3-small` por defecto) |
 | **Mensajería** | Socket.io (tiempo real) |
 | **Auth** | JWT (jsonwebtoken), bcryptjs (12 rounds) |
 | **Infraestructura** | Docker Compose, pnpm workspaces |
+| **Pruebas** | `node:test` + tsx (backend), Vitest + happy-dom + Vue Test Utils (frontend), Playwright (E2E) |
 
 ---
 
@@ -796,7 +808,7 @@ Todas las conexiones WebSocket requieren autenticación JWT:
 - **Dashboard**: Token JWT enviado en `socket.handshake.auth.token` y proyecto en `socket.handshake.auth.projectId` (validando pertenencia)
 - **Chat Público (`test-chat`)**: Slug del proyecto enviado en `socket.handshake.query.slug`
 - **Aislamiento por proyecto**: cada socket autenticado entra en la room `project:<id>`; los del dashboard también entran en `project:<id>:dashboard` (excluye clientes públicos) para sincronizar el sidebar con mensajes de conversaciones no abiertas; `join:room` valida que la conversación pertenezca a su proyecto
-- **Rate Limiting**: 30 mensajes/min y 10 joins/min por usuario (Redis)
+- **Rate Limiting**: 30 mensajes/min y 60 joins/min por usuario (Redis)
 - **CORS**: Restringido a `FRONTEND_URL` en producción
 
 ### Eventos
@@ -842,6 +854,17 @@ cd apps/backend && pnpm seed
 ```
 
 ---
+
+## Pruebas unitarias e integración
+
+```bash
+pnpm test                # unitarios → integración → E2E
+pnpm test:unit           # backend (node:test) + frontend (Vitest)
+pnpm test:integration    # backend contra MongoDB/Redis/Qdrant reales
+```
+
+- **Unitarios**: sin servicios externos. Backend en `apps/backend/tests/unit/*.test.ts`; frontend en `apps/frontend/tests/unit/*.test.ts` (happy-dom, alias `@`).
+- **Integración**: `apps/backend/tests/integration/*.test.ts`; usan el `MONGODB_URI` del `.env` y limpian lo que crean.
 
 ## Pruebas End-to-End (e2e)
 
@@ -912,18 +935,21 @@ DASHBOARD_RESPONSE_TIMEOUT_MS=5000
 - [x] Onboarding / Setup de proyecto
 - [x] Capa de abstracción IA + Enrutador
 
-### Fase Siguiente — Integración Social 🔜
-- [ ] WhatsApp Business API (webhooks + message broker)
-- [ ] Instagram Messaging API
-- [ ] Normalización de mensajes cross-platform
-- [ ] Rate limiting por plataforma
-- [ ] Sistema de retry y failover
+### Entregado después del MVP ✅
+- [x] Multi-proyecto con aislamiento de datos (v0.2)
+- [x] Analytics de sentimiento, urgencia, conversión y salud del bot (v0.4.26–v0.4.27)
+- [x] Infraestructura de tests unitarios en backend y frontend (v0.4.34)
 
-### Mejoras Futuras 💡
+### Fase Siguiente — v0.5 Integración Social 🔜
+- [ ] Identidad de marca por proyecto persistida en el backend (`project.config.brand`)
+- [ ] Normalización de mensajes cross-platform + message broker (BullMQ sobre Redis)
+- [ ] Rate limiting por plataforma, sistema de retry y failover
+- [ ] WhatsApp Business API (webhooks)
+- [ ] Instagram Messaging API
+
+### Hacia la v1.0 💡
 - [ ] Chat widget embebible para sitios web de clientes
-- [ ] Analytics avanzados (sentimiento, conversión, SLA)
-- [ ] Multi-tenant / multi-proyecto
 - [ ] Exportación de conversaciones
 - [ ] Integración con CRM externos
 - [ ] Notificaciones push
-- [ ] Tests automatizados unitarios (la suite e2e ya está implementada)
+- [ ] Métricas de SLA

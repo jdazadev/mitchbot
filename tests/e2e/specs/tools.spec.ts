@@ -293,11 +293,13 @@ test.describe('Módulo Tools', () => {
 
     await page.getByRole('tab', { name: 'Historial' }).click();
     await expect(page.getByRole('heading', { name: 'Historial de operaciones' })).toBeVisible();
-    const conversationLinks = await page.getByRole('link', { name: 'Ver conversación' }).evaluateAll(
+    const conversationLinks = () => page.getByRole('link', { name: 'Ver conversación' }).evaluateAll(
       links => links.map(link => link.getAttribute('href')),
     );
-    expect(conversationLinks).toContain(`/messaging?conversation=${first.conversation._id}`);
-    expect(conversationLinks).toContain(`/messaging?conversation=${second.conversation._id}`);
+    await expect.poll(conversationLinks).toEqual(expect.arrayContaining([
+      `/messaging?conversation=${first.conversation._id}`,
+      `/messaging?conversation=${second.conversation._id}`,
+    ]));
     await page.getByRole('button', { name: 'Herramienta' }).click();
     await page.getByRole('option', { name: 'Pagos' }).click();
     await expect(page.getByRole('row').filter({ hasText: 'Pagos' })).toHaveCount(2);

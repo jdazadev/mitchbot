@@ -1,13 +1,14 @@
 {
   "name": "@mitchbot/frontend",
   "private": true,
-  "version": "0.4.33",
+  "version": "0.4.34",
   "license": "FSL-1.1-ALv2",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@phosphor-icons/vue": "^2.2.1",
@@ -19,11 +20,14 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.4",
+    "@vue/test-utils": "^2.5.1",
     "autoprefixer": "^10.4.20",
+    "happy-dom": "^15.11.7",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.6.2",
     "vite": "^5.4.8",
+    "vitest": "^2.1.9",
     "vue-tsc": "^2.1.6"
   }
 }

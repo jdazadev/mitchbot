@@ -19,7 +19,7 @@ const brand = ref<BrandConfig>({
 
 const loaded = ref(false);
 
-function hexToHsl(hex: string): { h: number; s: number; l: number } {
+export function hexToHsl(hex: string): { h: number; s: number; l: number } {
   let clean = hex.trim().replace('#', '');
   if (clean.length === 3) {
     clean = clean.split('').map(c => c + c).join('');

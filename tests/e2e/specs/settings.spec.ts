@@ -85,7 +85,7 @@ test.describe('Configuración y agentes', () => {
 
     await page.goto('/profile');
     await expect(page.getByLabel('Contraseña actual')).toBeVisible();
-    await expect(page.getByLabel('Nueva contraseña')).toBeVisible();
+    await expect(page.getByLabel('Nueva contraseña', { exact: true })).toBeVisible();
     await expect(page.getByLabel('Confirmar nueva contraseña')).toBeVisible();
   });
 

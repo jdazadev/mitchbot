@@ -75,7 +75,8 @@ export const initSocket = (httpServer: HttpServer) => {
     socket.on('join:room', async (roomId: string) => {
       try {
         // 1. Rate limiting
-        const allowed = await wsRateLimiter.check(socket, 'join', 10, 60); // 10 joins/min
+        // 60 joins/min: un operador que recorre la bandeja abre muchas conversaciones seguidas.
+        const allowed = await wsRateLimiter.check(socket, 'join', 60, 60);
         if (!allowed) {
           socket.emit('error', { message: 'Demasiadas conexiones. Intenta más tarde.', code: 'RATE_LIMITED' });
           return;

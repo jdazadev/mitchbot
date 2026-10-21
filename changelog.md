@@ -5,6 +5,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.4.34 — 2026-10-20
+
+> **Pruebas en tres niveles**: tests unitarios en backend y frontend, y una suite E2E estable en verde
+
+### ✨ Añadido
+- **Tests unitarios del backend** (`apps/backend/tests/unit/`, `node:test` + tsx): helpers de agenda (rangos, slots, horas), configuración de herramientas (perfiles legacy/nuevo, bindings no implementados, módulos apagados), chunking semántico (idioma, prefijo de sección, tablas, división) y prompt builder (idioma, rasgos, fallback, despedidas). **20 tests**.
+- **Tests unitarios del frontend** con **Vitest** + happy-dom + Vue Test Utils (`apps/frontend/tests/unit/`, `vitest.config.ts` hereda el alias `@` de Vite): render seguro de Markdown, metadatos de canal, derivados de marca (`hexToHsl` ahora se exporta) y `authService.getProfile`. **13 tests**.
+- Scripts: en la raíz `pnpm test` (unitarios → integración → E2E), `pnpm test:unit` y `pnpm test:integration`; en el backend `test:unit` y `test:integration`; en el frontend `test:unit`.
+- `layout-audit.spec.ts`: la auditoría de desborde horizontal y errores de consola a 1440/390 pasa a ser una prueba con aserciones e incluye `/tools`.
+
+### 🐛 Corregido
+- **Mensajes en vivo al recorrer la bandeja**: el límite de `join:room` era de 10 por minuto y usuario (sumando todas sus sesiones); al superarlo la conversación abierta dejaba de recibir mensajes sin aviso. Sube a 60 por minuto.
+- **Proyecto activo entre pestañas**: abrir Mi Perfil sustituía el proyecto activo de la pestaña por el que tuviera el servidor, que otra pestaña podía haber cambiado. `getProfile` conserva el proyecto local mientras el usuario siga siendo miembro.
+- E2E con carreras: selector ambiguo de "Nueva contraseña" en Configuración y enlaces del historial de herramientas leídos antes de cargarse.
+
+### 🗑️ Eliminado
+- Specs de depuración sin aserciones: `zz-debug-btn.spec.ts` y `zz-critique-shots.spec.ts` (escribía capturas en una ruta temporal ajena al repo).
+
+### 📝 Documentación
+- README y AGENTS.md: sección de pruebas en tres niveles; regla de probar cada desarrollo con unitarios y E2E. AGENTS.md: stack sin Radix Vue, Lucide ni `@langchain/textsplitters` (retirados en v0.4.7 y v0.4.21), límite de joins actualizado y hoja de ruta alineada con el README (multi-proyecto y analytics ya entregados). `tests/e2e/README.md` sin Ollama.
+
+### ✅ Verificación
+- Unitarios backend **20/20** y frontend **13/13**; integración **30/30 (1 omitida)**; E2E **57/57** en dos corridas completas seguidas (la línea base partía de 56/58 con fallos intermitentes); backend `tsc --noEmit` y frontend `build` en verde.
+
+---
+
 ## v0.4.33 — 2026-10-20
 
 > **Licencia**: el proyecto pasa a la Functional Source License 1.1 con licencia futura Apache 2.0

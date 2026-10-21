@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.4.33** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.4.34** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -83,7 +83,7 @@ Hay diagramas interactivos (arquitectura, secuencias, flujos de datos y ciclos d
 | Backend | Node.js, Express 4, TypeScript, Socket.io, Zod, JWT, Multer |
 | IA | LangChain.js, OpenRouter |
 | Datos | MongoDB 8, Redis (BullMQ), Qdrant |
-| Calidad | Playwright (E2E con stub de IA determinista), OpenSpec |
+| Calidad | `node:test` y Vitest (unitarios), Playwright (E2E con stub de IA determinista), OpenSpec |
 
 ### Estructura del monorepo
 
@@ -92,7 +92,7 @@ mitchbot_v2/
 ├── apps/
 │   ├── backend/      # API REST + WebSocket
 │   └── frontend/     # Dashboard SPA y chat público
-├── tests/            # E2E (Playwright) y stub OpenAI-compatible
+├── tests/            # E2E (Playwright) y stub OpenAI-compatible; los unitarios viven en cada app
 ├── openspec/         # Especificaciones y cambios archivados
 ├── .archify/         # Diagramas del sistema
 └── docker-compose.yml
@@ -138,21 +138,28 @@ La lista completa está en [`apps/backend/.env.example`](apps/backend/.env.examp
 
 ## Pruebas
 
-La suite E2E de Playwright arranca un stub de IA (puerto 4010), el backend (3100) y el frontend (5174) contra la base de datos `mitchbot_e2e`. Nunca llama al proveedor real.
+Tres niveles, de más rápido a más completo:
+
+- **Unitarios**: funciones puras sin servicios externos. El backend usa `node:test` (`apps/backend/tests/unit/`) y el frontend Vitest con happy-dom (`apps/frontend/tests/unit/`).
+- **Integración** (backend): servicios contra MongoDB, Redis y Qdrant reales (`apps/backend/tests/integration/`).
+- **E2E**: Playwright arranca un stub de IA (puerto 4010), el backend (3100) y el frontend (5174) contra la base de datos `mitchbot_e2e`. Nunca llama al proveedor real.
 
 ```bash
-pnpm test:e2e              # suite completa
+pnpm test                  # los tres niveles en orden
+pnpm test:unit             # unitarios de backend y frontend
+pnpm test:integration      # integración del backend
+pnpm test:e2e              # suite E2E completa
 pnpm test:e2e messaging    # un módulo
 pnpm test:e2e:ui           # modo interactivo
 ```
 
-Requiere los servicios de Docker activos. Más detalles en [`tests/e2e/README.md`](tests/e2e/README.md).
+Integración y E2E requieren los servicios de Docker activos. Más detalles en [`tests/e2e/README.md`](tests/e2e/README.md).
 
 ---
 
 ## Estado y hoja de ruta
 
-Mitchbot está en **pre-1.0 (v0.4.33)**. El MVP está listo para demo, y la **v1.0** llegará cuando la plataforma atienda de forma estable los canales sociales además de la web.
+Mitchbot está en **pre-1.0 (v0.4.34)**. El MVP está listo para demo, y la **v1.0** llegará cuando la plataforma atienda de forma estable los canales sociales además de la web.
 
 <p align="center">
   <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.4, siguiente v0.5 con WhatsApp, Instagram, resiliencia y marca por proyecto, y hacia v1.0 con widget embebible, CRM y notificaciones push" width="100%">

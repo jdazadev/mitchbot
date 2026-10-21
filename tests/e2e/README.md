@@ -7,7 +7,7 @@ base de datos real.
 
 ## Prerrequisitos
 
-1. **Servicios Docker** (MongoDB, Redis, Qdrant, Ollama):
+1. **Servicios Docker** (MongoDB, Redis, Qdrant):
    ```bash
    docker compose up -d
    ```

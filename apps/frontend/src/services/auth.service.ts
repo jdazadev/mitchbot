@@ -145,7 +145,11 @@ class AuthService {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al obtener perfil');
     localStorage.setItem(this.userKey, JSON.stringify(data));
-    if (data.activeProjectId) this.setActiveProjectId(data.activeProjectId);
+    // Otra pestaña pudo cambiar el proyecto activo en el servidor: esta conserva
+    // el suyo mientras el usuario siga siendo miembro.
+    const localProjectId = localStorage.getItem(this.activeProjectKey);
+    const stillMember = !!localProjectId && (data.projectIds || []).includes(localProjectId);
+    if (!stillMember && data.activeProjectId) this.setActiveProjectId(data.activeProjectId);
     return data;
   }
 

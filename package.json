@@ -1,6 +1,6 @@
 {
   "name": "mitchbot-v2",
-  "version": "0.4.33",
+  "version": "0.4.34",
   "license": "FSL-1.1-ALv2",
   "private": true,
   "scripts": {
@@ -8,6 +8,9 @@
     "dev:frontend": "pnpm --filter @mitchbot/frontend dev",
     "dev:backend": "pnpm --filter @mitchbot/backend dev",
     "build": "pnpm -r build",
+    "test": "pnpm test:unit && pnpm test:integration && pnpm test:e2e",
+    "test:unit": "pnpm --filter @mitchbot/backend test:unit && pnpm --filter @mitchbot/frontend test:unit",
+    "test:integration": "pnpm --filter @mitchbot/backend test:integration",
     "stub:e2e": "node tests/stub/openai-stub.mjs",
     "seed:e2e": "pnpm --filter @mitchbot/backend seed:e2e",
     "test:e2e": "playwright test",
