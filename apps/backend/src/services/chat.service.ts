@@ -149,6 +149,7 @@ export const chatService = {
     initialMessage: string;
     projectId?: string;
     external?: Message['external'];
+    channelAccount?: string;
   }) {
     const conversationsColl = getConversationsCollection();
 
@@ -164,9 +165,11 @@ export const chatService = {
       }
     }
 
+    // Una conversación que espera a una persona sigue abierta: el cliente continúa en ella.
     const existingQuery: any = {
       'clientInfo.identifier': data.clientIdentifier,
-      status: 'active',
+      platform: data.platform,
+      status: { $in: ['active', 'pending_human'] },
     };
     if (data.projectId && ObjectId.isValid(data.projectId)) {
       existingQuery.projectId = new ObjectId(data.projectId);
@@ -174,6 +177,14 @@ export const chatService = {
     const existingConversation = await conversationsColl.findOne(existingQuery);
 
     if (existingConversation) {
+      if (data.channelAccount && existingConversation.channelAccount !== data.channelAccount) {
+        // El proyecto cambió de número: se responde desde el que recibió el último mensaje.
+        await conversationsColl.updateOne(
+          { _id: existingConversation._id },
+          { $set: { channelAccount: data.channelAccount } },
+        );
+        existingConversation.channelAccount = data.channelAccount;
+      }
       const message = await this.sendMessage(
         existingConversation._id!.toString(),
         data.initialMessage,
@@ -198,6 +209,7 @@ export const chatService = {
         email: data.clientEmail,
         identifier: data.clientIdentifier,
       },
+      ...(data.channelAccount ? { channelAccount: data.channelAccount } : {}),
       isContactCreated: false,
       lastMessage: data.initialMessage,
       lastMessageAt: new Date(),
@@ -303,7 +315,7 @@ export const chatService = {
     if (sender !== 'contact') {
       const target = await conversationsColl.findOne(
         { _id: new ObjectId(conversationId) },
-        { projection: { platform: 1, projectId: 1 } },
+        { projection: { platform: 1, projectId: 1, channelAccount: 1 } },
       );
       await dispatch(newMessage, target);
     }
@@ -666,7 +678,7 @@ export const chatService = {
     if (data.contentType === 'confirmation_request') {
       const target = await getConversationsCollection().findOne(
         { _id: new ObjectId(data.conversationId) },
-        { projection: { platform: 1, projectId: 1 } },
+        { projection: { platform: 1, projectId: 1, channelAccount: 1 } },
       );
       await dispatch(message, target);
     }
@@ -937,7 +949,7 @@ export const chatService = {
     if (placeholder) {
       const target = await getConversationsCollection().findOne(
         { _id: new ObjectId(args.conversationId) },
-        { projection: { platform: 1, projectId: 1 } },
+        { projection: { platform: 1, projectId: 1, channelAccount: 1 } },
       );
       await dispatch(placeholder, target);
     }

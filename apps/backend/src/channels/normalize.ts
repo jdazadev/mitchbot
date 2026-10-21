@@ -18,6 +18,7 @@ export function normalizeInbound(input: {
   platform: string;
   clientIdentifier?: unknown;
   externalMessageId?: unknown;
+  account?: unknown;
   sender?: { name?: unknown; phone?: unknown; email?: unknown };
   text?: unknown;
   receivedAt?: Date;
@@ -36,6 +37,7 @@ export function normalizeInbound(input: {
     platform: input.platform as ChannelPlatform,
     clientIdentifier,
     externalMessageId: clean(input.externalMessageId),
+    account: clean(input.account),
     sender: {
       name: clean(input.sender?.name),
       phone: clean(input.sender?.phone),

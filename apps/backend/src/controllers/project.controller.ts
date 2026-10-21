@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { projectService } from '../services/project.service';
 import { userService } from '../services/user.service';
 import { z } from 'zod';
+import { whatsAppServerStatus } from '../channels/whatsapp';
 
 /** Verifica si el usuario autenticado tiene proyectos */
 export const checkProject = async (req: Request, res: Response, next: NextFunction) => {
@@ -89,14 +90,7 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
     } as any);
 
     // Asociar el creador al proyecto y convertirlo en su proyecto activo
-    const user = (req as any).user;
-    const existingIds = (user?.projectIds || []).map((id: any) => id.toString());
-    const newProjectId = result.project._id!.toString();
-
-    await userService.update(userId, {
-      projectIds: [...existingIds, newProjectId],
-    });
-    await userService.setActiveProject(userId, newProjectId);
+    await userService.joinProject(userId, result.project._id!.toString());
 
     res.status(201).json(result);
   } catch (error) {
@@ -126,8 +120,17 @@ const updateProjectSchema = z.object({
       color: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'El color debe ser un HEX válido').optional(),
       logo: z.string().max(200_000, 'El logo es demasiado grande').nullable().optional(),
     }).optional(),
+    whatsapp: z.object({
+      // Vacío = desconectar el número.
+      phoneNumberId: z.preprocess(
+        value => (typeof value === 'string' && !value.trim() ? null : typeof value === 'string' ? value.trim() : value),
+        z.string().regex(/^\d{5,25}$/, 'El Phone Number ID solo contiene dígitos').nullable(),
+      ).optional(),
+    }).optional(),
   }).optional(),
 });
+
+const NUMBER_TAKEN = 'Ese número de WhatsApp ya está conectado a otro proyecto';
 
 /** Actualiza el proyecto activo de la request */
 export const updateProject = async (req: Request, res: Response, next: NextFunction) => {
@@ -143,9 +146,18 @@ export const updateProject = async (req: Request, res: Response, next: NextFunct
       updateData.slug = await projectService.ensureUniqueSlug(baseSlug);
     }
 
+    const phoneNumberId = data.config?.whatsapp?.phoneNumberId;
+    if (phoneNumberId && await projectService.isWhatsAppNumberTaken(phoneNumberId, projectId)) {
+      return res.status(409).json({ error: NUMBER_TAKEN });
+    }
+
     const updated = await projectService.update(projectId, updateData as any);
     res.json(updated);
-  } catch (error) {
+  } catch (error: any) {
+    // Dos guardados simultáneos del mismo número: el índice único decide.
+    if (error?.code === 11000 && JSON.stringify(error?.keyPattern || {}).includes('whatsapp')) {
+      return res.status(409).json({ error: NUMBER_TAKEN });
+    }
     next(error);
   }
 };
@@ -174,4 +186,9 @@ export const setActiveProject = async (req: Request, res: Response, next: NextFu
     }
     next(error);
   }
+};
+
+/** Qué canales externos tiene conectados el servidor; nunca devuelve credenciales. */
+export const getChannelsStatus = (_req: Request, res: Response) => {
+  res.json({ whatsapp: whatsAppServerStatus() });
 };

@@ -25,6 +25,10 @@ export interface Project {
       autoCreateContact: boolean;
     };
     tools?: ToolProjectConfig;
+    // Número de WhatsApp Business que atiende el proyecto; las credenciales vienen del entorno
+    whatsapp?: {
+      phoneNumberId?: string | null;
+    };
     // Identidad visual; el frontend deriva de `color` la familia --brand*
     brand?: {
       color?: string;

@@ -28,6 +28,7 @@ const inbound = (overrides: Partial<Parameters<typeof normalizeInbound>[0]> = {}
   platform: 'WhatsApp',
   clientIdentifier: `wa-${new ObjectId()}`,
   externalMessageId: `wamid.${new ObjectId()}`,
+  account: '1055000',
   sender: { name: 'Cliente WA' },
   text: 'Hola',
   ...overrides,
@@ -45,8 +46,8 @@ async function waitFor<T>(read: () => Promise<T>, done: (value: T) => boolean, t
 
 const readMessage = (id: ObjectId) => getMessagesCollection().findOne({ _id: id });
 
-/** Conversación de WhatsApp en `human_takeover` para que el bot no intervenga. */
-async function createConversation(platform: 'WhatsApp' | 'Web' = 'WhatsApp') {
+/** Conversación de WhatsApp en `human_takeover` para que el bot no intervenga. Sin cuenta, es del simulador. */
+async function createConversation(platform: 'WhatsApp' | 'Web' = 'WhatsApp', channelAccount: string | null = platform === 'WhatsApp' ? '1055000' : null) {
   const _id = new ObjectId();
   await getConversationsCollection().insertOne({
     _id,
@@ -56,6 +57,7 @@ async function createConversation(platform: 'WhatsApp' | 'Web' = 'WhatsApp') {
     mode: 'human_takeover',
     unreadCount: 0,
     clientInfo: { identifier: `${platform}-${_id}` },
+    ...(channelAccount ? { channelAccount } : {}),
     isContactCreated: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -150,7 +152,30 @@ test('una respuesta del operador en WhatsApp se entrega por la cola', async () =
   assert.equal(delivered?.delivery?.attempts, 1);
   assert.equal(delivered?.delivery?.externalId, `ext-${message._id}`);
   assert.equal(sent[0].recipient, `WhatsApp-${conversationId}`);
+  assert.equal(sent[0].account, '1055000');
   assert.equal(sent[0].text, 'Te ayudo');
+});
+
+test('una conversación del simulador no sale por la cola aunque el canal sea externo', async () => {
+  const conversationId = await createConversation('WhatsApp', null);
+  const message = await chatService.sendMessage(conversationId.toString(), 'Solo por socket', 'human_agent');
+  assert.equal(message.delivery, undefined);
+  assert.equal((await readMessage(message._id!))?.delivery, undefined);
+});
+
+test('la conversación guarda la cuenta del canal que la recibió', async () => {
+  const result: any = await receive(inbound());
+  assert.equal(result.conversation.channelAccount, '1055000');
+});
+
+test('un cliente que espera a una persona continúa su conversación', async () => {
+  const first: any = await receive(inbound());
+  const conversationId = first.conversation._id;
+  await getConversationsCollection().updateOne({ _id: conversationId }, { $set: { status: 'pending_human', mode: 'human_takeover' } });
+
+  const second: any = await receive(inbound({ clientIdentifier: first.conversation.clientInfo.identifier, text: '¿Hay alguien?' }));
+  assert.equal(second.isNew, false);
+  assert.equal(second.conversation._id.toString(), conversationId.toString());
 });
 
 test('en Web no hay cola de salida', async () => {

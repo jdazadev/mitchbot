@@ -12,6 +12,7 @@ import aiModelsRoutes from './ai-models.routes';
 import appointmentsRoutes from './appointments.routes';
 import ordersRoutes from './orders.routes';
 import publicChatRoutes from './public-chat.routes';
+import webhooksRoutes from './webhooks.routes';
 import toolsRoutes from './tools.routes';
 import toolExecutionsRoutes from './tool-executions.routes';
 import { aiService } from '../services/ai.service';
@@ -23,6 +24,7 @@ const router = Router();
 // Público
 router.use('/auth', authRoutes);
 router.use('/public', publicChatRoutes);
+router.use('/webhooks', webhooksRoutes);
 
 // Módulos del dashboard
 router.use('/contacts', contactRoutes);

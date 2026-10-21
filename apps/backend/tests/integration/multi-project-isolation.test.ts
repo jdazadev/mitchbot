@@ -7,6 +7,7 @@ import { getUsersCollection } from '../../src/models/user.model';
 import { getProjectsCollection, Project } from '../../src/models/project.model';
 import { authService } from '../../src/services/auth.service';
 import { projectService } from '../../src/services/project.service';
+import { userService } from '../../src/services/user.service';
 import { authenticate } from '../../src/middleware/auth.middleware';
 
 interface AuthResult {
@@ -147,4 +148,22 @@ test('cada usuario solo ve su propio proyecto', async () => {
   const result = await runAuth(req);
   assert.equal(result.next, true);
   assert.equal(req.projectId, projectBId.toString());
+});
+
+test('dos proyectos creados a la vez conservan la membresía de ambos', async () => {
+  const userId = new ObjectId();
+  await getUsersCollection().insertOne({
+    _id: userId, name: 'Concurrente', email: `concurrente-${suffix}@test.local`, password: 'x', role: 'admin',
+    status: 'Active', projectIds: [projectAId], activeProjectId: projectAId, createdAt: new Date(), updatedAt: new Date(),
+  } as any);
+  try {
+    const [first, second] = [new ObjectId(), new ObjectId()];
+    await Promise.all([userService.joinProject(userId.toString(), first.toString()), userService.joinProject(userId.toString(), second.toString())]);
+    const user = await getUsersCollection().findOne({ _id: userId });
+    const ids = (user?.projectIds || []).map(id => id.toString()).sort();
+    assert.deepEqual(ids, [projectAId, first, second].map(id => id.toString()).sort());
+    assert.ok([first, second].some(id => id.equals(user!.activeProjectId!)));
+  } finally {
+    await getUsersCollection().deleteOne({ _id: userId });
+  }
 });

@@ -14,6 +14,7 @@ import './queues/rag-upload.worker';
 import { createReindexWorker } from './queues/rag-reindex.worker';
 import { createInboundWorker } from './channels/inbound';
 import { createOutboundWorkers } from './channels/outbound';
+import { registerWhatsApp } from './channels/whatsapp';
 
 const app = express();
 const httpServer = createServer(app);
@@ -56,6 +57,7 @@ const httpServer = createServer(app);
 
         // Pasarela de canales: entrada de webhooks y entrega por canal externo
         try {
+          registerWhatsApp();
           createInboundWorker();
           createOutboundWorkers();
         } catch (e) {
@@ -67,7 +69,12 @@ const httpServer = createServer(app);
         
         // Middleware
         app.use(cors());
-        app.use(express.json());
+        // Los webhooks firman el cuerpo tal como llega: se conserva el original para verificarlo.
+        app.use(express.json({
+          verify: (req, _res, buf) => {
+            if (req.url?.startsWith('/api/webhooks/')) (req as any).rawBody = buf;
+          },
+        }));
         
         // Routes
         app.use('/api', apiRoutes);

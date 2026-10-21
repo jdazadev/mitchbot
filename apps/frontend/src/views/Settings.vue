@@ -8,7 +8,7 @@ import {
   type AgentPersonality,
   type ProviderConfig,
 } from '../services/settings.service';
-import { projectService, type Project } from '../services/project.service';
+import { projectService, whatsAppWebhookUrl, type ChannelsStatus, type Project } from '../services/project.service';
 import { useBrand, applyBrand } from '../composables/useBrand';
 import AIcon from '../components/ui/AIcon.vue';
 import AButton from '../components/ui/AButton.vue';
@@ -168,13 +168,13 @@ const isAgentDirty = computed(() => {
 const savedChannelsJson = ref('');
 const savedOptionsJson = ref('');
 
-const isChannelsDirty = computed(
-  () => JSON.stringify(channels.value.map((c) => c.enabled)) !== savedChannelsJson.value
-);
+const channelsSnapshot = () =>
+  JSON.stringify({ enabled: channels.value.map((c) => c.enabled), phoneNumberId: whatsAppNumber.value.trim() });
+const isChannelsDirty = computed(() => channelsSnapshot() !== savedChannelsJson.value);
 const isOptionsDirty = computed(() => JSON.stringify(optionsForm.value) !== savedOptionsJson.value);
 
 function snapshotChannels() {
-  savedChannelsJson.value = JSON.stringify(channels.value.map((c) => c.enabled));
+  savedChannelsJson.value = channelsSnapshot();
 }
 function snapshotOptions() {
   savedOptionsJson.value = JSON.stringify(optionsForm.value);
@@ -230,6 +230,20 @@ const channels = ref([
   { key: 'instagram', name: 'Instagram', icon: 'Image', enabled: false },
   { key: 'web', name: 'Web', icon: 'Globe', enabled: true },
 ]);
+/** Phone Number ID de Meta; vacío = sin número conectado. */
+const whatsAppNumber = ref('');
+const channelsStatus = ref<ChannelsStatus | null>(null);
+const whatsAppWebhook = whatsAppWebhookUrl();
+const whatsAppNumberInvalid = computed(() => !!whatsAppNumber.value.trim() && !/^\d{5,25}$/.test(whatsAppNumber.value.trim()));
+
+async function copyWhatsAppWebhook() {
+  try {
+    await navigator.clipboard.writeText(whatsAppWebhook);
+    showSuccessMsg(t('settings.toasts.linkCopied'));
+  } catch {
+    showErrorMsg(t('settings.errors.copyLink'));
+  }
+}
 
 
 // ===================== OPTIONS =====================
@@ -254,6 +268,7 @@ onMounted(async () => {
       settingsService.getActiveProvider('embedding').catch(() => null),
       settingsService.getActiveProvider('ocr').catch(() => null),
     ]);
+    projectService.getChannelsStatus().then((status) => (channelsStatus.value = status)).catch(() => {});
 
     resolvedModels.value = { llm: llmProvider, embedding: embeddingProvider, ocr: ocrProvider };
 
@@ -272,6 +287,7 @@ onMounted(async () => {
         channels.value[1].enabled = projectData.config.channels.instagram ?? false;
         channels.value[2].enabled = projectData.config.channels.web ?? true;
       }
+      whatsAppNumber.value = projectData.config?.whatsapp?.phoneNumberId || '';
       if (projectData.config?.options) {
         optionsForm.value.autoCreateContact = projectData.config.options.autoCreateContact ?? true;
       }
@@ -454,18 +470,22 @@ async function handleSaveBrand() {
 // ===================== CHANNELS =====================
 async function handleSaveChannels() {
   if (!project.value?._id) return showErrorMsg(t('settings.errors.projectNotFound'));
+  if (whatsAppNumberInvalid.value) return showErrorMsg(t('settings.channels.whatsapp.numberInvalid'));
   saving.value = true;
   try {
-    await projectService.updateProject({
+    const phoneNumberId = whatsAppNumber.value.trim() || null;
+    // Solo lo que edita esta pestaña: el resto de la configuración queda como está en el servidor.
+    const updated = await projectService.updateProject({
       config: {
-        ...project.value.config,
         channels: {
           whatsapp: channels.value[0].enabled,
           instagram: channels.value[1].enabled,
           web: channels.value[2].enabled,
         },
+        whatsapp: { phoneNumberId },
       },
     });
+    project.value = updated;
     showSuccessMsg(t('settings.toasts.channelsUpdated'));
     snapshotChannels();
   } catch (err: any) {
@@ -1019,13 +1039,58 @@ async function handleSaveOptions() {
             <div
               v-for="channel in channels"
               :key="channel.key"
-              class="flex items-center justify-between rounded-field border border-line p-4"
+              class="rounded-field border border-line p-4"
             >
-              <div class="flex items-center gap-3">
-                <AIcon :name="channel.icon" :size="20" class="text-ink-3" />
-                <span class="text-[13px] font-medium">{{ channel.name }}</span>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <AIcon :name="channel.icon" :size="20" class="text-ink-3" />
+                  <span class="text-[13px] font-medium">{{ channel.name }}</span>
+                </div>
+                <ASwitch v-model="channel.enabled" :aria-label="channel.name" />
               </div>
-              <ASwitch v-model="channel.enabled" :aria-label="channel.name" />
+
+              <!-- Conexión con WhatsApp Business: número del proyecto y webhook para Meta -->
+              <div v-if="channel.key === 'whatsapp'" class="mt-4 flex flex-col gap-4 border-t border-line pt-4" data-testid="whatsapp-connection">
+                <p
+                  v-if="channelsStatus"
+                  role="status"
+                  class="flex items-start gap-2 text-xs"
+                  :class="channelsStatus.whatsapp.connected ? 'text-lime-ink' : 'text-butter-ink'"
+                  data-testid="whatsapp-server-status"
+                >
+                  <AIcon :name="channelsStatus.whatsapp.connected ? 'CheckCircle' : 'WarningCircle'" :size="15" class="mt-px shrink-0" />
+                  <span v-if="channelsStatus.whatsapp.connected">{{ t('settings.channels.whatsapp.serverReady') }}</span>
+                  <span v-else>
+                    {{ t('settings.channels.whatsapp.serverMissing', { vars: channelsStatus.whatsapp.missing.join(', ') }) }}
+                  </span>
+                </p>
+
+                <div class="flex flex-col gap-1.5">
+                  <label for="whatsapp-number" class="text-xs font-semibold text-ink-2">{{ t('settings.channels.whatsapp.numberLabel') }}</label>
+                  <input
+                    id="whatsapp-number"
+                    v-model="whatsAppNumber"
+                    class="field"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    :placeholder="t('settings.channels.whatsapp.numberPlaceholder')"
+                    :aria-invalid="whatsAppNumberInvalid"
+                    aria-describedby="whatsapp-number-hint"
+                  />
+                  <p id="whatsapp-number-hint" class="text-xs" :class="whatsAppNumberInvalid ? 'text-[color:var(--danger)]' : 'text-ink-3'">
+                    {{ whatsAppNumberInvalid ? t('settings.channels.whatsapp.numberInvalid') : t('settings.channels.whatsapp.numberHint') }}
+                  </p>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label for="whatsapp-webhook" class="text-xs font-semibold text-ink-2">{{ t('settings.channels.whatsapp.webhookLabel') }}</label>
+                  <div class="flex flex-wrap items-center gap-2.5">
+                    <input id="whatsapp-webhook" :value="whatsAppWebhook" class="field min-w-0 flex-1 font-mono text-xs" readonly />
+                    <AButton variant="ghost" @click="copyWhatsAppWebhook">{{ t('settings.channels.whatsapp.copyWebhook') }}</AButton>
+                  </div>
+                  <p class="text-xs text-ink-3">{{ t('settings.channels.whatsapp.webhookHint') }}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

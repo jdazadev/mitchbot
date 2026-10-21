@@ -29,6 +29,16 @@ describe('DeliveryStatus', () => {
     expect(sent.find('button').exists()).toBe(false)
   })
 
+  it('distingue entregado y leído con el doble check', () => {
+    const delivered = render({ status: 'delivered' })
+    expect(delivered.get('[data-testid="delivery-status"]').attributes('data-status')).toBe('delivered')
+    expect(delivered.text()).toContain('Entregado')
+    const read = render({ status: 'read' })
+    expect(read.get('[data-testid="delivery-status"]').attributes('data-status')).toBe('read')
+    expect(read.text()).toContain('Leído')
+    expect(read.find('button').exists()).toBe(false)
+  })
+
   it('anuncia el fallo con su motivo y emite retry', async () => {
     const wrapper = render({ status: 'failed', error: 'Número no válido' })
     const status = wrapper.get('[role="status"]')

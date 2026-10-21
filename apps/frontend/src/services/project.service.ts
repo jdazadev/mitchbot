@@ -40,6 +40,19 @@ export interface ProjectConfig {
     color?: string;
     logo?: string | null;
   };
+  whatsapp?: {
+    phoneNumberId?: string | null;
+  };
+}
+
+/** Qué canales externos tiene conectados el servidor (credenciales del entorno). */
+export interface ChannelsStatus {
+  whatsapp: { connected: boolean; missing: string[] };
+}
+
+/** URL pública que hay que registrar en Meta como webhook de WhatsApp. */
+export function whatsAppWebhookUrl(apiBase = API_BASE, origin = window.location.origin) {
+  return new URL(`${apiBase.replace(/\/+$/, '')}/webhooks/whatsapp`, origin).toString();
 }
 
 export interface Project {
@@ -124,8 +137,16 @@ class ProjectService {
     return result;
   }
 
+  /** Estado de los canales externos en el servidor; `null` si no se pudo consultar. */
+  async getChannelsStatus(): Promise<ChannelsStatus | null> {
+    const res = await fetch(`${API_BASE}/project/channels/status`, { headers: authService.getHeaders() });
+    if (!res.ok) return null;
+    return res.json();
+  }
+
   /** Actualizar proyecto */
-  async updateProject(data: Partial<Pick<Project, 'name' | 'slug' | 'description' | 'logo' | 'config'>>): Promise<Project> {
+  /** La configuración es parcial: el servidor solo cambia los campos enviados. */
+  async updateProject(data: Partial<Pick<Project, 'name' | 'slug' | 'description' | 'logo'>> & { config?: ProjectConfig }): Promise<Project> {
     const res = await fetch(`${API_BASE}/project`, {
       method: 'PUT',
       headers: authService.getHeaders(),

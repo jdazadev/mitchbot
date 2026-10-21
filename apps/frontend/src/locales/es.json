@@ -476,6 +476,8 @@
     "delivery": {
       "queued": "Enviando…",
       "sent": "Enviado",
+      "delivered": "Entregado",
+      "read": "Leído",
       "failed": "No entregado",
       "retry": "Reintentar",
       "retrying": "Reintentando…",
@@ -663,7 +665,18 @@
     },
     "channels": {
       "title": "Canales de Comunicación",
-      "save": "Guardar Canales"
+      "save": "Guardar Canales",
+      "whatsapp": {
+        "serverReady": "El servidor tiene WhatsApp conectado.",
+        "serverMissing": "El servidor no tiene WhatsApp conectado: faltan {vars} en el entorno. Puedes guardar el número igualmente.",
+        "numberLabel": "Phone Number ID",
+        "numberPlaceholder": "Ej. 106540352242922",
+        "numberHint": "Lo encuentras en Meta → WhatsApp → Configuración de la API. Déjalo vacío para desconectar el número.",
+        "numberInvalid": "El Phone Number ID solo contiene dígitos.",
+        "webhookLabel": "URL del webhook",
+        "copyWebhook": "Copiar URL",
+        "webhookHint": "Regístrala en Meta con el token de verificación de WHATSAPP_VERIFY_TOKEN y suscríbete al campo messages. Meta necesita que sea pública y HTTPS."
+      }
     },
     "options": {
       "title": "Opciones",

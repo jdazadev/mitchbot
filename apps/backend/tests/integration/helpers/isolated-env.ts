@@ -13,3 +13,6 @@ process.env.OPENROUTER_API_KEY = 'offline-integration-key';
 process.env.CHANNEL_QUEUE_PREFIX = `itest-${process.pid}`;
 process.env.CHANNEL_BREAKER_THRESHOLD = '2';
 process.env.CHANNEL_BREAKER_COOLDOWN_MS = '5000';
+// Webhook de WhatsApp verificable en las pruebas; sin token no se registra el adaptador real.
+process.env.WHATSAPP_APP_SECRET = 'integration-app-secret';
+process.env.WHATSAPP_VERIFY_TOKEN = 'integration-verify-token';

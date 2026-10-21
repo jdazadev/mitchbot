@@ -147,6 +147,20 @@ export const userService = {
     return result;
   },
 
+  /**
+   * Añade el usuario a un proyecto y lo deja como activo en una sola operación
+   * atómica: dos proyectos creados a la vez no se pisan la membresía.
+   */
+  async joinProject(id: string, projectId: string) {
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(projectId)) throw new Error('Invalid ID');
+    const project = new ObjectId(projectId);
+    return getUsersCollection().findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $addToSet: { projectIds: project }, $set: { activeProjectId: project, updatedAt: new Date() } },
+      { returnDocument: 'after', projection: { password: 0 } }
+    );
+  },
+
   /** Establece el proyecto activo de un usuario (validando pertenencia) */
   async setActiveProject(id: string, projectId: string) {
     if (!ObjectId.isValid(id) || !ObjectId.isValid(projectId)) throw new Error('Invalid ID');

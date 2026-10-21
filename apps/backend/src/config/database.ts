@@ -19,6 +19,15 @@ export const connectDatabase = async () => {
         { unique: true, partialFilterExpression: { 'external.messageId': { $exists: true } } },
       )
       .catch((error) => console.warn('⚠️ Could not create the messages external id index:', error));
+    void db.collection('messages')
+      .createIndex({ 'delivery.externalId': 1 }, { partialFilterExpression: { 'delivery.externalId': { $exists: true } } })
+      .catch((error) => console.warn('⚠️ Could not create the messages delivery id index:', error));
+    void db.collection('projects')
+      .createIndex(
+        { 'config.whatsapp.phoneNumberId': 1 },
+        { unique: true, partialFilterExpression: { 'config.whatsapp.phoneNumberId': { $type: 'string' } } },
+      )
+      .catch((error) => console.warn('⚠️ Could not create the projects WhatsApp number index:', error));
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
     process.exit(1);

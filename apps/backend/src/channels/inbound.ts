@@ -52,6 +52,7 @@ export async function receive(inbound: InboundMessage, target?: { conversationId
     initialMessage: inbound.text,
     projectId: inbound.projectId,
     external,
+    channelAccount: inbound.account,
   });
 }
 

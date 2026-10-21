@@ -16,6 +16,8 @@ export interface Conversation {
   lastBotMessageAt?: Date;
   lastWelcomeAt?: Date;
   assignedTo?: string; // ID del agente humano si aplica
+  /** Cuenta del canal externo que recibió la conversación; sin ella las respuestas no salen por cola (simulador). */
+  channelAccount?: string;
   aiInsights?: {
     sentiment: "positive" | "neutral" | "negative";
     sentimentScores: { positive: number; neutral: number; negative: number };

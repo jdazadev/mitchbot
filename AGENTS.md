@@ -14,7 +14,49 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.5.0
+**Versión actual del proyecto:** v0.6.0
+
+---
+
+## Canal de WhatsApp (v0.6.0)
+
+Adaptador de WhatsApp Business (Cloud API de Meta) sobre la pasarela de canales. OpenSpec `add-whatsapp-channel`; capability `whatsapp-channel`.
+
+- **Módulo `src/channels/whatsapp/`**:
+  - `webhook.ts`: funciones puras `verifySignature`, `parseWhatsAppWebhook` y `describeWhatsAppError`.
+  - `adapter.ts`: `createWhatsAppAdapter` y `classifyWhatsAppError`.
+  - `handler.ts`: enruta mensajes y estados.
+  - `index.ts`: `registerWhatsApp` y `whatsAppServerStatus`.
+- **Registro del adaptador**: se registra al arrancar solo si hay `WHATSAPP_TOKEN`.
+- **Webhook** (`routes/webhooks.routes.ts`, `controllers/webhooks.controller.ts`):
+  - `GET /api/webhooks/whatsapp` responde al reto de verificación con `WHATSAPP_VERIFY_TOKEN`.
+  - `POST /api/webhooks/whatsapp` exige `X-Hub-Signature-256` sobre el cuerpo crudo: `index.ts` guarda `req.rawBody` solo en `/api/webhooks/*`. Sin `WHATSAPP_APP_SECRET`, o con una firma inválida, responde 401.
+  - Las respuestas son 200 incluso para números sin proyecto (para que Meta no reintente) y 500 si falla el procesamiento (Meta reintenta y la idempotencia absorbe el duplicado).
+- **Número por proyecto**:
+  - Se guarda en `project.config.whatsapp.phoneNumberId`, con índice único parcial y 409 si otro proyecto ya tiene el número (`projectService.isWhatsAppNumberTaken`).
+  - El webhook enruta por `metadata.phone_number_id` y solo si `config.channels.whatsapp` está activo.
+  - El token y el App Secret son de la app de Meta del despliegue y viven en el entorno.
+- **Cuenta del canal**: `conversation.channelAccount` guarda el número que recibió la conversación.
+  - `dispatch` solo encola si el canal es externo **y** hay cuenta. Las conversaciones del simulador, sin cuenta, se entregan por socket aunque sean WhatsApp.
+  - La respuesta sale desde esa cuenta (`OutboundMessage.account`).
+- **Continuidad**: `createConversationFromClient` reutiliza la conversación abierta (`active` o `pending_human`) del mismo cliente, canal y proyecto.
+- **Mensajes entrantes**: texto, `interactive` (botón o lista) y `button` entran como su título. Los tipos multimedia entran como `[El cliente envió … que Mitchbot aún no puede leer]`, más el pie de foto si lo trae. Las reacciones y los avisos de sistema se ignoran.
+- **Errores de Meta**:
+  - **Transitorios**: 429, 5xx, red y los códigos `4`, `80007`, `130429`, `131048`, `131056`, `1`, `2`, `131000` y `133004`.
+  - **Permanentes**: 401/`190` (token), `131047` (ventana de 24 h), `131026`, `131030` (lista de prueba), `10`/`200` (permisos) y el resto de 4xx, con su detalle.
+- **Estados de Meta**: `applyDeliveryStatus` (en `outbound.ts`) localiza el mensaje por `delivery.externalId`, que tiene índice.
+  - Los estados siguen el orden `queued < sent < delivered < read`, sin retroceder (`statusesBefore` en `policy.ts`).
+  - Un `failed` sobre `sent` o `delivered` llama a `markFailed`.
+- **Interfaz**:
+  - `DeliveryStatus` muestra Entregado y Leído con doble check; Leído va en tinta más fuerte, sin pastel.
+  - Configuración → Canales: Phone Number ID, URL del webhook (`whatsAppWebhookUrl`) y estado del servidor (`GET /api/project/channels/status` → `{ whatsapp: { connected, missing[] } }`).
+  - `lib/delivery.ts` (`latestDelivery`) resuelve el cruce entre la respuesta HTTP del reintento y el socket.
+- **Membresía atómica**: `userService.joinProject` (`$addToSet` + proyecto activo) sustituye la lectura y reescritura de `projectIds` al crear un proyecto.
+- **E2E**: el stub simula la Graph API en `/meta/:version/:phoneNumberId/messages`.
+  - Rutas de control: `GET /__meta/messages?to=`, `POST /__meta/fail { to, code }` y `POST /__meta/recover { to }`.
+  - El backend E2E usa `WHATSAPP_API_URL=<stub>/meta` y las credenciales de `E2E.whatsapp`.
+  - `helpers/owner.ts` (`createProjectOwner`, `signIn`) da a cada prueba un usuario y un proyecto propios.
+- **Verificación**: unitarios backend **54/54** y frontend **29/29**; integración **51/51 (1 omitida)**; E2E **69/69** en dos corridas completas; paridad es/en **726/726**.
 
 ---
 
@@ -463,6 +505,7 @@ apps/backend/src/
 │   ├── contacts.controller.ts      # CRUD de contactos
 │   ├── dashboard.controller.ts     # Analytics y estadísticas
 │   ├── messaging.controller.ts     # Conversaciones y mensajes
+│   ├── webhooks.controller.ts      # Webhooks de canales externos (WhatsApp)
 │   ├── project.controller.ts       # Gestión de proyecto
 │   ├── public-chat.controller.ts   # Chat público (clientes externos)
 │   └── users.controller.ts         # CRUD de usuarios del sistema
@@ -485,6 +528,7 @@ apps/backend/src/
 ├── routes/                         # Definición de rutas Express
 ├── middleware/                     # Auth, validación Zod, errores, upload
 ├── channels/                       # Pasarela de canales: adaptadores, entrada, salida, breaker
+│   └── whatsapp/                   # Cloud API: firma, parser del webhook, adaptador y enrutado
 ├── websocket/                      # Socket.io handlers
 ├── scripts/                        # Seed y utilidades
 ├── utils/                          # Logger, helpers
@@ -795,12 +839,13 @@ Usuario abre la app
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
 | **Config** | `GET /`, `PUT /` | Configuración global |
-| **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /` | Gestión de proyectos (multi-proyecto por usuario) |
+| **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /`, `GET /channels/status` | Gestión de proyectos (multi-proyecto por usuario); `PUT` responde 409 si el número de WhatsApp ya es de otro proyecto |
 | **Appointments** | `GET /`, `GET /:id`, `PATCH /:id/status` | Citas agendadas por el agente |
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
 | **Tools** | `GET /`, `PUT /config` | Catálogo de operaciones y configuración por proyecto |
 | **Tool Executions** | `GET /`, `GET /pending`, `POST /:id/approve`, `POST /:id/reject` | Historial, solicitudes pendientes y resolución por rol |
 | **Dashboard** | `GET /stats`, `GET /outcomes`, `GET /automation`, `GET /volume`, `GET /channels`, `GET /activities` | Analytics autenticada y acotada al proyecto activo (`X-Project-Id`/`activeProjectId`) |
+| **Webhooks** | `GET /whatsapp`, `POST /whatsapp` | Verificación y webhook de WhatsApp Cloud API (público, autenticado por firma) |
 | **Public Chat** | `GET /public/test-chat/:slug/config`, `POST /public/test-chat/:slug/start`, `POST /public/test-chat/:slug/:id/messages` | Chat público (clientes web); `config` expone el idioma del agente (sin auth) |
 
 > Todos los endpoints están bajo el prefijo `/api/<módulo>`.
@@ -813,12 +858,12 @@ Usuario abre la app
 |:----------|:-------------|:------|
 | `users` | name, email, password (hash), role, status, avatar, projectIds, activeProjectId | Roles: admin, support, assistant, approver. Pertenencia multi-proyecto |
 | `contacts` | projectId, name, phone, email, platform, status, tags, metadata | Aislado por proyecto. Soft delete (archivar) |
-| `conversations` | contactId, platform, status, mode, clientInfo, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores |
+| `conversations` | contactId, platform, status, mode, clientInfo, channelAccount, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores |
 | `messages` | conversationId, sender, content, contentType, isBot, toolData | Sender: contact, ai_agent, human_agent, tool. contentType: text, tool_call, tool_result, confirmation_request |
 | `agents` | projectId, name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
 | `ai_models` | name, value, provider, category, isActive | Catálogo de modelos (los disponibles se listan dinámicamente desde OpenRouter) |
 | `provider_configs` | type (llm/embedding/file/image/audio/ocr), provider, selectedModel, isActive | Sin credenciales: la API key proviene del entorno. `selectedModel` ya no se usa para resolver llm/embedding/file/ocr |
-| `projects` | name, agentId, config (channels, messages, options, tools) | Configuración de herramientas aislada por proyecto |
+| `projects` | name, agentId, config (channels, messages, options, tools, brand, whatsapp.phoneNumberId) | Configuración de herramientas aislada por proyecto |
 | `knowledge_sources` | name, type, size, status, vectorCount, filePath, extractionMethod, ocrProvider, extractionTimeMs | Status: Queued, Processing, Indexed, Failed |
 | `appointments` | date, time, service, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
 | `orders` | items, total, currency, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
@@ -850,7 +895,7 @@ Todas las conexiones WebSocket requieren autenticación JWT:
 | `chat:typing` | Bidireccional | Indicador de "escribiendo..." |
 | `chat:status` | Server → Client | Cambio de modo/estado de la conversación (lo consumen Messaging y TestChat sin recargar) |
 | `chat:new_conversation` | Server → Client | Nueva conversación iniciada |
-| `chat:message_updated` | Server → Client | Mensaje actualizado: `status` de la confirmación de tool, o `delivery` (entrega en canal externo); nunca ambos |
+| `chat:message_updated` | Server → Client | Mensaje actualizado: `status` de la confirmación de tool, o `delivery` (entrega en canal externo: `queued`, `sent`, `delivered`, `read`, `failed`); nunca ambos |
 | `chat:insights` | Server → Client | Insights de la conversación recalculados (sentimiento y su distribución) |
 | `chat:read` | Server → Client | Una sesión del proyecto marcó una conversación como leída; el resto actualiza su badge |
 | `tool:confirm` | Client → Server | Confirmar / cancelar / modificar una ejecución de herramienta |
@@ -897,7 +942,7 @@ pnpm test:integration    # backend contra MongoDB/Redis/Qdrant reales
 
 ## Pruebas End-to-End (e2e)
 
-Suite de Playwright en `tests/` que valida los flujos críticos contra un entorno aislado. **Requiere los servicios Docker** (`docker compose up -d`); Playwright arranca automáticamente el stub de IA (4010), el backend (3100) y el frontend (5174), y usa la base de datos `mitchbot_e2e`.
+Suite de Playwright en `tests/` que valida los flujos críticos contra un entorno aislado. **Requiere los servicios Docker** (`docker compose up -d`); Playwright arranca automáticamente el stub de IA y de la Graph API de WhatsApp (4010), el backend (3100) y el frontend (5174), y usa la base de datos `mitchbot_e2e`. Si otra app ocupa alguno de esos puertos, la comprobación de prerrequisitos lo indica: cámbialos con `E2E_STUB_PORT`, `E2E_BACKEND_PORT` y `E2E_FRONTEND_PORT` (por ejemplo, `E2E_BACKEND_PORT=3110 E2E_FRONTEND_PORT=5185 E2E_STUB_PORT=4020 pnpm test:e2e`).
 
 ```bash
 pnpm test:e2e            # suite completa
@@ -947,6 +992,12 @@ CHANNEL_INSTAGRAM_RATE_MAX=10
 CHANNEL_INSTAGRAM_RATE_MS=1000
 CHANNEL_BREAKER_THRESHOLD=5
 CHANNEL_BREAKER_COOLDOWN_MS=60000
+# WhatsApp Cloud API (opcionales; el Phone Number ID se guarda por proyecto)
+WHATSAPP_TOKEN=<token-de-sistema>
+WHATSAPP_VERIFY_TOKEN=<token-de-verificación-del-webhook>
+WHATSAPP_APP_SECRET=<app-secret-de-meta>
+WHATSAPP_API_URL=https://graph.facebook.com
+WHATSAPP_API_VERSION=v21.0
 ```
 
 > ⚠️ `OPENROUTER_LLM_MODEL` es obligatorio (sin default): si falta, la generación falla con un mensaje que indica definirlo. `OPENROUTER_FILE_MODEL`, `OPENROUTER_RERANKER_MODEL` y `OPENROUTER_INSIGHTS_MODEL` son opcionales (el CSV se indexa crudo, el re-ranker usa el modelo de embeddings y los insights usan `OPENROUTER_LLM_MODEL`, respectivamente).
@@ -981,7 +1032,8 @@ CHANNEL_BREAKER_COOLDOWN_MS=60000
 ### Fase Siguiente — v0.5 Integración Social 🔜
 - [x] Normalización de mensajes cross-platform + message broker (BullMQ sobre Redis) (v0.5.0)
 - [x] Rate limiting por plataforma, sistema de retry y failover operativo (circuit breaker) (v0.5.0)
-- [ ] WhatsApp Business API (webhooks)
+- [x] WhatsApp Business API con webhooks firmados, número por proyecto y estados de entrega y lectura (v0.6.0)
+- [ ] Plantillas de WhatsApp para escribir fuera de la ventana de 24 h
 - [ ] Instagram Messaging API
 
 ### Hacia la v1.0 💡

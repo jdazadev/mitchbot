@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isCustomerFacing, isPermanent, nextDelay } from '../../src/channels/policy';
+import { isCustomerFacing, isPermanent, nextDelay, statusesBefore } from '../../src/channels/policy';
 import { ChannelError } from '../../src/channels/types';
 
 test('solo se entregan respuestas y confirmaciones con contenido', () => {
@@ -27,4 +27,12 @@ test('solo los ChannelError permanentes son permanentes', () => {
   assert.equal(isPermanent(new ChannelError('token', 'permanent')), true);
   assert.equal(isPermanent(new ChannelError('5xx', 'transient')), false);
   assert.equal(isPermanent(new Error('ECONNRESET')), false);
+});
+
+test('los estados de entrega solo avanzan', () => {
+  assert.deepEqual(statusesBefore('sent'), ['queued']);
+  assert.deepEqual(statusesBefore('delivered'), ['queued', 'sent']);
+  assert.deepEqual(statusesBefore('read'), ['queued', 'sent', 'delivered']);
+  // Meta puede rechazar un mensaje que ya aceptó, pero no uno leído ni uno ya fallido.
+  assert.deepEqual(statusesBefore('failed'), ['sent', 'delivered']);
 });

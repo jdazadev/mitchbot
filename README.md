@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.5.0** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.6.0** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -51,7 +51,7 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
 ## Arquitectura
 
 ```
- Cliente (Web · WhatsApp* · Instagram*)          Operador (Dashboard Vue 3)
+ Cliente (Web · WhatsApp · Instagram*)           Operador (Dashboard Vue 3)
                 │                                          │
                 └──────────── Socket.io / REST ────────────┘
                                    │
@@ -134,6 +134,15 @@ Variables principales:
 
 La lista completa está en [`apps/backend/.env.example`](apps/backend/.env.example).
 
+### Conectar WhatsApp
+
+1. En tu app de Meta (producto WhatsApp), copia el **token** de acceso y el **App Secret**, y elige un token de verificación cualquiera.
+2. Ponlos en `apps/backend/.env` como `WHATSAPP_TOKEN`, `WHATSAPP_APP_SECRET` y `WHATSAPP_VERIFY_TOKEN`, y reinicia el backend.
+3. En **Configuración → Canales**, escribe el **Phone Number ID** del número y guarda. La misma pantalla muestra la URL del webhook.
+4. En Meta, registra esa URL con tu token de verificación y suscríbete al campo `messages`. Meta exige que la URL sea pública y use HTTPS. En local, publícala con un túnel como `cloudflared tunnel --url http://localhost:3000` o `ngrok http 3000`.
+
+Sin plantillas aprobadas, WhatsApp solo deja responder dentro de las 24 horas siguientes al último mensaje del cliente. Pasado ese plazo, el mensaje aparece como "No entregado" y explica el motivo.
+
 ---
 
 ## Pruebas
@@ -159,7 +168,7 @@ Integración y E2E requieren los servicios de Docker activos. Más detalles en [
 
 ## Estado y hoja de ruta
 
-Mitchbot está en **pre-1.0 (v0.5.0)**. El MVP está listo para demo, y la **v1.0** llegará cuando la plataforma atienda de forma estable los canales sociales además de la web.
+Mitchbot está en **pre-1.0 (v0.6.0)**. El MVP está listo para demo, y la **v1.0** llegará cuando la plataforma atienda de forma estable los canales sociales además de la web.
 
 <p align="center">
   <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.4, siguiente v0.5 con WhatsApp, Instagram, resiliencia y marca por proyecto, y hacia v1.0 con widget embebible, CRM y notificaciones push" width="100%">
@@ -176,10 +185,12 @@ Mitchbot está en **pre-1.0 (v0.5.0)**. El MVP está listo para demo, y la **v1.
 | **v0.3 · IA confiable** | sep 2026 | OpenRouter como proveedor único con credenciales solo en el entorno, memoria de conversación, saludo y despedida naturales e insights de sentimiento |
 | **v0.4 · Aurora y herramientas** | sep → oct 2026 | Sistema de diseño Aurora con tema oscuro y accesibilidad, catálogo de herramientas con aprobaciones, urgencia analizada, Resumen con métricas reales, identidad de marca por proyecto y tests unitarios |
 
-### 🔜 Siguiente · v0.5: integración social
-- **WhatsApp Business API** e **Instagram Messaging API** con webhooks
+### 🔜 Siguiente · integración social
 - ✅ Pasarela de canales (v0.5.0): mensajes normalizados e idempotentes y broker con BullMQ sobre Redis
 - ✅ **Resiliencia** (v0.5.0): rate limiting por canal, reintentos con backoff, circuit breaker y fallos de entrega visibles con reintento
+- ✅ **WhatsApp Business** (v0.6.0): Cloud API con webhooks firmados, un número por proyecto y estados de entrega y lectura
+- **Instagram Messaging API** con webhooks
+- Plantillas de WhatsApp para escribir fuera de la ventana de 24 horas
 
 ### 🎯 Hacia la v1.0
 - Widget embebible para webs de clientes y exportación de conversaciones

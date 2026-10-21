@@ -13,7 +13,7 @@ export interface MessageToolData {
 
 /** Entrega en canales externos (WhatsApp, Instagram); los mensajes Web no la llevan. */
 export interface MessageDelivery {
-  status: 'queued' | 'sent' | 'failed';
+  status: 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
   attempts: number;
   externalId?: string;
   error?: string;

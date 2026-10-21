@@ -26,6 +26,7 @@ import ADropdown from "../components/ui/ADropdown.vue";
 import AEmptyState from "../components/ui/AEmptyState.vue";
 import { renderMarkdown } from "../lib/markdown";
 import { channelMeta, channelIcon, channelTone } from "../lib/channels";
+import { latestDelivery } from "../lib/delivery";
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -833,7 +834,8 @@ async function retryDelivery(msg: ChatMessage) {
   deliveryRetries.value = { ...deliveryRetries.value, [msg._id]: "pending" };
   try {
     const { delivery } = await messagingService.retryMessage(conversationId, msg._id);
-    msg.delivery = delivery;
+    // El worker puede entregar antes de que llegue esta respuesta: no se pisa un `sent` con `queued`.
+    msg.delivery = latestDelivery(msg.delivery, delivery);
     const { [msg._id]: _done, ...rest } = deliveryRetries.value;
     deliveryRetries.value = rest;
   } catch {
@@ -845,7 +847,7 @@ function onMessageUpdated(data: MessageUpdate) {
   const existing = messages.value.find((m) => m._id === data.messageId);
   if (!existing) return;
   if (data.delivery) {
-    existing.delivery = data.delivery;
+    existing.delivery = latestDelivery(existing.delivery, data.delivery);
     return;
   }
   if (!data.status) return;

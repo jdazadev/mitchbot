@@ -39,6 +39,13 @@ export const E2E = {
     reply: 'Respuesta determinista de prueba E2E.',
   },
 
+  /** Credenciales de WhatsApp del backend e2e; la Graph API es el stub (`/meta`). */
+  whatsapp: {
+    token: 'e2e-wa-token',
+    appSecret: 'e2e-wa-secret',
+    verifyToken: 'e2e-wa-verify',
+  },
+
   projectNoContact: {
     name: 'E2E NoContact',
     slug: 'e2e-nocontact',

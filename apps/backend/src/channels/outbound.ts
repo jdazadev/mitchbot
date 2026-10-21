@@ -8,16 +8,16 @@ import { getMessagesCollection, type Message, type MessageDelivery } from '../mo
 import { emitToProject, emitToRoom } from '../websocket/socket';
 import { logger } from '../utils/logger';
 import { getAdapter, isExternal } from './registry';
-import { isCustomerFacing, isPermanent, MAX_DELIVERY_ATTEMPTS, nextDelay } from './policy';
+import { isCustomerFacing, isPermanent, MAX_DELIVERY_ATTEMPTS, nextDelay, statusesBefore } from './policy';
 import { BreakerSnapshot, CLOSED, currentState, transition } from './breaker';
-import { ChannelPlatform } from './types';
+import { ChannelPlatform, DeliveryStatus } from './types';
 
 interface DeliveryJob {
   messageId: string;
   conversationId: string;
 }
 
-type DeliveryTarget = Pick<Conversation, '_id' | 'platform' | 'projectId'>;
+type DeliveryTarget = Pick<Conversation, '_id' | 'platform' | 'projectId' | 'channelAccount'>;
 
 const queues = new Map<ChannelPlatform, Queue<DeliveryJob>>();
 
@@ -74,13 +74,17 @@ async function enqueue(platform: ChannelPlatform, conversationId: string, messag
   return delivery;
 }
 
+/** Solo sale por cola lo que entró por un canal externo: el simulador no tiene cuenta del canal. */
+const deliversByQueue = (conversation: DeliveryTarget) =>
+  isExternal(conversation.platform) && !!conversation.channelAccount;
+
 /**
  * Encola la entrega de un mensaje si va a un canal externo y el cliente debe
  * verlo. Devuelve el estado inicial, o `undefined` si el mensaje no se entrega
- * por cola (Web, mensajes internos).
+ * por cola (Web, simulador, mensajes internos).
  */
 export async function dispatch(message: Message, conversation: DeliveryTarget | null | undefined) {
-  if (!conversation || !message._id || !isExternal(conversation.platform) || !isCustomerFacing(message)) return undefined;
+  if (!conversation || !message._id || !deliversByQueue(conversation) || !isCustomerFacing(message)) return undefined;
   try {
     const delivery = await enqueue(conversation.platform, conversation._id!.toString(), message._id.toString());
     message.delivery = delivery;
@@ -110,7 +114,7 @@ export async function retryDelivery(conversationId: string, messageId: string, p
   return enqueue(conversation.platform, conversationId, messageId);
 }
 
-async function markFailed(conversation: DeliveryTarget, messageId: string, attempts: number, error: string) {
+export async function markFailed(conversation: DeliveryTarget, messageId: string, attempts: number, error: string) {
   const conversationId = conversation._id!.toString();
   const projectId = conversation.projectId?.toString();
   await setDelivery(conversationId, messageId, { status: 'failed', attempts, error, updatedAt: new Date() });
@@ -145,7 +149,7 @@ export async function processDelivery(job: Job<DeliveryJob>, token?: string) {
   const { messageId, conversationId } = job.data;
   const conversation = await getConversationsCollection().findOne(
     { _id: new ObjectId(conversationId) },
-    { projection: { platform: 1, projectId: 1, clientInfo: 1 } },
+    { projection: { platform: 1, projectId: 1, clientInfo: 1, channelAccount: 1 } },
   );
   const message = await getMessagesCollection().findOne({ _id: new ObjectId(messageId) });
   if (!conversation || !message) throw new UnrecoverableError('El mensaje o la conversación ya no existen');
@@ -173,6 +177,7 @@ export async function processDelivery(job: Job<DeliveryJob>, token?: string) {
       projectId: conversation.projectId?.toString(),
       platform,
       recipient: conversation.clientInfo.identifier,
+      account: conversation.channelAccount,
       text: message.content,
     });
     if (breaker.state !== 'closed' || breaker.failures > 0) await saveBreaker(platform, CLOSED);
@@ -194,6 +199,48 @@ export async function processDelivery(job: Job<DeliveryJob>, token?: string) {
     );
     throw error;
   }
+}
+
+/**
+ * Aplica un aviso de estado del canal al mensaje con ese id externo. Los estados
+ * solo avanzan; un `failed` del canal es un fallo definitivo como el síncrono.
+ * Devuelve `false` si no hay mensaje en un estado desde el que avanzar.
+ */
+export async function applyDeliveryStatus(
+  platform: ChannelPlatform,
+  externalId: string,
+  status: Exclude<DeliveryStatus, 'queued'>,
+  error?: string,
+) {
+  const messages = getMessagesCollection();
+  const message = await messages.findOne({
+    'delivery.externalId': externalId,
+    'delivery.status': { $in: statusesBefore(status) },
+  });
+  if (!message?._id) return false;
+  const conversation = await getConversationsCollection().findOne(
+    { _id: message.conversationId, platform },
+    { projection: { platform: 1, projectId: 1, channelAccount: 1 } },
+  );
+  if (!conversation) return false;
+
+  const conversationId = conversation._id!.toString();
+  const messageId = message._id.toString();
+  const attempts = message.delivery?.attempts ?? 1;
+  if (status === 'failed') {
+    await markFailed(conversation, messageId, attempts, error || 'El canal rechazó el mensaje');
+    return true;
+  }
+  const result = await messages.updateOne(
+    { _id: message._id, 'delivery.status': { $in: statusesBefore(status) } },
+    { $set: { 'delivery.status': status, 'delivery.updatedAt': new Date() } },
+  );
+  if (!result.modifiedCount) return false;
+  emitToRoom(conversationId, 'chat:message_updated', {
+    messageId,
+    delivery: { ...message.delivery, status, updatedAt: new Date() },
+  });
+  return true;
 }
 
 /** Arranca un worker por canal externo. Concurrencia 1: los mensajes a un cliente llegan en orden. */

@@ -1,37 +1,11 @@
 import { test, expect } from '../fixtures';
 import type { APIRequestContext } from '@playwright/test';
-import { uniqueEmail, uniqueName } from '../helpers/data';
+import { createProjectOwner, signIn } from '../helpers/owner';
 
 /** Usuario y proyecto propios: la marca no debe teñir el proyecto e2e compartido. */
-async function createBrandedOwner(api: APIRequestContext) {
-  const email = uniqueEmail('brand-owner');
-  const password = 'brand-owner-123';
-  const created = await api.post('users', { data: { name: 'Brand Owner', email, password, role: 'admin' } });
-  expect(created.ok()).toBeTruthy();
-  const login = await api.post('auth/login', { data: { email, password } });
-  const { token } = await login.json();
-  const headers = { Authorization: `Bearer ${token}`, 'X-Project-Id': '' };
-  const project = await api.post('project', {
-    headers,
-    data: { name: uniqueName('Marca'), agent: { name: 'Agente de marca' } },
-  });
-  expect(project.status()).toBe(201);
-  const projectId = (await project.json()).project._id as string;
-  return { email, password, headers: { ...headers, 'X-Project-Id': projectId } };
-}
+const createBrandedOwner = (api: APIRequestContext) => createProjectOwner(api, 'brand-owner');
 
 const LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-
-async function signIn(browser: any, owner: { email: string; password: string }) {
-  const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
-  const page = await context.newPage();
-  await page.goto('/login');
-  await page.getByPlaceholder('tu@email.com').fill(owner.email);
-  await page.getByPlaceholder('••••••••').fill(owner.password);
-  await page.getByRole('button', { name: /Iniciar Sesión/ }).click();
-  await page.waitForURL((url: URL) => url.pathname === '/');
-  return { context, page };
-}
 
 const brandHue = (page: any) =>
   page.evaluate(() => document.documentElement.style.getPropertyValue('--brand-h'));

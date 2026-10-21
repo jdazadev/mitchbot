@@ -166,6 +166,15 @@ export const projectService = {
     return result;
   },
 
+  /** Un número de WhatsApp solo puede atenderlo un proyecto. */
+  async isWhatsAppNumberTaken(phoneNumberId: string, exceptProjectId: string) {
+    const other = await getProjectsCollection().findOne(
+      { 'config.whatsapp.phoneNumberId': phoneNumberId, _id: { $ne: new ObjectId(exceptProjectId) } },
+      { projection: { _id: 1 } },
+    );
+    return !!other;
+  },
+
   slugify(value: string) {
     return value
       .toLowerCase()

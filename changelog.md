@@ -5,6 +5,53 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.6.0 — 2026-10-21
+
+> **Canal de WhatsApp**: los mensajes de WhatsApp Business llegan a la bandeja, el bot y el operador responden desde el número del proyecto y el hilo muestra si el cliente recibió y leyó la respuesta
+
+### ✨ Añadido
+- **Webhook de WhatsApp** (OpenSpec `add-whatsapp-channel`):
+  - `GET /api/webhooks/whatsapp` responde al reto de verificación de Meta con `WHATSAPP_VERIFY_TOKEN`.
+  - `POST /api/webhooks/whatsapp` exige la firma `X-Hub-Signature-256` del cuerpo crudo con `WHATSAPP_APP_SECRET`; sin secreto o con una firma inválida responde 401.
+  - Los textos y las respuestas a botones y listas entran por la cola de entrada. Las imágenes, audios, documentos y ubicaciones entran como un aviso de texto, para que el operador sepa que el cliente envió algo.
+- **Un número por proyecto**: `project.config.whatsapp.phoneNumberId` con índice único; si otro proyecto ya tiene el número, la API responde 409. Solo se aceptan mensajes si el proyecto tiene el canal WhatsApp habilitado. El token y el App Secret siguen viniendo del entorno.
+- **Adaptador de la Cloud API** (`src/channels/whatsapp/`): envía texto desde el número que recibió la conversación.
+  - **Errores transitorios** (se reintentan y respetan `Retry-After`): red, 5xx, 429 y los límites de ritmo de Meta.
+  - **Errores permanentes** (cada uno con un motivo legible): token inválido, ventana de 24 h vencida (`131047`), destinatario no válido o fuera de la lista de prueba, y el resto de errores 4xx.
+- **Entregado y Leído**: los avisos de estado de Meta actualizan la entrega por `externalId`. Los estados solo avanzan, y un `failed` posterior al envío se trata como cualquier otro fallo de entrega: el mensaje se marca como no entregado, la conversación pasa a `pending_human` y se notifica al proyecto.
+- **Configuración → Canales**:
+  - Campo **Phone Number ID** con validación.
+  - URL del webhook, con un botón para copiarla.
+  - Estado del servidor: indica qué credenciales faltan en el entorno.
+  - El indicador de cambios sin guardar también cubre el número.
+- `GET /api/project/channels/status` (sin secretos) y variables `WHATSAPP_APP_SECRET`, `WHATSAPP_API_URL` y `WHATSAPP_API_VERSION`.
+- Claves i18n `messaging.delivery.{delivered,read}` y `settings.channels.whatsapp.*` (es/en).
+
+### 🔧 Cambiado
+- **La entrega por cola exige la cuenta del canal**: la conversación guarda `channelAccount` (el número que la recibió). Así, las conversaciones del simulador con plataforma WhatsApp siguen entregándose por socket y nunca llegan a Meta.
+- **Continuidad de la conversación**: un cliente continúa su conversación abierta del mismo canal también cuando está en `pending_human`. Antes, tras una transferencia a una persona o un fallo de entrega, abría una conversación nueva.
+- Configuración → Canales envía solo canales y número. Antes reenviaba la configuración completa del proyecto, logo incluido.
+
+### 🐛 Corregido
+- **Reintento que se quedaba en "Enviando…"**: si el worker entregaba antes de que llegara la respuesta HTTP del reintento, esa respuesta (`queued`) pisaba el `sent` recibido por socket. Ahora siempre gana el estado más reciente del servidor (`lib/delivery.ts`).
+- **Membresía perdida al crear proyectos a la vez**: la lista de proyectos del usuario se leía y se reescribía entera, así que dos creaciones simultáneas podían dejar al usuario fuera de una de ellas (403 después). Ahora se añade con un `$addToSet` atómico (`userService.joinProject`).
+- La comprobación de prerrequisitos E2E detecta otra app escuchando en el puerto del backend o del stub, y explica cómo cambiarlo (`E2E_BACKEND_PORT`, `E2E_STUB_PORT`). Antes, un 200 de otra app pasaba por el backend de Mitchbot.
+
+### ✅ Pruebas
+- Unitarios del backend (**54**): firma, parser del webhook, clasificación de errores, adaptador con `fetch` falso y orden de los estados. Unitarios del frontend (**29**): `DeliveryStatus` con Entregado y Leído, `latestDelivery` y la URL del webhook.
+- Integración **51/51 (1 omitida)**:
+  - `whatsapp-webhook.test.ts`: verificación, firma, enrutado por número, canal deshabilitado, duplicados, estados y fallo asíncrono, y número único.
+  - Gateway: simulador sin cola, cuenta del canal y continuidad en `pending_human`.
+  - Membresía concurrente.
+- E2E **69/69** en dos corridas completas. `whatsapp.spec.ts` (7) usa una Graph API simulada en el stub (`/meta`):
+  - verificación y firma;
+  - un mensaje real con la respuesta del bot entregada y leída en vivo;
+  - un rechazo por la ventana de 24 h con reintento desde el hilo;
+  - duplicados, simulador sin envíos y configuración del número en la UI con 409 para otro proyecto.
+- Paridad es/en **726/726**; backend `tsc --noEmit` y frontend `vue-tsc` y `build` en verde.
+
+---
+
 ## v0.5.0 — 2026-10-20
 
 > **Pasarela de canales**: la base de WhatsApp e Instagram. Entrada normalizada e idempotente, salida por cola con rate limiting, reintentos y circuit breaker, y fallos de entrega visibles con reintento

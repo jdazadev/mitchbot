@@ -32,6 +32,16 @@ const { t } = useI18n();
     <AIcon name="Check" :size="12" />
     {{ t('messaging.delivery.sent') }}
   </p>
+  <p
+    v-else-if="delivery?.status === 'delivered' || delivery?.status === 'read'"
+    class="flex items-center gap-1 text-[11px] font-medium"
+    :class="delivery.status === 'read' ? 'text-ink-2' : 'text-ink-3'"
+    data-testid="delivery-status"
+    :data-status="delivery.status"
+  >
+    <AIcon name="Checks" :size="12" :weight="delivery.status === 'read' ? 'bold' : 'regular'" />
+    {{ t(`messaging.delivery.${delivery.status}`) }}
+  </p>
   <div
     v-else-if="delivery?.status === 'failed'"
     role="status"

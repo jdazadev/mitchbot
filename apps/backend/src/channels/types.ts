@@ -12,6 +12,8 @@ export interface InboundMessage {
   clientIdentifier: string;
   /** Id del mensaje en el canal; habilita la idempotencia. Web no lo trae. */
   externalMessageId?: string;
+  /** Cuenta del canal que recibió el mensaje (p. ej. el phone_number_id de WhatsApp). Sin cuenta no hay entrega por cola. */
+  account?: string;
   sender: {
     name?: string;
     phone?: string;
@@ -29,6 +31,8 @@ export interface OutboundMessage {
   platform: ChannelPlatform;
   /** Destinatario en el canal: el `clientInfo.identifier` de la conversación. */
   recipient: string;
+  /** Cuenta del canal desde la que se responde: la que recibió el mensaje del cliente. */
+  account?: string;
   text: string;
 }
 
@@ -55,4 +59,4 @@ export class ChannelError extends Error {
   }
 }
 
-export type DeliveryStatus = 'queued' | 'sent' | 'failed';
+export type DeliveryStatus = 'queued' | 'sent' | 'delivered' | 'read' | 'failed';

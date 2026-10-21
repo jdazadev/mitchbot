@@ -27,11 +27,15 @@ export async function assertE2EServers(): Promise<void> {
     for (let attempt = 1; attempt <= 10 && !ok; attempt += 1) {
       try {
         const res = await fetch(check.url, { signal: AbortSignal.timeout(2000) });
-        if (res.ok) {
+        // Un 200 de otra app (HTML) no vale: los dos servicios responden JSON con status ok.
+        const body = res.ok ? await res.json().catch(() => null) : null;
+        if (body?.status === 'ok') {
           ok = true;
           break;
         }
-        lastError = `status ${res.status}`;
+        lastError = res.ok
+          ? `responde, pero no es Mitchbot: otro proceso ocupa el puerto; libéralo o usa E2E_BACKEND_PORT / E2E_STUB_PORT=<libre>`
+          : `status ${res.status}`;
       } catch (error: any) {
         lastError = error?.message || String(error);
       }

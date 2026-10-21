@@ -43,8 +43,12 @@ const envSchema = z.object({
   CHANNEL_BREAKER_COOLDOWN_MS: z.coerce.number().int().positive().default(60000),
 
   // Social Gateway (Meta)
+  // WhatsApp Cloud API: el adaptador se registra solo si hay token; sin App Secret el webhook rechaza todo.
   WHATSAPP_TOKEN: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+  WHATSAPP_APP_SECRET: z.string().optional(),
+  WHATSAPP_API_URL: z.string().url().default('https://graph.facebook.com'),
+  WHATSAPP_API_VERSION: z.string().regex(/^v\d+\.\d+$/).default('v21.0'),
   INSTAGRAM_TOKEN: z.string().optional(),
   INSTAGRAM_VERIFY_TOKEN: z.string().optional(),
 });

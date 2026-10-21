@@ -10,6 +10,12 @@
  *   - GET  /__stats              -> contador de peticiones (prueba de guardia)
  *   - POST /__reset              -> reinicia contadores
  *
+ * Graph API de WhatsApp (Cloud API), para el canal de WhatsApp:
+ *   - POST /meta/:version/:phoneNumberId/messages -> acepta el envío y devuelve un wamid
+ *   - GET  /__meta/messages?to=   -> mensajes recibidos (por destinatario)
+ *   - POST /__meta/fail           -> { to, code, status? }: los envíos a `to` fallan con ese error
+ *   - POST /__meta/recover        -> { to }: los envíos a `to` vuelven a funcionar
+ *
  * Disparadores deterministas:
  *   - Si el último mensaje de usuario contiene "AGENDAR_CITA" se emite un
  *     tool_call de `agenda_crear`.
@@ -31,6 +37,10 @@ const PAYMENT_TRIGGER = /INTENCION_PAGO|registrar intención de pago/i;
 const EMBED_DIM = Number(process.env.STUB_EMBED_DIM || 768);
 
 const stats = { chatCompletions: 0, embeddings: 0, models: 0, requests: [] };
+
+// Estado de la Graph API simulada; separado de `stats` para no mezclarlo con la guardia del proveedor de IA.
+const META_TOKEN = process.env.STUB_META_TOKEN || 'e2e-wa-token';
+const meta = { sent: [], failures: new Map(), counter: 0 };
 
 function log(entry) {
   stats.requests.push({ ...entry, at: new Date().toISOString() });
@@ -336,6 +346,40 @@ const server = http.createServer(async (req, res) => {
     stats.models = 0;
     stats.requests = [];
     return sendJson(res, 200, { status: 'reset' });
+  }
+
+  const metaSend = req.method === 'POST' && url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)\/messages$/);
+  if (metaSend) {
+    const body = await readBody(req);
+    if (req.headers.authorization !== `Bearer ${META_TOKEN}`) {
+      return sendJson(res, 401, { error: { message: 'Invalid OAuth access token.', type: 'OAuthException', code: 190 } });
+    }
+    const failure = meta.failures.get(body.to);
+    if (failure) {
+      return sendJson(res, failure.status, { error: { message: `Stub: fallo ${failure.code}`, type: 'OAuthException', code: failure.code } });
+    }
+    meta.counter += 1;
+    const id = `wamid.stub.${Date.now()}.${meta.counter}`;
+    meta.sent.push({ id, phoneNumberId: metaSend[1], to: body.to, text: body.text?.body, at: new Date().toISOString() });
+    if (meta.sent.length > 500) meta.sent.shift();
+    return sendJson(res, 200, { messaging_product: 'whatsapp', contacts: [{ input: body.to, wa_id: body.to }], messages: [{ id }] });
+  }
+
+  if (req.method === 'GET' && url.pathname === '/__meta/messages') {
+    const to = url.searchParams.get('to');
+    return sendJson(res, 200, meta.sent.filter((m) => !to || m.to === to));
+  }
+
+  if (req.method === 'POST' && url.pathname === '/__meta/fail') {
+    const body = await readBody(req);
+    meta.failures.set(body.to, { code: Number(body.code) || 131047, status: Number(body.status) || 400 });
+    return sendJson(res, 200, { status: 'failing', to: body.to });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/__meta/recover') {
+    const body = await readBody(req);
+    meta.failures.delete(body.to);
+    return sendJson(res, 200, { status: 'recovered', to: body.to });
   }
 
   if (req.method === 'GET' && (url.pathname === '/v1/models' || url.pathname === '/models')) {

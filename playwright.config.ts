@@ -81,6 +81,7 @@ export default defineConfig({
         STUB_MODEL: E2E.stub.model,
         STUB_EMBED_MODEL: E2E.stub.embedModel,
         STUB_REPLY: E2E.stub.reply,
+        STUB_META_TOKEN: E2E.whatsapp.token,
       },
     },
     {
@@ -104,6 +105,12 @@ export default defineConfig({
         DASHBOARD_RESPONSE_TIMEOUT_MS: '5000',
         // Colas de canales propias: no se cruzan con un backend de desarrollo en el mismo Redis.
         CHANNEL_QUEUE_PREFIX: 'e2e',
+        // WhatsApp real contra la Graph API simulada del stub.
+        WHATSAPP_TOKEN: E2E.whatsapp.token,
+        WHATSAPP_APP_SECRET: E2E.whatsapp.appSecret,
+        WHATSAPP_VERIFY_TOKEN: E2E.whatsapp.verifyToken,
+        WHATSAPP_API_URL: `${E2E.stubUrl}/meta`,
+        WHATSAPP_API_VERSION: 'v21.0',
         FRONTEND_URL: E2E.frontendUrl,
       },
     },

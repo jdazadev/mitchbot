@@ -476,6 +476,8 @@
     "delivery": {
       "queued": "Sending…",
       "sent": "Sent",
+      "delivered": "Delivered",
+      "read": "Read",
       "failed": "Not delivered",
       "retry": "Retry",
       "retrying": "Retrying…",
@@ -663,7 +665,18 @@
     },
     "channels": {
       "title": "Communication Channels",
-      "save": "Save Channels"
+      "save": "Save Channels",
+      "whatsapp": {
+        "serverReady": "The server has WhatsApp connected.",
+        "serverMissing": "The server doesn't have WhatsApp connected: {vars} missing from the environment. You can still save the number.",
+        "numberLabel": "Phone Number ID",
+        "numberPlaceholder": "E.g. 106540352242922",
+        "numberHint": "Find it in Meta → WhatsApp → API Setup. Leave it empty to disconnect the number.",
+        "numberInvalid": "The Phone Number ID only contains digits.",
+        "webhookLabel": "Webhook URL",
+        "copyWebhook": "Copy URL",
+        "webhookHint": "Register it in Meta with the WHATSAPP_VERIFY_TOKEN verify token and subscribe to the messages field. Meta requires a public HTTPS URL."
+      }
     },
     "options": {
       "title": "Options",
