@@ -427,12 +427,13 @@ async function handleSaveBrand() {
   try {
     const updated = await projectService.updateProject({
       name: brandForm.value.name.trim() || project.value.name,
-      logo: brandForm.value.logo || undefined,
+      // null borra también el logo raíz heredado; con undefined el logo quitado volvía al recargar.
+      logo: brandForm.value.logo || null,
       config: {
         ...project.value.config,
         brand: {
           color: brandForm.value.color,
-          logo: brandForm.value.logo || '',
+          logo: brandForm.value.logo || null,
         },
       },
     });

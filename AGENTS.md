@@ -14,7 +14,18 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.4.34
+**Versión actual del proyecto:** v0.4.35
+
+---
+
+## Identidad de marca por proyecto (v0.4.35)
+
+- **Persistencia**: `PUT /api/project` guarda `config.brand { color, logo }` (color HEX validado con Zod; logo hasta 200 KB o `null` para quitarlo). El tipo `Project` del backend declara `config.brand`.
+- **Actualización parcial**: `projectService.update` traduce `config` a rutas `$set` campo a campo (`toConfigSet`): cambiar solo el color conserva el logo, y actualizar una sección no pisa las demás.
+- **Aplicación**: `useBrand().loadBrand` recuerda la sesión y el proyecto para los que cargó la marca; `App.vue` la vuelve a pedir en cada navegación, así que se aplica al iniciar sesión, al cerrarla y al entrar otro usuario sin recargar. Si el proyecto no se puede leer usa la de Aurora y reintenta en la siguiente navegación.
+- **Quitar logo**: Configuración envía `logo: null` (raíz y `config.brand`); antes el logo raíz heredado volvía al recargar.
+- **E2E en otro puerto**: los puertos de `tests/e2e/helpers/config.ts` derivan las URL (`E2E_FRONTEND_PORT`, `E2E_BACKEND_PORT`, `E2E_STUB_PORT`), y la comprobación de prerrequisitos falla con un mensaje claro si el puerto del frontend lo ocupa otra app.
+- **Verificación**: unitarios backend **23/23** y frontend **18/18**; integración **30/30 (1 omitida)**; E2E **62/62** en dos corridas completas (`brand.spec.ts`: 6 pruebas de API y UI).
 
 ---
 
@@ -336,7 +347,7 @@ Tras la auditoría Impeccable (`audit`) sobre Aurora se cerraron los hallazgos P
 - **Shell** (`apps/frontend/src/components/layout/`): `AuroraRail` (rail flotante con marca centrada sin subtítulo y nav con iconos Phosphor) + `AuroraTopbar`, compuestos dentro de `DashboardLayout`. El **topbar es una fila de cápsulas flotantes** (sin fondo/borde/blur): izquierda = título de página en **texto plano** (Bricolage 19px, ya no cápsula) + **reloj centrado** en el hueco (visible desde 1360px), derecha = invariantes (Proyectos · Idiomas · Tema · Notificaciones · **Usuario**, cuyo dropdown reúne **Configuración / Mi Perfil / Cerrar sesión**). Por debajo de 768px el rail se abre como **drawer** desde una cápsula de menú del topbar.
 - **Acento de marca** (`useBrand.ts`): default `#E2C6FF` (lila). `--brand*` es **identidad y selección** (item activo, avatar, punto de proyecto, foco), **no** primario de acción — el primario es siempre **tinta negra**.
 - **Documentación normativa**: `apps/frontend/DESIGN.md` + `apps/frontend/.impeccable/design.json` (re-documentados para Aurora). Diseñar contra los tokens `--brand*`, nunca contra un hue fijo.
-- **Estado de migración**: el shell Aurora, los componentes base y **todas las vistas del dashboard están migrados** (cero clases `warm-*` en el código). Vistas reales en Aurora: Panel, Conversaciones (con tarjeta de **Sentimiento** y bloque de **Urgencia**), Clientes, Brain, Usuarios, Configuración, Mi Perfil, Login, Setup, TestChat y DevTests. El **Resumen (Dashboard) se conserva tal cual** (datos reales) para refinarlo en una tanda posterior. La persistencia de `project.config.brand` en el backend sigue pendiente.
+- **Estado de migración**: el shell Aurora, los componentes base y **todas las vistas del dashboard están migrados** (cero clases `warm-*` en el código). Vistas reales en Aurora: Panel, Conversaciones (con tarjeta de **Sentimiento** y bloque de **Urgencia**), Clientes, Brain, Usuarios, Configuración, Mi Perfil, Login, Setup, TestChat y DevTests. El **Resumen (Dashboard) se conserva tal cual** (datos reales) para refinarlo en una tanda posterior. La marca por proyecto se persiste en `project.config.brand` (ver v0.4.35).
 - **Urgencia en Conversaciones**: bloque de UI con placeholder (no toca backend); claves en `messaging.urgency.*` (es/en).
 - **Prototipo fiel**: `apps/frontend/.impeccable/mocks/aurora/` (12 vistas con las etiquetas reales del producto, datos marcados como sintéticos; servible con `python3 -m http.server` en esa carpeta).
 
@@ -353,7 +364,7 @@ Tras la auditoría Impeccable (`audit`) sobre Aurora se cerraron los hallazgos P
 - **Dirección decidida**: reemplazo completo del mundo visual por la fusión **"Mesa de Exposición"** — topología de tablero de despacho (circuitos de conversación con lámpara: verde=bot, magenta=humano, hueco=cerrado; llave "TOMAR CONTROL") + materialidad de imprenta (papel #F1EDE6/#FBF9F3, tinta #1C1E22, carga por hatching, magenta #C13A7C único acento de acción, regla tachada al cerrar, cruz 90° para conflictos). Tipografía: Barlow Condensed (etiquetas), IBM Plex Mono (datos tabulares), Spline Sans (cuerpo).
 - **Prototipo de exploración** (12 vistas): se eliminó del repositorio en v0.4.32 y sigue disponible en el historial de git.
 - **Ronda 4 de exploración (v0.4.5)**: dos mundos nuevos con prototipo completo de 12 vistas cada uno — **«Aurora»** (`mocks/aurora/`, del pastel optimista de *orivo.webflow.io*: suelo cálido, tinta negra, tipografía enorme, pasteles con papel semántico) y **«Bóveda»** (del cool premium de *per-ment.webflow.io*: blanco frío, azul noche + violeta único, rejilla fina, nav en cápsula flotante, serif itálica). En v0.4.32 se eliminaron Bóveda y el comparador de mundos (están en el historial de git); solo se conserva `mocks/aurora/`, el prototipo del sistema adoptado.
-- Contrato de dirección en `apps/frontend/.impeccable/surfaces/…` (brief de Messaging). La identidad de marca por proyecto sigue siendo decisión abierta hacia el backend: persistencia en `project.config.brand` pendiente (se resuelve en la migración).
+- Contrato de dirección en `apps/frontend/.impeccable/surfaces/…` (brief de Messaging). La identidad de marca por proyecto se persiste en `project.config.brand` (cerrado en v0.4.35).
 - El resto del sistema actual "App Cálida" (v0.4.0) queda congelado: no mezclar estilos nuevos con los mapeos `warm-*` existentes hasta la migración completa.
 
 ---
@@ -939,9 +950,9 @@ DASHBOARD_RESPONSE_TIMEOUT_MS=5000
 - [x] Multi-proyecto con aislamiento de datos (v0.2)
 - [x] Analytics de sentimiento, urgencia, conversión y salud del bot (v0.4.26–v0.4.27)
 - [x] Infraestructura de tests unitarios en backend y frontend (v0.4.34)
+- [x] Identidad de marca por proyecto persistida y aplicada al iniciar sesión (v0.4.35)
 
 ### Fase Siguiente — v0.5 Integración Social 🔜
-- [ ] Identidad de marca por proyecto persistida en el backend (`project.config.brand`)
 - [ ] Normalización de mensajes cross-platform + message broker (BullMQ sobre Redis)
 - [ ] Rate limiting por plataforma, sistema de retry y failover
 - [ ] WhatsApp Business API (webhooks)

@@ -7,7 +7,7 @@ export interface Project {
   name: string;
   slug: string;
   description?: string;
-  logo?: string;
+  logo?: string | null;
   // Agente asociado (1 proyecto = 1 agente)
   agentId?: ObjectId;
   // Configuración del proyecto
@@ -25,6 +25,11 @@ export interface Project {
       autoCreateContact: boolean;
     };
     tools?: ToolProjectConfig;
+    // Identidad visual; el frontend deriva de `color` la familia --brand*
+    brand?: {
+      color?: string;
+      logo?: string | null;
+    };
   };
   createdBy: ObjectId; // User ID del creador
   status: 'active' | 'inactive';

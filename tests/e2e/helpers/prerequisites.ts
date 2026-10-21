@@ -40,6 +40,20 @@ export async function assertE2EServers(): Promise<void> {
     if (!ok) failures.push(`  - ${check.name} no responde en ${check.url} (${lastError})\n    ${check.hint}`);
   }
 
+  // Playwright reutiliza cualquier servidor que ya escuche en el puerto: si es
+  // otra app, las pruebas fallarían sin explicación.
+  try {
+    const html = await (await fetch(E2E.frontendUrl, { signal: AbortSignal.timeout(2000) })).text();
+    if (!html.includes('<title>Mitchbot')) {
+      failures.push(
+        `  - ${E2E.frontendUrl} responde, pero no es el frontend de Mitchbot.\n` +
+        `    Otro proceso ocupa el puerto ${E2E.ports.frontend}: libéralo o usa E2E_FRONTEND_PORT=<libre>.`
+      );
+    }
+  } catch (error: any) {
+    failures.push(`  - Frontend no responde en ${E2E.frontendUrl} (${error?.message || error})`);
+  }
+
   if (failures.length > 0) {
     throw new Error(
       [

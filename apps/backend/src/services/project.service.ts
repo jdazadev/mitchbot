@@ -3,6 +3,25 @@ import { getProjectsCollection, Project } from '../models/project.model';
 import { agentService } from './agent.service';
 import { createDefaultToolConfig } from '../tools/config';
 
+/**
+ * Traduce una actualización parcial de `config` a rutas `$set` campo a campo, de
+ * modo que enviar `brand: { color }` no borre `brand.logo` ni otra sección.
+ */
+export function toConfigSet(config: Record<string, unknown>): Record<string, unknown> {
+  const set: Record<string, unknown> = {};
+  for (const [section, value] of Object.entries(config)) {
+    if (value === undefined) continue;
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      for (const [field, fieldValue] of Object.entries(value)) {
+        if (fieldValue !== undefined) set[`config.${section}.${field}`] = fieldValue;
+      }
+    } else {
+      set[`config.${section}`] = value;
+    }
+  }
+  return set;
+}
+
 export const projectService = {
   async findBySlug(slug: string) {
     return getProjectsCollection().findOne({ slug, status: 'active' });
@@ -136,7 +155,7 @@ export const projectService = {
     const changes: Record<string, unknown> = { ...data };
     if (data.config) {
       delete changes.config;
-      for (const [key, value] of Object.entries(data.config)) changes[`config.${key}`] = value;
+      Object.assign(changes, toConfigSet(data.config));
     }
 
     const result = await getProjectsCollection().findOneAndUpdate(

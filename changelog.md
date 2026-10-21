@@ -5,6 +5,29 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.4.35 — 2026-10-20
+
+> **Identidad de marca por proyecto**: guardado parcial sin pérdidas, marca aplicada al iniciar sesión y logo que se puede quitar de verdad
+
+### 🐛 Corregido
+- **La marca no se aplicaba al iniciar sesión**: `loadBrand` se daba por cargada en la pantalla de login (sin sesión) y no lo volvía a intentar, así que el color del proyecto no aparecía hasta recargar. Ahora recuerda la sesión y el proyecto para los que cargó y `App.vue` la pide en cada navegación; también cambia al cerrar sesión o al entrar otro usuario.
+- **Cambiar solo el color borraba el logo**: `PUT /api/project` reemplazaba `config.brand` completo. `projectService.update` aplica la configuración campo a campo (`toConfigSet`), lo que también protege a canales, mensajes y opciones de actualizaciones parciales.
+- **El logo quitado volvía al recargar**: Configuración enviaba el logo raíz como `undefined` y no se borraba; ahora envía `null` en la raíz y en `config.brand`.
+- **E2E en otro puerto**: `E2E_FRONTEND_PORT` (y los de backend y stub) no cambiaban la URL usada por la suite; ahora las URL se derivan de los puertos. Si otro proceso ocupa el puerto del frontend, los prerrequisitos fallan explicando qué pasa en lugar de dar errores de selectores.
+
+### 🔧 Cambiado
+- Tipos: `Project.config.brand` declarado en el backend; `logo` admite `null` en backend y frontend.
+
+### ✅ Pruebas
+- Unitarios: `toConfigSet` (3) en el backend; `loadBrand` (5) en el frontend.
+- E2E `brand.spec.ts` (6): guardado y conservación al actualizar otras secciones, cambio parcial de color, color inválido (400), marca aplicada tras login sin recargar y cambio de color + quitar logo desde Configuración con persistencia al recargar.
+- Unitarios backend **23/23** y frontend **18/18**; integración **30/30 (1 omitida)**; E2E **62/62** en dos corridas completas; backend `tsc --noEmit` y frontend `vue-tsc --noEmit` en verde.
+
+### 📝 Documentación
+- README, AGENTS.md: la persistencia de la marca deja de figurar como pendiente.
+
+---
+
 ## v0.4.34 — 2026-10-20
 
 > **Pruebas en tres niveles**: tests unitarios en backend y frontend, y una suite E2E estable en verde

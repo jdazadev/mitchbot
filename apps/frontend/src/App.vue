@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { onMounted } from "vue";
 import DashboardLayout from "./components/layout/DashboardLayout.vue";
 import { useBrand } from "./composables/useBrand";
 
 const route = useRoute();
+const router = useRouter();
 const { loadBrand } = useBrand();
 
 onMounted(() => {
+  loadBrand().catch(() => {});
+});
+// Iniciar o cerrar sesión navega sin recargar: la marca sigue a la sesión.
+router.afterEach(() => {
   loadBrand().catch(() => {});
 });
 </script>

@@ -6,17 +6,19 @@ import path from 'node:path';
  * La suite usa puertos y base de datos dedicados para no interferir con los
  * servidores de desarrollo del usuario (3000 / 5173) ni con datos reales.
  */
+const ports = {
+  frontend: Number(process.env.E2E_FRONTEND_PORT || 5174),
+  backend: Number(process.env.E2E_BACKEND_PORT || 3100),
+  stub: Number(process.env.E2E_STUB_PORT || 4010),
+};
+
 export const E2E = {
-  frontendUrl: process.env.E2E_FRONTEND_URL || 'http://localhost:5174',
-  backendUrl: process.env.E2E_BACKEND_URL || 'http://localhost:3100',
-  stubUrl: process.env.E2E_STUB_URL || 'http://localhost:4010',
+  frontendUrl: process.env.E2E_FRONTEND_URL || `http://localhost:${ports.frontend}`,
+  backendUrl: process.env.E2E_BACKEND_URL || `http://localhost:${ports.backend}`,
+  stubUrl: process.env.E2E_STUB_URL || `http://localhost:${ports.stub}`,
   mongoUri: process.env.E2E_MONGODB_URI || 'mongodb://localhost:27017/mitchbot_e2e',
 
-  ports: {
-    frontend: Number(process.env.E2E_FRONTEND_PORT || 5174),
-    backend: Number(process.env.E2E_BACKEND_PORT || 3100),
-    stub: Number(process.env.E2E_STUB_PORT || 4010),
-  },
+  ports,
 
   user: {
     name: 'E2E User',

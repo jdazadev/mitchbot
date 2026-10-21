@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.4.34** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.4.35** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -159,7 +159,7 @@ Integración y E2E requieren los servicios de Docker activos. Más detalles en [
 
 ## Estado y hoja de ruta
 
-Mitchbot está en **pre-1.0 (v0.4.34)**. El MVP está listo para demo, y la **v1.0** llegará cuando la plataforma atienda de forma estable los canales sociales además de la web.
+Mitchbot está en **pre-1.0 (v0.4.35)**. El MVP está listo para demo, y la **v1.0** llegará cuando la plataforma atienda de forma estable los canales sociales además de la web.
 
 <p align="center">
   <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.4, siguiente v0.5 con WhatsApp, Instagram, resiliencia y marca por proyecto, y hacia v1.0 con widget embebible, CRM y notificaciones push" width="100%">
@@ -174,13 +174,12 @@ Mitchbot está en **pre-1.0 (v0.4.34)**. El MVP está listo para demo, y la **v1
 | **v0.1 · MVP** | feb → sep 2026 | Chat web en tiempo real, motor RAG (PDF, TXT, CSV, OCR), panel, contactos, usuarios, agentes con personalidad y onboarding |
 | **v0.2 · Multi-proyecto** | sep 2026 | Pertenencia usuario↔proyecto y aislamiento total de datos, agentes y eventos |
 | **v0.3 · IA confiable** | sep 2026 | OpenRouter como proveedor único con credenciales solo en el entorno, memoria de conversación, saludo y despedida naturales e insights de sentimiento |
-| **v0.4 · Aurora y herramientas** | sep → oct 2026 | Sistema de diseño Aurora con tema oscuro y accesibilidad, catálogo de herramientas con aprobaciones, urgencia analizada y Resumen con métricas reales |
+| **v0.4 · Aurora y herramientas** | sep → oct 2026 | Sistema de diseño Aurora con tema oscuro y accesibilidad, catálogo de herramientas con aprobaciones, urgencia analizada, Resumen con métricas reales, identidad de marca por proyecto y tests unitarios |
 
 ### 🔜 Siguiente · v0.5: integración social
 - **WhatsApp Business API** e **Instagram Messaging API** con webhooks y message broker
 - Mensajes normalizados entre plataformas
 - **Resiliencia:** rate limiting por canal, reintentos y failover
-- **Identidad de marca por proyecto** (color, nombre y logo) guardada en el backend
 
 ### 🎯 Hacia la v1.0
 - Widget embebible para webs de clientes y exportación de conversaciones

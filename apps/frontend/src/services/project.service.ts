@@ -38,7 +38,7 @@ export interface ProjectConfig {
   };
   brand?: {
     color?: string;
-    logo?: string;
+    logo?: string | null;
   };
 }
 
@@ -47,7 +47,7 @@ export interface Project {
   name: string;
   slug: string;
   description?: string;
-  logo?: string;
+  logo?: string | null;
   agentId?: string;
   config: {
     channels: { whatsapp: boolean; instagram: boolean; web: boolean };

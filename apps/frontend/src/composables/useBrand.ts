@@ -1,5 +1,6 @@
 import { ref, onMounted } from 'vue';
 import { projectService, type Project } from '../services/project.service';
+import { authService } from '../services/auth.service';
 import { currentTheme, registerBrandReapply, type Theme } from './useTheme';
 
 /** Color de identidad por defecto del mundo Aurora */
@@ -18,6 +19,8 @@ const brand = ref<BrandConfig>({
 });
 
 const loaded = ref(false);
+/** Sesión y proyecto para los que se cargó la marca: si cambian, se vuelve a cargar. */
+let loadedFor: string | null = null;
 
 export function hexToHsl(hex: string): { h: number; s: number; l: number } {
   let clean = hex.trim().replace('#', '');
@@ -142,18 +145,29 @@ registerBrandReapply(() => applyBrand(brand.value));
 
 export function useBrand() {
   async function loadBrand() {
-    if (loaded.value) return;
-    try {
-      const project = await projectService.getProject();
-      if (project) {
-        applyBrand({
-          name: project.name || null,
-          color: project.config?.brand?.color || DEFAULT_BRAND_COLOR,
-          logo: project.config?.brand?.logo || project.logo || null,
-        });
-      }
-    } catch {
+    const token = authService.getToken();
+    const key = token ? `${token}:${authService.getActiveProjectId() || ''}` : null;
+    if (loaded.value && key === loadedFor) return;
+    loadedFor = key;
+    if (!key) {
       applyBrand({ name: null, color: DEFAULT_BRAND_COLOR, logo: null });
+      loaded.value = true;
+      return;
+    }
+    try {
+      const project = await projectService.getProject().catch(() => null);
+      if (key !== loadedFor) return;
+      if (!project) {
+        // Sin marca recuperable: se aplica la de Aurora y se reintenta en la próxima navegación.
+        loadedFor = null;
+        applyBrand({ name: null, color: DEFAULT_BRAND_COLOR, logo: null });
+        return;
+      }
+      applyBrand({
+        name: project.name || null,
+        color: project.config?.brand?.color || DEFAULT_BRAND_COLOR,
+        logo: project.config?.brand?.logo || project.logo || null,
+      });
     } finally {
       loaded.value = true;
     }
