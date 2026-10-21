@@ -1,6 +1,6 @@
 {
   "name": "@mitchbot/backend",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "license": "FSL-1.1-ALv2",
   "main": "dist/index.js",
   "scripts": {

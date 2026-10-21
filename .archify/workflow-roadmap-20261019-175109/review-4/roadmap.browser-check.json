@@ -6,11 +6,11 @@
   "status": "pass",
   "visualReview": "not-requested",
   "provenance": "current",
-  "deliveryReceiptId": "aa35a012-de12-457e-b92b-e90098023502",
+  "deliveryReceiptId": "309c47b8-e5a2-4a18-b1fd-25b744466489",
   "artifact": {
     "path": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/roadmap.html",
-    "sha256": "1295744eb0140075c8fd9f2cd35d2cb9d9ccf3397eaa24fe60ef55d0383b575a",
-    "bytes": 768319
+    "sha256": "e8db2d56afde4c2b3450c143440235b2a791359fe4328b1fecba4f386edbb458",
+    "bytes": 766996
   },
   "state": {
     "detail": "read",
@@ -56,13 +56,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 121,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 78,
@@ -90,7 +89,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -153,13 +152,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 136,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 87,
@@ -187,7 +185,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -250,13 +248,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 165,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 106,
@@ -284,7 +281,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -347,13 +344,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 169,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 108,
@@ -381,7 +377,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -497,13 +493,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 121,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 78,
@@ -531,7 +526,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -594,13 +589,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 136,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 87,
@@ -628,7 +622,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -691,13 +685,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 165,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 106,
@@ -725,7 +718,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -788,13 +781,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 169,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 108,
@@ -822,7 +814,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -890,13 +882,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 121,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 78,
@@ -924,7 +915,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -987,13 +978,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 136,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 87,
@@ -1021,7 +1011,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -1084,13 +1074,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 165,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 106,
@@ -1118,7 +1107,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -1181,13 +1170,12 @@
           {
             "frameId": "lane-0",
             "heightPx": 169,
-            "nodeCount": 6,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "exportacion",
               "v1"
             ],
             "nodeSpanPx": 108,
@@ -1215,7 +1203,7 @@
             "nodeIds": [
               "insights",
               "aurora",
-              "marca",
+              "exportacion",
               "widget",
               "sla"
             ],
@@ -1255,7 +1243,7 @@
     "contactSheet": null
   },
   "sidecars": {
-    "directory": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-3",
+    "directory": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-4",
     "receipt": "roadmap.browser-check.json",
     "files": []
   }

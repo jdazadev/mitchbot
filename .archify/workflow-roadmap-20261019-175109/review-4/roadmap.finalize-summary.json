@@ -7,13 +7,13 @@
   "quality": "showcase",
   "specification": {
     "path": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/candidate.json",
-    "sha256": "7f7784ce497bd72134fdc9213f0a2fd174adddbab7bfcbe8f657ccce770720d7",
-    "bytes": 6653
+    "sha256": "4f1ce2880b7c465c2fb851d5e7acc3c72fd91e377dd0630f72927326f0888d65",
+    "bytes": 6363
   },
   "artifact": {
     "path": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/roadmap.html",
-    "sha256": "1295744eb0140075c8fd9f2cd35d2cb9d9ccf3397eaa24fe60ef55d0383b575a",
-    "bytes": 768319
+    "sha256": "e8db2d56afde4c2b3450c143440235b2a791359fe4328b1fecba4f386edbb458",
+    "bytes": 766996
   },
   "gates": {
     "validate": "pass",
@@ -28,9 +28,9 @@
     "truncated": false
   },
   "evidence": {
-    "receipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-3/roadmap.finalize.json",
-    "summaryReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-3/roadmap.finalize-summary.json",
-    "browserCheckReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-3/roadmap.browser-check.json"
+    "receipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-4/roadmap.finalize.json",
+    "summaryReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-4/roadmap.finalize-summary.json",
+    "browserCheckReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-4/roadmap.browser-check.json"
   },
   "update": {
     "status": "update_available",
@@ -39,11 +39,11 @@
     "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.2.0",
     "severity": "normal",
     "checkedAt": "2026-10-21T04:42:29.559Z",
-    "source": "network",
+    "source": "cache",
     "noticeRequired": true,
-    "noticeText": "Archify update: 3.0.1 → 3.2.0. A newer release is available. Release notes: https://github.com/tt-a1i/archify/releases/tag/v3.2.0. The installed Skill has not changed; ask to snooze or ignore this reminder.",
+    "noticeText": "Archify update: 3.0.1 → 3.2.0. A previous check at 2026-10-21T04:42:29.559Z found a newer release. Release notes: https://github.com/tt-a1i/archify/releases/tag/v3.2.0. The installed Skill has not changed; ask to snooze or ignore this reminder.",
     "eventKey": "archify@sha256:70e210265c59f24dcbdf2a502ff671104b5454e7ee7d3554aecd86bad32384f5"
   },
   "visualReview": "not-requested",
-  "durationMs": 6394
+  "durationMs": 2258
 }

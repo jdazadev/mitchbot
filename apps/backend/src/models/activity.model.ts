@@ -11,7 +11,8 @@ export interface Activity {
     | "new_contact"
     | "conversation_closed"
     | "conversation_created"
-    | "tool_executed";
+    | "tool_executed"
+    | "conversations_exported";
   title: string;
   detail: string;
   icon: string;

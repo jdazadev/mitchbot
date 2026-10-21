@@ -23,10 +23,13 @@ import DeliveryStatus from "../components/messaging/DeliveryStatus.vue";
 import AButton from "../components/ui/AButton.vue";
 import AModal from "../components/ui/AModal.vue";
 import ADropdown from "../components/ui/ADropdown.vue";
+import ExportDialog from "../components/messaging/ExportDialog.vue";
+import { authService } from "../services/auth.service";
 import AEmptyState from "../components/ui/AEmptyState.vue";
 import { renderMarkdown } from "../lib/markdown";
 import { channelMeta, channelIcon, channelTone } from "../lib/channels";
 import { latestDelivery } from "../lib/delivery";
+import { downloadBlob } from "../lib/download";
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -53,6 +56,26 @@ const inboxLoadError = ref(false);
 const newMessage = ref("");
 const isSending = ref(false);
 const actionError = ref<string | null>(null);
+
+// Exportación: contiene datos personales, solo para admin y support (el backend lo exige igual).
+const canExport = computed(() => ["admin", "support"].includes(authService.getUser()?.role || ""));
+const showExportDialog = ref(false);
+const exportingConversation = ref(false);
+
+async function exportCurrentConversation(format: "csv" | "json") {
+  const conversationId = selectedChat.value?._id;
+  if (!conversationId || exportingConversation.value) return;
+  exportingConversation.value = true;
+  actionError.value = null;
+  try {
+    const file = await messagingService.exportConversation(conversationId, format);
+    downloadBlob(file.blob, file.fileName);
+  } catch {
+    actionError.value = t("messaging.errors.export");
+  } finally {
+    exportingConversation.value = false;
+  }
+}
 const liveAnnouncement = ref("");
 let messagesRequestId = 0;
 
@@ -965,9 +988,22 @@ onUnmounted(() => {
     >
       <template v-if="!focusCollapsed">
         <div class="px-4.5 pb-2.5 pt-4">
-          <h2 class="font-display text-[15.5px] font-bold tracking-[-0.01em]">
-            {{ t("messaging.inbox.title") }}
-          </h2>
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="font-display text-[15.5px] font-bold tracking-[-0.01em]">
+              {{ t("messaging.inbox.title") }}
+            </h2>
+            <button
+              v-if="canExport"
+              type="button"
+              data-testid="export-conversations"
+              class="inline-flex items-center gap-1.5 rounded-full bg-canvas px-3 py-1.5 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+              :title="t('messaging.export.title')"
+              @click="showExportDialog = true"
+            >
+              <AIcon name="DownloadSimple" :size="14" />
+              {{ t("messaging.export.button") }}
+            </button>
+          </div>
           <div class="mt-3 flex items-center gap-2.5 rounded-full bg-canvas px-4 py-2.5 transition-shadow focus-within:shadow-[0_0_0_2px_var(--focus)]">
             <AIcon name="MagnifyingGlass" :size="17" class="shrink-0 text-ink-3" />
             <input
@@ -1265,6 +1301,33 @@ onUnmounted(() => {
             </span>
           </span>
           <span class="ml-auto flex items-center gap-2">
+            <ADropdown
+              v-if="canExport"
+              :label="t('messaging.export.conversation')"
+              :title="t('messaging.export.conversation')"
+              testid="export-conversation"
+              align="right"
+              panel-class="w-44"
+              :disabled="exportingConversation"
+              trigger-class="inline-flex items-center gap-2 rounded-full bg-canvas px-3.5 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+            >
+              <template #trigger>
+                <AIcon name="DownloadSimple" :size="15" />
+                <span class="hidden xl:inline">{{ t("messaging.export.button") }}</span>
+              </template>
+              <template #content="{ close }">
+                <button
+                  v-for="format in (['csv', 'json'] as const)"
+                  :key="format"
+                  type="button"
+                  role="menuitem"
+                  class="flex w-full items-center px-4 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-canvas"
+                  @click="close(); exportCurrentConversation(format)"
+                >
+                  {{ t(`messaging.export.formats.${format}`) }}
+                </button>
+              </template>
+            </ADropdown>
             <button
               type="button"
               class="hidden items-center gap-2 rounded-full bg-canvas px-3.5 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink lg:inline-flex"
@@ -1768,6 +1831,13 @@ onUnmounted(() => {
         </div>
       </div>
     </AModal>
+
+    <ExportDialog
+      v-if="canExport"
+      :open="showExportDialog"
+      :channels="enabledChannels"
+      @close="showExportDialog = false"
+    />
   </div>
 </template>
 

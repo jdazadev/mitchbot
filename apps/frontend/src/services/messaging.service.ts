@@ -1,4 +1,5 @@
 import { authService } from './auth.service';
+import { fileNameFromDisposition } from '../lib/download';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -9,6 +10,31 @@ export interface MessageToolData {
   status: 'pending' | 'success' | 'error' | 'needs_confirmation' | 'pending_approval' | 'approved' | 'rejected' | 'cancelled';
   executionId?: string;
   confirmedBy?: string;
+}
+
+export type ExportFormat = 'csv' | 'json';
+
+export interface ExportRequest {
+  format: ExportFormat;
+  /** Últimos N días; se ignora si llegan `from`/`to` (YYYY-MM-DD). */
+  days?: number;
+  from?: string;
+  to?: string;
+  platform?: string;
+}
+
+export interface ExportedFile {
+  blob: Blob;
+  fileName: string;
+}
+
+async function downloadExport(url: string, fallbackName: string): Promise<ExportedFile> {
+  const res = await fetch(url, { headers: authService.getHeaders() });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'No se pudo exportar');
+  }
+  return { blob: await res.blob(), fileName: fileNameFromDisposition(res.headers.get('content-disposition'), fallbackName) };
 }
 
 /** Entrega en canales externos (WhatsApp, Instagram); los mensajes Web no la llevan. */
@@ -191,6 +217,27 @@ export const messagingService = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to retry message');
     return data;
+  },
+
+  /** Historial completo de una conversación como archivo. */
+  exportConversation(conversationId: string, format: ExportFormat): Promise<ExportedFile> {
+    return downloadExport(
+      `${API_URL}/conversations/${conversationId}/export?format=${format}`,
+      `mitchbot-conversacion.${format}`,
+    );
+  },
+
+  /** Mensajes de un rango de todas las conversaciones del proyecto. */
+  exportConversations(request: ExportRequest): Promise<ExportedFile> {
+    const params = new URLSearchParams({ format: request.format });
+    if (request.from || request.to) {
+      if (request.from) params.set('from', request.from);
+      if (request.to) params.set('to', request.to);
+    } else if (request.days) {
+      params.set('days', String(request.days));
+    }
+    if (request.platform && request.platform !== 'All') params.set('platform', request.platform);
+    return downloadExport(`${API_URL}/conversations/export?${params}`, `mitchbot-conversaciones.${request.format}`);
   },
 
   // === Funciones del CLIENTE (chatbot/widget/test) ===

@@ -5,6 +5,55 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.8.0 — 2026-10-21
+
+> **Exportación de conversaciones**: una conversación o un periodo completo a CSV o JSON, desde el hilo o la bandeja, con un CSV seguro para hojas de cálculo, permisos y registro de cada exportación
+
+### ✨ Añadido
+- **API de exportación** (OpenSpec `add-conversation-export`):
+  - `GET /api/conversations/:id/export?format=csv|json` devuelve el historial completo de una conversación.
+  - `GET /api/conversations/export?format=&days=|from=&to=&platform=` devuelve los mensajes del periodo de todo el proyecto, agrupados por conversación.
+  - Por defecto exporta los últimos 30 días, con un máximo de 366. Un `to` sin hora cubre el día entero. Un formato, canal o rango inválido responde 400; una conversación ajena, 404.
+- **Contenido**: mensajes del cliente, del bot y del operador, y solicitudes de confirmación. No se exportan los `tool_call`/`tool_result` (ya están en `/tools`) ni el placeholder vacío del bot.
+- **CSV**:
+  - Una fila por mensaje, con 14 columnas, en UTF-8 con BOM (para que Excel respete los acentos) y RFC 4180 con CRLF.
+  - Contra la inyección de fórmulas: las celdas que empiezan por `=`, `+`, `-`, `@`, tabulador o retorno de carro se prefijan con `'`.
+- **JSON**: `{ exportedAt, project, range, conversations: [{ id, platform, status, client, messages }] }`.
+- **Streaming**: el archivo se escribe conversación a conversación con cursores de MongoDB y respetando la contrapresión, sin cargar el conjunto en memoria. Si el cliente cancela, la escritura se corta. El nombre del archivo llega en `Content-Disposition` (expuesto por CORS).
+- **Permisos y auditoría**:
+  - Solo `admin` y `support` pueden exportar; el resto recibe 403.
+  - Cada exportación queda en la actividad del proyecto (`conversations_exported`), con quién, el formato, el alcance y el número de mensajes.
+- **Interfaz**:
+  - El hilo tiene un menú **Exportar** (CSV / JSON).
+  - La bandeja tiene un botón **Exportar** que abre `ExportDialog.vue`: periodo (7, 30 o 90 días, o fechas propias), canal y formato, con errores en línea y un aviso de privacidad.
+  - Solo lo ven `admin` y `support`.
+  - Nuevos `lib/download.ts` (`downloadBlob`, `fileNameFromDisposition`) e icono `DownloadSimple`.
+- Claves i18n `messaging.export.*` y `messaging.errors.export` (es/en).
+
+### 🔧 Cambiado
+- **Hoja de ruta**: la exportación pasa a "Entregado · v0.1 – v0.8", y "Siguiente · v0.9 – v0.10" queda con plantillas y widget. "Marca por proyecto" se integra en el nodo de Aurora.
+
+### ✅ Pruebas
+- **Unitarios**:
+  - Backend (**78**): celdas RFC 4180, inyección de fórmulas, filas y cabecera, forma del JSON, nombres de archivo, formato y rangos.
+  - Frontend (**43**): `fileNameFromDisposition`, `downloadBlob`, construcción de la URL del servicio y `ExportDialog` (envío, fechas inválidas y error del servidor).
+- **Integración** (**63/63**, 1 omitida). `conversation-export.test.ts` contra MongoDB cubre:
+  - rango, proyecto y mensajes internos fuera;
+  - filtro de canal;
+  - JSON agrupado;
+  - rango vacío;
+  - exportación individual con aislamiento.
+- **E2E** (**81/81** en dos corridas completas). `export.spec.ts` (7) cubre:
+  - CSV en bloque con BOM, fórmula neutralizada y filtro de canal;
+  - JSON individual y 404 en un proyecto ajeno;
+  - 400 de validación, 403 para `assistant` y 200 para `support`;
+  - registro en la actividad;
+  - descarga desde el hilo y desde el modal;
+  - un asistente no ve las acciones.
+- Paridad es/en **752/752**; backend `tsc --noEmit` y frontend `vue-tsc` y `build` en verde.
+
+---
+
 ## v0.7.0 — 2026-10-21
 
 > **Canal de Instagram**: los mensajes directos llegan a la bandeja con el nombre del perfil, las respuestas salen desde la cuenta del proyecto y el hilo muestra cuándo el cliente las leyó. Con esto, la integración social está completa.

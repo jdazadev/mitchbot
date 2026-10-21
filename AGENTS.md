@@ -14,7 +14,34 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.7.0
+**Versión actual del proyecto:** v0.8.0
+
+---
+
+## Exportación de conversaciones (v0.8.0)
+
+Descarga de conversaciones a CSV y JSON. OpenSpec `add-conversation-export`; capability `conversation-export`.
+
+- **Serialización pura** (`src/export/conversation-format.ts`):
+  - `CSV_COLUMNS` (14 columnas), `csvCell`, `csvHeader` y `csvMessageRow`.
+  - `jsonConversation` y `jsonMessage`.
+  - `exportFileName` y `fileSlug`.
+  - `parseFormat` y `parseRange`, que lanzan `InvalidExportError` → 400.
+  - **Reglas del rango**: 30 días por defecto y 366 como máximo; un `to` en formato `YYYY-MM-DD` cubre el día completo.
+  - **Reglas del CSV**: UTF-8 con BOM, CRLF, y un `'` delante de las celdas que empiezan por `= + - @ \t \r` (protección contra inyección de fórmulas). Por eso los teléfonos `+57…` salen como `'+57…`.
+- **Servicio** (`services/conversation-export.service.ts`):
+  - Recorre las conversaciones con un cursor (proyecto, `createdAt <= to`, `lastMessageAt >= from` o sin él, canal opcional) y, por cada una, los mensajes visibles: `contentType` `text` o `confirmation_request`, sin contenido vacío y dentro del rango.
+  - Escribe con un `ExportWriter` que espera a `drain`; las conversaciones sin mensajes en el alcance se omiten.
+  - `findConversation` acota al proyecto.
+- **Endpoints**: `GET /api/conversations/export` y `GET /api/conversations/:id/export`, con `authorize('admin', 'support')`. Van declarados antes de `/:id` para que `export` no se interprete como id.
+- **Respuesta**:
+  - `Content-Disposition` (con `filename*`) se expone por CORS con `Access-Control-Expose-Headers`.
+  - Un error con la descarga empezada corta la respuesta (`res.destroy()`), para no entregar un archivo incompleto que parezca válido.
+  - Se registra la actividad `conversations_exported` con `metadata { userId, format, conversations, messages, scope, … }`.
+- **Interfaz**:
+  - `canExport` (rol `admin` o `support`) muestra el menú del hilo (`data-testid="export-conversation"`) y el botón de la bandeja (`export-conversations`), que abre `components/messaging/ExportDialog.vue`.
+  - La descarga se hace con `fetch` autenticado y `downloadBlob` (`lib/download.ts`); el nombre del archivo sale de `fileNameFromDisposition`.
+- **Verificación**: unitarios backend **78/78** y frontend **43/43**; integración **63/63 (1 omitida)**; E2E **81/81** en dos corridas completas; paridad es/en **752/752**.
 
 ---
 
@@ -127,7 +154,7 @@ Base común para WhatsApp e Instagram: entrada normalizada e idempotente, salida
 
 - **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y **un solo HTML final**: en la subcarpeta `review-N` o, si no la hay, en la raíz de la carpeta. Los borradores superados se eliminaron en v0.4.32; al regenerar, borra la revisión anterior.
 - **Contenido**: arquitectura del sistema; workflows de auth/onboarding y de control de herramientas; secuencias de mensaje→bot y de confirmación del cliente; dataflows de ingesta RAG y de analítica/insights; lifecycles de conversación, fuente de conocimiento y ejecución de herramienta.
-- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.7.0 (`review-3`).
+- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.8.0 (`review-4`).
 - **Regenerar**: `node ~/.claude/skills/archify/bin/archify.mjs finalize <tipo> candidate.json <salida.html> --quality showcase --out-dir <carpeta>/review-N`. Un candidato modificado necesita un `--out-dir` nuevo. En el sandbox de Claude Code, antepón `NO_PROXY=localhost,127.0.0.1,::1`.
 - **Límites**: los diagramas del sistema se redactaron cuando aún no había remoto, así que no fijan fuentes por commit. Ahora existe `origin` (`git@github.com:jdazadev/mitchbot.git`) y los nuevos diagramas pueden usar `meta.repository` + `--repo-root`. Si cambia el flujo, actualiza el `candidate.json` correspondiente.
 
@@ -861,7 +888,7 @@ Usuario abre la app
 | **Auth** | `POST /register`, `POST /login`, `GET /me`, `PUT /profile`, `PUT /password` | Autenticación y perfil |
 | **Users** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Gestión de usuarios |
 | **Contacts** | `GET /`, `GET /:id`, `PUT /:id`, `PATCH /:id/archive`, `PATCH /:id/restore` | Gestión de contactos |
-| **Conversations** | `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages` (paginación opcional `?limit=&before=`), `POST /:id/messages`, `POST /:id/messages/:messageId/retry`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, historial paginado, resolver conversación por contacto, marcar leída, guardar contacto e insights |
+| **Conversations** | `GET /export` y `GET /:id/export` (CSV/JSON, solo admin y support), `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages` (paginación opcional `?limit=&before=`), `POST /:id/messages`, `POST /:id/messages/:messageId/retry`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, historial paginado, resolver conversación por contacto, marcar leída, guardar contacto e insights |
 | **Brain** | `GET /sources`, `POST /upload`, `POST /text`, `DELETE /sources/:id`, `POST /search` | Base de conocimiento RAG |
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
@@ -897,7 +924,7 @@ Usuario abre la app
 | `tool_executions` | projectId, conversationId, toolId, operation, binding, params, result, status, decisionBy, decisionAt | Historial y aprobación, aislados por proyecto |
 | `payments` | projectId, conversationId, contactId, amount, currency, method, status | Intenciones de cobro; nunca mueve dinero |
 | `config` | key, value | Key-value store dinámico |
-| `activities` | type, description, createdAt | Log de eventos |
+| `activities` | projectId, type, title, detail, metadata, createdAt | Log de eventos; `conversations_exported` audita las exportaciones |
 
 ---
 
@@ -1068,8 +1095,8 @@ INSTAGRAM_API_VERSION=v21.0
 - [x] WhatsApp Business API con webhooks firmados, número por proyecto y estados de entrega y lectura (v0.6.0)
 - [x] Instagram Messaging API con nombre del perfil y lectura acumulativa (v0.7.0)
 
-### Siguiente — v0.8 🔜
-- [ ] Exportación de conversaciones
+### Siguiente — v0.9 – v0.10 🔜
+- [x] Exportación de conversaciones a CSV y JSON con permisos y auditoría (v0.8.0)
 - [ ] Plantillas de mensaje para escribir fuera de la ventana de 24 h
 - [ ] Chat widget embebible para sitios web de clientes
 

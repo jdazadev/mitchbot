@@ -473,6 +473,30 @@
         "pendingHuman": "Pending human"
       }
     },
+    "export": {
+      "button": "Export",
+      "title": "Export conversations",
+      "conversation": "Export this conversation",
+      "subtitle": "Download the messages in the period, grouped by conversation. Internal tool details aren't included.",
+      "period": "Period",
+      "lastDays": "Last {days} days",
+      "custom": "Dates",
+      "from": "From",
+      "to": "To",
+      "channel": "Channel",
+      "format": "Format",
+      "formats": {
+        "csv": "CSV (spreadsheet)",
+        "json": "JSON"
+      },
+      "privacy": "The file contains your customers' personal data. The export is recorded in the project activity.",
+      "submit": "Download",
+      "exporting": "Exporting…",
+      "errors": {
+        "range": "Pick a start and an end date, with the start not after the end.",
+        "failed": "Couldn't export. Please try again."
+      }
+    },
     "delivery": {
       "queued": "Sending…",
       "sent": "Sent",
@@ -509,7 +533,8 @@
       "send": "Couldn't send the message. Your draft was kept; try again.",
       "mode": "Couldn't change the conversation mode. Try again.",
       "contact": "Couldn't save the contact. Try again.",
-      "insights": "Couldn't analyze the conversation. Try again."
+      "insights": "Couldn't analyze the conversation. Try again.",
+      "export": "Couldn't export the conversation."
     },
     "a11y": {
       "incoming": "New message from {name}: {message}"

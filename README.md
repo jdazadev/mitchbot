@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.7.0** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.8.0** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -38,7 +38,7 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
 
 | Módulo | Capacidades |
 |:--|:--|
-| **Conversaciones** | Bandeja en tiempo real con filtros por canal y búsqueda. Modos `auto_pilot` / `human_takeover`. No leídos sincronizados entre sesiones. Historial paginado. Modo enfoque. Sentimiento y urgencia analizados por IA en cada mensaje del cliente. |
+| **Conversaciones** | Bandeja en tiempo real con filtros por canal y búsqueda. Modos `auto_pilot` / `human_takeover`. No leídos sincronizados entre sesiones. Historial paginado. Modo enfoque. Sentimiento y urgencia analizados por IA en cada mensaje del cliente. Exportación a CSV y JSON (una conversación o un periodo), solo para `admin` y `support` y registrada en la actividad. |
 | **Agente IA** | Personalidad configurable (rol, tono, longitud, idioma es/en). Memoria de los últimos 20 turnos. Saludo y despedida naturales. Respuesta completa sin fragmentos. Errores visibles en el chat. |
 | **Memoria (RAG)** | Ingesta de PDF, TXT, CSV, imágenes y texto manual. OCR con modelos de visión, chunking semántico por secciones, embeddings en Qdrant, búsqueda re-rankeada y reindexado en segundo plano (BullMQ). |
 | **Herramientas** | Catálogo por proyecto: Agenda, Conocimiento, Inventario y Pagos. Tres niveles de control (ninguno, confirmación del cliente, aprobación de operador). Rol `approver` y auditoría completa en `tool_executions`. |
@@ -175,10 +175,10 @@ Integración y E2E requieren los servicios de Docker activos. Más detalles en [
 
 ## Estado y hoja de ruta
 
-Mitchbot está en **pre-1.0 (v0.7.0)**. Ya atiende Web, WhatsApp e Instagram en una sola bandeja; la **v1.0** llegará cuando sume el widget embebible, la exportación, las plantillas de mensaje y las integraciones externas.
+Mitchbot está en **pre-1.0 (v0.8.0)**. Ya atiende Web, WhatsApp e Instagram en una sola bandeja y exporta sus conversaciones; la **v1.0** llegará cuando sume el widget embebible, las plantillas de mensaje y las integraciones externas.
 
 <p align="center">
-  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.7 con pasarela de canales, WhatsApp e Instagram; siguiente v0.8 con exportación, plantillas y widget embebible; y hacia v1.0 con CRM, notificaciones push y métricas de SLA" width="100%">
+  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.8 con pasarela de canales, WhatsApp, Instagram y exportación; siguiente v0.9 y v0.10 con plantillas y widget embebible; y hacia v1.0 con CRM, notificaciones push y métricas de SLA" width="100%">
 </p>
 
 <sub>Diagrama interactivo en <a href=".archify/workflow-roadmap-20261019-175109/roadmap.html"><code>.archify/workflow-roadmap-…/roadmap.html</code></a>. Su fuente editable es <code>candidate.json</code>, en la misma carpeta.</sub>
@@ -194,9 +194,9 @@ Mitchbot está en **pre-1.0 (v0.7.0)**. Ya atiende Web, WhatsApp e Instagram en 
 | **v0.5 · Pasarela de canales** | oct 2026 | Mensajes normalizados e idempotentes, broker con BullMQ sobre Redis, rate limiting por canal, reintentos, circuit breaker y fallos de entrega visibles con reintento |
 | **v0.6 · WhatsApp** | oct 2026 | Cloud API con webhooks firmados, un número por proyecto y estados de entrega y lectura |
 | **v0.7 · Instagram** | oct 2026 | Mensajes directos con el nombre del perfil, lectura acumulativa y configuración común de los canales de Meta |
+| **v0.8 · Exportación** | oct 2026 | Conversaciones a CSV y JSON, individual o por periodo y canal, con CSV seguro para hojas de cálculo, permisos y auditoría |
 
-### 🔜 Siguiente · v0.8
-- Exportación de conversaciones
+### 🔜 Siguiente · v0.9 – v0.10
 - Plantillas de mensaje para escribir fuera de la ventana de 24 horas
 - Widget embebible para webs de clientes
 

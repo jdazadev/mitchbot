@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, authorize } from '../middleware/auth.middleware';
 import { 
   listConversations, 
   getConversation, 
@@ -12,12 +12,17 @@ import {
   analyzeInsights,
   createConversationContact,
   retryMessageDelivery,
+  exportConversations,
+  exportConversation,
 } from '../controllers/messaging.controller';
 
 const router = Router();
 
 // === Rutas del DASHBOARD (admin/agente) ===
 router.get('/', authenticate, listConversations);                    // Listar conversaciones
+// Exportación (datos personales): solo admin y support. Antes de `/:id` para que `export` no se lea como id.
+router.get('/export', authenticate, authorize('admin', 'support'), exportConversations);
+router.get('/:id/export', authenticate, authorize('admin', 'support'), exportConversation);
 router.get('/:id', authenticate, getConversation);                   // Detalle de conversación
 router.get('/:id/messages', authenticate, listMessages);             // Mensajes de una conversación
 router.post('/:id/messages', authenticate, sendMessage);             // Enviar mensaje como agente (auto-crea contacto)

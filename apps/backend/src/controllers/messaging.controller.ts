@@ -7,6 +7,18 @@ import { getConversationsCollection } from '../models/conversation.model';
 import { getMessagesCollection } from '../models/message.model';
 import { emitToRoom, emitToProject } from '../websocket/socket';
 import { ObjectId } from 'mongodb';
+import { CHANNEL_PLATFORMS, type ChannelPlatform } from '../channels/types';
+import {
+  InvalidExportError,
+  exportFileName,
+  parseFormat,
+  parseRange,
+  type ExportFormat,
+} from '../export/conversation-format';
+import { conversationExportService, type ExportSummary, type ExportWriter } from '../services/conversation-export.service';
+import { analyticsService } from '../services/analytics.service';
+import { projectService } from '../services/project.service';
+import { logger } from '../utils/logger';
 
 /**
  * Lista las conversaciones con lookup al contacto (si existe).
@@ -301,5 +313,119 @@ export const analyzeInsights = async (req: Request, res: Response, next: NextFun
     res.json(insights);
   } catch (error) {
     next(error);
+  }
+};
+
+// =================== Exportación ===================
+
+const CONTENT_TYPES: Record<ExportFormat, string> = {
+  csv: 'text/csv; charset=utf-8',
+  json: 'application/json; charset=utf-8',
+};
+
+/** Escribe en la respuesta respetando la contrapresión; falla si el cliente se fue. */
+function responseWriter(res: Response): ExportWriter {
+  return chunk => new Promise((resolve, reject) => {
+    if (res.destroyed) return reject(new Error('La descarga se canceló'));
+    if (res.write(chunk)) return resolve();
+    res.once('drain', resolve);
+    res.once('close', () => reject(new Error('La descarga se canceló')));
+  });
+}
+
+function startDownload(res: Response, format: ExportFormat, fileName: string) {
+  res.status(200);
+  res.setHeader('Content-Type', CONTENT_TYPES[format]);
+  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+  res.setHeader('Cache-Control', 'no-store');
+  // Para que el panel (otro origen) pueda leer el nombre del archivo.
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+}
+
+/** Deja constancia de quién exportó qué: los archivos contienen datos personales. */
+function trackExport(req: Request, format: ExportFormat, summary: ExportSummary, scope: Record<string, unknown>) {
+  const user = (req as any).user;
+  const projectId = (req as any).projectId as string;
+  void analyticsService.trackActivity({
+    projectId: new ObjectId(projectId),
+    type: 'conversations_exported',
+    title: 'Exportación de conversaciones',
+    detail: `${user?.name || 'Un usuario'} exportó ${summary.messages} mensajes (${format.toUpperCase()})`,
+    icon: 'DownloadSimple',
+    color: 'sky',
+    metadata: { userId: user?._id?.toString(), format, ...summary, ...scope },
+  }).catch(error => logger.warn('[Export] No se pudo registrar la exportación', error));
+}
+
+/** Si el error llega con la descarga empezada solo queda cortarla: el archivo quedaría incompleto. */
+function failExport(res: Response, next: NextFunction, error: unknown) {
+  if (!res.headersSent) return next(error);
+  logger.error(`[Export] Exportación interrumpida: ${(error as Error)?.message || error}`);
+  res.destroy();
+}
+
+/** GET /api/conversations/export — mensajes del rango de todas las conversaciones del proyecto */
+export const exportConversations = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+
+    let format: ExportFormat;
+    let range: { from: Date; to: Date };
+    try {
+      format = parseFormat(req.query.format);
+      range = parseRange(req.query);
+    } catch (error) {
+      if (error instanceof InvalidExportError) return res.status(400).json({ error: error.message });
+      throw error;
+    }
+    const platform = req.query.platform ? String(req.query.platform) : undefined;
+    if (platform && platform !== 'All' && !CHANNEL_PLATFORMS.includes(platform as ChannelPlatform)) {
+      return res.status(400).json({ error: `Canal desconocido: ${platform}` });
+    }
+    const channel = platform && platform !== 'All' ? platform as ChannelPlatform : undefined;
+
+    const project = await projectService.findById(projectId);
+    startDownload(res, format, exportFileName('conversaciones', project?.slug || project?.name, format));
+    const summary = await conversationExportService.exportConversations(
+      format,
+      { projectId, project: { id: projectId, name: project?.name }, range, platform: channel },
+      responseWriter(res),
+    );
+    res.end();
+    trackExport(req, format, summary, { scope: 'range', from: range.from, to: range.to, platform: channel ?? null });
+  } catch (error) {
+    failExport(res, next, error);
+  }
+};
+
+/** GET /api/conversations/:id/export — historial completo de una conversación */
+export const exportConversation = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+
+    let format: ExportFormat;
+    try {
+      format = parseFormat(req.query.format);
+    } catch (error) {
+      if (error instanceof InvalidExportError) return res.status(400).json({ error: error.message });
+      throw error;
+    }
+    const conversation = await conversationExportService.findConversation(projectId, req.params.id);
+    if (!conversation) return res.status(404).json({ error: 'Conversación no encontrada' });
+
+    const project = await projectService.findById(projectId);
+    startDownload(res, format, exportFileName('conversacion', conversation.clientInfo?.name || conversation.clientInfo?.identifier, format));
+    const summary = await conversationExportService.exportConversation(
+      conversation,
+      format,
+      { projectId, project: { id: projectId, name: project?.name } },
+      responseWriter(res),
+    );
+    res.end();
+    trackExport(req, format, summary, { scope: 'conversation', conversationId: req.params.id });
+  } catch (error) {
+    failExport(res, next, error);
   }
 };

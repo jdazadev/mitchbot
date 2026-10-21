@@ -473,6 +473,30 @@
         "pendingHuman": "Pendiente de humano"
       }
     },
+    "export": {
+      "button": "Exportar",
+      "title": "Exportar conversaciones",
+      "conversation": "Exportar esta conversación",
+      "subtitle": "Descarga los mensajes del periodo, agrupados por conversación. No incluye el detalle interno de las herramientas.",
+      "period": "Periodo",
+      "lastDays": "Últimos {days} días",
+      "custom": "Fechas",
+      "from": "Desde",
+      "to": "Hasta",
+      "channel": "Canal",
+      "format": "Formato",
+      "formats": {
+        "csv": "CSV (hoja de cálculo)",
+        "json": "JSON"
+      },
+      "privacy": "El archivo contiene datos personales de tus clientes. La exportación queda registrada en la actividad del proyecto.",
+      "submit": "Descargar",
+      "exporting": "Exportando…",
+      "errors": {
+        "range": "Elige una fecha inicial y una final, y que la inicial no sea posterior.",
+        "failed": "No se pudo exportar. Inténtalo de nuevo."
+      }
+    },
     "delivery": {
       "queued": "Enviando…",
       "sent": "Enviado",
@@ -509,7 +533,8 @@
       "send": "No se pudo enviar el mensaje. Conservamos tu borrador; inténtalo de nuevo.",
       "mode": "No se pudo cambiar el modo de la conversación. Inténtalo de nuevo.",
       "contact": "No se pudo guardar el contacto. Inténtalo de nuevo.",
-      "insights": "No se pudo analizar la conversación. Inténtalo de nuevo."
+      "insights": "No se pudo analizar la conversación. Inténtalo de nuevo.",
+      "export": "No se pudo exportar la conversación."
     },
     "a11y": {
       "incoming": "Nuevo mensaje de {name}: {message}"

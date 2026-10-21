@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "aa35a012-de12-457e-b92b-e90098023502",
+  "receiptId": "309c47b8-e5a2-4a18-b1fd-25b744466489",
   "status": "current",
   "command": "deliver",
   "type": "workflow",
   "input": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/candidate.json",
   "output": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/roadmap.html",
   "specification": {
-    "sha256": "7f7784ce497bd72134fdc9213f0a2fd174adddbab7bfcbe8f657ccce770720d7",
-    "bytes": 6653
+    "sha256": "4f1ce2880b7c465c2fb851d5e7acc3c72fd91e377dd0630f72927326f0888d65",
+    "bytes": 6363
   },
   "artifact": {
-    "sha256": "1295744eb0140075c8fd9f2cd35d2cb9d9ccf3397eaa24fe60ef55d0383b575a",
-    "bytes": 768319
+    "sha256": "e8db2d56afde4c2b3450c143440235b2a791359fe4328b1fecba4f386edbb458",
+    "bytes": 766996
   }
 }
