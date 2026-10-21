@@ -17,6 +17,12 @@
  *   - POST /meta/:version/:accountId/messages -> acepta el envío y devuelve un message_id
  *   - GET  /meta/:version/:igsid             -> perfil `{ name, username }` del cliente
  *
+ *
+ * Plantillas de WhatsApp:
+ *   - GET /meta/:version/:wabaId/message_templates -> catálogo fijo en dos páginas (`paging.next`)
+ *   - Un envío `type: template` se valida contra el catálogo (132001 si no existe, 132000 si
+ *     no cuadran las variables) y se registra con el texto `plantilla:<nombre>|v1|v2…`.
+ *
  * Control (ambos canales):
  *   - GET  /__meta/messages?to=   -> mensajes recibidos (por destinatario)
  *   - POST /__meta/fail           -> { to, code, subcode?, status? }: los envíos a `to` fallan con ese error
@@ -48,6 +54,29 @@ const stats = { chatCompletions: 0, embeddings: 0, models: 0, requests: [] };
 const META_TOKEN = process.env.STUB_META_TOKEN || 'e2e-wa-token';
 const IG_TOKEN = process.env.STUB_IG_TOKEN || 'e2e-ig-token';
 const meta = { sent: [], failures: new Map(), counter: 0 };
+
+/** Catálogo de plantillas de la WABA simulada (`body` = número de variables del cuerpo). */
+const TEMPLATES = [
+  { name: 'bienvenida', language: 'es', status: 'APPROVED', category: 'MARKETING', components: [{ type: 'BODY', text: '¡Hola! Gracias por escribirnos.' }] },
+  { name: 'plantilla_pendiente', language: 'es', status: 'PENDING', category: 'UTILITY', components: [{ type: 'BODY', text: 'Aún en revisión' }] },
+  {
+    name: 'promo_imagen', language: 'es', status: 'APPROVED', category: 'MARKETING',
+    components: [{ type: 'HEADER', format: 'IMAGE' }, { type: 'BODY', text: 'Mira nuestra oferta' }],
+  },
+  {
+    name: 'recordatorio_cita', language: 'es_MX', status: 'APPROVED', category: 'UTILITY', parameter_format: 'NAMED',
+    components: [{ type: 'BODY', text: 'Hola {{nombre}}, te recordamos tu cita del {{fecha}}.', example: { body_text_named_params: [{ param_name: 'nombre', example: 'Ana' }, { param_name: 'fecha', example: 'martes' }] } }],
+  },
+  {
+    name: 'seguimiento_pedido', language: 'es', status: 'APPROVED', category: 'UTILITY',
+    components: [
+      { type: 'BODY', text: 'Hola {{1}}, tu pedido {{2}} está en camino.', example: { body_text: [['Ana', 'A-12']] } },
+      { type: 'FOOTER', text: 'Gracias por tu compra' },
+    ],
+  },
+];
+const templateVariables = (template, type) =>
+  [...new Set([...((template.components.find((c) => c.type === type)?.text || '').matchAll(/\{\{\s*(\w+)\s*\}\}/g))].map((m) => m[1]))];
 
 function log(entry) {
   stats.requests.push({ ...entry, at: new Date().toISOString() });
@@ -366,6 +395,16 @@ const server = http.createServer(async (req, res) => {
     }
     const to = instagram ? body.recipient.id : body.to;
     const failure = meta.failures.get(to);
+    if (!failure && body.type === 'template') {
+      const template = TEMPLATES.find((t) => t.name === body.template?.name && t.language === body.template?.language?.code && t.status === 'APPROVED');
+      if (!template) {
+        return sendJson(res, 404, { error: { message: 'Template name does not exist in the translation', code: 132001 } });
+      }
+      const sentBody = (body.template.components || []).find((c) => c.type === 'body')?.parameters || [];
+      if (sentBody.length !== templateVariables(template, 'BODY').length) {
+        return sendJson(res, 400, { error: { message: 'Number of parameters does not match', code: 132000 } });
+      }
+    }
     if (failure) {
       return sendJson(res, failure.status, {
         error: { message: `Stub: fallo ${failure.code}`, type: 'OAuthException', code: failure.code, error_subcode: failure.subcode },
@@ -373,11 +412,30 @@ const server = http.createServer(async (req, res) => {
     }
     meta.counter += 1;
     const id = instagram ? `mid.stub.${Date.now()}.${meta.counter}` : `wamid.stub.${Date.now()}.${meta.counter}`;
-    const text = instagram ? body.message?.text : body.text?.body;
+    const text = instagram
+      ? body.message?.text
+      : body.type === 'template'
+        ? [`plantilla:${body.template.name}`, ...((body.template.components || []).flatMap((c) => c.parameters.map((p) => p.text)))].join('|')
+        : body.text?.body;
     meta.sent.push({ id, channel: instagram ? 'instagram' : 'whatsapp', phoneNumberId: metaSend[1], to, text, at: new Date().toISOString() });
     if (meta.sent.length > 500) meta.sent.shift();
     if (instagram) return sendJson(res, 200, { recipient_id: to, message_id: id });
     return sendJson(res, 200, { messaging_product: 'whatsapp', contacts: [{ input: body.to, wa_id: body.to }], messages: [{ id }] });
+  }
+
+  const templateList = req.method === 'GET' && url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)\/message_templates$/);
+  if (templateList) {
+    if (req.headers.authorization !== `Bearer ${META_TOKEN}`) {
+      return sendJson(res, 401, { error: { message: 'Invalid OAuth access token.', code: 190 } });
+    }
+    // Dos páginas, como la Graph API cuando hay más plantillas que `limit`.
+    const second = url.searchParams.get('after') === 'p2';
+    const next = new URL(url);
+    next.searchParams.set('after', 'p2');
+    return sendJson(res, 200, {
+      data: second ? TEMPLATES.slice(3) : TEMPLATES.slice(0, 3),
+      ...(second ? {} : { paging: { next: `http://localhost:${PORT}${next.pathname}${next.search}` } }),
+    });
   }
 
   const igProfile = req.method === 'GET' && url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)$/);

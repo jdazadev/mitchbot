@@ -119,6 +119,20 @@ export function describeWhatsAppError(code: unknown, fallback?: string): string 
       return 'El número del cliente no está en la lista de destinatarios permitidos de la app de Meta';
     case 131051:
       return 'WhatsApp no admite este tipo de mensaje';
+    case 132000:
+      return 'El número de variables no coincide con el de la plantilla aprobada';
+    case 132001:
+      return 'La plantilla no existe en ese idioma o todavía no está aprobada';
+    case 132005:
+      return 'El texto de la plantilla con sus variables es demasiado largo';
+    case 132007:
+      return 'El contenido de la plantilla incumple la política de WhatsApp';
+    case 132012:
+      return 'El formato de alguna variable no coincide con el de la plantilla';
+    case 132015:
+      return 'La plantilla está en pausa por su baja calidad';
+    case 132016:
+      return 'La plantilla está deshabilitada por su baja calidad';
     default:
       return fallback ? `WhatsApp rechazó el mensaje${code ? ` (código ${code})` : ''}: ${fallback}` : 'WhatsApp rechazó el mensaje';
   }

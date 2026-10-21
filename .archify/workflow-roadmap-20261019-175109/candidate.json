@@ -40,13 +40,13 @@
   "phases": [
     {
       "id": "entregado",
-      "label": "Entregado · v0.1 – v0.8",
+      "label": "Entregado · v0.1 – v0.9",
       "fromCol": 0,
       "toCol": 3
     },
     {
       "id": "siguiente",
-      "label": "Siguiente · v0.9 – v0.10",
+      "label": "Siguiente · v0.10 – v0.12",
       "fromCol": 4,
       "toCol": 4,
       "variant": "emphasis"
@@ -64,6 +64,7 @@
     "openrouter",
     "herramientas",
     "resiliencia",
+    "sla",
     "v1"
   ],
   "nodes": [
@@ -142,17 +143,8 @@
       "col": 3,
       "type": "backend",
       "label": "WhatsApp + Instagram",
-      "sublabel": "webhooks firmados · leído",
-      "tag": "v0.6 – v0.7",
-      "width": 160
-    },
-    {
-      "id": "plantillas",
-      "lane": "canales",
-      "col": 4,
-      "type": "messagebus",
-      "label": "Plantillas",
-      "sublabel": "fuera de la ventana de 24 h",
+      "sublabel": "webhooks · leído · plantillas",
+      "tag": "v0.6 – v0.9",
       "width": 160
     },
     {
@@ -160,7 +152,7 @@
       "lane": "canales",
       "col": 5,
       "type": "cloud",
-      "label": "CRM + push",
+      "label": "CRM",
       "sublabel": "integraciones externas",
       "width": 150
     },
@@ -195,12 +187,21 @@
     },
     {
       "id": "sla",
-      "lane": "experiencia",
-      "col": 5,
-      "type": "cloud",
+      "lane": "plataforma",
+      "col": 4,
+      "type": "messagebus",
       "label": "Métricas de SLA",
       "sublabel": "tiempos de respuesta",
       "width": 150
+    },
+    {
+      "id": "push",
+      "lane": "canales",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Notificaciones push",
+      "sublabel": "avisos al operador",
+      "width": 160
     }
   ],
   "edges": [
@@ -227,17 +228,6 @@
       "label": "adaptadores"
     },
     {
-      "id": "social-plantillas",
-      "from": "social",
-      "to": "plantillas"
-    },
-    {
-      "id": "plantillas-crm",
-      "from": "plantillas",
-      "to": "crm",
-      "variant": "dashed"
-    },
-    {
       "id": "mvp-web",
       "from": "mvp",
       "to": "web",
@@ -255,19 +245,6 @@
       "to": "aurora"
     },
     {
-      "id": "widget-sla",
-      "from": "widget",
-      "to": "sla",
-      "variant": "dashed"
-    },
-    {
-      "id": "gateway-v1",
-      "from": "resiliencia",
-      "to": "v1",
-      "label": "estabilizar",
-      "variant": "dashed"
-    },
-    {
       "id": "aurora-export",
       "from": "aurora",
       "to": "exportacion"
@@ -278,23 +255,46 @@
       "to": "widget",
       "label": "siguiente",
       "variant": "emphasis"
+    },
+    {
+      "id": "gateway-sla",
+      "from": "resiliencia",
+      "to": "sla",
+      "label": "siguiente",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sla-v1",
+      "from": "sla",
+      "to": "v1"
+    },
+    {
+      "id": "social-push",
+      "from": "social",
+      "to": "push"
+    },
+    {
+      "id": "push-crm",
+      "from": "push",
+      "to": "crm",
+      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "emerald",
-      "title": "Dónde estamos · v0.8.0",
+      "title": "Dónde estamos · v0.9.0",
       "items": [
-        "Web, WhatsApp e Instagram en una sola bandeja, con entrega y lectura visibles",
-        "Exportación de conversaciones a CSV y JSON, con permisos y auditoría"
+        "Web, WhatsApp e Instagram en una bandeja, con entrega, lectura y plantillas para la ventana de 24 h",
+        "Exportación de conversaciones a CSV y JSON con permisos y auditoría"
       ]
     },
     {
       "dot": "violet",
       "title": "Qué falta para la v1.0",
       "items": [
-        "Plantillas de mensaje y widget embebible",
-        "CRM, notificaciones push y métricas de SLA"
+        "Widget embebible, métricas de SLA y notificaciones push",
+        "Integración con un CRM externo"
       ]
     }
   ]

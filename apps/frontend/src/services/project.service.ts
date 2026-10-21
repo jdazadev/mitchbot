@@ -42,6 +42,7 @@ export interface ProjectConfig {
   };
   whatsapp?: {
     phoneNumberId?: string | null;
+    wabaId?: string | null;
   };
   instagram?: {
     accountId?: string | null;

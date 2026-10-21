@@ -14,6 +14,8 @@ export interface Conversation {
   lastMessageAt?: Date;
   unreadCount?: number;
   lastBotMessageAt?: Date;
+  /** Último mensaje del cliente: abre la ventana de 24 h de WhatsApp para mensajes libres. */
+  lastInboundAt?: Date;
   lastWelcomeAt?: Date;
   assignedTo?: string; // ID del agente humano si aplica
   /** Cuenta del canal externo que recibió la conversación; sin ella las respuestas no salen por cola (simulador). */

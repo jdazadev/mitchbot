@@ -497,6 +497,34 @@
         "failed": "No se pudo exportar. Inténtalo de nuevo."
       }
     },
+    "templates": {
+      "title": "Enviar plantilla",
+      "open": "Enviar plantilla",
+      "subtitle": "Plantillas aprobadas en tu cuenta de WhatsApp Business. Se envían aunque hayan pasado 24 horas desde el último mensaje del cliente.",
+      "subtitleClosed": "Han pasado más de 24 horas desde el último mensaje del cliente: WhatsApp solo permite escribirle con una plantilla aprobada.",
+      "windowClosed": "Han pasado más de 24 horas desde el último mensaje del cliente. Para retomar la conversación, envía una plantilla aprobada.",
+      "loading": "Cargando plantillas…",
+      "search": "Buscar plantillas",
+      "refresh": "Actualizar plantillas",
+      "empty": "No hay plantillas aprobadas en la cuenta de WhatsApp Business. Créalas en el Administrador de WhatsApp de Meta.",
+      "noResults": "Ninguna plantilla coincide con la búsqueda.",
+      "unsupported": "No compatible: {reason}",
+      "back": "Elegir otra plantilla",
+      "variable": {
+        "header": "Cabecera · {'{{'}{key}{'}}'}",
+        "body": "Variable {'{{'}{key}{'}}'}"
+      },
+      "example": "Ej. {example}",
+      "noVariables": "Esta plantilla no tiene variables.",
+      "preview": "Vista previa",
+      "send": "Enviar plantilla",
+      "sending": "Enviando…",
+      "label": "Plantilla · {name}",
+      "errors": {
+        "load": "No se pudieron cargar las plantillas.",
+        "send": "No se pudo enviar la plantilla."
+      }
+    },
     "delivery": {
       "queued": "Enviando…",
       "sent": "Enviado",
@@ -700,7 +728,11 @@
         "accountPlaceholder": "Ej. 106540352242922",
         "accountHint": "Lo encuentras en Meta → WhatsApp → Configuración de la API. Déjalo vacío para desconectar el número.",
         "accountInvalid": "El Phone Number ID solo contiene dígitos.",
-        "webhookHint": "Regístrala en Meta con el token de verificación de WHATSAPP_VERIFY_TOKEN y suscríbete al campo messages. Meta necesita que sea pública y HTTPS."
+        "webhookHint": "Regístrala en Meta con el token de verificación de WHATSAPP_VERIFY_TOKEN y suscríbete al campo messages. Meta necesita que sea pública y HTTPS.",
+        "wabaLabel": "ID de la cuenta de WhatsApp Business (WABA)",
+        "wabaPlaceholder": "Ej. 102290129340398",
+        "wabaHint": "Opcional. Lo necesitan las plantillas; lo encuentras en Meta → WhatsApp → Configuración de la API. Si lo dejas vacío se usa WHATSAPP_WABA_ID del servidor.",
+        "wabaInvalid": "El ID de la cuenta de WhatsApp Business solo contiene dígitos."
       },
       "instagram": {
         "serverReady": "El servidor tiene Instagram conectado.",

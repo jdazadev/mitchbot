@@ -47,6 +47,8 @@ const envSchema = z.object({
   WHATSAPP_TOKEN: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
   WHATSAPP_APP_SECRET: z.string().optional(),
+  // WABA por defecto para las plantillas, si el proyecto no define la suya
+  WHATSAPP_WABA_ID: z.string().regex(/^\d{5,25}$/).optional().or(z.literal('').transform(() => undefined)),
   WHATSAPP_API_URL: z.string().url().default('https://graph.facebook.com'),
   WHATSAPP_API_VERSION: z.string().regex(/^v\d+\.\d+$/).default('v21.0'),
   // Instagram Messaging API: mismo esquema que WhatsApp. graph.instagram.com (Instagram Login)

@@ -34,6 +34,8 @@ export interface OutboundMessage {
   /** Cuenta del canal desde la que se responde: la que recibió el mensaje del cliente. */
   account?: string;
   text: string;
+  /** Plantilla de WhatsApp: el adaptador la envía en lugar del texto libre. */
+  template?: import('../models/message.model').MessageTemplate;
 }
 
 export interface ChannelAdapter {

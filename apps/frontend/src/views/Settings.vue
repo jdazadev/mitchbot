@@ -171,7 +171,11 @@ const savedChannelsJson = ref('');
 const savedOptionsJson = ref('');
 
 const channelsSnapshot = () =>
-  JSON.stringify({ enabled: channels.value.map((c) => c.enabled), accounts: { whatsapp: channelAccounts.value.whatsapp.trim(), instagram: channelAccounts.value.instagram.trim() } });
+  JSON.stringify({
+    enabled: channels.value.map((c) => c.enabled),
+    accounts: { whatsapp: channelAccounts.value.whatsapp.trim(), instagram: channelAccounts.value.instagram.trim() },
+    wabaId: whatsAppWaba.value.trim(),
+  });
 const isChannelsDirty = computed(() => channelsSnapshot() !== savedChannelsJson.value);
 const isOptionsDirty = computed(() => JSON.stringify(optionsForm.value) !== savedOptionsJson.value);
 
@@ -235,6 +239,9 @@ const channels = ref([
 /** Cuentas de Meta del proyecto (Phone Number ID, ID de la cuenta de Instagram); vacío = desconectada. */
 const channelAccounts = ref<Record<MetaChannel, string>>({ whatsapp: '', instagram: '' });
 const channelsStatus = ref<ChannelsStatus | null>(null);
+/** Cuenta de WhatsApp Business: de ella salen las plantillas aprobadas. */
+const whatsAppWaba = ref('');
+const wabaInvalid = computed(() => !!whatsAppWaba.value.trim() && !isValidAccountId(whatsAppWaba.value));
 const webhookUrls: Record<MetaChannel, string> = {
   whatsapp: channelWebhookUrl('whatsapp'),
   instagram: channelWebhookUrl('instagram'),
@@ -287,6 +294,7 @@ onMounted(async () => {
         whatsapp: projectData.config?.whatsapp?.phoneNumberId || '',
         instagram: projectData.config?.instagram?.accountId || '',
       };
+      whatsAppWaba.value = projectData.config?.whatsapp?.wabaId || '';
       if (projectData.config?.options) {
         optionsForm.value.autoCreateContact = projectData.config.options.autoCreateContact ?? true;
       }
@@ -473,6 +481,7 @@ async function handleSaveChannels() {
     (channel) => channelAccounts.value[channel].trim() && !isValidAccountId(channelAccounts.value[channel])
   );
   if (invalid) return showErrorMsg(t(`settings.channels.${invalid}.accountInvalid`));
+  if (wabaInvalid.value) return showErrorMsg(t('settings.channels.whatsapp.wabaInvalid'));
   saving.value = true;
   try {
     const accountOf = (channel: MetaChannel) => channelAccounts.value[channel].trim() || null;
@@ -484,7 +493,7 @@ async function handleSaveChannels() {
           instagram: channels.value[1].enabled,
           web: channels.value[2].enabled,
         },
-        whatsapp: { phoneNumberId: accountOf('whatsapp') },
+        whatsapp: { phoneNumberId: accountOf('whatsapp'), wabaId: whatsAppWaba.value.trim() || null },
         instagram: { accountId: accountOf('instagram') },
       },
     });
@@ -1061,7 +1070,26 @@ async function handleSaveOptions() {
                 :webhook-url="webhookUrls[channel.key]"
                 @copied="showSuccessMsg(t('settings.toasts.linkCopied'))"
                 @copy-failed="showErrorMsg(t('settings.errors.copyLink'))"
-              />
+              >
+                <template v-if="channel.key === 'whatsapp'" #extra>
+                  <div class="flex flex-col gap-1.5">
+                    <label for="whatsapp-waba" class="text-xs font-semibold text-ink-2">{{ t('settings.channels.whatsapp.wabaLabel') }}</label>
+                    <input
+                      id="whatsapp-waba"
+                      v-model="whatsAppWaba"
+                      class="field"
+                      inputmode="numeric"
+                      autocomplete="off"
+                      :placeholder="t('settings.channels.whatsapp.wabaPlaceholder')"
+                      :aria-invalid="wabaInvalid"
+                      aria-describedby="whatsapp-waba-hint"
+                    />
+                    <p id="whatsapp-waba-hint" class="text-xs" :class="wabaInvalid ? 'text-[color:var(--danger)]' : 'text-ink-3'">
+                      {{ wabaInvalid ? t('settings.channels.whatsapp.wabaInvalid') : t('settings.channels.whatsapp.wabaHint') }}
+                    </p>
+                  </div>
+                </template>
+              </ChannelConnection>
             </div>
           </div>
         </div>

@@ -24,6 +24,8 @@ import AButton from "../components/ui/AButton.vue";
 import AModal from "../components/ui/AModal.vue";
 import ADropdown from "../components/ui/ADropdown.vue";
 import ExportDialog from "../components/messaging/ExportDialog.vue";
+import TemplatePicker from "../components/messaging/TemplatePicker.vue";
+import { isWindowClosed } from "../lib/templates";
 import { authService } from "../services/auth.service";
 import AEmptyState from "../components/ui/AEmptyState.vue";
 import { renderMarkdown } from "../lib/markdown";
@@ -60,6 +62,29 @@ const actionError = ref<string | null>(null);
 // Exportación: contiene datos personales, solo para admin y support (el backend lo exige igual).
 const canExport = computed(() => ["admin", "support"].includes(authService.getUser()?.role || ""));
 const showExportDialog = ref(false);
+
+// === Plantillas de WhatsApp y ventana de 24 h ===
+const showTemplatePicker = ref(false);
+/** Reloj para que la ventana se cierre en pantalla sin recargar. */
+const now = ref(Date.now());
+const clock = window.setInterval(() => (now.value = Date.now()), 60_000);
+onUnmounted(() => window.clearInterval(clock));
+
+/** Solo las conversaciones reales de WhatsApp (con número) admiten plantillas; el simulador no. */
+const canSendTemplate = computed(() => selectedChat.value?.platform === "WhatsApp" && !!selectedChat.value?.channelAccount);
+const windowClosed = computed(() => canSendTemplate.value && isWindowClosed(selectedChat.value?.lastInboundAt, now.value));
+/** La entrega falló por la ventana de 24 h: el motivo del backend lo menciona. */
+const failedByWindow = (msg: ChatMessage) =>
+  canSendTemplate.value && msg.delivery?.status === "failed" && /24 horas/.test(msg.delivery.error || "");
+
+function onTemplateSent(message: ChatMessage) {
+  if (!selectedChat.value) return;
+  const processed = processMessage(message, selectedChat.value);
+  if (!messages.value.find((m) => m._id === processed._id)) {
+    messages.value.push(processed);
+    scrollToBottom();
+  }
+}
 const exportingConversation = ref(false);
 
 async function exportCurrentConversation(format: "csv" | "json") {
@@ -645,6 +670,8 @@ function onNewMessage(msg: ChatMessage) {
       existingMsg.content = processed.content;
     }
     if (msg.sender === "contact") {
+      // El cliente escribió: se reabre la ventana de 24 h.
+      selectedChat.value.lastInboundAt = msg.createdAt;
       liveAnnouncement.value = t("messaging.a11y.incoming", {
         name: selectedChat.value.name || "",
         message: (msg.content || "").slice(0, 140),
@@ -1489,6 +1516,13 @@ onUnmounted(() => {
                       <span class="dot-pulse h-1.5 w-1.5 rounded-full bg-current" style="animation-delay: 150ms" />
                       <span class="dot-pulse h-1.5 w-1.5 rounded-full bg-current" style="animation-delay: 300ms" />
                     </span>
+                    <span v-else-if="msg.contentType === 'template'" class="flex flex-col gap-1.5">
+                      <span class="inline-flex items-center gap-1 text-[10.5px] font-bold uppercase tracking-wide opacity-70" data-testid="template-label">
+                        <AIcon name="Notepad" :size="12" />
+                        {{ t("messaging.templates.label", { name: msg.template?.name || "" }) }}
+                      </span>
+                      <span class="whitespace-pre-line">{{ msg.content }}</span>
+                    </span>
                     <span v-else v-html="renderMarkdown(msg.content)" />
                   </ABubble>
                   <DeliveryStatus
@@ -1499,6 +1533,15 @@ onUnmounted(() => {
                     :retry-error="deliveryRetries[msg._id] === 'error'"
                     @retry="retryDelivery(msg)"
                   />
+                  <button
+                    v-if="failedByWindow(msg)"
+                    type="button"
+                    class="-mt-1 inline-flex items-center gap-1.5 self-end rounded-full bg-lime-soft px-3 py-1 text-[11px] font-bold text-lime-ink hover:opacity-90"
+                    @click="showTemplatePicker = true"
+                  >
+                    <AIcon name="Notepad" :size="13" />
+                    {{ t("messaging.templates.open") }}
+                  </button>
                 </template>
               </template>
             </div>
@@ -1523,7 +1566,24 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <footer class="flex flex-none items-center gap-2.5 border-t-[1.5px] border-line px-5 py-3.5">
+        <footer
+          v-if="windowClosed"
+          role="status"
+          class="flex flex-none flex-wrap items-center gap-3 border-t-[1.5px] border-line bg-butter-soft px-5 py-3.5"
+          data-testid="whatsapp-window-closed"
+        >
+          <AIcon name="Clock" :size="18" class="shrink-0 text-butter-ink" />
+          <span class="min-w-0 flex-1 text-[12.5px] font-medium text-butter-ink">{{ t("messaging.templates.windowClosed") }}</span>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-full bg-ink-solid px-4 py-2 text-xs font-semibold text-ink-contrast"
+            @click="showTemplatePicker = true"
+          >
+            <AIcon name="Notepad" :size="15" />
+            {{ t("messaging.templates.open") }}
+          </button>
+        </footer>
+        <footer v-else class="flex flex-none items-center gap-2.5 border-t-[1.5px] border-line px-5 py-3.5">
           <label class="sr-only" for="message-composer">{{ t("messaging.composer.sendPlaceholder") }}</label>
           <input
             id="message-composer"
@@ -1533,6 +1593,17 @@ onUnmounted(() => {
             :placeholder="t('messaging.composer.sendPlaceholder')"
             @keydown.enter.prevent="handleSendMessage"
           />
+          <button
+            v-if="canSendTemplate"
+            type="button"
+            class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-canvas text-ink-2 transition-colors hover:bg-sunken hover:text-ink"
+            data-testid="open-templates"
+            :aria-label="t('messaging.templates.open')"
+            :title="t('messaging.templates.open')"
+            @click="showTemplatePicker = true"
+          >
+            <AIcon name="Notepad" :size="16" />
+          </button>
           <button
             type="button"
             :disabled="isUpdatingMode"
@@ -1831,6 +1902,15 @@ onUnmounted(() => {
         </div>
       </div>
     </AModal>
+
+    <TemplatePicker
+      v-if="canSendTemplate && selectedChat"
+      :open="showTemplatePicker"
+      :conversation-id="selectedChat._id"
+      :window-closed="windowClosed"
+      @close="showTemplatePicker = false"
+      @sent="onTemplateSent"
+    />
 
     <ExportDialog
       v-if="canExport"

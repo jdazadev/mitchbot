@@ -5,6 +5,49 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.9.0 — 2026-10-21
+
+> **Plantillas de WhatsApp**: pasadas las 24 horas desde el último mensaje del cliente, el operador retoma la conversación con una plantilla aprobada, con sus variables y vista previa
+
+### ✨ Añadido
+- **Catálogo** (OpenSpec `add-whatsapp-templates`): `GET /api/project/whatsapp/templates` lista las plantillas **aprobadas** de la WABA del proyecto.
+  - Sigue la paginación de la Graph API y guarda el resultado en una caché de 5 minutos (`?refresh=1` la ignora).
+  - Admite variables posicionales (`{{1}}`) y con nombre (`{{nombre}}`), con los ejemplos que guarda Meta.
+  - Marca como no compatibles, con el motivo, las plantillas con cabecera multimedia, con botones de URL variable o de código, las de autenticación y las de carrusel.
+- **Envío**: `POST /api/conversations/:id/template` `{ name, language, parameters: { header?, body } }`.
+  - **Validación**: solo conversaciones reales de WhatsApp (409 en Web y en el simulador); 404 si la plantilla no existe o no está aprobada; 409 si no es compatible; 400 si faltan variables o tienen saltos de línea o tabuladores.
+  - **Registro**: el mensaje se guarda como `contentType: 'template'`, con el texto que verá el cliente y `template { name, language, components }`.
+  - **Entrega**: sale por la cola de WhatsApp como `type: template`, con los mismos reintentos y estados de entrega.
+- **WABA por proyecto**: `project.config.whatsapp.wabaId` (en Configuración → Canales, junto al número), con `WHATSAPP_WABA_ID` como valor por defecto del servidor. Sin ninguno de los dos, el catálogo responde 409 y explica cómo configurarlo.
+- **Ventana de 24 h**: la conversación guarda `lastInboundAt` con la hora en que escribió el cliente según el canal (nunca una fecha futura). Con la ventana cerrada, el hilo sustituye el compositor por un aviso con **Enviar plantilla**. Con la ventana abierta, la plantilla es una opción más del compositor, y también aparece junto a los mensajes que fallaron por la ventana.
+- **`TemplatePicker.vue`**: búsqueda, actualización, plantillas no compatibles deshabilitadas con su motivo, un campo por variable con su ejemplo, vista previa en vivo y errores en línea. En el hilo, las plantillas se muestran con la etiqueta "Plantilla · nombre".
+- **Errores de plantilla de Meta** (`132000`, `132001`, `132005`, `132007`, `132012`, `132015`, `132016`): son permanentes y llegan con un motivo legible.
+- Claves i18n `messaging.templates.*` y `settings.channels.whatsapp.waba*` (es/en). Iconos `Notepad`.
+
+### 🔧 Cambiado
+- **Las plantillas cuentan como mensajes del operador**: `isCustomerFacing` las entrega, la exportación las incluye y la memoria del bot las ve.
+- **Hoja de ruta**: las plantillas pasan a "Entregado · v0.1 – v0.9". "Siguiente · v0.10 – v0.12" queda con widget, SLA y push, y "Hacia v1.0" con el CRM.
+
+### ✅ Pruebas
+- **Unitarios**:
+  - Backend (**87**): variables, parser y compatibilidad, validación, render, componentes posicionales y con nombre, payload `type: template`, paginación del catálogo y motivos de los errores 132xxx.
+  - Frontend (**48**): vista previa, ventana de 24 h y `TemplatePicker` (envío, plantillas no compatibles, reintento de carga y error de envío).
+- **Integración** (**69/69**, 1 omitida). `whatsapp-templates.test.ts` cubre:
+  - catálogo y caché;
+  - 409 sin WABA;
+  - envío por la cola;
+  - validaciones sin crear mensajes;
+  - `lastInboundAt` con la hora del canal.
+- **E2E** (**86/86** en dos corridas completas). `whatsapp-templates.spec.ts` (6), contra la Graph API simulada con catálogo paginado, cubre:
+  - catálogo y 409;
+  - envío desde el hilo con vista previa y entrega;
+  - ventana cerrada por un mensaje de hace 26 h;
+  - validaciones de la API y rechazo de Meta (`132015`);
+  - WABA en Configuración.
+- Paridad es/en **778/778**; backend `tsc --noEmit` y frontend `vue-tsc` y `build` en verde.
+
+---
+
 ## v0.8.0 — 2026-10-21
 
 > **Exportación de conversaciones**: una conversación o un periodo completo a CSV o JSON, desde el hilo o la bandeja, con un CSV seguro para hojas de cálculo, permisos y registro de cada exportación

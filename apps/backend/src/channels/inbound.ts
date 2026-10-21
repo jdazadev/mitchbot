@@ -39,7 +39,7 @@ export async function receive(inbound: InboundMessage, target?: { conversationId
       inbound.text,
       'contact',
       inbound.sender.name,
-      { external },
+      { external, receivedAt: inbound.receivedAt },
     );
     return { message };
   }
@@ -53,6 +53,7 @@ export async function receive(inbound: InboundMessage, target?: { conversationId
     projectId: inbound.projectId,
     external,
     channelAccount: inbound.account,
+    receivedAt: inbound.receivedAt,
   });
 }
 

@@ -11,6 +11,8 @@ test('solo se entregan respuestas y confirmaciones con contenido', () => {
   assert.equal(isCustomerFacing({ sender: 'tool', contentType: 'tool_call', content: 'x' }), false);
   assert.equal(isCustomerFacing({ sender: 'contact', contentType: 'text', content: 'Hola' }), false);
   assert.equal(isCustomerFacing({ sender: 'ai_agent', contentType: 'text', content: '  ' }), false);
+  assert.equal(isCustomerFacing({ sender: 'human_agent', contentType: 'template', content: 'Hola Ana' }), true);
+  assert.equal(isCustomerFacing({ sender: 'ai_agent', contentType: 'template', content: 'Hola Ana' }), false);
 });
 
 test('nextDelay crece de forma exponencial con tope', () => {

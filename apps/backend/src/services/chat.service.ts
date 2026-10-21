@@ -150,6 +150,7 @@ export const chatService = {
     projectId?: string;
     external?: Message['external'];
     channelAccount?: string;
+    receivedAt?: Date;
   }) {
     const conversationsColl = getConversationsCollection();
 
@@ -190,7 +191,7 @@ export const chatService = {
         data.initialMessage,
         'contact',
         data.clientName || 'Cliente',
-        { external: data.external }
+        { external: data.external, receivedAt: data.receivedAt }
       );
       return { conversation: existingConversation, message, isNew: false };
     }
@@ -234,7 +235,7 @@ export const chatService = {
       data.initialMessage,
       'contact',
       data.clientName || 'Cliente',
-      { external: data.external }
+      { external: data.external, receivedAt: data.receivedAt }
     );
 
     try {
@@ -251,7 +252,7 @@ export const chatService = {
     content: string,
     sender: 'contact' | 'ai_agent' | 'human_agent',
     senderName?: string,
-    options?: { external?: Message['external'] }
+    options?: { external?: Message['external']; template?: Message['template']; receivedAt?: Date }
   ) {
     const messagesColl = getMessagesCollection();
     const conversationsColl = getConversationsCollection();
@@ -268,9 +269,10 @@ export const chatService = {
       sender,
       senderName: senderName || defaultNames[sender] || 'Unknown',
       content,
-      contentType: 'text',
+      contentType: options?.template ? 'template' : 'text',
       isBot: sender === 'ai_agent',
       ...(options?.external ? { external: options.external } : {}),
+      ...(options?.template ? { template: options.template } : {}),
       createdAt: new Date(),
     };
 
@@ -293,6 +295,11 @@ export const chatService = {
     };
     if (sender === 'ai_agent') {
       updateSet.lastBotMessageAt = new Date();
+    }
+    if (sender === 'contact') {
+      // La ventana de 24 h de WhatsApp cuenta desde que el cliente escribió (hora del canal), nunca en el futuro.
+      const sentAt = options?.receivedAt && options.receivedAt < newMessage.createdAt ? options.receivedAt : newMessage.createdAt;
+      updateSet.lastInboundAt = sentAt;
     }
 
     const conversationUpdate: any = { $set: updateSet };

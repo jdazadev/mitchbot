@@ -61,6 +61,9 @@ async function copyWebhook() {
       </p>
     </div>
 
+    <!-- Campos propios del canal (p. ej. la WABA de WhatsApp para las plantillas) -->
+    <slot name="extra" />
+
     <div class="flex flex-col gap-1.5">
       <label :for="`${channel}-webhook`" class="text-xs font-semibold text-ink-2">{{ t('settings.channels.webhookLabel') }}</label>
       <div class="flex flex-wrap items-center gap-2.5">

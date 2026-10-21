@@ -19,6 +19,8 @@ import { conversationExportService, type ExportSummary, type ExportWriter } from
 import { analyticsService } from '../services/analytics.service';
 import { projectService } from '../services/project.service';
 import { logger } from '../utils/logger';
+import { TemplateError, templateService } from '../services/template.service';
+import { z } from 'zod';
 
 /**
  * Lista las conversaciones con lookup al contacto (si existe).
@@ -427,5 +429,32 @@ export const exportConversation = async (req: Request, res: Response, next: Next
     trackExport(req, format, summary, { scope: 'conversation', conversationId: req.params.id });
   } catch (error) {
     failExport(res, next, error);
+  }
+};
+
+// =================== Plantillas de WhatsApp ===================
+
+const sendTemplateSchema = z.object({
+  name: z.string().min(1),
+  language: z.string().min(1),
+  parameters: z.object({
+    header: z.array(z.string().max(1024)).optional(),
+    body: z.array(z.string().max(1024)).optional(),
+  }).default({}),
+});
+
+/** POST /api/conversations/:id/template — envía una plantilla aprobada */
+export const sendConversationTemplate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
+    const parsed = sendTemplateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Plantilla o variables inválidas' });
+    const user = (req as any).user;
+    const message = await templateService.send(projectId, req.params.id, parsed.data, user?.name);
+    res.status(201).json(message);
+  } catch (error) {
+    if (error instanceof TemplateError) return res.status(error.status).json({ error: error.message });
+    next(error);
   }
 };

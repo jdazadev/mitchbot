@@ -28,6 +28,8 @@ export interface Project {
     // Número de WhatsApp Business que atiende el proyecto; las credenciales vienen del entorno
     whatsapp?: {
       phoneNumberId?: string | null;
+      /** Cuenta de WhatsApp Business del número: de ella salen las plantillas aprobadas. */
+      wabaId?: string | null;
     };
     // ID de la cuenta profesional de Instagram que atiende el proyecto
     instagram?: {

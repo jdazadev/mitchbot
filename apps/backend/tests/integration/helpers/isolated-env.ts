@@ -21,3 +21,4 @@ process.env.INSTAGRAM_VERIFY_TOKEN = 'integration-ig-verify';
 // Sin tokens reales: las pruebas nunca llaman a Meta con las credenciales del `.env`.
 process.env.WHATSAPP_TOKEN = '';
 process.env.INSTAGRAM_TOKEN = '';
+process.env.WHATSAPP_WABA_ID = '';

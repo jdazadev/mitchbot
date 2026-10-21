@@ -11,7 +11,8 @@ export type MessageContentType =
   | 'emoji'
   | 'tool_call'
   | 'tool_result'
-  | 'confirmation_request';
+  | 'confirmation_request'
+  | 'template';
 
 export interface MessageToolData {
   toolName: string;
@@ -40,8 +41,22 @@ export interface Message {
   external?: { platform: ChannelPlatform; messageId: string };
   /** Entrega en canales externos (los mensajes Web no lo llevan). */
   delivery?: MessageDelivery;
+  /** Plantilla de WhatsApp enviada; `content` guarda el texto ya rellenado que ve el cliente. */
+  template?: MessageTemplate;
   readAt?: Date;
   createdAt: Date;
+}
+
+export interface MessageTemplate {
+  name: string;
+  language: string;
+  /** Componentes con sus parámetros, tal como los espera la Cloud API. */
+  components: MetaTemplateComponent[];
+}
+
+export interface MetaTemplateComponent {
+  type: 'header' | 'body';
+  parameters: { type: 'text'; text: string; parameter_name?: string }[];
 }
 
 export interface MessageDelivery {

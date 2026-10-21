@@ -497,6 +497,34 @@
         "failed": "Couldn't export. Please try again."
       }
     },
+    "templates": {
+      "title": "Send template",
+      "open": "Send template",
+      "subtitle": "Templates approved in your WhatsApp Business account. They can be sent even more than 24 hours after the customer's last message.",
+      "subtitleClosed": "More than 24 hours have passed since the customer's last message: WhatsApp only allows approved templates.",
+      "windowClosed": "More than 24 hours have passed since the customer's last message. Send an approved template to resume the conversation.",
+      "loading": "Loading templates…",
+      "search": "Search templates",
+      "refresh": "Refresh templates",
+      "empty": "There are no approved templates in the WhatsApp Business account. Create them in Meta's WhatsApp Manager.",
+      "noResults": "No template matches the search.",
+      "unsupported": "Not supported: {reason}",
+      "back": "Choose another template",
+      "variable": {
+        "header": "Header · {'{{'}{key}{'}}'}",
+        "body": "Variable {'{{'}{key}{'}}'}"
+      },
+      "example": "E.g. {example}",
+      "noVariables": "This template has no variables.",
+      "preview": "Preview",
+      "send": "Send template",
+      "sending": "Sending…",
+      "label": "Template · {name}",
+      "errors": {
+        "load": "Couldn't load the templates.",
+        "send": "Couldn't send the template."
+      }
+    },
     "delivery": {
       "queued": "Sending…",
       "sent": "Sent",
@@ -700,7 +728,11 @@
         "accountPlaceholder": "E.g. 106540352242922",
         "accountHint": "Find it in Meta → WhatsApp → API Setup. Leave it empty to disconnect the number.",
         "accountInvalid": "The Phone Number ID only contains digits.",
-        "webhookHint": "Register it in Meta with the WHATSAPP_VERIFY_TOKEN verify token and subscribe to the messages field. Meta requires a public HTTPS URL."
+        "webhookHint": "Register it in Meta with the WHATSAPP_VERIFY_TOKEN verify token and subscribe to the messages field. Meta requires a public HTTPS URL.",
+        "wabaLabel": "WhatsApp Business account ID (WABA)",
+        "wabaPlaceholder": "E.g. 102290129340398",
+        "wabaHint": "Optional. Templates need it; find it in Meta → WhatsApp → API Setup. If empty, the server's WHATSAPP_WABA_ID is used.",
+        "wabaInvalid": "The WhatsApp Business account ID only contains digits."
       },
       "instagram": {
         "serverReady": "The server has Instagram connected.",

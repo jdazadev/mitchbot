@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { projectService } from '../services/project.service';
 import { userService } from '../services/user.service';
 import { z } from 'zod';
+import { TemplateError, templateService } from '../services/template.service';
 import { whatsAppServerStatus } from '../channels/whatsapp';
 import { instagramServerStatus } from '../channels/instagram';
 import { isAccountTaken, type MetaChannel } from '../channels/meta/routing';
@@ -130,6 +131,7 @@ const updateProjectSchema = z.object({
     }).optional(),
     whatsapp: z.object({
       phoneNumberId: accountId('El Phone Number ID solo contiene dígitos'),
+      wabaId: accountId('El ID de la cuenta de WhatsApp Business solo contiene dígitos'),
     }).optional(),
     instagram: z.object({
       accountId: accountId('El ID de la cuenta de Instagram solo contiene dígitos'),
@@ -206,4 +208,16 @@ export const setActiveProject = async (req: Request, res: Response, next: NextFu
 /** Qué canales externos tiene conectados el servidor; nunca devuelve credenciales. */
 export const getChannelsStatus = (_req: Request, res: Response) => {
   res.json({ whatsapp: whatsAppServerStatus(), instagram: instagramServerStatus() });
+};
+
+/** GET /api/project/whatsapp/templates — plantillas aprobadas de la WABA del proyecto */
+export const listWhatsAppTemplates = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(404).json({ error: 'No hay proyecto configurado' });
+    res.json(await templateService.list(projectId, req.query.refresh === '1'));
+  } catch (error) {
+    if (error instanceof TemplateError) return res.status(error.status).json({ error: error.message });
+    next(error);
+  }
 };

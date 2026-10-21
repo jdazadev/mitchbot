@@ -9,6 +9,7 @@ const MAX_DELAY_MS = 60_000;
 export function isCustomerFacing(message: Pick<Message, 'sender' | 'contentType' | 'content'>): boolean {
   if (!message.content?.trim()) return false;
   if (message.contentType === 'confirmation_request') return true;
+  if (message.contentType === 'template') return message.sender === 'human_agent';
   return (message.sender === 'ai_agent' || message.sender === 'human_agent') && message.contentType === 'text';
 }
 

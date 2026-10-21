@@ -1,5 +1,6 @@
 import { authService } from './auth.service';
 import { fileNameFromDisposition } from '../lib/download';
+import type { TemplateParameters, WhatsAppTemplate } from '../lib/templates';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -51,7 +52,8 @@ export interface ChatMessage {
   sender: 'contact' | 'ai_agent' | 'human_agent' | 'tool';
   senderName: string;
   content: string;
-  contentType: 'text' | 'image' | 'file' | 'emoji' | 'tool_call' | 'tool_result' | 'confirmation_request';
+  contentType: 'text' | 'image' | 'file' | 'emoji' | 'tool_call' | 'tool_result' | 'confirmation_request' | 'template';
+  template?: { name: string; language: string };
   isBot: boolean;
   confidence?: string;
   toolData?: MessageToolData;
@@ -88,6 +90,10 @@ export interface ChatConversation {
   tag?: string;
   tagColor?: string;
   isContactCreated?: boolean;
+  /** Cuenta del canal externo; sin ella la conversación es del simulador. */
+  channelAccount?: string;
+  /** Último mensaje del cliente (ventana de 24 h de WhatsApp). */
+  lastInboundAt?: string;
   clientInfo?: {
     name?: string;
     phone?: string;
@@ -216,6 +222,31 @@ export const messagingService = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to retry message');
+    return data;
+  },
+
+  /** Plantillas aprobadas de la WABA del proyecto. */
+  async listTemplates(refresh = false): Promise<WhatsAppTemplate[]> {
+    const res = await fetch(`${API_URL}/project/whatsapp/templates${refresh ? '?refresh=1' : ''}`, {
+      headers: authService.getHeaders(),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'No se pudieron cargar las plantillas');
+    return data;
+  },
+
+  /** Envía una plantilla a la conversación; devuelve el mensaje creado. */
+  async sendTemplate(
+    conversationId: string,
+    template: { name: string; language: string; parameters: TemplateParameters },
+  ): Promise<ChatMessage> {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}/template`, {
+      method: 'POST',
+      headers: authService.getHeaders(),
+      body: JSON.stringify(template),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'No se pudo enviar la plantilla');
     return data;
   },
 

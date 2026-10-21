@@ -14,6 +14,7 @@ import {
   retryMessageDelivery,
   exportConversations,
   exportConversation,
+  sendConversationTemplate,
 } from '../controllers/messaging.controller';
 
 const router = Router();
@@ -26,6 +27,7 @@ router.get('/:id/export', authenticate, authorize('admin', 'support'), exportCon
 router.get('/:id', authenticate, getConversation);                   // Detalle de conversación
 router.get('/:id/messages', authenticate, listMessages);             // Mensajes de una conversación
 router.post('/:id/messages', authenticate, sendMessage);             // Enviar mensaje como agente (auto-crea contacto)
+router.post('/:id/template', authenticate, sendConversationTemplate);  // Enviar plantilla de WhatsApp
 router.post('/:id/messages/:messageId/retry', authenticate, retryMessageDelivery); // Reencolar una entrega fallida
 router.put('/:id/mode', authenticate, updateMode);                   // Cambiar modo (auto_pilot / human_takeover)
 router.put('/:id/status', authenticate, updateStatus);               // Cambiar estado (active / closed)

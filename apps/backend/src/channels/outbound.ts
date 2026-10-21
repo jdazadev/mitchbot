@@ -179,6 +179,7 @@ export async function processDelivery(job: Job<DeliveryJob>, token?: string) {
       recipient: conversation.clientInfo.identifier,
       account: conversation.channelAccount,
       text: message.content,
+      template: message.template,
     });
     if (breaker.state !== 'closed' || breaker.failures > 0) await saveBreaker(platform, CLOSED);
     await setDelivery(conversationId, messageId, { status: 'sent', attempts, externalId, updatedAt: new Date() });

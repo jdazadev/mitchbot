@@ -54,8 +54,16 @@ export function createWhatsAppAdapter(options: WhatsAppAdapterOptions): ChannelA
             messaging_product: 'whatsapp',
             recipient_type: 'individual',
             to: message.recipient,
-            type: 'text',
-            text: { preview_url: false, body: message.text.slice(0, MAX_TEXT_LENGTH) },
+            ...(message.template
+              ? {
+                  type: 'template',
+                  template: {
+                    name: message.template.name,
+                    language: { code: message.template.language },
+                    components: message.template.components,
+                  },
+                }
+              : { type: 'text', text: { preview_url: false, body: message.text.slice(0, MAX_TEXT_LENGTH) } }),
           }),
           signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         });

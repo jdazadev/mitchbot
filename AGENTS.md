@@ -14,7 +14,40 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.8.0
+**Versión actual del proyecto:** v0.9.0
+
+---
+
+## Plantillas de WhatsApp (v0.9.0)
+
+Envío de plantillas aprobadas para retomar conversaciones fuera de la ventana de 24 h. OpenSpec `add-whatsapp-templates`; capability `whatsapp-templates`.
+
+- **Núcleo puro** (`channels/whatsapp/templates.ts`):
+  - `parseTemplate` (componentes, variables posicionales o con nombre con sus ejemplos, `supported`/`unsupportedReason`), `validateParameters`, `renderTemplate` y `templateMessage` (componentes de la Cloud API, con `parameter_name` si la plantilla es `NAMED`).
+  - `fetchApprovedTemplates` sigue `paging.next` hasta 10 páginas y filtra `APPROVED`.
+  - Los parámetros siempre van como arrays en el orden de `variables` de cada componente (`header`, `body`).
+- **Servicio** (`services/template.service.ts`):
+  - `list` resuelve la WABA (`config.whatsapp.wabaId` o, si no, `WHATSAPP_WABA_ID`) y guarda una caché de 5 minutos por WABA.
+  - `send` valida la conversación (WhatsApp con `channelAccount`), la plantilla y las variables, y crea el mensaje con `chatService.sendMessage(..., { template })`.
+  - Los errores son `TemplateError(status)`. `setTemplateClientForTests` permite inyectar un `fetch` falso en las pruebas.
+- **Modelo**:
+  - Mensaje: `contentType: 'template'`, `content` con el texto renderizado y `template { name, language, components }`. El adaptador de WhatsApp envía `type: template` cuando `OutboundMessage.template` existe.
+  - Conversación: `lastInboundAt`, que se fija en `sendMessage` del cliente con `options.receivedAt` (la hora del canal) o con la hora actual si `receivedAt` es futura.
+- **Interfaz**:
+  - `lib/templates.ts`: `previewTemplate`, `isWindowClosed`, `emptyParameters` y `parametersComplete`.
+  - `components/messaging/TemplatePicker.vue`, con los `data-template` de cada plantilla y `template-preview`.
+  - En `Messaging.vue`:
+    - `canSendTemplate`: WhatsApp con `channelAccount`.
+    - `windowClosed`: reloj de 60 s; muestra el aviso `whatsapp-window-closed` en lugar del compositor.
+    - El botón `open-templates` en el compositor.
+    - La acción junto a las entregas fallidas por la ventana.
+    - La etiqueta `template-label` en la burbuja.
+  - `ChannelConnection` tiene un slot `extra` para el campo WABA.
+- **E2E**:
+  - El stub sirve `GET /meta/:v/:waba/message_templates` en dos páginas. Su catálogo fijo contiene `bienvenida`, `plantilla_pendiente` (PENDING), `promo_imagen` (cabecera de imagen), `recordatorio_cita` (NAMED, es_MX) y `seguimiento_pedido`.
+  - Valida los envíos de plantilla: 132001 si no existe y 132000 si las variables no cuadran. Registra cada envío como `plantilla:<nombre>|v1|…`.
+  - Para simular la ventana cerrada basta un webhook con un `timestamp` antiguo.
+- **Verificación**: unitarios backend **87/87** y frontend **48/48**; integración **69/69 (1 omitida)**; E2E **86/86** en dos corridas completas; paridad es/en **778/778**.
 
 ---
 
@@ -154,7 +187,7 @@ Base común para WhatsApp e Instagram: entrada normalizada e idempotente, salida
 
 - **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y **un solo HTML final**: en la subcarpeta `review-N` o, si no la hay, en la raíz de la carpeta. Los borradores superados se eliminaron en v0.4.32; al regenerar, borra la revisión anterior.
 - **Contenido**: arquitectura del sistema; workflows de auth/onboarding y de control de herramientas; secuencias de mensaje→bot y de confirmación del cliente; dataflows de ingesta RAG y de analítica/insights; lifecycles de conversación, fuente de conocimiento y ejecución de herramienta.
-- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.8.0 (`review-4`).
+- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.9.0 (`review-5`).
 - **Regenerar**: `node ~/.claude/skills/archify/bin/archify.mjs finalize <tipo> candidate.json <salida.html> --quality showcase --out-dir <carpeta>/review-N`. Un candidato modificado necesita un `--out-dir` nuevo. En el sandbox de Claude Code, antepón `NO_PROXY=localhost,127.0.0.1,::1`.
 - **Límites**: los diagramas del sistema se redactaron cuando aún no había remoto, así que no fijan fuentes por commit. Ahora existe `origin` (`git@github.com:jdazadev/mitchbot.git`) y los nuevos diagramas pueden usar `meta.repository` + `--repo-root`. Si cambia el flujo, actualiza el `candidate.json` correspondiente.
 
@@ -888,12 +921,12 @@ Usuario abre la app
 | **Auth** | `POST /register`, `POST /login`, `GET /me`, `PUT /profile`, `PUT /password` | Autenticación y perfil |
 | **Users** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Gestión de usuarios |
 | **Contacts** | `GET /`, `GET /:id`, `PUT /:id`, `PATCH /:id/archive`, `PATCH /:id/restore` | Gestión de contactos |
-| **Conversations** | `GET /export` y `GET /:id/export` (CSV/JSON, solo admin y support), `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages` (paginación opcional `?limit=&before=`), `POST /:id/messages`, `POST /:id/messages/:messageId/retry`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, historial paginado, resolver conversación por contacto, marcar leída, guardar contacto e insights |
+| **Conversations** | `GET /export` y `GET /:id/export` (CSV/JSON, solo admin y support), `POST /:id/template` (plantilla de WhatsApp), `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages` (paginación opcional `?limit=&before=`), `POST /:id/messages`, `POST /:id/messages/:messageId/retry`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, historial paginado, resolver conversación por contacto, marcar leída, guardar contacto e insights |
 | **Brain** | `GET /sources`, `POST /upload`, `POST /text`, `DELETE /sources/:id`, `POST /search` | Base de conocimiento RAG |
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
 | **Config** | `GET /`, `PUT /` | Configuración global |
-| **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /`, `GET /channels/status` | Gestión de proyectos (multi-proyecto por usuario); `PUT` responde 409 si el número de WhatsApp o la cuenta de Instagram ya son de otro proyecto |
+| **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /`, `GET /channels/status`, `GET /whatsapp/templates` | Gestión de proyectos (multi-proyecto por usuario); `PUT` responde 409 si el número de WhatsApp o la cuenta de Instagram ya son de otro proyecto |
 | **Appointments** | `GET /`, `GET /:id`, `PATCH /:id/status` | Citas agendadas por el agente |
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
 | **Tools** | `GET /`, `PUT /config` | Catálogo de operaciones y configuración por proyecto |
@@ -912,7 +945,7 @@ Usuario abre la app
 |:----------|:-------------|:------|
 | `users` | name, email, password (hash), role, status, avatar, projectIds, activeProjectId | Roles: admin, support, assistant, approver. Pertenencia multi-proyecto |
 | `contacts` | projectId, name, phone, email, platform, status, tags, metadata | Aislado por proyecto. Soft delete (archivar) |
-| `conversations` | contactId, platform, status, mode, clientInfo, channelAccount, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores |
+| `conversations` | contactId, platform, status, mode, clientInfo, channelAccount, lastInboundAt, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores |
 | `messages` | conversationId, sender, content, contentType, isBot, toolData | Sender: contact, ai_agent, human_agent, tool. contentType: text, tool_call, tool_result, confirmation_request |
 | `agents` | projectId, name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
 | `ai_models` | name, value, provider, category, isActive | Catálogo de modelos (los disponibles se listan dinámicamente desde OpenRouter) |
@@ -1050,6 +1083,7 @@ CHANNEL_BREAKER_COOLDOWN_MS=60000
 WHATSAPP_TOKEN=<token-de-sistema>
 WHATSAPP_VERIFY_TOKEN=<token-de-verificación-del-webhook>
 WHATSAPP_APP_SECRET=<app-secret-de-meta>
+WHATSAPP_WABA_ID=<waba-por-defecto-para-plantillas>
 WHATSAPP_API_URL=https://graph.facebook.com
 WHATSAPP_API_VERSION=v21.0
 # Instagram Messaging API (opcionales; el ID de la cuenta se guarda por proyecto)
@@ -1095,12 +1129,14 @@ INSTAGRAM_API_VERSION=v21.0
 - [x] WhatsApp Business API con webhooks firmados, número por proyecto y estados de entrega y lectura (v0.6.0)
 - [x] Instagram Messaging API con nombre del perfil y lectura acumulativa (v0.7.0)
 
-### Siguiente — v0.9 – v0.10 🔜
+### Entregado tras la integración social ✅
 - [x] Exportación de conversaciones a CSV y JSON con permisos y auditoría (v0.8.0)
-- [ ] Plantillas de mensaje para escribir fuera de la ventana de 24 h
+- [x] Plantillas de WhatsApp para escribir fuera de la ventana de 24 h (v0.9.0)
+
+### Siguiente — v0.10 – v0.12 🔜
 - [ ] Chat widget embebible para sitios web de clientes
+- [ ] Métricas de SLA
+- [ ] Notificaciones push
 
 ### Hacia la v1.0 💡
 - [ ] Integración con CRM externos
-- [ ] Notificaciones push
-- [ ] Métricas de SLA

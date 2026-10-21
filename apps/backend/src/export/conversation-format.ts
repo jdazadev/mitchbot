@@ -9,7 +9,7 @@ export const MAX_RANGE_DAYS = 366;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Lo que vio el cliente o el equipo; el detalle interno de herramientas queda fuera. */
-export const EXPORTED_CONTENT_TYPES: Message['contentType'][] = ['text', 'confirmation_request'];
+export const EXPORTED_CONTENT_TYPES: Message['contentType'][] = ['text', 'confirmation_request', 'template'];
 
 export const CSV_COLUMNS = [
   'conversation_id',
