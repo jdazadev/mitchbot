@@ -7,13 +7,13 @@
   "quality": "showcase",
   "specification": {
     "path": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/candidate.json",
-    "sha256": "974e49f7cace6c58f54917c1d909058ebbfa50a25f0e30d6980a40190acb610c",
-    "bytes": 5695
+    "sha256": "448871ac828cd1971b5c44dd96cc68689c24c76aeba598514619c045e2a735b3",
+    "bytes": 5569
   },
   "artifact": {
     "path": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/roadmap.html",
-    "sha256": "f9284df69b5ee1bc9ded4625024e7d9cbbfabf33c8edf826586481ad46b4e8de",
-    "bytes": 763229
+    "sha256": "5adbc65fce4712e9bea8f45d49b7799c1495700a07d1ae0fbeb7786c666d3d1b",
+    "bytes": 762796
   },
   "gates": {
     "validate": "pass",
@@ -28,9 +28,9 @@
     "truncated": false
   },
   "evidence": {
-    "receipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-7/roadmap.finalize.json",
-    "summaryReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-7/roadmap.finalize-summary.json",
-    "browserCheckReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-7/roadmap.browser-check.json"
+    "receipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-8/roadmap.finalize.json",
+    "summaryReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-8/roadmap.finalize-summary.json",
+    "browserCheckReceipt": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-8/roadmap.browser-check.json"
   },
   "update": {
     "status": "update_available",
@@ -45,5 +45,5 @@
     "eventKey": "archify@sha256:70e210265c59f24dcbdf2a502ff671104b5454e7ee7d3554aecd86bad32384f5"
   },
   "visualReview": "not-requested",
-  "durationMs": 1933
+  "durationMs": 2144
 }

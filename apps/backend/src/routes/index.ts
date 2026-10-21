@@ -13,6 +13,7 @@ import appointmentsRoutes from './appointments.routes';
 import ordersRoutes from './orders.routes';
 import publicChatRoutes from './public-chat.routes';
 import webhooksRoutes from './webhooks.routes';
+import pushRoutes from './push.routes';
 import toolsRoutes from './tools.routes';
 import toolExecutionsRoutes from './tool-executions.routes';
 import { aiService } from '../services/ai.service';
@@ -40,5 +41,6 @@ router.use('/appointments', appointmentsRoutes);
 router.use('/orders', ordersRoutes);
 router.use('/tools', toolsRoutes);
 router.use('/tool-executions', toolExecutionsRoutes);
+router.use('/push', pushRoutes);
 
 export default router;

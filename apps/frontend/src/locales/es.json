@@ -591,6 +591,52 @@
     }
   },
   "profile": {
+    "push": {
+      "title": "Notificaciones push",
+      "subtitle": "Avisos del equipo en este dispositivo aunque Mitchbot no esté abierto. Si tienes el panel abierto, los verás en la campana.",
+      "status": {
+        "unsupported": "Este navegador no las admite",
+        "unavailable": "El servidor no las tiene configuradas",
+        "denied": "Bloqueadas en el navegador",
+        "off": "Desactivadas en este dispositivo",
+        "on": "Activadas en este dispositivo"
+      },
+      "deniedHint": "Permite las notificaciones de este sitio en la configuración del navegador y vuelve a intentarlo.",
+      "enable": "Activar en este dispositivo",
+      "disable": "Desactivar en este dispositivo",
+      "test": "Enviar prueba",
+      "enabled": "Notificaciones activadas en este dispositivo.",
+      "disabled": "Notificaciones desactivadas en este dispositivo.",
+      "testSent": "Prueba enviada: llegará en unos segundos.",
+      "kindsTitle": "Qué te avisamos",
+      "kinds": {
+        "team": {
+          "label": "Mensajes del equipo",
+          "hint": "Lo que el agente envía al equipo con la herramienta de notificación."
+        },
+        "approval": {
+          "label": "Aprobaciones pendientes",
+          "hint": "Operaciones que esperan tu aprobación."
+        },
+        "delivery": {
+          "label": "Entregas fallidas",
+          "hint": "Respuestas que no llegaron al cliente por WhatsApp o Instagram."
+        },
+        "channel": {
+          "label": "Canal pausado",
+          "hint": "Cuando un canal deja de responder y los envíos se pausan."
+        },
+        "sla": {
+          "label": "Esperas vencidas",
+          "hint": "Clientes que superan el objetivo de respuesta."
+        }
+      },
+      "errors": {
+        "load": "No se pudo cargar el estado de las notificaciones.",
+        "permission": "Hace falta permitir las notificaciones en el navegador.",
+        "generic": "No se pudo completar la acción."
+      }
+    },
     "projects": {
       "title": "Mis Proyectos ({count})",
       "empty": "Sin proyectos asignados"

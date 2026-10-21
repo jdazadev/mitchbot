@@ -42,6 +42,13 @@ const envSchema = z.object({
   CHANNEL_BREAKER_THRESHOLD: z.coerce.number().int().positive().default(5),
   CHANNEL_BREAKER_COOLDOWN_MS: z.coerce.number().int().positive().default(60000),
 
+  // Notificaciones push (Web Push con VAPID). Sin claves, el push queda desactivado.
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default('mailto:notificaciones@mitchbot.invalid'),
+  // Proveedores de push adicionales (host[:puerto], separados por comas); p. ej. el simulado de las pruebas.
+  PUSH_ALLOWED_HOSTS: z.string().optional(),
+
   // Social Gateway (Meta)
   // WhatsApp Cloud API: el adaptador se registra solo si hay token; sin App Secret el webhook rechaza todo.
   WHATSAPP_TOKEN: z.string().optional(),

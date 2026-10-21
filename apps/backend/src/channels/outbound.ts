@@ -5,8 +5,9 @@ import redis from '../config/redis';
 import env from '../config/env';
 import { getConversationsCollection, type Conversation } from '../models/conversation.model';
 import { getMessagesCollection, type Message, type MessageDelivery } from '../models/message.model';
-import { emitToProject, emitToRoom } from '../websocket/socket';
+import { emitToRoom } from '../websocket/socket';
 import { logger } from '../utils/logger';
+import { notifyProject } from '../services/notify.service';
 import { getAdapter, isExternal } from './registry';
 import { isCustomerFacing, isPermanent, MAX_DELIVERY_ATTEMPTS, nextDelay, statusesBefore } from './policy';
 import { BreakerSnapshot, CLOSED, currentState, transition } from './breaker';
@@ -125,23 +126,20 @@ export async function markFailed(conversation: DeliveryTarget, messageId: string
     { $set: { status: 'pending_human', updatedAt: new Date() } },
   );
   emitToRoom(conversationId, 'chat:status', { status: 'pending_human' });
-  emitToProject(projectId, 'admin:notification', {
+  notifyProject(projectId, {
+    kind: 'delivery',
     message: `Un mensaje no se pudo entregar por ${conversation.platform}: ${error}`,
     level: 'error',
     conversationId,
-    projectId,
-    createdAt: new Date(),
   });
 }
 
 function notifyBreakerOpen(conversation: DeliveryTarget, snapshot: BreakerSnapshot) {
-  const projectId = conversation.projectId?.toString();
-  emitToProject(projectId, 'admin:notification', {
+  notifyProject(conversation.projectId?.toString(), {
+    kind: 'channel',
     message: `${conversation.platform} no responde: los envíos se pausan y se reanudan solos en ${Math.round(env.CHANNEL_BREAKER_COOLDOWN_MS / 1000)} s.`,
     level: 'warning',
-    projectId,
     resumeAt: snapshot.openUntil ? new Date(snapshot.openUntil) : undefined,
-    createdAt: new Date(),
   });
 }
 

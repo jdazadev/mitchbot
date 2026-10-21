@@ -7,6 +7,7 @@ import AIcon from '../components/ui/AIcon.vue';
 import AAvatar from '../components/ui/AAvatar.vue';
 import APill from '../components/ui/APill.vue';
 import AButton from '../components/ui/AButton.vue';
+import PushSettings from '../components/profile/PushSettings.vue';
 
 const { t, te } = useI18n();
 
@@ -18,6 +19,8 @@ const profileSuccess = ref('');
 const profileError = ref('');
 
 const userInitials = ref('?');
+/** El formulario se habilita con el perfil cargado: antes, la carga pisaría lo escrito y se enviaría un correo vacío. */
+const profileLoaded = ref(false);
 
 const roleLabel = computed(() => {
   const role = currentUser.value?.role;
@@ -39,6 +42,7 @@ onMounted(async () => {
       profileForm.value.email = currentUser.value.email;
     }
   }
+  profileLoaded.value = !!currentUser.value;
   userInitials.value =
     currentUser.value?.name
       ?.split(' ')
@@ -144,11 +148,11 @@ async function handleUpdateProfile() {
         <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label class="flex flex-col gap-1.5">
             <span class="text-xs font-semibold text-ink-2">{{ t('common.name') }}</span>
-            <input v-model="profileForm.name" type="text" class="field" />
+            <input v-model="profileForm.name" type="text" class="field" :disabled="!profileLoaded" />
           </label>
           <label class="flex flex-col gap-1.5">
             <span class="text-xs font-semibold text-ink-2">{{ t('common.email') }}</span>
-            <input v-model="profileForm.email" type="email" class="field" />
+            <input v-model="profileForm.email" type="email" class="field" :disabled="!profileLoaded" />
           </label>
         </div>
 
@@ -173,11 +177,12 @@ async function handleUpdateProfile() {
         </div>
 
         <div class="mt-6 flex justify-end">
-          <AButton variant="primary" :loading="profileLoading" @click="handleUpdateProfile">
+          <AButton variant="primary" :loading="profileLoading" :disabled="!profileLoaded" @click="handleUpdateProfile">
             {{ profileLoading ? t('common.saving') : t('common.saveChanges') }}
           </AButton>
         </div>
       </div>
     </div>
+    <PushSettings :role="currentUser?.role" />
   </div>
 </template>

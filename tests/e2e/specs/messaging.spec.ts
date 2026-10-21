@@ -141,7 +141,8 @@ test.describe('Mensajería', () => {
     const loadError = page.getByRole('alert').filter({ hasText: 'No se pudieron cargar los mensajes de esta conversación.' });
     await expect(loadError).toBeVisible();
     await loadError.getByRole('button', { name: 'Reintentar' }).click();
-    await expect(page.locator('main').getByText(initial)).toBeVisible({ timeout: 20_000 });
+    // En el hilo: la fila de la bandeja, oculta a 390 px, puede mostrar el mismo texto si el bot aún no respondió.
+    await expect(page.locator('#chat-messages-container').getByText(initial)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByLabel('Escribe un mensaje...')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   });

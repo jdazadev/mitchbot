@@ -20,6 +20,7 @@ import { analyticsService } from './analytics.service';
 import { dispatch } from '../channels/outbound';
 import { isCustomerFacing } from '../channels/policy';
 import { scheduleSlaAlert } from '../queues/sla-alerts';
+import { notifyProject } from './notify.service';
 
 const isDuplicateKey = (error: any) => error?.code === 11000;
 
@@ -793,13 +794,12 @@ export const chatService = {
         },
       });
       await toolExecutionService.setMessageId(execution._id!, pendingMessage._id!);
-      emitToProject(args.projectId, 'admin:notification', {
+      notifyProject(args.projectId, {
+        kind: 'approval',
         message: 'Hay una nueva operación pendiente de aprobación.',
         level: 'warning',
         conversationId: args.conversationId,
-        projectId: args.projectId,
         toolExecutionId: execution._id!.toString(),
-        createdAt: new Date(),
       });
       return { awaitingConfirmation: true };
     }

@@ -69,6 +69,8 @@ export const initSocket = (httpServer: HttpServer) => {
       // Room exclusiva del dashboard para sincronizar el sidebar con mensajes de conversaciones no abiertas.
       socket.join(dashboardProjectRoom(socket.data.projectId));
     }
+    // Sala del usuario: saber si tiene el panel abierto (entonces no se le envía push).
+    if (socket.data.userId && !socket.data.isPublic) socket.join(userRoom(socket.data.userId));
 
     // Evento: Unirse a una room (conversación). El cliente público envía `{ roomId, clientToken }`.
     socket.on('join:room', async (payload: string | { roomId?: string; clientToken?: string }) => {
@@ -319,3 +321,16 @@ export const emitToAll = (event: string, data: any) => {
     logger.error(`[WS] Error emitting to all: ${error.message}`);
   }
 };
+
+const userRoom = (userId: string) => `user:${userId}`;
+
+/** ¿Tiene el usuario el panel abierto en algún navegador? */
+export async function isUserOnline(userId: string): Promise<boolean> {
+  try {
+    const sockets = await getIO().in(userRoom(userId)).fetchSockets();
+    return sockets.length > 0;
+  } catch {
+    // Sin Socket.io (pruebas, arranque): nadie está conectado.
+    return false;
+  }
+}

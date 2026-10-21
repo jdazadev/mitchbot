@@ -5,6 +5,63 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.12.0 — 2026-10-21
+
+> **Notificaciones push**: los avisos del equipo llegan al navegador o al móvil del operador aunque Mitchbot no esté abierto. Cada uno elige qué recibir y en qué dispositivos.
+
+### ✨ Añadido
+- **`notifyProject`** (OpenSpec `add-push-notifications`): un solo punto para las notificaciones del equipo. Emite `admin:notification` como antes (ahora con `kind`) y encola el push. Los cinco emisores lo usan:
+  - `team`: la herramienta `send_notification`;
+  - `approval`: una aprobación pendiente, solo para `approver` y `admin`;
+  - `delivery`: una entrega fallida;
+  - `channel`: un canal pausado por el circuit breaker;
+  - `sla`: una espera vencida.
+- **Web Push con VAPID** (`web-push`):
+  - **Configuración**: claves en `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT`. `pnpm --filter @mitchbot/backend vapid:generate` genera un par. Sin claves, el push queda desactivado y el panel lo indica.
+  - **Envío**: el mensaje se cifra con `aes128gcm` y se firma con VAPID mediante `generateRequestDetails`. Lo envía `fetch`, con 10 s de tiempo límite y sin seguir redirecciones.
+- **Suscripciones** (`push_subscriptions`, con `endpoint` único):
+  - **Proveedores permitidos**: solo endpoints HTTPS de proveedores conocidos (FCM, Mozilla, Apple, Microsoft), más los de `PUSH_ALLOWED_HOSTS`, para que el servidor no haga peticiones a direcciones arbitrarias (SSRF).
+  - **Validación**: las claves deben ser una P-256 sin comprimir y un secreto de 16 bytes.
+  - **Bajas automáticas**: con 404 o 410 la suscripción se borra.
+- **Entrega**: cola BullMQ `push-notifications` con reintentos. No se envía push a quien tiene el panel abierto (sala `user:<id>` del socket), porque ya lo ve en la campana; la prueba manual sí. Cada push lleva enlace a la conversación (o a las aprobaciones) y una etiqueta por tipo.
+- **API `/api/push`**: `GET /config`, `GET /me`, `POST /subscriptions`, `DELETE /subscriptions`, `PUT /preferences` y `POST /test`. Las preferencias se guardan en `user.pushPreferences`.
+- **Interfaz**:
+  - `sw.js` muestra la notificación y, al pulsarla, enfoca una pestaña del panel o abre la conversación.
+  - Mi Perfil tiene la sección **Notificaciones push** (`PushSettings.vue`):
+    - el estado del dispositivo (no compatible, servidor sin claves, bloqueadas, desactivadas o activadas);
+    - activar, desactivar y enviar una prueba;
+    - los tipos que se reciben, con las aprobaciones solo para quien puede decidir.
+  - `/tools?tab=approvals` abre directamente las aprobaciones.
+  - Iconos `BellRinging` y `BellSlash`.
+- Claves i18n `profile.push.*` (es/en).
+
+### 🐛 Corregido
+- **Mi Perfil**: escribir o guardar antes de que llegara el perfil hacía que la carga pisara lo escrito, o que se enviara un correo vacío ("Validation Error"). Ahora el formulario se habilita cuando el perfil está cargado.
+- **`ECONNRESET` intermitente con conexiones reutilizadas**: el servidor cerraba las conexiones inactivas a los 5 s, que es el valor por defecto de Node. Ahora `keepAliveTimeout` es de 65 s y `headersTimeout` de 66 s.
+- **Test de Mensajería**: se acotó el selector al hilo; la fila de la bandeja, oculta a 390 px, podía mostrar el mismo texto.
+
+### ✅ Pruebas
+- **Unitarios**:
+  - Backend (**106**): endpoints permitidos y SSRF, hosts extra, validación de claves, destinatarios por rol y preferencia, y contenido del push.
+  - Frontend (**75**): `lib/push`, `PushSettings` (servidor sin claves, activar y probar, tipos por rol, preferencia revertida si falla) y el service worker (mostrar, texto plano, enfocar o abrir).
+- **Integración** (**83/83**, 1 omitida). `push-notifications.test.ts`, con un proveedor local que **descifra** cada push, cubre:
+  - las cabeceras `aes128gcm`, VAPID y TTL;
+  - todos los dispositivos de cada destinatario, sin usuarios inactivos;
+  - roles y preferencias;
+  - la prueba manual;
+  - las bajas por 410;
+  - los endpoints bloqueados.
+- **E2E** (**103/103** en tres corridas completas). `push.spec.ts` (7), con el proveedor simulado del stub y descifrado en la prueba, cubre:
+  - la configuración y el rechazo de SSRF y de claves inválidas;
+  - la prueba cifrada y firmada;
+  - el aviso real: no llega con el panel abierto y sí con el panel cerrado, con enlace;
+  - un tipo desactivado;
+  - una suscripción caducada;
+  - activar, probar, elegir tipos y desactivar desde Mi Perfil.
+- Paridad es/en **853/853**; backend `tsc --noEmit` y frontend `vue-tsc` y `build` en verde.
+
+---
+
 ## v0.11.0 — 2026-10-21
 
 > **Métricas de SLA**: cada proyecto fija cuánto puede esperar un cliente. El Resumen muestra si se cumple, la bandeja señala las esperas que vencen y el equipo recibe un aviso cuando un cliente supera el plazo. Además, el panel vuelve a recibir los eventos en vivo justo después de iniciar sesión.

@@ -17,10 +17,15 @@ import { createOutboundWorkers } from './channels/outbound';
 import { registerWhatsApp } from './channels/whatsapp';
 import { registerInstagram } from './channels/instagram';
 import { createSlaAlertWorker } from './queues/sla-alerts';
+import { createPushWorker } from './queues/push-notifications';
 import { serveLoader, WIDGET_ASSETS_DIR } from './controllers/widget.controller';
 
 const app = express();
 const httpServer = createServer(app);
+// Más que el de los balanceadores y clientes que reutilizan conexiones (60 s): con los
+// 5 s de Node, una petición puede llegar justo a una conexión que el servidor ya cerró (ECONNRESET).
+httpServer.keepAliveTimeout = 65_000;
+httpServer.headersTimeout = 66_000;
 
 // Infrastructure
 (async () => {
@@ -65,6 +70,7 @@ const httpServer = createServer(app);
           createInboundWorker();
           createOutboundWorkers();
           createSlaAlertWorker();
+          createPushWorker();
         } catch (e) {
           console.warn('⚠️ Could not start channel workers:', e);
         }

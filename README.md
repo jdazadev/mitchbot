@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.11.0** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.12.0** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -45,6 +45,7 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
 | **Clientes** | Contactos creados al responder al cliente o guardados desde una conversación. Búsqueda, filtros, orden, paginación y archivado (nunca se borran). |
 | **Panel** | Resultados (conversaciones, leads, citas, conversión), salud del bot (tasa y mediana de primera respuesta, cobertura, backlog), SLA (respuesta y resolución en plazo, esperas vencidas), automatización y volumen por remitente, con rangos de 7/30/90 días. |
 | **Widget web** | Botón de chat para la web del negocio con una línea de código: marca del proyecto, idioma del agente, historial al volver y confirmaciones de herramientas. Solo se muestra en los dominios autorizados (`frame-ancestors`). |
+| **Notificaciones** | Avisos del equipo en la campana y por push del navegador (Web Push) cuando el panel no está abierto: mensajes del agente, aprobaciones, entregas fallidas, canal pausado y esperas vencidas, configurables por usuario. |
 | **Plataforma** | Varios proyectos por usuario, roles (`admin`, `support`, `assistant`, `approver`), interfaz bilingüe es/en, tema claro/oscuro y chat público de prueba por proyecto. |
 
 ---
@@ -150,6 +151,14 @@ WhatsApp solo deja escribir libremente durante las 24 horas siguientes al últim
 
 El widget solo aparece en los dominios de la lista: sin dominios no se muestra en ninguna web externa.
 
+### Activar las notificaciones push
+
+1. Genera las claves con `pnpm --filter @mitchbot/backend vapid:generate` y copia `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (un `mailto:` tuyo) en `apps/backend/.env`. Reinicia el backend.
+2. Cada operador abre **Mi Perfil → Notificaciones push**, pulsa **Activar en este dispositivo** y acepta el permiso del navegador. **Enviar prueba** comprueba que llegan.
+3. En la misma sección elige qué avisos recibir. Mientras tienes el panel abierto los ves en la campana y no llegan por push.
+
+El navegador exige HTTPS (o `localhost`) para las notificaciones push. Si cambias las claves, cada dispositivo tiene que volver a activarlas.
+
 ### Conectar Instagram
 
 1. Tu cuenta de Instagram tiene que ser **profesional** y estar vinculada a una app de Meta con el producto de mensajería de Instagram.
@@ -184,10 +193,10 @@ Integración y E2E requieren los servicios de Docker activos. Más detalles en [
 
 ## Estado y hoja de ruta
 
-Mitchbot está en **pre-1.0 (v0.11.0)**. Ya atiende la web (con widget embebible), WhatsApp e Instagram en una sola bandeja, envía plantillas de WhatsApp, exporta sus conversaciones y mide sus objetivos de servicio; la **v1.0** llegará cuando sume las notificaciones push y un CRM.
+Mitchbot está en **pre-1.0 (v0.12.0)**. Ya atiende la web (con widget embebible), WhatsApp e Instagram en una sola bandeja, envía plantillas de WhatsApp, exporta sus conversaciones, mide sus objetivos de servicio y avisa al equipo por push; la **v1.0** llegará con la integración con un CRM y la validación de los canales con cuentas reales.
 
 <p align="center">
-  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.11 con pasarela de canales, WhatsApp, Instagram, exportación, plantillas, widget embebible y SLA; siguiente v0.12 con notificaciones push; y hacia v1.0 con CRM" width="100%">
+  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.12 con pasarela de canales, WhatsApp, Instagram, exportación, plantillas, widget embebible, SLA y notificaciones push; y hacia v1.0 con la integración con un CRM" width="100%">
 </p>
 
 <sub>Diagrama interactivo en <a href=".archify/workflow-roadmap-20261019-175109/roadmap.html"><code>.archify/workflow-roadmap-…/roadmap.html</code></a>. Su fuente editable es <code>candidate.json</code>, en la misma carpeta.</sub>
@@ -207,12 +216,11 @@ Mitchbot está en **pre-1.0 (v0.11.0)**. Ya atiende la web (con widget embebible
 | **v0.9 · Plantillas** | oct 2026 | Plantillas aprobadas de WhatsApp con variables y vista previa, y la ventana de 24 h visible en el hilo |
 | **v0.10 · Widget** | oct 2026 | Chat embebible en la web del negocio con dominios autorizados, y acceso por token a las conversaciones públicas |
 | **v0.11 · SLA** | oct 2026 | Objetivos de respuesta y resolución por proyecto, cumplimiento en el Resumen, esperas vencidas en la bandeja y avisos al equipo |
-
-### 🔜 Siguiente · v0.12
-- Notificaciones push para operadores
+| **v0.12 · Push** | oct 2026 | Notificaciones Web Push para el equipo, con suscripción por dispositivo y preferencias por tipo |
 
 ### 🎯 Hacia la v1.0
 - Integración con un CRM externo
+- Validación de WhatsApp, Instagram y push con cuentas reales
 
 ---
 

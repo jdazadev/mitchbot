@@ -14,9 +14,6 @@
         "messagebus": {
           "label": "Siguiente"
         },
-        "cloud": {
-          "label": "Futuro"
-        },
         "security": {
           "label": "Hito"
         }
@@ -40,23 +37,16 @@
   "phases": [
     {
       "id": "entregado",
-      "label": "Entregado · v0.1 – v0.11",
+      "label": "Entregado · v0.1 – v0.12",
       "fromCol": 0,
-      "toCol": 3
+      "toCol": 4
     },
     {
       "id": "siguiente",
-      "label": "Siguiente · v0.12",
-      "fromCol": 4,
-      "toCol": 4,
-      "variant": "emphasis"
-    },
-    {
-      "id": "futuro",
-      "label": "Hacia v1.0",
+      "label": "Siguiente · hacia v1.0",
       "fromCol": 5,
       "toCol": 5,
-      "variant": "dashed"
+      "variant": "emphasis"
     }
   ],
   "mainPath": [
@@ -150,9 +140,9 @@
       "id": "crm",
       "lane": "canales",
       "col": 5,
-      "type": "cloud",
+      "type": "messagebus",
       "label": "CRM",
-      "sublabel": "integraciones externas",
+      "sublabel": "pendiente de proveedor",
       "width": 150
     },
     {
@@ -179,10 +169,11 @@
       "id": "push",
       "lane": "canales",
       "col": 4,
-      "type": "messagebus",
+      "type": "backend",
       "label": "Notificaciones push",
-      "sublabel": "avisos al operador",
-      "width": 160
+      "sublabel": "Web Push al equipo",
+      "width": 160,
+      "tag": "v0.12"
     }
   ],
   "edges": [
@@ -252,18 +243,18 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "Dónde estamos · v0.11.0",
+      "title": "Dónde estamos · v0.12.0",
       "items": [
-        "Web, widget, WhatsApp e Instagram en una bandeja, con plantillas, exportación y SLA",
-        "Avisos de esperas vencidas y eventos en vivo fiables tras iniciar sesión o reconectar"
+        "Web, widget, WhatsApp e Instagram con plantillas, exportación, SLA y notificaciones push",
+        "Pasarela de canales con reintentos y tests unitarios, de integración y E2E"
       ]
     },
     {
       "dot": "violet",
       "title": "Qué falta para la v1.0",
       "items": [
-        "Notificaciones push para operadores",
-        "Integración con un CRM externo"
+        "Integración con un CRM externo (elegir proveedor)",
+        "Validar WhatsApp, Instagram y push con cuentas reales"
       ]
     }
   ]

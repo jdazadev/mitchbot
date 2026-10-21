@@ -12,6 +12,8 @@ export interface User {
   projectIds?: ObjectId[];       // Proyectos a los que pertenece el usuario
   activeProjectId?: ObjectId;    // Proyecto activo del usuario
   lastLoginAt?: Date;
+  /** Tipos de notificación push activados (`false` = desactivado; ausente = activado). */
+  pushPreferences?: Partial<Record<string, boolean>>;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -14,7 +14,32 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.11.0
+**Versión actual del proyecto:** v0.12.0
+
+---
+
+## Notificaciones push (v0.12.0)
+
+Avisos del equipo por Web Push cuando el panel no está abierto. OpenSpec `add-push-notifications`; capability `push-notifications`.
+
+- **Punto único**: `notifyProject(projectId, { kind, message, level, conversationId?, … })` (`services/notify.service.ts`) emite `admin:notification` y encola el push. **No emitas `admin:notification` a mano**: usa `notifyProject`.
+- **Política pura** (`services/push-policy.ts`): `PUSH_KINDS` (`team`, `approval`, `delivery`, `channel`, `sla`), `canReceive` (las aprobaciones solo para `approver` y `admin`; respeta `user.pushPreferences`), `isAllowedEndpoint` (HTTPS de FCM, Mozilla, Apple o Windows, más `PUSH_ALLOWED_HOSTS`, que también admite HTTP), `validKeys` y `pushPayload` (título, texto de hasta 240 caracteres, `url`, `tag` y `urgent`).
+- **Envío** (`services/push.service.ts`): `sendPush` usa `webPush.generateRequestDetails` (cifrado `aes128gcm` y firma VAPID) y lo manda con `fetch`, porque `web-push` solo habla HTTPS y así se controla el transporte. 404 o 410 borran la suscripción; con éxito se guarda `lastSuccessAt`.
+- **Cola** (`queues/push-notifications.ts`): `processPush` envía a los miembros activos que aceptan ese tipo y **no están en línea** (`isUserOnline`, sala `user:<id>` en `websocket/socket.ts`), o a los `userIds` indicados en la prueba manual. Las pruebas cierran la cola con `closePushQueue`.
+- **API**: `/api/push` con `GET /config`, `GET /me`, `POST /subscriptions`, `DELETE /subscriptions`, `PUT /preferences` (esquema estricto por tipo) y `POST /test` (202).
+- **Datos**: `push_subscriptions` (`userId`, `endpoint` único, `keys`, `userAgent`, `lastSuccessAt`).
+- **Interfaz**:
+  - `public/sw.js`: `push` → `showNotification`; `notificationclick` → enfoca o abre.
+  - `lib/push.ts` y `services/push.service.ts` (con `enable`, que pide permiso, suscribe y registra, y `disable`).
+  - `components/profile/PushSettings.vue` en `Profile.vue` (`data-testid` `push-settings` y `push-status`, este con `data-status`).
+- **E2E**:
+  - Claves VAPID fijas de prueba en `E2E.push`.
+  - El stub hace de proveedor de push: `POST /push/:id`, `GET /__push/:id` y `POST /__push/gone`. `helpers/push.ts` crea dispositivos falsos y descifra los pushes con `http_ece`, que llega como dependencia de `web-push`.
+  - En Mi Perfil se simulan `Notification.permission` y `PushManager`, porque Chromium sin interfaz no tiene servicio de push.
+- **Robustez**:
+  - `httpServer.keepAliveTimeout` es de 65 s.
+  - Mi Perfil deshabilita el formulario hasta cargar el perfil.
+- **Verificación**: unitarios backend **106/106** y frontend **75/75**; integración **83/83 (1 omitida)**; E2E **103/103** en tres corridas completas; paridad es/en **853/853**.
 
 ---
 
@@ -243,7 +268,7 @@ Base común para WhatsApp e Instagram: entrada normalizada e idempotente, salida
 
 - **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y **un solo HTML final**: en la subcarpeta `review-N` o, si no la hay, en la raíz de la carpeta. Los borradores superados se eliminaron en v0.4.32; al regenerar, borra la revisión anterior.
 - **Contenido**: arquitectura del sistema; workflows de auth/onboarding y de control de herramientas; secuencias de mensaje→bot y de confirmación del cliente; dataflows de ingesta RAG y de analítica/insights; lifecycles de conversación, fuente de conocimiento y ejecución de herramienta.
-- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.11.0 (`review-7`).
+- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.12.0 (`review-8`).
 - **Regenerar**: `node ~/.claude/skills/archify/bin/archify.mjs finalize <tipo> candidate.json <salida.html> --quality showcase --out-dir <carpeta>/review-N`. Un candidato modificado necesita un `--out-dir` nuevo. En el sandbox de Claude Code, antepón `NO_PROXY=localhost,127.0.0.1,::1`.
 - **Límites**: los diagramas del sistema se redactaron cuando aún no había remoto, así que no fijan fuentes por commit. Ahora existe `origin` (`git@github.com:jdazadev/mitchbot.git`) y los nuevos diagramas pueden usar `meta.repository` + `--repo-root`. Si cambia el flujo, actualiza el `candidate.json` correspondiente.
 
@@ -895,7 +920,7 @@ Cada usuario pertenece a uno o más proyectos y tiene un proyecto activo.
 
 - **Nomenclatura de módulos**: el rail y los títulos del Topbar muestran **"Brain"**, **"Clients"** y **"Tools"**. La ruta de clientes es `/clients` y `/contacts` redirige a ella; herramientas vive en `/tools`.
 - **Rango de fechas del panel**: el widget estático "Last 30 Days" del Topbar se eliminó. El Dashboard ofrece un control real de últimos 7/30/90 días (30 por defecto) que recalcula métricas, canales y volumen; los toggles Diaria/Semanal/Mensual cambian la granularidad del volumen. El backend (`analytics.service`/`dashboard.controller`) acepta `days` o `from`/`to` y `period = daily | weekly | monthly`. Todas las rutas del dashboard exigen autenticación y acotan las métricas (`stats`, `outcomes`, `automation`, `volume`, `channels`, `activities`) al proyecto resuelto (`req.projectId`).
-- **Centro de notificaciones**: el Topbar escucha `admin:notification` (emitido por la tool `send_notification`), acumula las notificaciones en estado local, muestra el indicador solo si hay no leídas y permite marcarlas como leídas o limpiarlas. El alcance es la sesión activa (sin persistencia en base de datos).
+- **Centro de notificaciones**: el Topbar escucha `admin:notification` (emitido por `notifyProject`: mensajes de `send_notification`, aprobaciones, entregas fallidas, canal pausado y esperas vencidas), acumula las notificaciones en estado local, muestra el indicador solo si hay no leídas y permite marcarlas como leídas o limpiarlas. El alcance es la sesión activa (sin persistencia); quien no tiene el panel abierto las recibe por push (v0.12.0).
 
 ### 12. Internacionalización (i18n)
 
@@ -986,6 +1011,7 @@ Usuario abre la app
 | **Appointments** | `GET /`, `GET /:id`, `PATCH /:id/status` | Citas agendadas por el agente |
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
 | **Tools** | `GET /`, `PUT /config` | Catálogo de operaciones y configuración por proyecto |
+| **Push** | `GET /config`, `GET /me`, `POST /subscriptions`, `DELETE /subscriptions`, `PUT /preferences`, `POST /test` | Notificaciones Web Push: clave pública, dispositivos y preferencias del usuario, prueba |
 | **Tool Executions** | `GET /`, `GET /pending`, `POST /:id/approve`, `POST /:id/reject` | Historial, solicitudes pendientes y resolución por rol |
 | **Dashboard** | `GET /stats`, `GET /outcomes`, `GET /automation`, `GET /volume`, `GET /channels`, `GET /activities`, `GET /sla` | Analytics autenticada y acotada al proyecto activo (`X-Project-Id`/`activeProjectId`) |
 | **Webhooks** | `GET /whatsapp`, `POST /whatsapp`, `GET /instagram`, `POST /instagram` | Verificación y webhooks de WhatsApp Cloud API e Instagram Messaging API (públicos, autenticados por firma) |
@@ -1000,7 +1026,7 @@ Usuario abre la app
 
 | Colección | Campos Clave | Notas |
 |:----------|:-------------|:------|
-| `users` | name, email, password (hash), role, status, avatar, projectIds, activeProjectId | Roles: admin, support, assistant, approver. Pertenencia multi-proyecto |
+| `users` | name, email, password (hash), role, status, avatar, projectIds, activeProjectId, pushPreferences | Roles: admin, support, assistant, approver. Pertenencia multi-proyecto |
 | `contacts` | projectId, name, phone, email, platform, status, tags, metadata | Aislado por proyecto. Soft delete (archivar) |
 | `conversations` | contactId, platform, status, mode, clientInfo, channelAccount, lastInboundAt, awaitingReplySince, slaBreachNotifiedAt, closedAt, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores |
 | `messages` | conversationId, sender, content, contentType, isBot, toolData | Sender: contact, ai_agent, human_agent, tool. contentType: text, tool_call, tool_result, confirmation_request |
@@ -1012,6 +1038,7 @@ Usuario abre la app
 | `appointments` | date, time, service, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
 | `orders` | items, total, currency, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
 | `tool_executions` | projectId, conversationId, toolId, operation, binding, params, result, status, decisionBy, decisionAt | Historial y aprobación, aislados por proyecto |
+| `push_subscriptions` | userId, endpoint (único), keys, userAgent, lastSuccessAt | Dispositivos suscritos a Web Push |
 | `payments` | projectId, conversationId, contactId, amount, currency, method, status | Intenciones de cobro; nunca mueve dinero |
 | `config` | key, value | Key-value store dinámico |
 | `activities` | projectId, type, title, detail, metadata, createdAt | Log de eventos; `conversations_exported` audita las exportaciones |
@@ -1045,7 +1072,7 @@ Todas las conexiones WebSocket requieren autenticación JWT:
 | `chat:read` | Server → Client | Una sesión del proyecto marcó una conversación como leída; el resto actualiza su badge |
 | `tool:confirm` | Client → Server | Confirmar / cancelar / modificar una ejecución de herramienta |
 | `tool:confirmed` | Server → Client | Resultado de la confirmación de herramienta |
-| `admin:notification` | Server → Client | Notificación de la tool `send_notification` |
+| `admin:notification` | Server → Client | Notificación del equipo (`kind`: `team`, `approval`, `delivery`, `channel`, `sla`); la emite `notifyProject`, que también envía el push |
 | `join:room` | Client → Server | Unirse a room de conversación |
 | `joined:room` | Server → Client | Confirmación de unión a room |
 | `error` | Server → Client | Error de autenticación o autorización |
@@ -1150,6 +1177,11 @@ INSTAGRAM_VERIFY_TOKEN=<token-de-verificación-del-webhook>
 INSTAGRAM_APP_SECRET=<app-secret-de-meta>
 INSTAGRAM_API_URL=https://graph.instagram.com
 INSTAGRAM_API_VERSION=v21.0
+# Notificaciones push (opcionales; genera las claves con `pnpm --filter @mitchbot/backend vapid:generate`)
+VAPID_PUBLIC_KEY=<clave-publica>
+VAPID_PRIVATE_KEY=<clave-privada>
+VAPID_SUBJECT=mailto:<tu-correo>
+PUSH_ALLOWED_HOSTS=<solo-pruebas>
 ```
 
 > ⚠️ `OPENROUTER_LLM_MODEL` es obligatorio (sin default): si falta, la generación falla con un mensaje que indica definirlo. `OPENROUTER_FILE_MODEL`, `OPENROUTER_RERANKER_MODEL` y `OPENROUTER_INSIGHTS_MODEL` son opcionales (el CSV se indexa crudo, el re-ranker usa el modelo de embeddings y los insights usan `OPENROUTER_LLM_MODEL`, respectivamente).
@@ -1192,9 +1224,8 @@ INSTAGRAM_API_VERSION=v21.0
 - [x] Plantillas de WhatsApp para escribir fuera de la ventana de 24 h (v0.9.0)
 - [x] Chat widget embebible con dominios autorizados y acceso por token al chat público (v0.10.0)
 - [x] Métricas de SLA con avisos de esperas vencidas (v0.11.0)
-
-### Siguiente — v0.12 🔜
-- [ ] Notificaciones push
+- [x] Notificaciones push (Web Push) con preferencias por tipo (v0.12.0)
 
 ### Hacia la v1.0 💡
-- [ ] Integración con CRM externos
+- [ ] Integración con CRM externos (pendiente de elegir proveedor)
+- [ ] Validación de WhatsApp, Instagram y push con cuentas reales

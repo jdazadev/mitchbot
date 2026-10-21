@@ -23,6 +23,12 @@
  *   - Un envío `type: template` se valida contra el catálogo (132001 si no existe, 132000 si
  *     no cuadran las variables) y se registra con el texto `plantilla:<nombre>|v1|v2…`.
  *
+ *
+ * Proveedor de Web Push simulado (notificaciones del equipo):
+ *   - POST /push/:id        -> guarda el push cifrado (cabeceras y cuerpo en base64); 410 si `id` caducó
+ *   - GET  /__push/:id      -> pushes recibidos por ese dispositivo
+ *   - POST /__push/gone     -> { id }: el dispositivo responde 410 (suscripción caducada)
+ *
  * Control (ambos canales):
  *   - GET  /__meta/messages?to=   -> mensajes recibidos (por destinatario)
  *   - POST /__meta/fail           -> { to, code, subcode?, status? }: los envíos a `to` fallan con ese error
@@ -54,6 +60,18 @@ const stats = { chatCompletions: 0, embeddings: 0, models: 0, requests: [] };
 const META_TOKEN = process.env.STUB_META_TOKEN || 'e2e-wa-token';
 const IG_TOKEN = process.env.STUB_IG_TOKEN || 'e2e-ig-token';
 const meta = { sent: [], failures: new Map(), counter: 0 };
+
+// Pushes recibidos por dispositivo y dispositivos caducados (responden 410).
+const push = { received: new Map(), gone: new Set() };
+
+function readRaw(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
 
 /** Catálogo de plantillas de la WABA simulada (`body` = número de variables del cuerpo). */
 const TEMPLATES = [
@@ -382,6 +400,26 @@ const server = http.createServer(async (req, res) => {
     stats.models = 0;
     stats.requests = [];
     return sendJson(res, 200, { status: 'reset' });
+  }
+
+  const pushSend = req.method === 'POST' && url.pathname.match(/^\/push\/([^/]+)$/);
+  if (pushSend) {
+    const body = await readRaw(req);
+    const id = decodeURIComponent(pushSend[1]);
+    if (push.gone.has(id)) return sendJson(res, 410, { error: 'gone' });
+    const list = push.received.get(id) || [];
+    list.push({ headers: req.headers, body: body.toString('base64'), at: new Date().toISOString() });
+    push.received.set(id, list);
+    return sendJson(res, 201, { ok: true });
+  }
+
+  const pushList = req.method === 'GET' && url.pathname.match(/^\/__push\/([^/]+)$/);
+  if (pushList) return sendJson(res, 200, push.received.get(decodeURIComponent(pushList[1])) || []);
+
+  if (req.method === 'POST' && url.pathname === '/__push/gone') {
+    const body = await readBody(req);
+    push.gone.add(String(body.id));
+    return sendJson(res, 200, { status: 'gone', id: body.id });
   }
 
   const metaSend = req.method === 'POST' && url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)\/messages$/);

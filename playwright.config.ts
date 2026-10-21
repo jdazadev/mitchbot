@@ -117,6 +117,11 @@ export default defineConfig({
         INSTAGRAM_VERIFY_TOKEN: E2E.instagram.verifyToken,
         INSTAGRAM_API_URL: `${E2E.stubUrl}/meta`,
         INSTAGRAM_API_VERSION: 'v21.0',
+        // Push: claves de prueba y proveedor simulado en el stub (por HTTP).
+        VAPID_PUBLIC_KEY: E2E.push.publicKey,
+        VAPID_PRIVATE_KEY: E2E.push.privateKey,
+        VAPID_SUBJECT: 'mailto:e2e@mitchbot.test',
+        PUSH_ALLOWED_HOSTS: `localhost:${E2E.ports.stub}`,
         FRONTEND_URL: E2E.frontendUrl,
       },
     },

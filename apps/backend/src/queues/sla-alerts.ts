@@ -5,7 +5,7 @@ import env from '../config/env';
 import { getConversationsCollection } from '../models/conversation.model';
 import { projectService } from '../services/project.service';
 import { slaTargets } from '../services/sla';
-import { emitToProject } from '../websocket/socket';
+import { notifyProject } from '../services/notify.service';
 import { logger } from '../utils/logger';
 
 export const SLA_ALERTS_QUEUE_NAME = 'sla-alerts';
@@ -71,13 +71,11 @@ export async function processSlaAlert(data: SlaAlertJob) {
   const targets = slaTargets(project);
   if (!targets.alerts) return false;
   const minutes = Math.round((Date.now() - since.getTime()) / 60_000);
-  emitToProject(conversation.projectId?.toString(), 'admin:notification', {
+  notifyProject(conversation.projectId?.toString(), {
+    kind: 'sla',
     message: `${conversation.clientInfo?.name || 'Un cliente'} lleva ${minutes} min esperando respuesta por ${conversation.platform} (objetivo: ${targets.responseMinutes} min).`,
     level: 'warning',
-    kind: 'sla_breach',
     conversationId: data.conversationId,
-    projectId: conversation.projectId?.toString(),
-    createdAt: new Date(),
   });
   return true;
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 import { authService } from '../services/auth.service';
 import { toolsService } from '../services/tools.service';
 import { socketService } from '../services/socket.service';
@@ -10,7 +11,9 @@ import ToolApprovalsPanel from '../components/tools/ToolApprovalsPanel.vue';
 import ToolHistoryPanel from '../components/tools/ToolHistoryPanel.vue';
 
 const { t } = useI18n();
-const activeTab = ref('catalog');
+const route = useRoute();
+// `?tab=approvals` abre directamente las aprobaciones (enlace de las notificaciones push).
+const activeTab = ref(['catalog', 'approvals', 'history'].includes(String(route.query.tab)) ? String(route.query.tab) : 'catalog');
 const pendingCount = ref(0);
 const user = authService.getUser();
 const canApprove = user?.role === 'admin' || user?.role === 'approver';

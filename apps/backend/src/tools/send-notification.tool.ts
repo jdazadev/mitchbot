@@ -1,4 +1,4 @@
-import { emitToProject } from '../websocket/socket';
+import { notifyProject } from '../services/notify.service';
 import { logger } from '../utils/logger';
 import { Tool } from './types';
 
@@ -30,12 +30,11 @@ export const sendNotificationTool: Tool = {
     const level = ['info', 'warning', 'urgent'].includes(params?.level) ? params.level : 'info';
 
     try {
-      emitToProject(context.projectId, 'admin:notification', {
+      notifyProject(context.projectId, {
+        kind: 'team',
         message,
-        level,
+        level: level as 'info' | 'warning' | 'urgent',
         conversationId: context.conversationId,
-        projectId: context.projectId,
-        createdAt: new Date(),
       });
     } catch (error: any) {
       logger.warn(`[Tool] No se pudo emitir la notificación: ${error?.message || error}`);

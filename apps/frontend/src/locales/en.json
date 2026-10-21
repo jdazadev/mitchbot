@@ -591,6 +591,52 @@
     }
   },
   "profile": {
+    "push": {
+      "title": "Push notifications",
+      "subtitle": "Team alerts on this device even when Mitchbot isn't open. With the dashboard open, you'll see them in the bell.",
+      "status": {
+        "unsupported": "This browser doesn't support them",
+        "unavailable": "The server doesn't have them configured",
+        "denied": "Blocked in the browser",
+        "off": "Off on this device",
+        "on": "On on this device"
+      },
+      "deniedHint": "Allow notifications for this site in your browser settings and try again.",
+      "enable": "Turn on for this device",
+      "disable": "Turn off for this device",
+      "test": "Send test",
+      "enabled": "Notifications turned on for this device.",
+      "disabled": "Notifications turned off for this device.",
+      "testSent": "Test sent: it will arrive in a few seconds.",
+      "kindsTitle": "What we notify you about",
+      "kinds": {
+        "team": {
+          "label": "Team messages",
+          "hint": "What the agent sends to the team with the notification tool."
+        },
+        "approval": {
+          "label": "Pending approvals",
+          "hint": "Operations waiting for your approval."
+        },
+        "delivery": {
+          "label": "Failed deliveries",
+          "hint": "Replies that didn't reach the customer on WhatsApp or Instagram."
+        },
+        "channel": {
+          "label": "Channel paused",
+          "hint": "When a channel stops responding and sending is paused."
+        },
+        "sla": {
+          "label": "Overdue waits",
+          "hint": "Customers past the response target."
+        }
+      },
+      "errors": {
+        "load": "Couldn't load the notification status.",
+        "permission": "You need to allow notifications in the browser.",
+        "generic": "Couldn't complete the action."
+      }
+    },
     "projects": {
       "title": "My Projects ({count})",
       "empty": "No projects assigned"

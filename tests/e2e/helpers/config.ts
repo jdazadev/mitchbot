@@ -53,6 +53,15 @@ export const E2E = {
     verifyToken: 'e2e-ig-verify',
   },
 
+  /**
+   * Claves VAPID fijas (solo para pruebas): el backend firma con ellas y el
+   * proveedor de push simulado del stub recibe los envíos.
+   */
+  push: {
+    publicKey: 'BCUqZ3jcRMGD-_J7-B8p7GpBc0qNfyF0DBuyKk2S6D8W8iWKNOzZR826hjG4S0Kr0vsUhMiBPR9bzbS5Z-xHf4o',
+    privateKey: 'He3cNn1Rvua9vmas2kjgzZaiZb2lm1TE6QVIY1hykmo',
+  },
+
   projectNoContact: {
     name: 'E2E NoContact',
     slug: 'e2e-nocontact',
