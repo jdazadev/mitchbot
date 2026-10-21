@@ -38,6 +38,17 @@ export interface ChannelDistribution {
   web: number;
 }
 
+export interface DashboardSla {
+  targets: { responseMinutes: number; resolutionHours: number; alerts: boolean };
+  response: { total: number; onTime: number; rate: number | null; medianMs: number | null; p90Ms: number | null };
+  resolution: { total: number; onTime: number; rate: number | null; medianMs: number | null };
+  now: {
+    breached: number;
+    atRisk: number;
+    conversations: { id: string; name: string | null; platform: string; awaitingReplySince: string }[];
+  };
+}
+
 export interface Activity {
   _id?: string;
   type: string;
@@ -94,6 +105,13 @@ export const dashboardService = {
       headers: authService.getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to fetch channels');
+    return res.json();
+  },
+
+  async getSla(days?: number): Promise<DashboardSla> {
+    const query = days ? `?days=${days}` : '';
+    const res = await fetch(`${API_URL}/dashboard/sla${query}`, { headers: authService.getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch SLA');
     return res.json();
   },
 

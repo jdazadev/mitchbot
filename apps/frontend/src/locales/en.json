@@ -101,7 +101,24 @@
   "dashboard": {
     "sections": {
       "outcomes": "Results",
-      "botHealth": "Bot health"
+      "botHealth": "Bot health",
+      "sla": "SLA"
+    },
+    "sla": {
+      "response": "Answered within {minutes} min",
+      "resolution": "Resolved within {hours} h",
+      "turns": "{onTime} of {total} messages on time",
+      "noTurns": "No messages in this range",
+      "resolved": "{onTime} of {total} conversations",
+      "noResolutions": "No closed conversations in this range",
+      "medianWait": "Median wait",
+      "p90": "90% wait less than {value}",
+      "breachedNow": "Overdue now",
+      "atRisk": "{count} due soon",
+      "waitingTitle": "Waiting past target",
+      "waitingSubtitle": "Customers waiting more than {minutes} min without a reply.",
+      "waiting": "waiting {time}",
+      "unknownClient": "Customer"
     },
     "stats": {
       "totalConversations": "Total Conversations",
@@ -497,6 +514,11 @@
         "failed": "Couldn't export. Please try again."
       }
     },
+    "sla": {
+      "breached": "Overdue",
+      "at_risk": "Due soon",
+      "waiting": "Waiting for a reply for {time}"
+    },
     "templates": {
       "title": "Send template",
       "open": "Send template",
@@ -743,6 +765,17 @@
         "accountInvalid": "The Instagram account ID only contains digits.",
         "webhookHint": "Register it in Meta with the INSTAGRAM_VERIFY_TOKEN verify token and subscribe to the messages field. Meta requires a public HTTPS URL."
       }
+    },
+    "sla": {
+      "title": "Service level targets (SLA)",
+      "subtitle": "How long a customer can wait. Times run continuously, without business hours.",
+      "responseLabel": "Response (minutes)",
+      "responseHint": "Maximum time to answer each customer message.",
+      "resolutionLabel": "Resolution (hours)",
+      "resolutionHint": "Maximum time from the start of a conversation until it is closed.",
+      "alerts": "Alert on overdue waits",
+      "alertsHint": "The team is notified when a customer exceeds the response target.",
+      "invalid": "Response goes from 1 to 1440 minutes and resolution from 1 to 720 hours, in whole numbers."
     },
     "widget": {
       "title": "Widget for your website",

@@ -137,6 +137,11 @@ const updateProjectSchema = z.object({
     instagram: z.object({
       accountId: accountId('El ID de la cuenta de Instagram solo contiene dígitos'),
     }).optional(),
+    sla: z.object({
+      responseMinutes: z.number().int().min(1, 'El objetivo de respuesta es de 1 a 1440 minutos').max(1440, 'El objetivo de respuesta es de 1 a 1440 minutos').optional(),
+      resolutionHours: z.number().int().min(1, 'El objetivo de resolución es de 1 a 720 horas').max(720, 'El objetivo de resolución es de 1 a 720 horas').optional(),
+      alerts: z.boolean().optional(),
+    }).optional(),
     widget: z.object({
       enabled: z.boolean().optional(),
       allowedOrigins: z.array(z.string().max(255)).max(MAX_ALLOWED_ORIGINS, `Como máximo ${MAX_ALLOWED_ORIGINS} dominios`).optional(),

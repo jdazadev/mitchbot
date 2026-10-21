@@ -180,13 +180,14 @@ const channelsSnapshot = () =>
     widget: widgetForm.value,
   });
 const isChannelsDirty = computed(() => channelsSnapshot() !== savedChannelsJson.value);
-const isOptionsDirty = computed(() => JSON.stringify(optionsForm.value) !== savedOptionsJson.value);
+const optionsSnapshot = () => JSON.stringify({ options: optionsForm.value, sla: slaForm.value });
+const isOptionsDirty = computed(() => optionsSnapshot() !== savedOptionsJson.value);
 
 function snapshotChannels() {
   savedChannelsJson.value = channelsSnapshot();
 }
 function snapshotOptions() {
-  savedOptionsJson.value = JSON.stringify(optionsForm.value);
+  savedOptionsJson.value = optionsSnapshot();
 }
 
 function addGoodbyeKeyword() {
@@ -269,6 +270,13 @@ const isMetaChannel = (key: string): key is MetaChannel => key === 'whatsapp' ||
 
 // ===================== OPTIONS =====================
 const optionsForm = ref({ autoCreateContact: true });
+/** Objetivos de servicio: respuesta en minutos, resolución en horas y avisos de espera vencida. */
+const slaForm = ref({ responseMinutes: 15, resolutionHours: 24, alerts: true });
+const slaInvalid = computed(() => {
+  const { responseMinutes, resolutionHours } = slaForm.value;
+  const valid = (value: number, max: number) => Number.isInteger(value) && value >= 1 && value <= max;
+  return !valid(responseMinutes, 1440) || !valid(resolutionHours, 720);
+});
 
 // ===================== MODELOS (SOLO LECTURA) =====================
 const resolvedModels = ref<{ llm: ProviderConfig | null; embedding: ProviderConfig | null; ocr: ProviderConfig | null }>({
@@ -316,6 +324,13 @@ onMounted(async () => {
       loadWidget(projectData.config?.widget);
       if (projectData.config?.options) {
         optionsForm.value.autoCreateContact = projectData.config.options.autoCreateContact ?? true;
+      }
+      if (projectData.config?.sla) {
+        slaForm.value = {
+          responseMinutes: projectData.config.sla.responseMinutes ?? 15,
+          resolutionHours: projectData.config.sla.resolutionHours ?? 24,
+          alerts: projectData.config.sla.alerts ?? true,
+        };
       }
     }
 
@@ -540,13 +555,12 @@ async function handleSaveChannels() {
 // ===================== OPTIONS =====================
 async function handleSaveOptions() {
   if (!project.value?._id) return showErrorMsg(t('settings.errors.projectNotFound'));
+  if (slaInvalid.value) return showErrorMsg(t('settings.sla.invalid'));
   saving.value = true;
   try {
-    await projectService.updateProject({
-      config: {
-        ...project.value.config,
-        options: optionsForm.value,
-      },
+    // Solo lo que edita esta pestaña: el resto de la configuración queda como está en el servidor.
+    project.value = await projectService.updateProject({
+      config: { options: optionsForm.value, sla: slaForm.value },
     });
     showSuccessMsg(t('settings.toasts.optionsUpdated'));
     snapshotOptions();
@@ -1152,6 +1166,30 @@ async function handleSaveOptions() {
               <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.options.autoCreateContactHint') }}</p>
             </div>
             <ASwitch v-model="optionsForm.autoCreateContact" :aria-label="t('settings.options.autoCreateContact')" />
+          </div>
+        </div>
+        <div class="rounded-card bg-surface p-6 shadow-card" data-testid="sla-settings">
+          <h2 class="font-display text-[15.5px] font-semibold tracking-[-0.015em]">{{ t('settings.sla.title') }}</h2>
+          <p class="mt-1 text-xs text-ink-3">{{ t('settings.sla.subtitle') }}</p>
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-semibold text-ink-2">{{ t('settings.sla.responseLabel') }}</span>
+              <input v-model.number="slaForm.responseMinutes" type="number" min="1" max="1440" step="1" class="field" />
+              <span class="text-xs text-ink-3">{{ t('settings.sla.responseHint') }}</span>
+            </label>
+            <label class="flex flex-col gap-1.5">
+              <span class="text-xs font-semibold text-ink-2">{{ t('settings.sla.resolutionLabel') }}</span>
+              <input v-model.number="slaForm.resolutionHours" type="number" min="1" max="720" step="1" class="field" />
+              <span class="text-xs text-ink-3">{{ t('settings.sla.resolutionHint') }}</span>
+            </label>
+          </div>
+          <p v-if="slaInvalid" role="alert" class="mt-3 text-xs text-[color:var(--danger)]">{{ t('settings.sla.invalid') }}</p>
+          <div class="mt-4 flex items-center justify-between rounded-field border border-line p-4">
+            <div>
+              <span class="text-[13px] font-medium">{{ t('settings.sla.alerts') }}</span>
+              <p class="mt-0.5 text-xs text-ink-3">{{ t('settings.sla.alertsHint') }}</p>
+            </div>
+            <ASwitch v-model="slaForm.alerts" :aria-label="t('settings.sla.alerts')" />
           </div>
         </div>
         <div class="sticky bottom-3.5 z-10 flex flex-wrap items-center gap-3 rounded-card bg-surface p-3 shadow-card">

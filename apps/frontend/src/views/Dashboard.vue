@@ -10,10 +10,12 @@ import {
   type ChannelDistribution,
   type VolumeData,
   type VolumePeriod,
+  type DashboardSla,
 } from "../services/dashboard.service";
 import AIcon from "../components/ui/AIcon.vue";
 import AButton from "../components/ui/AButton.vue";
 import DashboardMetricBand from "../components/dashboard/DashboardMetricBand.vue";
+import SlaPanel from "../components/dashboard/SlaPanel.vue";
 import DashboardSentimentPanel from "../components/dashboard/DashboardSentimentPanel.vue";
 import DashboardToolsPanel from "../components/dashboard/DashboardToolsPanel.vue";
 import { CHANNEL_META, channelFill } from "../lib/channels";
@@ -32,6 +34,9 @@ const periodOptions = computed<{ id: VolumePeriod; label: string }[]>(() => [
   { id: "monthly", label: t("dashboard.volume.monthly") },
 ]);
 const volumeData = ref<VolumeData[]>([]);
+const slaData = ref<DashboardSla | null>(null);
+/** Referencia para las esperas en curso del bloque SLA. */
+const now = ref(Date.now());
 
 const dashboardStats = ref<DashboardStats>({
   total: 0,
@@ -262,13 +267,14 @@ async function loadDashboard() {
     isLoading.value = true;
     error.value = null;
 
-    const [statsRes, outcomesRes, automationRes, channelsRes, activitiesRes, volumeRes] = await Promise.all([
+    const [statsRes, outcomesRes, automationRes, channelsRes, activitiesRes, volumeRes, slaRes] = await Promise.all([
       dashboardService.getStats(rangeDays.value),
       dashboardService.getOutcomes(rangeDays.value),
       dashboardService.getAutomation(rangeDays.value),
       dashboardService.getChannelDistribution(rangeDays.value),
       dashboardService.getActivities(),
       dashboardService.getVolume(period.value, rangeDays.value),
+      dashboardService.getSla(rangeDays.value),
     ]);
 
     dashboardStats.value = statsRes;
@@ -277,6 +283,8 @@ async function loadDashboard() {
     channelData.value = channelsRes;
     activityList.value = activitiesRes;
     volumeData.value = volumeRes;
+    slaData.value = slaRes;
+    now.value = Date.now();
   } catch (err: any) {
     console.error("Failed to load dashboard data:", err);
     error.value = err.message;
@@ -314,6 +322,7 @@ onMounted(() => {
     <template v-else>
       <DashboardMetricBand :title="t('dashboard.sections.outcomes')" :metrics="resultMetrics" :is-loading="isLoading" />
       <DashboardMetricBand :title="t('dashboard.sections.botHealth')" :metrics="healthMetrics" :is-loading="isLoading" />
+      <SlaPanel :sla="slaData" :is-loading="isLoading" :now="now" />
 
       <!-- Conversation volume and message mix -->
       <div class="rounded-card bg-surface p-5 px-6 shadow-card">

@@ -14,7 +14,36 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.10.0
+**Versión actual del proyecto:** v0.11.0
+
+---
+
+## Métricas de SLA y socket del panel fiable (v0.11.0)
+
+Objetivos de servicio por proyecto, su medición y avisos, más el arreglo de los eventos en vivo tras iniciar sesión. OpenSpec `add-sla-metrics`; capability `sla-metrics`.
+
+- **Cálculo puro** (`services/sla.ts`): `slaTargets` (por defecto 15 min, 24 h y avisos), `isReply`, `responseTurns`, `responseCompliance`, `resolutionCompliance`, `median`, `percentile` y `waitState` (`AT_RISK_RATIO` = 0,75). El frontend replica `waitState` en `lib/sla.ts`.
+- **Espera** (`chat.service`):
+  - `startWaiting` (con el mensaje del cliente, solo si no esperaba): fija `awaitingReplySince` con la hora del canal, programa el aviso y emite `chat:sla`.
+  - `stopWaiting`: borra la espera y `slaBreachNotifiedAt`.
+  - `deliverReply(message, target)` sustituye a las cuatro llamadas a `dispatch` (respuesta directa, final del bot, final tras herramientas y confirmación) y cierra la espera si el mensaje es visible para el cliente.
+  - `closedAt` se fija en `markConversationClosed`, `handleAutoGoodbye` y `PUT /:id/status`; se borra al reabrir.
+- **Avisos** (`queues/sla-alerts.ts`):
+  - **Programación**: un trabajo diferido por espera, con `jobId` `sla_<conversación>_<inicio>`.
+  - **Comprobación**: `processSlaAlert` reclama atómicamente la espera (la misma `awaitingReplySince`, abierta y sin aviso previo) y emite `admin:notification` con `kind: 'sla_breach'`.
+  - **Arranque**: el worker se arranca en `index.ts`.
+  - **En las pruebas**: las de integración que crean esperas deben llamar a `closeSlaAlertsQueue()` en su `after`, o el proceso no termina.
+- **Endpoint**: `GET /api/dashboard/sla?days|from|to` devuelve `{ targets, range, response, resolution, now { breached, atRisk, conversations[] } }`, calculado en `services/sla.service.ts`.
+- **Interfaz**: `components/dashboard/SlaPanel.vue` (con `DashboardMetricBand`), la marca `conversation-sla` (`data-state` = `breached` o `at_risk`) en la bandeja de `Messaging.vue` y el bloque `sla-settings` en Opciones. Opciones ya envía solo `options` y `sla`.
+- **Socket del panel** (`services/socket.service.ts`):
+  - **Registro de manejadores**: `on`/`off`/`emit`, con un registro global por evento que se engancha a cada socket nuevo.
+  - **`ensure()`**: recrea el socket si no hay ninguno vivo o si cambió el token o el proyecto. Nunca se conecta al panel sin token.
+  - **Sala**: `lastRoom` se vuelve a pedir en cada `connect`.
+  - **Chat público**: `leavePublic()` lo cierra.
+  - **Uso**: no accedas a `socketService.socket` para escuchar; usa `socketService.on`.
+  - `useConversations` se registra una sola vez (`bound`).
+- **Recuperación tras `joined:room`**: Conversaciones (`onJoinedRoom`) y el widget vuelven a pedir la última página y la fusionan (`mergeMessages` completa también las burbujas vacías).
+- **Verificación**: unitarios backend **101/101** y frontend **66/66**; integración **79/79 (1 omitida)**; E2E **97/97** en tres corridas completas; paridad es/en **825/825**.
 
 ---
 
@@ -214,7 +243,7 @@ Base común para WhatsApp e Instagram: entrada normalizada e idempotente, salida
 
 - **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y **un solo HTML final**: en la subcarpeta `review-N` o, si no la hay, en la raíz de la carpeta. Los borradores superados se eliminaron en v0.4.32; al regenerar, borra la revisión anterior.
 - **Contenido**: arquitectura del sistema; workflows de auth/onboarding y de control de herramientas; secuencias de mensaje→bot y de confirmación del cliente; dataflows de ingesta RAG y de analítica/insights; lifecycles de conversación, fuente de conocimiento y ejecución de herramienta.
-- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.10.0 (`review-6`).
+- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.11.0 (`review-7`).
 - **Regenerar**: `node ~/.claude/skills/archify/bin/archify.mjs finalize <tipo> candidate.json <salida.html> --quality showcase --out-dir <carpeta>/review-N`. Un candidato modificado necesita un `--out-dir` nuevo. En el sandbox de Claude Code, antepón `NO_PROXY=localhost,127.0.0.1,::1`.
 - **Límites**: los diagramas del sistema se redactaron cuando aún no había remoto, así que no fijan fuentes por commit. Ahora existe `origin` (`git@github.com:jdazadev/mitchbot.git`) y los nuevos diagramas pueden usar `meta.repository` + `--repo-root`. Si cambia el flujo, actualiza el `candidate.json` correspondiente.
 
@@ -958,7 +987,7 @@ Usuario abre la app
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
 | **Tools** | `GET /`, `PUT /config` | Catálogo de operaciones y configuración por proyecto |
 | **Tool Executions** | `GET /`, `GET /pending`, `POST /:id/approve`, `POST /:id/reject` | Historial, solicitudes pendientes y resolución por rol |
-| **Dashboard** | `GET /stats`, `GET /outcomes`, `GET /automation`, `GET /volume`, `GET /channels`, `GET /activities` | Analytics autenticada y acotada al proyecto activo (`X-Project-Id`/`activeProjectId`) |
+| **Dashboard** | `GET /stats`, `GET /outcomes`, `GET /automation`, `GET /volume`, `GET /channels`, `GET /activities`, `GET /sla` | Analytics autenticada y acotada al proyecto activo (`X-Project-Id`/`activeProjectId`) |
 | **Webhooks** | `GET /whatsapp`, `POST /whatsapp`, `GET /instagram`, `POST /instagram` | Verificación y webhooks de WhatsApp Cloud API e Instagram Messaging API (públicos, autenticados por firma) |
 | **Public Chat** | `GET /public/test-chat/:slug/config`, `POST /public/test-chat/:slug/start` (devuelve `clientToken`), `POST /public/test-chat/:slug/:id/messages` (exige `clientToken`) | Chat público (clientes web); `config` expone el idioma del agente (sin auth) |
 | **Widget** | `GET /widget.js`, `GET /public/widget/:slug/config`, `GET /public/widget/:slug/frame`, `GET /public/widget/:slug/conversations/:id/messages` | Widget embebible: cargador, configuración pública, página con `frame-ancestors` e historial con token |
@@ -973,7 +1002,7 @@ Usuario abre la app
 |:----------|:-------------|:------|
 | `users` | name, email, password (hash), role, status, avatar, projectIds, activeProjectId | Roles: admin, support, assistant, approver. Pertenencia multi-proyecto |
 | `contacts` | projectId, name, phone, email, platform, status, tags, metadata | Aislado por proyecto. Soft delete (archivar) |
-| `conversations` | contactId, platform, status, mode, clientInfo, channelAccount, lastInboundAt, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores |
+| `conversations` | contactId, platform, status, mode, clientInfo, channelAccount, lastInboundAt, awaitingReplySince, slaBreachNotifiedAt, closedAt, unreadCount, aiInsights | Modos: auto_pilot, human_takeover. `aiInsights`: sentiment, sentimentScores |
 | `messages` | conversationId, sender, content, contentType, isBot, toolData | Sender: contact, ai_agent, human_agent, tool. contentType: text, tool_call, tool_result, confirmation_request |
 | `agents` | projectId, name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
 | `ai_models` | name, value, provider, category, isActive | Catálogo de modelos (los disponibles se listan dinámicamente desde OpenRouter) |
@@ -1012,6 +1041,7 @@ Todas las conexiones WebSocket requieren autenticación JWT:
 | `chat:new_conversation` | Server → Client | Nueva conversación iniciada |
 | `chat:message_updated` | Server → Client | Mensaje actualizado: `status` de la confirmación de tool, o `delivery` (entrega en canal externo: `queued`, `sent`, `delivered`, `read`, `failed`); nunca ambos |
 | `chat:insights` | Server → Client | Insights de la conversación recalculados (sentimiento y su distribución) |
+| `chat:sla` | Server → Client | Espera del cliente abierta (`awaitingReplySince`) o cerrada (`null`); solo al dashboard |
 | `chat:read` | Server → Client | Una sesión del proyecto marcó una conversación como leída; el resto actualiza su badge |
 | `tool:confirm` | Client → Server | Confirmar / cancelar / modificar una ejecución de herramienta |
 | `tool:confirmed` | Server → Client | Resultado de la confirmación de herramienta |
@@ -1161,9 +1191,9 @@ INSTAGRAM_API_VERSION=v21.0
 - [x] Exportación de conversaciones a CSV y JSON con permisos y auditoría (v0.8.0)
 - [x] Plantillas de WhatsApp para escribir fuera de la ventana de 24 h (v0.9.0)
 - [x] Chat widget embebible con dominios autorizados y acceso por token al chat público (v0.10.0)
+- [x] Métricas de SLA con avisos de esperas vencidas (v0.11.0)
 
-### Siguiente — v0.11 – v0.12 🔜
-- [ ] Métricas de SLA
+### Siguiente — v0.12 🔜
 - [ ] Notificaciones push
 
 ### Hacia la v1.0 💡

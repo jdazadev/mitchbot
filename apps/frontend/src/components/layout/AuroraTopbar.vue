@@ -271,6 +271,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (clockTimer) clearInterval(clockTimer);
+  socketService.offNotification(handleNotification);
 });
 </script>
 

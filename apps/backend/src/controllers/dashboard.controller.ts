@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { analyticsService, type DateRange, type VolumePeriod } from '../services/analytics.service';
+import { slaService } from '../services/sla.service';
 
 const VOLUME_PERIODS: VolumePeriod[] = ['daily', 'weekly', 'monthly'];
 
@@ -101,6 +102,17 @@ export const getActivities = async (req: Request, res: Response, next: NextFunct
     if (!projectId) return;
     const data = await analyticsService.getRecentActivity(projectId);
     res.json(data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** SLA: respuesta y resolución en plazo y esperas vencidas ahora */
+export const getSla = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = resolveProjectId(req, res);
+    if (!projectId) return;
+    res.json(await slaService.getSla(projectId, parseRange(req)));
   } catch (error) {
     next(error);
   }

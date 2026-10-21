@@ -1,4 +1,5 @@
 import './helpers/isolated-env';
+import { closeSlaAlertsQueue } from '../../src/queues/sla-alerts';
 import { test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { ObjectId } from 'mongodb';
@@ -76,6 +77,7 @@ beforeEach(async () => {
 });
 
 after(async () => {
+  await closeSlaAlertsQueue({ obliterate: true });
   setTemplateClientForTests(undefined);
   await Promise.all(workers.map(worker => worker.close()));
   await getOutboundQueue('WhatsApp').obliterate({ force: true });

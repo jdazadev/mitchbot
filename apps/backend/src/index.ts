@@ -16,6 +16,7 @@ import { createInboundWorker } from './channels/inbound';
 import { createOutboundWorkers } from './channels/outbound';
 import { registerWhatsApp } from './channels/whatsapp';
 import { registerInstagram } from './channels/instagram';
+import { createSlaAlertWorker } from './queues/sla-alerts';
 import { serveLoader, WIDGET_ASSETS_DIR } from './controllers/widget.controller';
 
 const app = express();
@@ -63,6 +64,7 @@ const httpServer = createServer(app);
           registerInstagram();
           createInboundWorker();
           createOutboundWorkers();
+          createSlaAlertWorker();
         } catch (e) {
           console.warn('⚠️ Could not start channel workers:', e);
         }

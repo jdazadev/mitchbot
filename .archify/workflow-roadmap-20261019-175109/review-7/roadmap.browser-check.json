@@ -6,11 +6,11 @@
   "status": "pass",
   "visualReview": "not-requested",
   "provenance": "current",
-  "deliveryReceiptId": "1b0f0632-1d49-4909-a391-91dd3484eb28",
+  "deliveryReceiptId": "b60770ca-7b54-4436-832a-f66ab31ddf44",
   "artifact": {
     "path": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/roadmap.html",
-    "sha256": "496c8be7e94e2ee97902ccd4a974407dde662759a8776a90805167f6805686b0",
-    "bytes": 765056
+    "sha256": "f9284df69b5ee1bc9ded4625024e7d9cbbfabf33c8edf826586481ad46b4e8de",
+    "bytes": 763229
   },
   "state": {
     "detail": "read",
@@ -47,31 +47,30 @@
           "bodyPaddingPx": 12,
           "headerPx": 52,
           "diagramChromePx": 78,
-          "svgPx": 611,
+          "svgPx": 627,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 121,
-            "nodeCount": 6,
+            "heightPx": 124,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 78,
-            "spaceAboveNodesPx": 39,
+            "nodeSpanPx": 80,
+            "spaceAboveNodesPx": 40,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 121,
+            "heightPx": 124,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -79,21 +78,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 78,
-            "spaceAboveNodesPx": 39,
+            "nodeSpanPx": 80,
+            "spaceAboveNodesPx": 40,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 121,
+            "heightPx": 124,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 78,
-            "spaceAboveNodesPx": 39,
+            "nodeSpanPx": 80,
+            "spaceAboveNodesPx": 40,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -142,31 +141,30 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 684,
+          "svgPx": 701,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 136,
-            "nodeCount": 6,
+            "heightPx": 139,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 87,
-            "spaceAboveNodesPx": 44,
+            "nodeSpanPx": 89,
+            "spaceAboveNodesPx": 45,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 136,
+            "heightPx": 139,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -174,21 +172,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 87,
-            "spaceAboveNodesPx": 44,
+            "nodeSpanPx": 89,
+            "spaceAboveNodesPx": 45,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 136,
+            "heightPx": 139,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 87,
-            "spaceAboveNodesPx": 44,
+            "nodeSpanPx": 89,
+            "spaceAboveNodesPx": 45,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -237,31 +235,30 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 829,
+          "svgPx": 850,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 165,
-            "nodeCount": 6,
+            "heightPx": 169,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 106,
-            "spaceAboveNodesPx": 53,
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 165,
+            "heightPx": 169,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -269,21 +266,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 106,
-            "spaceAboveNodesPx": 53,
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 165,
+            "heightPx": 169,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 106,
-            "spaceAboveNodesPx": 53,
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           }
         ],
@@ -332,31 +329,30 @@
           "bodyPaddingPx": 64,
           "headerPx": 68,
           "diagramChromePx": 94,
-          "svgPx": 849,
+          "svgPx": 871,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 169,
-            "nodeCount": 6,
+            "heightPx": 173,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 108,
-            "spaceAboveNodesPx": 54,
-            "spaceBelowNodesPx": 6
+            "nodeSpanPx": 111,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 7
           },
           {
             "frameId": "lane-1",
-            "heightPx": 169,
+            "heightPx": 173,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -364,22 +360,22 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 108,
-            "spaceAboveNodesPx": 54,
-            "spaceBelowNodesPx": 6
+            "nodeSpanPx": 111,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 7
           },
           {
             "frameId": "lane-2",
-            "heightPx": 169,
+            "heightPx": 173,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 108,
-            "spaceAboveNodesPx": 54,
-            "spaceBelowNodesPx": 6
+            "nodeSpanPx": 111,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 7
           }
         ],
         "minimumProjectedNodeTextPx": 7.9,
@@ -480,31 +476,30 @@
           "bodyPaddingPx": 12,
           "headerPx": 52,
           "diagramChromePx": 78,
-          "svgPx": 611,
+          "svgPx": 627,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 121,
-            "nodeCount": 6,
+            "heightPx": 124,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 78,
-            "spaceAboveNodesPx": 39,
+            "nodeSpanPx": 80,
+            "spaceAboveNodesPx": 40,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 121,
+            "heightPx": 124,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -512,21 +507,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 78,
-            "spaceAboveNodesPx": 39,
+            "nodeSpanPx": 80,
+            "spaceAboveNodesPx": 40,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 121,
+            "heightPx": 124,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 78,
-            "spaceAboveNodesPx": 39,
+            "nodeSpanPx": 80,
+            "spaceAboveNodesPx": 40,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -575,31 +570,30 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 684,
+          "svgPx": 701,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 136,
-            "nodeCount": 6,
+            "heightPx": 139,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 87,
-            "spaceAboveNodesPx": 44,
+            "nodeSpanPx": 89,
+            "spaceAboveNodesPx": 45,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 136,
+            "heightPx": 139,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -607,21 +601,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 87,
-            "spaceAboveNodesPx": 44,
+            "nodeSpanPx": 89,
+            "spaceAboveNodesPx": 45,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 136,
+            "heightPx": 139,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 87,
-            "spaceAboveNodesPx": 44,
+            "nodeSpanPx": 89,
+            "spaceAboveNodesPx": 45,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -670,31 +664,30 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 829,
+          "svgPx": 850,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 165,
-            "nodeCount": 6,
+            "heightPx": 169,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 106,
-            "spaceAboveNodesPx": 53,
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 165,
+            "heightPx": 169,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -702,21 +695,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 106,
-            "spaceAboveNodesPx": 53,
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 165,
+            "heightPx": 169,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 106,
-            "spaceAboveNodesPx": 53,
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           }
         ],
@@ -765,31 +758,30 @@
           "bodyPaddingPx": 64,
           "headerPx": 68,
           "diagramChromePx": 94,
-          "svgPx": 849,
+          "svgPx": 871,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 169,
-            "nodeCount": 6,
+            "heightPx": 173,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 108,
-            "spaceAboveNodesPx": 54,
-            "spaceBelowNodesPx": 6
+            "nodeSpanPx": 111,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 7
           },
           {
             "frameId": "lane-1",
-            "heightPx": 169,
+            "heightPx": 173,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -797,22 +789,22 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 108,
-            "spaceAboveNodesPx": 54,
-            "spaceBelowNodesPx": 6
+            "nodeSpanPx": 111,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 7
           },
           {
             "frameId": "lane-2",
-            "heightPx": 169,
+            "heightPx": 173,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 108,
-            "spaceAboveNodesPx": 54,
-            "spaceBelowNodesPx": 6
+            "nodeSpanPx": 111,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 7
           }
         ],
         "minimumProjectedNodeTextPx": 7.9,
@@ -865,31 +857,30 @@
           "bodyPaddingPx": 12,
           "headerPx": 52,
           "diagramChromePx": 78,
-          "svgPx": 611,
+          "svgPx": 627,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 121,
-            "nodeCount": 6,
+            "heightPx": 124,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 78,
-            "spaceAboveNodesPx": 39,
+            "nodeSpanPx": 80,
+            "spaceAboveNodesPx": 40,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 121,
+            "heightPx": 124,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -897,21 +888,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 78,
-            "spaceAboveNodesPx": 39,
+            "nodeSpanPx": 80,
+            "spaceAboveNodesPx": 40,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 121,
+            "heightPx": 124,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 78,
-            "spaceAboveNodesPx": 39,
+            "nodeSpanPx": 80,
+            "spaceAboveNodesPx": 40,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -960,31 +951,30 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 684,
+          "svgPx": 701,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 136,
-            "nodeCount": 6,
+            "heightPx": 139,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 87,
-            "spaceAboveNodesPx": 44,
+            "nodeSpanPx": 89,
+            "spaceAboveNodesPx": 45,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 136,
+            "heightPx": 139,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -992,21 +982,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 87,
-            "spaceAboveNodesPx": 44,
+            "nodeSpanPx": 89,
+            "spaceAboveNodesPx": 45,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 136,
+            "heightPx": 139,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 87,
-            "spaceAboveNodesPx": 44,
+            "nodeSpanPx": 89,
+            "spaceAboveNodesPx": 45,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -1055,31 +1045,30 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 829,
+          "svgPx": 850,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 165,
-            "nodeCount": 6,
+            "heightPx": 169,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 106,
-            "spaceAboveNodesPx": 53,
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 165,
+            "heightPx": 169,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -1087,21 +1076,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 106,
-            "spaceAboveNodesPx": 53,
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 165,
+            "heightPx": 169,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 106,
-            "spaceAboveNodesPx": 53,
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           }
         ],
@@ -1150,31 +1139,30 @@
           "bodyPaddingPx": 64,
           "headerPx": 68,
           "diagramChromePx": 94,
-          "svgPx": 849,
+          "svgPx": 871,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1176,
+        "viewBoxWidth": 1147,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 169,
-            "nodeCount": 6,
+            "heightPx": 173,
+            "nodeCount": 5,
             "nodeIds": [
               "mvp",
               "openrouter",
               "herramientas",
               "resiliencia",
-              "sla",
               "v1"
             ],
-            "nodeSpanPx": 108,
-            "spaceAboveNodesPx": 54,
-            "spaceBelowNodesPx": 6
+            "nodeSpanPx": 111,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 7
           },
           {
             "frameId": "lane-1",
-            "heightPx": 169,
+            "heightPx": 173,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -1182,22 +1170,22 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 108,
-            "spaceAboveNodesPx": 54,
-            "spaceBelowNodesPx": 6
+            "nodeSpanPx": 111,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 7
           },
           {
             "frameId": "lane-2",
-            "heightPx": 169,
+            "heightPx": 173,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 108,
-            "spaceAboveNodesPx": 54,
-            "spaceBelowNodesPx": 6
+            "nodeSpanPx": 111,
+            "spaceAboveNodesPx": 55,
+            "spaceBelowNodesPx": 7
           }
         ],
         "minimumProjectedNodeTextPx": 7.9,
@@ -1231,7 +1219,7 @@
     "contactSheet": null
   },
   "sidecars": {
-    "directory": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-6",
+    "directory": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-7",
     "receipt": "roadmap.browser-check.json",
     "files": []
   }

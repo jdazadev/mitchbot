@@ -47,6 +47,11 @@ export interface ProjectConfig {
   instagram?: {
     accountId?: string | null;
   };
+  sla?: {
+    responseMinutes?: number;
+    resolutionHours?: number;
+    alerts?: boolean;
+  };
   widget?: {
     enabled?: boolean;
     allowedOrigins?: string[];

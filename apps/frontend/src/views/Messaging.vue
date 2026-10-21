@@ -26,6 +26,7 @@ import ADropdown from "../components/ui/ADropdown.vue";
 import ExportDialog from "../components/messaging/ExportDialog.vue";
 import TemplatePicker from "../components/messaging/TemplatePicker.vue";
 import { isWindowClosed } from "../lib/templates";
+import { DEFAULT_RESPONSE_MINUTES, waitState, formatDuration } from "../lib/sla";
 import { authService } from "../services/auth.service";
 import AEmptyState from "../components/ui/AEmptyState.vue";
 import { renderMarkdown } from "../lib/markdown";
@@ -108,6 +109,17 @@ const searchQuery = ref("");
 
 // === Filtros de canal derivados de la configuración del proyecto ===
 const enabledChannels = ref<ChannelFilter[]>(["All"]);
+/** Objetivo de respuesta del proyecto: marca las esperas en la bandeja. */
+const slaResponseMinutes = ref(DEFAULT_RESPONSE_MINUTES);
+
+/** Estado de la espera del cliente; `null` si no espera o va en plazo holgado. */
+function slaBadge(chat: ChatConversation) {
+  if (chat.status === "closed") return null;
+  const state = waitState(chat.awaitingReplySince, slaResponseMinutes.value, now.value);
+  if (state !== "breached" && state !== "at_risk") return null;
+  const waited = formatDuration(now.value - Date.parse(chat.awaitingReplySince!), locale.value);
+  return { state, label: t(`messaging.sla.${state}`), title: t("messaging.sla.waiting", { time: waited }) };
+}
 
 async function loadChannels() {
   try {
@@ -118,6 +130,7 @@ async function loadChannels() {
     if (channels?.instagram) list.push("Instagram");
     if (channels?.web) list.push("Web");
     enabledChannels.value = list;
+    slaResponseMinutes.value = project?.config?.sla?.responseMinutes ?? DEFAULT_RESPONSE_MINUTES;
   } catch (error) {
     console.error("Failed to load project channels", error);
     enabledChannels.value = ["All", "WhatsApp", "Instagram", "Web"];
@@ -269,6 +282,22 @@ const sentimentTitle = computed(() => {
 const urgencyTitle = computed(
   () => `${t("messaging.urgency.title")}: ${urgency.value.level} — ${urgency.value.reason}`,
 );
+
+/**
+ * Al entrar en la sala se vuelve a pedir la última página: lo que se emitió
+ * entre la carga del historial y la entrada en la sala no llega por socket.
+ */
+async function onJoinedRoom(data: { roomId?: string }) {
+  const chat = selectedChat.value;
+  if (!chat || data?.roomId !== chat._id || messageLoadError.value) return;
+  try {
+    const res = await messagingService.getMessages(chat._id);
+    if (selectedChat.value?._id !== chat._id) return;
+    messages.value = mergeMessages(messages.value, res.messages.map((m) => processMessage(m, chat)));
+  } catch {
+    // Sin conexión: la carga normal ya informó del error si lo hubo.
+  }
+}
 
 async function fetchMessages(chat: ChatConversation) {
   const requestId = ++messagesRequestId;
@@ -971,10 +1000,9 @@ onMounted(async () => {
     socketService.onConversationStatus(onConversationStatus);
     socketService.onInsights(onInsights);
 
-    if (socketService.socket) {
-      socketService.socket.on('error', onSocketError);
-      socketService.socket.on('disconnect', onSocketDisconnect);
-    }
+    socketService.on('error', onSocketError);
+    socketService.on('disconnect', onSocketDisconnect);
+    socketService.on('joined:room', onJoinedRoom);
   } catch (error) {
     console.error("Failed to initialize socket service", error);
   }
@@ -992,10 +1020,9 @@ onUnmounted(() => {
   socketService.offToolConfirmed(onToolConfirmed);
   socketService.offConversationStatus(onConversationStatus);
   socketService.offInsights(onInsights);
-  if (socketService.socket) {
-    socketService.socket.off('error', onSocketError);
-    socketService.socket.off('disconnect', onSocketDisconnect);
-  }
+  socketService.off('error', onSocketError);
+  socketService.off('disconnect', onSocketDisconnect);
+  socketService.off('joined:room', onJoinedRoom);
   for (const timer of toolDecisionTimers.values()) clearTimeout(timer);
   toolDecisionTimers.clear();
 });
@@ -1134,6 +1161,18 @@ onUnmounted(() => {
             </span>
             <span class="flex flex-col items-end gap-1.5">
               <span class="text-[11px] text-ink-3">{{ chat.time }}</span>
+              <span
+                v-if="slaBadge(chat)"
+                data-testid="conversation-sla"
+                :data-state="slaBadge(chat)!.state"
+                :title="slaBadge(chat)!.title"
+                class="whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-bold"
+                :class="slaBadge(chat)!.state === 'breached'
+                  ? 'bg-[color:var(--danger-soft)] text-[color:var(--danger)]'
+                  : 'bg-butter-soft text-butter-ink'"
+              >
+                {{ slaBadge(chat)!.label }}
+              </span>
               <span
                 v-if="chat.unreadCount"
                 data-testid="conversation-unread"

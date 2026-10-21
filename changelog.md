@@ -5,6 +5,53 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.11.0 — 2026-10-21
+
+> **Métricas de SLA**: cada proyecto fija cuánto puede esperar un cliente. El Resumen muestra si se cumple, la bandeja señala las esperas que vencen y el equipo recibe un aviso cuando un cliente supera el plazo. Además, el panel vuelve a recibir los eventos en vivo justo después de iniciar sesión.
+
+### ✨ Añadido
+- **Objetivos por proyecto** (OpenSpec `add-sla-metrics`): `config.sla { responseMinutes, resolutionHours, alerts }`, por defecto 15 minutos, 24 horas y avisos activos. Se validan entre 1 y 1440 minutos y entre 1 y 720 horas, y se editan en Configuración → Opciones.
+- **Espera del cliente**: la conversación guarda `awaitingReplySince` desde el primer mensaje del cliente sin responder (con la hora del canal).
+  - **Qué la cierra**: una respuesta del bot o del operador, una confirmación o una plantilla. El aviso de error del bot no la cierra.
+  - **En vivo**: los cambios llegan al panel con `chat:sla`.
+- **Cierre**: `closedAt` se fija al cerrar y se borra al reabrir.
+- **`GET /api/dashboard/sla`**:
+  - **Respuesta**: cumplimiento por turnos (un turno sin responder que ya superó el objetivo cuenta como fuera de plazo), mediana y percentil 90 de la espera.
+  - **Resolución**: entre las conversaciones creadas en el rango, las cerradas dentro del objetivo frente a las cerradas tarde o abiertas vencidas.
+  - **Ahora**: las esperas vencidas (con las 10 más antiguas) y las que están a punto de vencer (al 75 % del objetivo).
+- **Avisos**: la cola BullMQ `sla-alerts` programa un trabajo diferido al empezar cada espera. Si al vencer el cliente sigue esperando y la conversación está abierta, el equipo recibe `admin:notification`, una sola vez por espera (`slaBreachNotifiedAt`).
+- **Interfaz**:
+  - El Resumen añade un bloque **SLA** (`SlaPanel.vue`): respuesta y resolución en plazo, mediana de espera y las esperas vencidas, con enlace a cada conversación.
+  - La bandeja marca **Fuera de plazo** y **Vence pronto** en cada conversación; la marca se actualiza sola.
+  - Configuración → Opciones tiene los objetivos y los avisos.
+  - Nuevos `lib/sla.ts` (`waitState`, `formatDuration`) e icono `Timer`.
+- Claves i18n `dashboard.sla.*`, `messaging.sla.*` y `settings.sla.*` (es/en).
+
+### 🐛 Corregido
+- **Sin eventos en vivo tras iniciar sesión**: en el primer render, el layout del panel se montaba un instante en `/login` y el topbar creaba un socket sin token que el servidor rechazaba. Después, `socketService` reutilizaba ese socket muerto, así que el operador no recibía mensajes ni notificaciones hasta recargar.
+  - **Arreglo**: `socketService` ya no se conecta sin sesión. Recrea el socket si está muerto o si cambia la sesión, y guarda los manejadores en un registro que se vuelve a enganchar a cada socket nuevo.
+  - **Además**: al reconectar se vuelve a unir a la sala abierta, y al salir del chat público el panel recupera su propio socket.
+- **Mensajes emitidos antes de entrar en la sala**: lo que se emitía entre la carga del historial y la entrada en la sala se perdía, por ejemplo la respuesta del bot al primer mensaje en el widget. Ahora el panel y el widget vuelven a pedir lo último al confirmarse `joined:room`, y la fusión completa las burbujas que seguían vacías.
+
+### ✅ Pruebas
+- **Unitarios**:
+  - Backend (**101**): objetivos, qué cuenta como respuesta, turnos, cumplimiento de respuesta y resolución, mediana y percentil, y estado de una espera.
+  - Frontend (**66**): `lib/sla`, `SlaPanel`, `socketService` (sin sesión, socket muerto, cambio de sesión, manejadores sin duplicar, vuelta a la sala, salida del chat público) y la fusión de burbujas vacías.
+- **Integración** (**79/79**, 1 omitida). `sla.test.ts` cubre:
+  - la espera desde el primer mensaje, con el aviso programado, y su cierre con la respuesta;
+  - un solo aviso por espera, y ninguno si se respondió o se cerró;
+  - `closedAt` al cerrar, reabrir y volver a cerrar;
+  - el cálculo completo del endpoint.
+  - Las pruebas cierran la cola de avisos (`closeSlaAlertsQueue`).
+- **E2E** (**97/97** en tres corridas completas). `sla.spec.ts` (4) cubre:
+  - el Resumen con la espera vencida, la lista y el aviso recibido sin recargar tras iniciar sesión;
+  - las marcas de la bandeja y su desaparición al responder;
+  - la configuración con validación;
+  - el endpoint con aislamiento y autenticación.
+- Paridad es/en **825/825**; backend `tsc --noEmit` y frontend `vue-tsc` y `build` en verde.
+
+---
+
 ## v0.10.0 — 2026-10-21
 
 > **Widget embebible**: el chat de Mitchbot se instala en la web del negocio con una línea de código y solo se muestra en los dominios autorizados. De paso, el chat público queda protegido: cada conversación tiene su token y los visitantes ya no reciben eventos de otros clientes.

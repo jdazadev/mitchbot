@@ -101,7 +101,24 @@
   "dashboard": {
     "sections": {
       "outcomes": "Resultados",
-      "botHealth": "Salud del bot"
+      "botHealth": "Salud del bot",
+      "sla": "SLA"
+    },
+    "sla": {
+      "response": "Respuesta en {minutes} min",
+      "resolution": "Resueltas en {hours} h",
+      "turns": "{onTime} de {total} mensajes a tiempo",
+      "noTurns": "Sin mensajes en este rango",
+      "resolved": "{onTime} de {total} conversaciones",
+      "noResolutions": "Sin conversaciones cerradas en este rango",
+      "medianWait": "Mediana de espera",
+      "p90": "El 90 % espera menos de {value}",
+      "breachedNow": "Fuera de plazo ahora",
+      "atRisk": "{count} vencen pronto",
+      "waitingTitle": "Esperando fuera de plazo",
+      "waitingSubtitle": "Clientes que llevan más de {minutes} min sin respuesta.",
+      "waiting": "esperando {time}",
+      "unknownClient": "Cliente"
     },
     "stats": {
       "totalConversations": "Conversaciones totales",
@@ -497,6 +514,11 @@
         "failed": "No se pudo exportar. Inténtalo de nuevo."
       }
     },
+    "sla": {
+      "breached": "Fuera de plazo",
+      "at_risk": "Vence pronto",
+      "waiting": "Esperando respuesta desde hace {time}"
+    },
     "templates": {
       "title": "Enviar plantilla",
       "open": "Enviar plantilla",
@@ -743,6 +765,17 @@
         "accountInvalid": "El ID de la cuenta de Instagram solo contiene dígitos.",
         "webhookHint": "Regístrala en Meta con el token de verificación de INSTAGRAM_VERIFY_TOKEN y suscríbete al campo messages. Meta necesita que sea pública y HTTPS."
       }
+    },
+    "sla": {
+      "title": "Objetivos de servicio (SLA)",
+      "subtitle": "Cuánto puede esperar un cliente. Los plazos se cuentan en tiempo corrido, sin horario laboral.",
+      "responseLabel": "Respuesta (minutos)",
+      "responseHint": "Tiempo máximo hasta responder cada mensaje del cliente.",
+      "resolutionLabel": "Resolución (horas)",
+      "resolutionHint": "Tiempo máximo desde que empieza una conversación hasta cerrarla.",
+      "alerts": "Avisar de las esperas vencidas",
+      "alertsHint": "El equipo recibe una notificación cuando un cliente supera el objetivo de respuesta.",
+      "invalid": "La respuesta va de 1 a 1440 minutos y la resolución de 1 a 720 horas, en números enteros."
     },
     "widget": {
       "title": "Widget para tu web",

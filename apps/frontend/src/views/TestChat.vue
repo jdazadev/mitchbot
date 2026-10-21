@@ -71,6 +71,7 @@ onUnmounted(() => {
   socketService.offMessageChunk(onMessageChunk);
   socketService.offMessageUpdated(onMessageUpdated);
   socketService.offConversationStatus(onConversationStatus);
+  socketService.leavePublic();
 });
 
 /**

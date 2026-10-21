@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.10.0** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.11.0** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -38,12 +38,12 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
 
 | Módulo | Capacidades |
 |:--|:--|
-| **Conversaciones** | Bandeja en tiempo real con filtros por canal y búsqueda. Modos `auto_pilot` / `human_takeover`. No leídos sincronizados entre sesiones. Historial paginado. Modo enfoque. Sentimiento y urgencia analizados por IA en cada mensaje del cliente. Exportación a CSV y JSON (una conversación o un periodo), solo para `admin` y `support` y registrada en la actividad. Plantillas de WhatsApp aprobadas para retomar la conversación pasada la ventana de 24 h. |
+| **Conversaciones** | Bandeja en tiempo real con filtros por canal y búsqueda. Modos `auto_pilot` / `human_takeover`. No leídos sincronizados entre sesiones. Historial paginado. Modo enfoque. Sentimiento y urgencia analizados por IA en cada mensaje del cliente. Exportación a CSV y JSON (una conversación o un periodo), solo para `admin` y `support` y registrada en la actividad. Plantillas de WhatsApp aprobadas para retomar la conversación pasada la ventana de 24 h. Marca de las esperas fuera de plazo y aviso al equipo cuando vencen. |
 | **Agente IA** | Personalidad configurable (rol, tono, longitud, idioma es/en). Memoria de los últimos 20 turnos. Saludo y despedida naturales. Respuesta completa sin fragmentos. Errores visibles en el chat. |
 | **Memoria (RAG)** | Ingesta de PDF, TXT, CSV, imágenes y texto manual. OCR con modelos de visión, chunking semántico por secciones, embeddings en Qdrant, búsqueda re-rankeada y reindexado en segundo plano (BullMQ). |
 | **Herramientas** | Catálogo por proyecto: Agenda, Conocimiento, Inventario y Pagos. Tres niveles de control (ninguno, confirmación del cliente, aprobación de operador). Rol `approver` y auditoría completa en `tool_executions`. |
 | **Clientes** | Contactos creados al responder al cliente o guardados desde una conversación. Búsqueda, filtros, orden, paginación y archivado (nunca se borran). |
-| **Panel** | Resultados (conversaciones, leads, citas, conversión), salud del bot (tasa y mediana de primera respuesta, cobertura, backlog), automatización y volumen por remitente, con rangos de 7/30/90 días. |
+| **Panel** | Resultados (conversaciones, leads, citas, conversión), salud del bot (tasa y mediana de primera respuesta, cobertura, backlog), SLA (respuesta y resolución en plazo, esperas vencidas), automatización y volumen por remitente, con rangos de 7/30/90 días. |
 | **Widget web** | Botón de chat para la web del negocio con una línea de código: marca del proyecto, idioma del agente, historial al volver y confirmaciones de herramientas. Solo se muestra en los dominios autorizados (`frame-ancestors`). |
 | **Plataforma** | Varios proyectos por usuario, roles (`admin`, `support`, `assistant`, `approver`), interfaz bilingüe es/en, tema claro/oscuro y chat público de prueba por proyecto. |
 
@@ -184,10 +184,10 @@ Integración y E2E requieren los servicios de Docker activos. Más detalles en [
 
 ## Estado y hoja de ruta
 
-Mitchbot está en **pre-1.0 (v0.10.0)**. Ya atiende la web (con widget embebible), WhatsApp e Instagram en una sola bandeja, envía plantillas de WhatsApp y exporta sus conversaciones; la **v1.0** llegará cuando sume las métricas de SLA, las notificaciones push y un CRM.
+Mitchbot está en **pre-1.0 (v0.11.0)**. Ya atiende la web (con widget embebible), WhatsApp e Instagram en una sola bandeja, envía plantillas de WhatsApp, exporta sus conversaciones y mide sus objetivos de servicio; la **v1.0** llegará cuando sume las notificaciones push y un CRM.
 
 <p align="center">
-  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.10 con pasarela de canales, WhatsApp, Instagram, exportación, plantillas y widget embebible; siguiente v0.11 y v0.12 con métricas de SLA y notificaciones push; y hacia v1.0 con CRM" width="100%">
+  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.11 con pasarela de canales, WhatsApp, Instagram, exportación, plantillas, widget embebible y SLA; siguiente v0.12 con notificaciones push; y hacia v1.0 con CRM" width="100%">
 </p>
 
 <sub>Diagrama interactivo en <a href=".archify/workflow-roadmap-20261019-175109/roadmap.html"><code>.archify/workflow-roadmap-…/roadmap.html</code></a>. Su fuente editable es <code>candidate.json</code>, en la misma carpeta.</sub>
@@ -206,9 +206,9 @@ Mitchbot está en **pre-1.0 (v0.10.0)**. Ya atiende la web (con widget embebible
 | **v0.8 · Exportación** | oct 2026 | Conversaciones a CSV y JSON, individual o por periodo y canal, con CSV seguro para hojas de cálculo, permisos y auditoría |
 | **v0.9 · Plantillas** | oct 2026 | Plantillas aprobadas de WhatsApp con variables y vista previa, y la ventana de 24 h visible en el hilo |
 | **v0.10 · Widget** | oct 2026 | Chat embebible en la web del negocio con dominios autorizados, y acceso por token a las conversaciones públicas |
+| **v0.11 · SLA** | oct 2026 | Objetivos de respuesta y resolución por proyecto, cumplimiento en el Resumen, esperas vencidas en la bandeja y avisos al equipo |
 
-### 🔜 Siguiente · v0.11 – v0.12
-- Métricas de SLA
+### 🔜 Siguiente · v0.12
 - Notificaciones push para operadores
 
 ### 🎯 Hacia la v1.0

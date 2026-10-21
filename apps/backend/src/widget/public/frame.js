@@ -147,6 +147,10 @@
     if (socket || typeof io !== 'function') return;
     socket = io({ query: { isPublic: 'true', slug: config.slug }, transports: ['websocket', 'polling'] });
     socket.on('connect', join);
+    // Lo emitido antes de entrar en la sala (p. ej. la respuesta del bot al primer mensaje) se recupera del historial.
+    socket.on('joined:room', function (data) {
+      if (data && data.roomId === state.conversationId) loadHistory();
+    });
     socket.on('chat:message', function (message) {
       if (message.conversationId !== state.conversationId) return;
       var isNew = !rendered[message._id];
@@ -247,11 +251,14 @@
 
   // === Arranque ===
 
-  greet();
-  connect();
-  if (state.conversationId && state.clientToken) {
+  function loadHistory() {
+    if (!state.conversationId || !state.clientToken) return;
     request(api + '/conversations/' + state.conversationId + '/messages', { headers: { 'X-Client-Token': state.clientToken } })
       .then(function (messages) { messages.forEach(render); })
-      .catch(function () { forget(); });
+      .catch(function (error) { if (error.status === 403 || error.status === 404) forget(); });
   }
+
+  greet();
+  connect();
+  loadHistory();
 })();

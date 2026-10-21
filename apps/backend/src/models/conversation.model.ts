@@ -16,6 +16,12 @@ export interface Conversation {
   lastBotMessageAt?: Date;
   /** Último mensaje del cliente: abre la ventana de 24 h de WhatsApp para mensajes libres. */
   lastInboundAt?: Date;
+  /** Primer mensaje del cliente sin respuesta; se borra al responderle (SLA). */
+  awaitingReplySince?: Date | null;
+  /** Aviso de espera vencida ya enviado para la espera en curso. */
+  slaBreachNotifiedAt?: Date | null;
+  /** Momento del cierre (resolución); se borra al reabrir. */
+  closedAt?: Date | null;
   lastWelcomeAt?: Date;
   assignedTo?: string; // ID del agente humano si aplica
   /** Cuenta del canal externo que recibió la conversación; sin ella las respuestas no salen por cola (simulador). */

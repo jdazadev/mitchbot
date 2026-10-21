@@ -31,6 +31,12 @@ export interface Project {
       /** Cuenta de WhatsApp Business del número: de ella salen las plantillas aprobadas. */
       wabaId?: string | null;
     };
+    // Objetivos de servicio: respuesta (minutos) y resolución (horas)
+    sla?: {
+      responseMinutes?: number;
+      resolutionHours?: number;
+      alerts?: boolean;
+    };
     // Widget embebible del canal Web
     widget?: {
       enabled?: boolean;

@@ -94,6 +94,8 @@ export interface ChatConversation {
   channelAccount?: string;
   /** Último mensaje del cliente (ventana de 24 h de WhatsApp). */
   lastInboundAt?: string;
+  /** Primer mensaje del cliente sin responder (SLA). */
+  awaitingReplySince?: string | null;
   clientInfo?: {
     name?: string;
     phone?: string;

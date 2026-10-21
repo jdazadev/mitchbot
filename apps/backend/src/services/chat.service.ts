@@ -18,6 +18,8 @@ import { ToolContext } from '../tools/types';
 import { logger } from '../utils/logger';
 import { analyticsService } from './analytics.service';
 import { dispatch } from '../channels/outbound';
+import { isCustomerFacing } from '../channels/policy';
+import { scheduleSlaAlert } from '../queues/sla-alerts';
 
 const isDuplicateKey = (error: any) => error?.code === 11000;
 
@@ -26,6 +28,41 @@ function trackActivitySafely(activity: Omit<Activity, '_id' | 'createdAt'>) {
   void analyticsService.trackActivity(activity).catch((error) => {
     logger.warn('[Analytics] Could not record activity', error);
   });
+}
+
+/**
+ * El cliente empieza a esperar respuesta (si no esperaba ya): se guarda desde
+ * cuándo, se programa el aviso de SLA y se informa al panel.
+ */
+async function startWaiting(conversationId: string, since: Date) {
+  const conversation = await getConversationsCollection().findOneAndUpdate(
+    { _id: new ObjectId(conversationId), $or: [{ awaitingReplySince: { $exists: false } }, { awaitingReplySince: null }] },
+    { $set: { awaitingReplySince: since }, $unset: { slaBreachNotifiedAt: '' } },
+    { projection: { projectId: 1 } },
+  );
+  if (!conversation) return;
+  const projectId = conversation.projectId?.toString();
+  emitToProjectDashboard(projectId, 'chat:sla', { conversationId, awaitingReplySince: since });
+  void scheduleSlaAlert(conversationId, projectId, since).catch((error) => {
+    logger.warn(`[SLA] No se pudo programar el aviso de ${conversationId}: ${error?.message || error}`);
+  });
+}
+
+/** El cliente recibió una respuesta: deja de esperar. */
+async function stopWaiting(conversationId: string) {
+  const conversation = await getConversationsCollection().findOneAndUpdate(
+    // `$ne: null` excluye también el campo ausente.
+    { _id: new ObjectId(conversationId), awaitingReplySince: { $ne: null } },
+    { $unset: { awaitingReplySince: '', slaBreachNotifiedAt: '' } },
+    { projection: { projectId: 1 } },
+  );
+  if (conversation) emitToProjectDashboard(conversation.projectId?.toString(), 'chat:sla', { conversationId, awaitingReplySince: null });
+}
+
+/** Entrega una respuesta por su canal y, si el cliente la ve, cierra su espera. */
+async function deliverReply(message: Message, target: Parameters<typeof dispatch>[1]) {
+  await dispatch(message, target);
+  if (isCustomerFacing(message)) await stopWaiting(message.conversationId.toString());
 }
 
 export const chatService = {
@@ -97,7 +134,7 @@ export const chatService = {
       const conversation = await getConversationsCollection().findOne({ _id: new ObjectId(conversationId) });
       await getConversationsCollection().updateOne(
         { _id: new ObjectId(conversationId) },
-        { $set: { status: 'closed', updatedAt: new Date() } }
+        { $set: { status: 'closed', updatedAt: new Date(), ...(conversation?.status !== 'closed' ? { closedAt: new Date() } : {}) } }
       );
       if (conversation?.status !== 'closed') {
         trackActivitySafely({
@@ -121,7 +158,7 @@ export const chatService = {
       const conversation = await getConversationsCollection().findOne({ _id: new ObjectId(conversationId) });
       await getConversationsCollection().updateOne(
         { _id: new ObjectId(conversationId) },
-        { $set: { status: 'closed', updatedAt: new Date() } }
+        { $set: { status: 'closed', updatedAt: new Date(), ...(conversation?.status !== 'closed' ? { closedAt: new Date() } : {}) } }
       );
       emitToRoom(conversationId, 'chat:status', { mode: conversation?.mode, status: 'closed' });
       if (conversation?.status !== 'closed') {
@@ -313,6 +350,8 @@ export const chatService = {
       conversationUpdate
     );
 
+    if (sender === 'contact') await startWaiting(conversationId, updateSet.lastInboundAt);
+
     try {
       emitToRoom(conversationId, 'chat:message', newMessage);
     } catch (e) {
@@ -324,7 +363,7 @@ export const chatService = {
         { _id: new ObjectId(conversationId) },
         { projection: { platform: 1, projectId: 1, channelAccount: 1 } },
       );
-      await dispatch(newMessage, target);
+      await deliverReply(newMessage, target);
     }
 
     if (sender === 'human_agent') {
@@ -591,7 +630,7 @@ export const chatService = {
         { _id: placeholderMsgId },
         { $set: { content } }
       );
-      await dispatch({ ...placeholderMsg, content }, conversation);
+      await deliverReply({ ...placeholderMsg, content }, conversation);
       
       // Update the conversation's last message
       const conversationsColl = getConversationsCollection();
@@ -687,7 +726,7 @@ export const chatService = {
         { _id: new ObjectId(data.conversationId) },
         { projection: { platform: 1, projectId: 1, channelAccount: 1 } },
       );
-      await dispatch(message, target);
+      await deliverReply(message, target);
     }
 
     return message;
@@ -958,7 +997,7 @@ export const chatService = {
         { _id: new ObjectId(args.conversationId) },
         { projection: { platform: 1, projectId: 1, channelAccount: 1 } },
       );
-      await dispatch(placeholder, target);
+      await deliverReply(placeholder, target);
     }
     await getConversationsCollection().updateOne(
       { _id: new ObjectId(args.conversationId) },

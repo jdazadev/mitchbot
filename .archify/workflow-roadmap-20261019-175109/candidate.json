@@ -40,13 +40,13 @@
   "phases": [
     {
       "id": "entregado",
-      "label": "Entregado · v0.1 – v0.10",
+      "label": "Entregado · v0.1 – v0.11",
       "fromCol": 0,
       "toCol": 3
     },
     {
       "id": "siguiente",
-      "label": "Siguiente · v0.11 – v0.12",
+      "label": "Siguiente · v0.12",
       "fromCol": 4,
       "toCol": 4,
       "variant": "emphasis"
@@ -64,7 +64,6 @@
     "openrouter",
     "herramientas",
     "resiliencia",
-    "sla",
     "v1"
   ],
   "nodes": [
@@ -103,9 +102,9 @@
       "lane": "plataforma",
       "col": 3,
       "type": "backend",
-      "label": "Pasarela de canales",
-      "sublabel": "cola · reintentos · breaker",
-      "tag": "v0.5",
+      "label": "Pasarela + SLA",
+      "sublabel": "cola · reintentos · plazos",
+      "tag": "v0.5 · v0.11",
       "width": 160
     },
     {
@@ -177,15 +176,6 @@
       "width": 150
     },
     {
-      "id": "sla",
-      "lane": "plataforma",
-      "col": 4,
-      "type": "messagebus",
-      "label": "Métricas de SLA",
-      "sublabel": "tiempos de respuesta",
-      "width": 150
-    },
-    {
       "id": "push",
       "lane": "canales",
       "col": 4,
@@ -241,18 +231,6 @@
       "to": "exportacion"
     },
     {
-      "id": "gateway-sla",
-      "from": "resiliencia",
-      "to": "sla",
-      "label": "siguiente",
-      "variant": "emphasis"
-    },
-    {
-      "id": "sla-v1",
-      "from": "sla",
-      "to": "v1"
-    },
-    {
       "id": "social-push",
       "from": "social",
       "to": "push"
@@ -262,22 +240,29 @@
       "from": "push",
       "to": "crm",
       "variant": "dashed"
+    },
+    {
+      "id": "gateway-v1",
+      "from": "resiliencia",
+      "to": "v1",
+      "label": "estabilizar",
+      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "emerald",
-      "title": "Dónde estamos · v0.10.0",
+      "title": "Dónde estamos · v0.11.0",
       "items": [
-        "Web, widget embebible, WhatsApp e Instagram en una bandeja, con plantillas para la ventana de 24 h",
-        "Exportación de conversaciones y chat público con acceso por token"
+        "Web, widget, WhatsApp e Instagram en una bandeja, con plantillas, exportación y SLA",
+        "Avisos de esperas vencidas y eventos en vivo fiables tras iniciar sesión o reconectar"
       ]
     },
     {
       "dot": "violet",
       "title": "Qué falta para la v1.0",
       "items": [
-        "Métricas de SLA y notificaciones push",
+        "Notificaciones push para operadores",
         "Integración con un CRM externo"
       ]
     }

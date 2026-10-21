@@ -36,6 +36,11 @@ describe('mergeMessages', () => {
     expect(merged.map((m) => m._id)).toEqual(['a', 'b', 'c'])
   })
 
+  it('una burbuja vacía del bot toma el texto que ya tiene el servidor', () => {
+    const [merged] = mergeMessages([{ _id: 'a', createdAt: '2026-10-21T10:00:00Z', content: '' }], [{ _id: 'a', createdAt: '2026-10-21T10:00:00Z', content: 'Hola' }])
+    expect(merged.content).toBe('Hola')
+  })
+
   it('aplica el estado de entrega más reciente de los dos', () => {
     const [merged] = mergeMessages(
       [msg('a', '2026-10-21T10:00:00Z', at('queued', '2026-10-21T10:00:01Z'))],

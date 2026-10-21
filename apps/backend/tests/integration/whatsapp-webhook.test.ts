@@ -1,4 +1,5 @@
 import './helpers/isolated-env';
+import { closeSlaAlertsQueue } from '../../src/queues/sla-alerts';
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
@@ -120,6 +121,7 @@ before(async () => {
 });
 
 after(async () => {
+  await closeSlaAlertsQueue({ obliterate: true });
   await Promise.all(workers.map(worker => worker.close()));
   await getInboundQueue().obliterate({ force: true });
   await getInboundQueue().close();

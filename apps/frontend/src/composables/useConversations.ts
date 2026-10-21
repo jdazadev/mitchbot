@@ -1,5 +1,4 @@
 import { computed, ref } from 'vue';
-import type { Socket } from 'socket.io-client';
 import { messagingService, type ChatConversation, type ChatMessage } from '../services/messaging.service';
 import { socketService } from '../services/socket.service';
 import i18n from '../i18n';
@@ -14,7 +13,7 @@ const activeChannel = ref<ChannelFilter>('All');
 const openConversationId = ref<string | null>(null);
 
 let hasLoaded = false;
-let boundSocket: Socket | null = null;
+let bound = false;
 
 export function formatConversationTime(dateStr?: string): string {
   if (!dateStr) return '';
@@ -106,6 +105,12 @@ function handleSocketChunk(data: { conversationId: string; content: string; isDo
   chat.lastMessage = data.content;
 }
 
+/** El servidor abre o cierra la espera del cliente (SLA). */
+function handleSocketSla(data: { conversationId: string; awaitingReplySince: string | null }) {
+  const chat = conversations.value.find((c) => c._id === data?.conversationId);
+  if (chat) chat.awaitingReplySince = data.awaitingReplySince;
+}
+
 function handleSocketNewConversation(conv: ChatConversation) {
   if (!conv?._id) return;
   if (conversations.value.some((c) => c._id === conv._id)) return;
@@ -117,15 +122,15 @@ function handleSocketNewConversation(conv: ChatConversation) {
  * lista y el conteo de no leídos sincronizados en vivo. Es idempotente.
  */
 function bindConversationSocket() {
-  socketService.connect();
-  const socket = socketService.socket;
-  if (!socket || socket === boundSocket) return;
-  boundSocket = socket;
-  socket.on('chat:message', handleSocketMessage);
-  socket.on('chat:message_chunk', handleSocketChunk);
-  socket.on('chat:new_conversation', handleSocketNewConversation);
-  socket.on('chat:read', handleConversationRead);
-  socket.on('chat:insights', handleSocketInsights);
+  if (bound) return;
+  bound = true;
+  // El registro de socketService los mantiene en cada socket nuevo (sesión, proyecto, reconexión).
+  socketService.on('chat:message', handleSocketMessage);
+  socketService.on('chat:message_chunk', handleSocketChunk);
+  socketService.on('chat:new_conversation', handleSocketNewConversation);
+  socketService.on('chat:read', handleConversationRead);
+  socketService.on('chat:insights', handleSocketInsights);
+  socketService.on('chat:sla', handleSocketSla);
 }
 
 export function useConversations() {

@@ -229,10 +229,17 @@ export const updateStatus = async (req: Request, res: Response, next: NextFuncti
     if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
     if (!ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId inválido' });
     const query: any = { _id: new ObjectId(req.params.id), projectId: new ObjectId(projectId) };
+    // `closedAt` mide la resolución: se fija al cerrar y se borra al reabrir.
     const result = await getConversationsCollection().updateOne(
-        query,
-        { $set: { status, updatedAt: new Date() } }
+        status === 'closed' ? { ...query, status: { $ne: 'closed' } } : query,
+        status === 'closed'
+          ? { $set: { status, updatedAt: new Date(), closedAt: new Date() } }
+          : { $set: { status, updatedAt: new Date() }, $unset: { closedAt: '' } }
     );
+    if (result.matchedCount === 0 && status === 'closed') {
+      const exists = await getConversationsCollection().countDocuments(query);
+      if (exists) return res.json({ message: `Status updated to ${status}` });
+    }
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Conversation not found' });
     if (status === 'closed') {
       const agent = await agentService.getActiveAgent(projectId);
