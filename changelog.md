@@ -5,6 +5,54 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.7.0 — 2026-10-21
+
+> **Canal de Instagram**: los mensajes directos llegan a la bandeja con el nombre del perfil, las respuestas salen desde la cuenta del proyecto y el hilo muestra cuándo el cliente las leyó. Con esto, la integración social está completa.
+
+### ✨ Añadido
+- **Webhook de Instagram** (OpenSpec `add-instagram-channel`):
+  - `GET /api/webhooks/instagram` responde al reto de verificación con `INSTAGRAM_VERIFY_TOKEN`.
+  - `POST /api/webhooks/instagram` exige una firma `X-Hub-Signature-256` hecha con `INSTAGRAM_APP_SECRET`.
+  - Acepta los eventos en los dos formatos de Meta: `messaging[]` y `changes[messages]`.
+- **Mensajes directos**:
+  - Entran el texto, las respuestas rápidas y los postbacks.
+  - Imágenes, vídeos, audios, archivos, publicaciones compartidas, reels y menciones en historias entran como un aviso para el operador.
+  - Se ignoran los ecos de nuestros envíos (aunque no traigan `is_echo`), los mensajes borrados y las reacciones.
+- **Nombre del perfil**: se consulta `name`/`username` del cliente con un límite de 3 s y una caché en memoria. Si la consulta falla, el mensaje entra igual.
+- **Una cuenta por proyecto**: `project.config.instagram.accountId`, con índice único (409 si ya la usa otro proyecto). Solo cuenta si el canal Instagram está habilitado.
+- **Adaptador de la Messaging API**: envía texto desde la cuenta de la conversación, recortado a 1000 caracteres.
+  - **Errores transitorios** (se reintentan): límites de ritmo (`4`, `17`, `32`, `613`, `80002`, `80006`), 429, 5xx y `is_transient`.
+  - **Errores permanentes** (con motivo legible): ventana de 24 h (código `10`, subcódigos `2534022`/`2018278`), token, permisos, persona no disponible (`551`) y destinatario inexistente.
+- **Lectura acumulativa** (`applyReadUpTo`): un aviso de lectura marca como leído ese mensaje y lo enviado antes en la conversación, pero no lo posterior.
+- **Configuración → Canales**: Instagram tiene su campo **ID de la cuenta de Instagram**, la URL de su webhook y el estado del servidor.
+- Variables `INSTAGRAM_APP_SECRET`, `INSTAGRAM_API_URL` (`graph.instagram.com`, o `graph.facebook.com` con Facebook Login) e `INSTAGRAM_API_VERSION`. `GET /api/project/channels/status` incluye `instagram`.
+
+### 🔧 Cambiado
+- **Código común de Meta** (`src/channels/meta/`): firma, `Retry-After` y búsqueda del proyecto dueño de una cuenta (`projectForAccount`, `isAccountTaken`). El controlador de webhooks es una fábrica para los dos canales. `projectService.isWhatsAppNumberTaken` se sustituye por `isAccountTaken('whatsapp', …)`.
+- **Un solo componente para las conexiones**: `ChannelConnection.vue` sirve a WhatsApp e Instagram. Las claves i18n pasan a `settings.channels.<canal>.account*`, y `webhookLabel`/`copyWebhook` son comunes.
+- `channelWebhookUrl(channel)` sustituye a `whatsAppWebhookUrl`.
+- **Hoja de ruta**: v0.5–v0.7 pasan a "Entregado". "Siguiente · v0.8" incluye exportación, plantillas y widget; "Hacia v1.0", CRM, push y SLA. El SVG del README se exporta ahora con `.archify/export-svg.mjs` (Playwright pulsa Export → SVG · Auto y traduce la leyenda), sin pasos manuales en el visor.
+- Las pruebas de integración vacían `WHATSAPP_TOKEN` e `INSTAGRAM_TOKEN` para no usar nunca las credenciales del `.env`.
+
+### ✅ Pruebas
+- **Unitarios**:
+  - Backend (**69**): parser de Instagram, adaptador y errores, consulta de perfil y `Retry-After`.
+  - Frontend (**34**): `ChannelConnection`, `isValidAccountId` y `channelWebhookUrl`.
+- **Integración** (**58/58**, 1 omitida). `instagram-webhook.test.ts` cubre:
+  - verificación con su propio token y rechazo de la firma de WhatsApp;
+  - nombre de perfil desde un servidor local, y entrada del mensaje sin perfil;
+  - ecos, cuenta deshabilitada, lectura acumulativa y cuenta única.
+- **E2E** (**74/74** en dos corridas completas). `instagram.spec.ts` (5) contra la Graph API simulada (envíos con `recipient.id` y perfiles):
+  - firma y token;
+  - mensaje directo con nombre del perfil, respuesta del bot entregada y leída;
+  - rechazo fuera de la ventana con reintento;
+  - ecos y adjuntos;
+  - configuración de la cuenta con 409.
+  - Los helpers comunes están en `tests/e2e/helpers/meta.ts`.
+- Paridad es/en **733/733**; backend `tsc --noEmit` y frontend `vue-tsc` y `build` en verde.
+
+---
+
 ## v0.6.0 — 2026-10-21
 
 > **Canal de WhatsApp**: los mensajes de WhatsApp Business llegan a la bandeja, el bot y el operador responden desde el número del proyecto y el hilo muestra si el cliente recibió y leyó la respuesta

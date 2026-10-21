@@ -14,7 +14,32 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.6.0
+**Versión actual del proyecto:** v0.7.0
+
+---
+
+## Canal de Instagram (v0.7.0)
+
+Adaptador de la Instagram Messaging API sobre la pasarela, con el código común de Meta extraído de WhatsApp. OpenSpec `add-instagram-channel`; capability `instagram-channel`.
+
+- **Común de Meta (`src/channels/meta/`)**:
+  - `signature.ts`: `verifySignature` y `retryAfterMs`.
+  - `routing.ts`: `projectForAccount(channel, account)` e `isAccountTaken(channel, account, exceptProjectId)`, sobre `config.whatsapp.phoneNumberId` y `config.instagram.accountId`.
+  - `controllers/webhooks.controller.ts` es una fábrica `metaWebhook({ verifyToken, appSecret, parse, handle })` que da los `verify`/`receive` de cada canal. Un canal de Meta nuevo aporta su parser, su handler y su adaptador.
+- **Módulo `src/channels/instagram/`**:
+  - `webhook.ts`: `parseInstagramWebhook` (`messaging[]` y `changes[messages]`) y `describeInstagramError`.
+  - `adapter.ts`: `createInstagramAdapter`, `classifyInstagramError` y `fetchInstagramName`.
+  - `handler.ts`: enruta mensajes y lecturas, con la caché de nombres.
+  - `index.ts`: `registerInstagram`, `instagramServerStatus` e `instagramApiOptions`.
+- **Webhook**: `GET|POST /api/webhooks/instagram`, con `INSTAGRAM_VERIFY_TOKEN` e `INSTAGRAM_APP_SECRET` (distintos de los de WhatsApp).
+- **Cuenta e identidad del cliente**: la cuenta es `entry.id`/`recipient.id` (ID de la cuenta profesional) y el cliente es su IGSID (`clientInfo.identifier`). Se descarta lo enviado por la propia cuenta (`sender.id === entry.id`), traiga o no `is_echo`.
+- **Envío**: `POST {INSTAGRAM_API_URL}/{INSTAGRAM_API_VERSION}/{accountId}/messages` con `{ recipient: { id }, message: { text } }`, texto hasta 1000 caracteres y `externalId = message_id`.
+- **Nombre**: `GET /{igsid}?fields=name,username` con 3 s de límite. La caché guarda hasta 5000 nombres; los fallos no se cachean y el mensaje entra sin nombre.
+- **Lectura**: Instagram no informa `delivered`. `read.mid` llama a `applyReadUpTo` (en `outbound.ts`), que pasa a `read` los mensajes `sent`/`delivered` de la conversación creados hasta ese mensaje y emite un `chat:message_updated` por cada uno.
+- **Interfaz**: `components/settings/ChannelConnection.vue` (cuenta, webhook y estado del servidor) sirve a los dos canales en Configuración → Canales. Las claves i18n son `settings.channels.<canal>.{serverReady, serverMissing, accountLabel, accountPlaceholder, accountHint, accountInvalid, webhookHint}`, más las comunes `settings.channels.{webhookLabel, copyWebhook}`.
+- **E2E**: el stub acepta el envío de Instagram en la misma ruta `/meta/:version/:id/messages` (lo distingue por `recipient`) y sirve perfiles en `GET /meta/:version/:igsid` como `Cliente IG <últimos 5>`. `/__meta/fail` admite `subcode`. Los helpers comunes están en `tests/e2e/helpers/meta.ts`.
+- **Hoja de ruta**: actualizada a v0.7 (`review-3`). El SVG se exporta sin abrir el visor con un script de Playwright que pulsa **Export diagram → SVG · Auto**; luego se traduce `Legend` → `Leyenda`.
+- **Verificación**: unitarios backend **69/69** y frontend **34/34**; integración **58/58 (1 omitida)**; E2E **74/74** en dos corridas completas; paridad es/en **733/733**.
 
 ---
 
@@ -102,7 +127,7 @@ Base común para WhatsApp e Instagram: entrada normalizada e idempotente, salida
 
 - **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y **un solo HTML final**: en la subcarpeta `review-N` o, si no la hay, en la raíz de la carpeta. Los borradores superados se eliminaron en v0.4.32; al regenerar, borra la revisión anterior.
 - **Contenido**: arquitectura del sistema; workflows de auth/onboarding y de control de herramientas; secuencias de mensaje→bot y de confirmación del cliente; dataflows de ingesta RAG y de analítica/insights; lifecycles de conversación, fuente de conocimiento y ejecución de herramienta.
-- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta de nuevo el SVG desde el menú Export del visor y actualiza la sección "Estado y hoja de ruta" del README.
+- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.7.0 (`review-3`).
 - **Regenerar**: `node ~/.claude/skills/archify/bin/archify.mjs finalize <tipo> candidate.json <salida.html> --quality showcase --out-dir <carpeta>/review-N`. Un candidato modificado necesita un `--out-dir` nuevo. En el sandbox de Claude Code, antepón `NO_PROXY=localhost,127.0.0.1,::1`.
 - **Límites**: los diagramas del sistema se redactaron cuando aún no había remoto, así que no fijan fuentes por commit. Ahora existe `origin` (`git@github.com:jdazadev/mitchbot.git`) y los nuevos diagramas pueden usar `meta.repository` + `--repo-root`. Si cambia el flujo, actualiza el `candidate.json` correspondiente.
 
@@ -505,7 +530,7 @@ apps/backend/src/
 │   ├── contacts.controller.ts      # CRUD de contactos
 │   ├── dashboard.controller.ts     # Analytics y estadísticas
 │   ├── messaging.controller.ts     # Conversaciones y mensajes
-│   ├── webhooks.controller.ts      # Webhooks de canales externos (WhatsApp)
+│   ├── webhooks.controller.ts      # Webhooks de canales de Meta (WhatsApp, Instagram)
 │   ├── project.controller.ts       # Gestión de proyecto
 │   ├── public-chat.controller.ts   # Chat público (clientes externos)
 │   └── users.controller.ts         # CRUD de usuarios del sistema
@@ -528,7 +553,9 @@ apps/backend/src/
 ├── routes/                         # Definición de rutas Express
 ├── middleware/                     # Auth, validación Zod, errores, upload
 ├── channels/                       # Pasarela de canales: adaptadores, entrada, salida, breaker
-│   └── whatsapp/                   # Cloud API: firma, parser del webhook, adaptador y enrutado
+│   ├── meta/                       # Común de Meta: firma, Retry-After, proyecto por cuenta
+│   ├── whatsapp/                   # Cloud API: parser del webhook, adaptador y enrutado
+│   └── instagram/                  # Messaging API: parser, adaptador, perfil y enrutado
 ├── websocket/                      # Socket.io handlers
 ├── scripts/                        # Seed y utilidades
 ├── utils/                          # Logger, helpers
@@ -839,13 +866,13 @@ Usuario abre la app
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
 | **Config** | `GET /`, `PUT /` | Configuración global |
-| **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /`, `GET /channels/status` | Gestión de proyectos (multi-proyecto por usuario); `PUT` responde 409 si el número de WhatsApp ya es de otro proyecto |
+| **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /`, `GET /channels/status` | Gestión de proyectos (multi-proyecto por usuario); `PUT` responde 409 si el número de WhatsApp o la cuenta de Instagram ya son de otro proyecto |
 | **Appointments** | `GET /`, `GET /:id`, `PATCH /:id/status` | Citas agendadas por el agente |
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
 | **Tools** | `GET /`, `PUT /config` | Catálogo de operaciones y configuración por proyecto |
 | **Tool Executions** | `GET /`, `GET /pending`, `POST /:id/approve`, `POST /:id/reject` | Historial, solicitudes pendientes y resolución por rol |
 | **Dashboard** | `GET /stats`, `GET /outcomes`, `GET /automation`, `GET /volume`, `GET /channels`, `GET /activities` | Analytics autenticada y acotada al proyecto activo (`X-Project-Id`/`activeProjectId`) |
-| **Webhooks** | `GET /whatsapp`, `POST /whatsapp` | Verificación y webhook de WhatsApp Cloud API (público, autenticado por firma) |
+| **Webhooks** | `GET /whatsapp`, `POST /whatsapp`, `GET /instagram`, `POST /instagram` | Verificación y webhooks de WhatsApp Cloud API e Instagram Messaging API (públicos, autenticados por firma) |
 | **Public Chat** | `GET /public/test-chat/:slug/config`, `POST /public/test-chat/:slug/start`, `POST /public/test-chat/:slug/:id/messages` | Chat público (clientes web); `config` expone el idioma del agente (sin auth) |
 
 > Todos los endpoints están bajo el prefijo `/api/<módulo>`.
@@ -863,7 +890,7 @@ Usuario abre la app
 | `agents` | projectId, name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
 | `ai_models` | name, value, provider, category, isActive | Catálogo de modelos (los disponibles se listan dinámicamente desde OpenRouter) |
 | `provider_configs` | type (llm/embedding/file/image/audio/ocr), provider, selectedModel, isActive | Sin credenciales: la API key proviene del entorno. `selectedModel` ya no se usa para resolver llm/embedding/file/ocr |
-| `projects` | name, agentId, config (channels, messages, options, tools, brand, whatsapp.phoneNumberId) | Configuración de herramientas aislada por proyecto |
+| `projects` | name, agentId, config (channels, messages, options, tools, brand, whatsapp.phoneNumberId, instagram.accountId) | Configuración de herramientas aislada por proyecto |
 | `knowledge_sources` | name, type, size, status, vectorCount, filePath, extractionMethod, ocrProvider, extractionTimeMs | Status: Queued, Processing, Indexed, Failed |
 | `appointments` | date, time, service, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
 | `orders` | items, total, currency, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
@@ -998,6 +1025,12 @@ WHATSAPP_VERIFY_TOKEN=<token-de-verificación-del-webhook>
 WHATSAPP_APP_SECRET=<app-secret-de-meta>
 WHATSAPP_API_URL=https://graph.facebook.com
 WHATSAPP_API_VERSION=v21.0
+# Instagram Messaging API (opcionales; el ID de la cuenta se guarda por proyecto)
+INSTAGRAM_TOKEN=<token-de-la-cuenta>
+INSTAGRAM_VERIFY_TOKEN=<token-de-verificación-del-webhook>
+INSTAGRAM_APP_SECRET=<app-secret-de-meta>
+INSTAGRAM_API_URL=https://graph.instagram.com
+INSTAGRAM_API_VERSION=v21.0
 ```
 
 > ⚠️ `OPENROUTER_LLM_MODEL` es obligatorio (sin default): si falta, la generación falla con un mensaje que indica definirlo. `OPENROUTER_FILE_MODEL`, `OPENROUTER_RERANKER_MODEL` y `OPENROUTER_INSIGHTS_MODEL` son opcionales (el CSV se indexa crudo, el re-ranker usa el modelo de embeddings y los insights usan `OPENROUTER_LLM_MODEL`, respectivamente).
@@ -1029,16 +1062,18 @@ WHATSAPP_API_VERSION=v21.0
 - [x] Infraestructura de tests unitarios en backend y frontend (v0.4.34)
 - [x] Identidad de marca por proyecto persistida y aplicada al iniciar sesión (v0.4.35)
 
-### Fase Siguiente — v0.5 Integración Social 🔜
+### Integración Social (v0.5–v0.7) ✅
 - [x] Normalización de mensajes cross-platform + message broker (BullMQ sobre Redis) (v0.5.0)
 - [x] Rate limiting por plataforma, sistema de retry y failover operativo (circuit breaker) (v0.5.0)
 - [x] WhatsApp Business API con webhooks firmados, número por proyecto y estados de entrega y lectura (v0.6.0)
-- [ ] Plantillas de WhatsApp para escribir fuera de la ventana de 24 h
-- [ ] Instagram Messaging API
+- [x] Instagram Messaging API con nombre del perfil y lectura acumulativa (v0.7.0)
+
+### Siguiente — v0.8 🔜
+- [ ] Exportación de conversaciones
+- [ ] Plantillas de mensaje para escribir fuera de la ventana de 24 h
+- [ ] Chat widget embebible para sitios web de clientes
 
 ### Hacia la v1.0 💡
-- [ ] Chat widget embebible para sitios web de clientes
-- [ ] Exportación de conversaciones
 - [ ] Integración con CRM externos
 - [ ] Notificaciones push
 - [ ] Métricas de SLA

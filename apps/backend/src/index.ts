@@ -15,6 +15,7 @@ import { createReindexWorker } from './queues/rag-reindex.worker';
 import { createInboundWorker } from './channels/inbound';
 import { createOutboundWorkers } from './channels/outbound';
 import { registerWhatsApp } from './channels/whatsapp';
+import { registerInstagram } from './channels/instagram';
 
 const app = express();
 const httpServer = createServer(app);
@@ -58,6 +59,7 @@ const httpServer = createServer(app);
         // Pasarela de canales: entrada de webhooks y entrega por canal externo
         try {
           registerWhatsApp();
+          registerInstagram();
           createInboundWorker();
           createOutboundWorkers();
         } catch (e) {

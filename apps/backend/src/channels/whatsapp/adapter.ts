@@ -1,4 +1,5 @@
 import { ChannelAdapter, ChannelError, OutboundMessage } from '../types';
+import { retryAfterMs } from '../meta/signature';
 import { describeWhatsAppError } from './webhook';
 
 /** Códigos de límite de ritmo de la Graph API y de WhatsApp: se reintentan. */
@@ -7,15 +8,6 @@ const RATE_LIMIT_CODES = new Set([4, 80007, 130429, 131048, 131056]);
 const TRANSIENT_CODES = new Set([1, 2, 131000, 133004]);
 const MAX_TEXT_LENGTH = 4096;
 const REQUEST_TIMEOUT_MS = 15_000;
-
-/** `Retry-After` en segundos o como fecha HTTP. */
-function retryAfterMs(header: string | null | undefined): number | undefined {
-  if (!header) return undefined;
-  const seconds = Number(header);
-  if (Number.isFinite(seconds)) return Math.max(seconds, 0) * 1000;
-  const date = Date.parse(header);
-  return Number.isNaN(date) ? undefined : Math.max(date - Date.now(), 0);
-}
 
 /** Traduce una respuesta de error de la Graph API a un `ChannelError` transitorio o permanente. */
 export function classifyWhatsAppError(status: number, body: any, retryAfter?: string | null): ChannelError {

@@ -666,16 +666,25 @@
     "channels": {
       "title": "Communication Channels",
       "save": "Save Channels",
+      "webhookLabel": "Webhook URL",
+      "copyWebhook": "Copy URL",
       "whatsapp": {
         "serverReady": "The server has WhatsApp connected.",
         "serverMissing": "The server doesn't have WhatsApp connected: {vars} missing from the environment. You can still save the number.",
-        "numberLabel": "Phone Number ID",
-        "numberPlaceholder": "E.g. 106540352242922",
-        "numberHint": "Find it in Meta → WhatsApp → API Setup. Leave it empty to disconnect the number.",
-        "numberInvalid": "The Phone Number ID only contains digits.",
-        "webhookLabel": "Webhook URL",
-        "copyWebhook": "Copy URL",
+        "accountLabel": "Phone Number ID",
+        "accountPlaceholder": "E.g. 106540352242922",
+        "accountHint": "Find it in Meta → WhatsApp → API Setup. Leave it empty to disconnect the number.",
+        "accountInvalid": "The Phone Number ID only contains digits.",
         "webhookHint": "Register it in Meta with the WHATSAPP_VERIFY_TOKEN verify token and subscribe to the messages field. Meta requires a public HTTPS URL."
+      },
+      "instagram": {
+        "serverReady": "The server has Instagram connected.",
+        "serverMissing": "The server doesn't have Instagram connected: {vars} missing from the environment. You can still save the account.",
+        "accountLabel": "Instagram account ID",
+        "accountPlaceholder": "E.g. 17841400000000000",
+        "accountHint": "The numeric ID of the professional account, not the username. Find it in Meta → Instagram → API Setup. Leave it empty to disconnect the account.",
+        "accountInvalid": "The Instagram account ID only contains digits.",
+        "webhookHint": "Register it in Meta with the INSTAGRAM_VERIFY_TOKEN verify token and subscribe to the messages field. Meta requires a public HTTPS URL."
       }
     },
     "options": {

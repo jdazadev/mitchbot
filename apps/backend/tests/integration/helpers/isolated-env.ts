@@ -16,3 +16,8 @@ process.env.CHANNEL_BREAKER_COOLDOWN_MS = '5000';
 // Webhook de WhatsApp verificable en las pruebas; sin token no se registra el adaptador real.
 process.env.WHATSAPP_APP_SECRET = 'integration-app-secret';
 process.env.WHATSAPP_VERIFY_TOKEN = 'integration-verify-token';
+process.env.INSTAGRAM_APP_SECRET = 'integration-ig-secret';
+process.env.INSTAGRAM_VERIFY_TOKEN = 'integration-ig-verify';
+// Sin tokens reales: las pruebas nunca llaman a Meta con las credenciales del `.env`.
+process.env.WHATSAPP_TOKEN = '';
+process.env.INSTAGRAM_TOKEN = '';

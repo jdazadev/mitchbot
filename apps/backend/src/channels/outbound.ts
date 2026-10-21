@@ -243,6 +243,44 @@ export async function applyDeliveryStatus(
   return true;
 }
 
+/**
+ * Lectura acumulativa: el cliente leyó el mensaje con este id externo y, con él,
+ * lo enviado antes en la conversación. Devuelve cuántos mensajes pasaron a `read`.
+ */
+export async function applyReadUpTo(platform: ChannelPlatform, externalId: string) {
+  const messages = getMessagesCollection();
+  const target = await messages.findOne({ 'delivery.externalId': externalId }, { projection: { conversationId: 1, createdAt: 1 } });
+  if (!target) return 0;
+  const conversation = await getConversationsCollection().findOne(
+    { _id: target.conversationId, platform },
+    { projection: { _id: 1 } },
+  );
+  if (!conversation) return 0;
+
+  const unread: DeliveryStatus[] = ['sent', 'delivered'];
+  const pending = await messages
+    .find(
+      { conversationId: target.conversationId, createdAt: { $lte: target.createdAt }, 'delivery.status': { $in: unread } },
+      { projection: { delivery: 1 } },
+    )
+    .toArray();
+  if (!pending.length) return 0;
+
+  const updatedAt = new Date();
+  await messages.updateMany(
+    { _id: { $in: pending.map(message => message._id) }, 'delivery.status': { $in: unread } },
+    { $set: { 'delivery.status': 'read', 'delivery.updatedAt': updatedAt } },
+  );
+  const conversationId = conversation._id.toString();
+  for (const message of pending) {
+    emitToRoom(conversationId, 'chat:message_updated', {
+      messageId: message._id.toString(),
+      delivery: { ...message.delivery, status: 'read', updatedAt },
+    });
+  }
+  return pending.length;
+}
+
 /** Arranca un worker por canal externo. Concurrencia 1: los mensajes a un cliente llegan en orden. */
 export function createOutboundWorkers(platforms: ChannelPlatform[] = ['WhatsApp', 'Instagram']) {
   return platforms.map(platform => {

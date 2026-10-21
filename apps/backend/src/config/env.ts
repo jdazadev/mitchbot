@@ -49,8 +49,13 @@ const envSchema = z.object({
   WHATSAPP_APP_SECRET: z.string().optional(),
   WHATSAPP_API_URL: z.string().url().default('https://graph.facebook.com'),
   WHATSAPP_API_VERSION: z.string().regex(/^v\d+\.\d+$/).default('v21.0'),
+  // Instagram Messaging API: mismo esquema que WhatsApp. graph.instagram.com (Instagram Login)
+  // o graph.facebook.com (Facebook Login).
   INSTAGRAM_TOKEN: z.string().optional(),
   INSTAGRAM_VERIFY_TOKEN: z.string().optional(),
+  INSTAGRAM_APP_SECRET: z.string().optional(),
+  INSTAGRAM_API_URL: z.string().url().default('https://graph.instagram.com'),
+  INSTAGRAM_API_VERSION: z.string().regex(/^v\d+\.\d+$/).default('v21.0'),
 });
 
 const env = envSchema.parse(process.env);

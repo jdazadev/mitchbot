@@ -46,3 +46,11 @@ export function channelInk(platform?: string): string {
 export function channelIcon(platform?: string): string {
   return channelMeta(platform).icon;
 }
+
+/** Canales de Meta que se conectan con una cuenta por proyecto. */
+export type MetaChannel = 'whatsapp' | 'instagram';
+
+/** Los IDs de cuenta de Meta (Phone Number ID, cuenta de Instagram) son numéricos. */
+export function isValidAccountId(value: string): boolean {
+  return /^\d{5,25}$/.test(value.trim());
+}

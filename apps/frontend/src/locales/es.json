@@ -666,16 +666,25 @@
     "channels": {
       "title": "Canales de Comunicación",
       "save": "Guardar Canales",
+      "webhookLabel": "URL del webhook",
+      "copyWebhook": "Copiar URL",
       "whatsapp": {
         "serverReady": "El servidor tiene WhatsApp conectado.",
         "serverMissing": "El servidor no tiene WhatsApp conectado: faltan {vars} en el entorno. Puedes guardar el número igualmente.",
-        "numberLabel": "Phone Number ID",
-        "numberPlaceholder": "Ej. 106540352242922",
-        "numberHint": "Lo encuentras en Meta → WhatsApp → Configuración de la API. Déjalo vacío para desconectar el número.",
-        "numberInvalid": "El Phone Number ID solo contiene dígitos.",
-        "webhookLabel": "URL del webhook",
-        "copyWebhook": "Copiar URL",
+        "accountLabel": "Phone Number ID",
+        "accountPlaceholder": "Ej. 106540352242922",
+        "accountHint": "Lo encuentras en Meta → WhatsApp → Configuración de la API. Déjalo vacío para desconectar el número.",
+        "accountInvalid": "El Phone Number ID solo contiene dígitos.",
         "webhookHint": "Regístrala en Meta con el token de verificación de WHATSAPP_VERIFY_TOKEN y suscríbete al campo messages. Meta necesita que sea pública y HTTPS."
+      },
+      "instagram": {
+        "serverReady": "El servidor tiene Instagram conectado.",
+        "serverMissing": "El servidor no tiene Instagram conectado: faltan {vars} en el entorno. Puedes guardar la cuenta igualmente.",
+        "accountLabel": "ID de la cuenta de Instagram",
+        "accountPlaceholder": "Ej. 17841400000000000",
+        "accountHint": "Es el ID numérico de la cuenta profesional, no el nombre de usuario. Lo encuentras en Meta → Instagram → Configuración de la API. Déjalo vacío para desconectar la cuenta.",
+        "accountInvalid": "El ID de la cuenta de Instagram solo contiene dígitos.",
+        "webhookHint": "Regístrala en Meta con el token de verificación de INSTAGRAM_VERIFY_TOKEN y suscríbete al campo messages. Meta necesita que sea pública y HTTPS."
       }
     },
     "options": {

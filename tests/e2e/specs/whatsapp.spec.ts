@@ -1,11 +1,8 @@
-import { createHmac } from 'node:crypto';
 import { test, expect } from '../fixtures';
 import type { APIRequestContext } from '@playwright/test';
 import { E2E } from '../helpers/config';
 import { createProjectOwner, signIn, type ProjectOwner } from '../helpers/owner';
-
-/** Dígitos únicos por prueba: números de WhatsApp y teléfonos de clientes no se cruzan entre workers. */
-const digits = (prefix: string) => `${prefix}${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+import { digits, failSendsTo, openConversation, postSignedWebhook, recoverSendsTo, sentTo } from '../helpers/meta';
 
 /** Propietario con WhatsApp habilitado y un número propio. */
 async function ownerWithNumber(api: APIRequestContext) {
@@ -17,16 +14,6 @@ async function ownerWithNumber(api: APIRequestContext) {
   });
   expect(saved.ok()).toBeTruthy();
   return { ...owner, phoneNumberId };
-}
-
-/** POST al webhook con la firma que calcularía Meta (o la indicada). */
-function postWebhook(api: APIRequestContext, payload: unknown, signature?: string) {
-  const raw = JSON.stringify(payload);
-  const header = signature ?? `sha256=${createHmac('sha256', E2E.whatsapp.appSecret).update(raw).digest('hex')}`;
-  return api.post('webhooks/whatsapp', {
-    data: raw,
-    headers: { 'Content-Type': 'application/json', 'X-Hub-Signature-256': header },
-  });
 }
 
 const textMessage = (phoneNumberId: string, from: string, name: string, body: string) => ({
@@ -50,18 +37,8 @@ const statusUpdate = (phoneNumberId: string, id: string, status: string) => ({
   entry: [{ changes: [{ field: 'messages', value: { metadata: { phone_number_id: phoneNumberId }, statuses: [{ id, status, recipient_id: '1' }] } }] }],
 });
 
-/** Mensajes que la Graph API simulada recibió para un cliente. */
-async function sentTo(api: APIRequestContext, to: string): Promise<{ id: string; text: string; phoneNumberId: string }[]> {
-  const res = await api.get(`${E2E.stubUrl}/__meta/messages?to=${to}`);
-  return res.json();
-}
-
-async function openConversation(page: any, clientName: string) {
-  await page.goto('/messaging');
-  await expect(page.getByText('Cargando conversaciones...')).toHaveCount(0, { timeout: 20_000 });
-  await page.getByText(clientName).first().click();
-  return page.locator('#chat-messages-container');
-}
+const postWebhook = (api: APIRequestContext, payload: unknown, signature?: string) =>
+  postSignedWebhook(api, 'whatsapp', payload, signature);
 
 async function receiveFromClient(api: APIRequestContext, owner: ProjectOwner & { phoneNumberId: string }, body = 'Hola, quiero información') {
   const from = digits('57');
@@ -126,7 +103,7 @@ test.describe('Canal de WhatsApp', () => {
     await expect(thread.getByTestId('delivery-status').last()).toHaveAttribute('data-status', 'sent', { timeout: 20_000 });
 
     // Pasada la ventana de 24 h, Meta rechaza los mensajes libres.
-    await api.post(`${E2E.stubUrl}/__meta/fail`, { data: { to: from, code: 131047 } });
+    await failSendsTo(api, from, 131047);
     const conversations = await (await api.get('conversations', { headers: owner.headers })).json();
     const conversation = conversations.find((c: any) => c.clientInfo?.identifier === from);
     const operatorText = 'Te escribo desde el panel';
@@ -141,7 +118,7 @@ test.describe('Canal de WhatsApp', () => {
     await expect(failed).toContainText('No entregado');
     await expect(failed).toContainText('24 horas');
 
-    await api.post(`${E2E.stubUrl}/__meta/recover`, { data: { to: from } });
+    await recoverSendsTo(api, from);
     await failed.getByRole('button', { name: 'Reintentar' }).click();
     await expect(thread.getByTestId('delivery-status').last()).toHaveAttribute('data-status', 'sent', { timeout: 20_000 });
     await expect.poll(async () => (await sentTo(api, from)).map(m => m.text)).toEqual([E2E.stub.reply, operatorText]);

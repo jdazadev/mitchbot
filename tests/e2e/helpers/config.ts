@@ -46,6 +46,13 @@ export const E2E = {
     verifyToken: 'e2e-wa-verify',
   },
 
+  /** Credenciales de Instagram del backend e2e; la Graph API también es el stub (`/meta`). */
+  instagram: {
+    token: 'e2e-ig-token',
+    appSecret: 'e2e-ig-secret',
+    verifyToken: 'e2e-ig-verify',
+  },
+
   projectNoContact: {
     name: 'E2E NoContact',
     slug: 'e2e-nocontact',

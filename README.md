@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.6.0** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.7.0** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -51,7 +51,7 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
 ## Arquitectura
 
 ```
- Cliente (Web · WhatsApp · Instagram*)           Operador (Dashboard Vue 3)
+ Cliente (Web · WhatsApp · Instagram)            Operador (Dashboard Vue 3)
                 │                                          │
                 └──────────── Socket.io / REST ────────────┘
                                    │
@@ -65,8 +65,6 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
                     └──────┬──────────────┬────────┘
                            │              │
                         MongoDB     Redis (caché, BullMQ, rate limit)
-
- * canales previstos en el roadmap
 ```
 
 - **Capa de abstracción de IA.** El chat no sabe qué modelo usa: `llm-provider.service` es el único punto que instancia el modelo. OpenRouter es el proveedor único de LLM, embeddings y OCR, y los modelos se definen solo por variables de entorno.
@@ -143,6 +141,15 @@ La lista completa está en [`apps/backend/.env.example`](apps/backend/.env.examp
 
 Sin plantillas aprobadas, WhatsApp solo deja responder dentro de las 24 horas siguientes al último mensaje del cliente. Pasado ese plazo, el mensaje aparece como "No entregado" y explica el motivo.
 
+### Conectar Instagram
+
+1. Tu cuenta de Instagram tiene que ser **profesional** y estar vinculada a una app de Meta con el producto de mensajería de Instagram.
+2. En `apps/backend/.env`, pon `INSTAGRAM_TOKEN` (token de la cuenta), `INSTAGRAM_APP_SECRET` y un `INSTAGRAM_VERIFY_TOKEN` que elijas tú, y reinicia el backend. Si la app usa Facebook Login, añade `INSTAGRAM_API_URL=https://graph.facebook.com`.
+3. En **Configuración → Canales**, escribe el **ID de la cuenta de Instagram** (el ID numérico de la cuenta profesional, no el nombre de usuario) y guarda.
+4. En Meta, registra la URL del webhook de Instagram que muestra esa pantalla con tu token de verificación y suscríbete al campo `messages`.
+
+Instagram también limita las respuestas a las 24 horas siguientes al último mensaje del cliente.
+
 ---
 
 ## Pruebas
@@ -168,10 +175,10 @@ Integración y E2E requieren los servicios de Docker activos. Más detalles en [
 
 ## Estado y hoja de ruta
 
-Mitchbot está en **pre-1.0 (v0.6.0)**. El MVP está listo para demo, y la **v1.0** llegará cuando la plataforma atienda de forma estable los canales sociales además de la web.
+Mitchbot está en **pre-1.0 (v0.7.0)**. Ya atiende Web, WhatsApp e Instagram en una sola bandeja; la **v1.0** llegará cuando sume el widget embebible, la exportación, las plantillas de mensaje y las integraciones externas.
 
 <p align="center">
-  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.4, siguiente v0.5 con WhatsApp, Instagram, resiliencia y marca por proyecto, y hacia v1.0 con widget embebible, CRM y notificaciones push" width="100%">
+  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.7 con pasarela de canales, WhatsApp e Instagram; siguiente v0.8 con exportación, plantillas y widget embebible; y hacia v1.0 con CRM, notificaciones push y métricas de SLA" width="100%">
 </p>
 
 <sub>Diagrama interactivo en <a href=".archify/workflow-roadmap-20261019-175109/roadmap.html"><code>.archify/workflow-roadmap-…/roadmap.html</code></a>. Su fuente editable es <code>candidate.json</code>, en la misma carpeta.</sub>
@@ -184,18 +191,18 @@ Mitchbot está en **pre-1.0 (v0.6.0)**. El MVP está listo para demo, y la **v1.
 | **v0.2 · Multi-proyecto** | sep 2026 | Pertenencia usuario↔proyecto y aislamiento total de datos, agentes y eventos |
 | **v0.3 · IA confiable** | sep 2026 | OpenRouter como proveedor único con credenciales solo en el entorno, memoria de conversación, saludo y despedida naturales e insights de sentimiento |
 | **v0.4 · Aurora y herramientas** | sep → oct 2026 | Sistema de diseño Aurora con tema oscuro y accesibilidad, catálogo de herramientas con aprobaciones, urgencia analizada, Resumen con métricas reales, identidad de marca por proyecto y tests unitarios |
+| **v0.5 · Pasarela de canales** | oct 2026 | Mensajes normalizados e idempotentes, broker con BullMQ sobre Redis, rate limiting por canal, reintentos, circuit breaker y fallos de entrega visibles con reintento |
+| **v0.6 · WhatsApp** | oct 2026 | Cloud API con webhooks firmados, un número por proyecto y estados de entrega y lectura |
+| **v0.7 · Instagram** | oct 2026 | Mensajes directos con el nombre del perfil, lectura acumulativa y configuración común de los canales de Meta |
 
-### 🔜 Siguiente · integración social
-- ✅ Pasarela de canales (v0.5.0): mensajes normalizados e idempotentes y broker con BullMQ sobre Redis
-- ✅ **Resiliencia** (v0.5.0): rate limiting por canal, reintentos con backoff, circuit breaker y fallos de entrega visibles con reintento
-- ✅ **WhatsApp Business** (v0.6.0): Cloud API con webhooks firmados, un número por proyecto y estados de entrega y lectura
-- **Instagram Messaging API** con webhooks
-- Plantillas de WhatsApp para escribir fuera de la ventana de 24 horas
+### 🔜 Siguiente · v0.8
+- Exportación de conversaciones
+- Plantillas de mensaje para escribir fuera de la ventana de 24 horas
+- Widget embebible para webs de clientes
 
 ### 🎯 Hacia la v1.0
-- Widget embebible para webs de clientes y exportación de conversaciones
 - Integración con CRM y notificaciones push
-- Tests unitarios que complementen la suite E2E
+- Métricas de SLA
 
 ---
 

@@ -10,7 +10,7 @@ import { getConversationsCollection } from '../../src/models/conversation.model'
 import { getMessagesCollection } from '../../src/models/message.model';
 import { createInboundWorker, getInboundQueue } from '../../src/channels/inbound';
 import { receiveWhatsAppWebhook, verifyWhatsAppWebhook } from '../../src/controllers/webhooks.controller';
-import { projectService } from '../../src/services/project.service';
+import { isAccountTaken } from '../../src/channels/meta/routing';
 
 const SECRET = 'integration-app-secret';
 const enabledProject = new ObjectId();
@@ -214,8 +214,8 @@ test('un fallo informado por Meta marca el mensaje y pide a una persona', async 
 });
 
 test('un número de WhatsApp solo puede pertenecer a un proyecto', async () => {
-  assert.equal(await projectService.isWhatsAppNumberTaken(ENABLED_NUMBER, disabledProject.toString()), true);
-  assert.equal(await projectService.isWhatsAppNumberTaken(ENABLED_NUMBER, enabledProject.toString()), false);
+  assert.equal(await isAccountTaken('whatsapp', ENABLED_NUMBER, disabledProject.toString()), true);
+  assert.equal(await isAccountTaken('whatsapp', ENABLED_NUMBER, enabledProject.toString()), false);
   await assert.rejects(
     getDatabase().collection('projects').updateOne({ _id: disabledProject }, { $set: { 'config.whatsapp.phoneNumberId': ENABLED_NUMBER } }),
     (error: any) => error.code === 11000,

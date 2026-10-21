@@ -29,6 +29,10 @@ export interface Project {
     whatsapp?: {
       phoneNumberId?: string | null;
     };
+    // ID de la cuenta profesional de Instagram que atiende el proyecto
+    instagram?: {
+      accountId?: string | null;
+    };
     // Identidad visual; el frontend deriva de `color` la familia --brand*
     brand?: {
       color?: string;

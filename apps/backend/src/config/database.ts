@@ -28,6 +28,12 @@ export const connectDatabase = async () => {
         { unique: true, partialFilterExpression: { 'config.whatsapp.phoneNumberId': { $type: 'string' } } },
       )
       .catch((error) => console.warn('⚠️ Could not create the projects WhatsApp number index:', error));
+    void db.collection('projects')
+      .createIndex(
+        { 'config.instagram.accountId': 1 },
+        { unique: true, partialFilterExpression: { 'config.instagram.accountId': { $type: 'string' } } },
+      )
+      .catch((error) => console.warn('⚠️ Could not create the projects Instagram account index:', error));
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
     process.exit(1);

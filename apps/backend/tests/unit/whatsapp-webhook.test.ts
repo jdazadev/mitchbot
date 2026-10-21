@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
-import { describeWhatsAppError, parseWhatsAppWebhook, verifySignature } from '../../src/channels/whatsapp/webhook';
+import { describeWhatsAppError, parseWhatsAppWebhook } from '../../src/channels/whatsapp/webhook';
+import { retryAfterMs, verifySignature } from '../../src/channels/meta/signature';
 
 const SECRET = 'app-secret';
 const sign = (body: Buffer, secret = SECRET) => `sha256=${createHmac('sha256', secret).update(body).digest('hex')}`;
@@ -25,6 +26,14 @@ test('sin firma, sin secreto o con formato raro se rechaza', () => {
   assert.equal(verifySignature(undefined, sign(body), SECRET), false);
   assert.equal(verifySignature(body, 'sha1=abc', SECRET), false);
   assert.equal(verifySignature(body, 'sha256=zz', SECRET), false);
+});
+
+test('Retry-After admite segundos y fecha HTTP', () => {
+  assert.equal(retryAfterMs('3'), 3000);
+  assert.equal(retryAfterMs(undefined), undefined);
+  assert.equal(retryAfterMs('no-es-fecha'), undefined);
+  const inTwoSeconds = new Date(Date.now() + 2000).toUTCString();
+  assert.ok(retryAfterMs(inTwoSeconds)! <= 2000);
 });
 
 test('extrae mensajes de texto con nombre, número receptor y fecha', () => {

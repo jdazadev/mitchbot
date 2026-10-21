@@ -3,6 +3,8 @@ import { projectService } from '../services/project.service';
 import { userService } from '../services/user.service';
 import { z } from 'zod';
 import { whatsAppServerStatus } from '../channels/whatsapp';
+import { instagramServerStatus } from '../channels/instagram';
+import { isAccountTaken, type MetaChannel } from '../channels/meta/routing';
 
 /** Verifica si el usuario autenticado tiene proyectos */
 export const checkProject = async (req: Request, res: Response, next: NextFunction) => {
@@ -98,6 +100,12 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+/** ID numérico de una cuenta de Meta; vacío = desconectarla. */
+const accountId = (message: string) => z.preprocess(
+  value => (typeof value === 'string' && !value.trim() ? null : typeof value === 'string' ? value.trim() : value),
+  z.string().regex(/^\d{5,25}$/, message).nullable(),
+).optional();
+
 const updateProjectSchema = z.object({
   name: z.string().min(1).optional(),
   slug: z.string().min(1).optional(),
@@ -121,16 +129,18 @@ const updateProjectSchema = z.object({
       logo: z.string().max(200_000, 'El logo es demasiado grande').nullable().optional(),
     }).optional(),
     whatsapp: z.object({
-      // Vacío = desconectar el número.
-      phoneNumberId: z.preprocess(
-        value => (typeof value === 'string' && !value.trim() ? null : typeof value === 'string' ? value.trim() : value),
-        z.string().regex(/^\d{5,25}$/, 'El Phone Number ID solo contiene dígitos').nullable(),
-      ).optional(),
+      phoneNumberId: accountId('El Phone Number ID solo contiene dígitos'),
+    }).optional(),
+    instagram: z.object({
+      accountId: accountId('El ID de la cuenta de Instagram solo contiene dígitos'),
     }).optional(),
   }).optional(),
 });
 
-const NUMBER_TAKEN = 'Ese número de WhatsApp ya está conectado a otro proyecto';
+const ACCOUNT_TAKEN: Record<MetaChannel, string> = {
+  whatsapp: 'Ese número de WhatsApp ya está conectado a otro proyecto',
+  instagram: 'Esa cuenta de Instagram ya está conectada a otro proyecto',
+};
 
 /** Actualiza el proyecto activo de la request */
 export const updateProject = async (req: Request, res: Response, next: NextFunction) => {
@@ -146,18 +156,23 @@ export const updateProject = async (req: Request, res: Response, next: NextFunct
       updateData.slug = await projectService.ensureUniqueSlug(baseSlug);
     }
 
-    const phoneNumberId = data.config?.whatsapp?.phoneNumberId;
-    if (phoneNumberId && await projectService.isWhatsAppNumberTaken(phoneNumberId, projectId)) {
-      return res.status(409).json({ error: NUMBER_TAKEN });
+    const accounts: [MetaChannel, string | null | undefined][] = [
+      ['whatsapp', data.config?.whatsapp?.phoneNumberId],
+      ['instagram', data.config?.instagram?.accountId],
+    ];
+    for (const [channel, account] of accounts) {
+      if (account && await isAccountTaken(channel, account, projectId)) {
+        return res.status(409).json({ error: ACCOUNT_TAKEN[channel] });
+      }
     }
 
     const updated = await projectService.update(projectId, updateData as any);
     res.json(updated);
   } catch (error: any) {
-    // Dos guardados simultáneos del mismo número: el índice único decide.
-    if (error?.code === 11000 && JSON.stringify(error?.keyPattern || {}).includes('whatsapp')) {
-      return res.status(409).json({ error: NUMBER_TAKEN });
-    }
+    // Dos guardados simultáneos de la misma cuenta: el índice único decide.
+    const pattern = JSON.stringify(error?.keyPattern || {});
+    const channel = (Object.keys(ACCOUNT_TAKEN) as MetaChannel[]).find(key => pattern.includes(key));
+    if (error?.code === 11000 && channel) return res.status(409).json({ error: ACCOUNT_TAKEN[channel] });
     next(error);
   }
 };
@@ -190,5 +205,5 @@ export const setActiveProject = async (req: Request, res: Response, next: NextFu
 
 /** Qué canales externos tiene conectados el servidor; nunca devuelve credenciales. */
 export const getChannelsStatus = (_req: Request, res: Response) => {
-  res.json({ whatsapp: whatsAppServerStatus() });
+  res.json({ whatsapp: whatsAppServerStatus(), instagram: instagramServerStatus() });
 };

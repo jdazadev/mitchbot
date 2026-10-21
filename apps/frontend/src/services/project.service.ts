@@ -43,16 +43,26 @@ export interface ProjectConfig {
   whatsapp?: {
     phoneNumberId?: string | null;
   };
+  instagram?: {
+    accountId?: string | null;
+  };
+}
+
+export interface ChannelServerStatus {
+  connected: boolean;
+  /** Variables de entorno que faltan, sin valores. */
+  missing: string[];
 }
 
 /** Qué canales externos tiene conectados el servidor (credenciales del entorno). */
 export interface ChannelsStatus {
-  whatsapp: { connected: boolean; missing: string[] };
+  whatsapp: ChannelServerStatus;
+  instagram: ChannelServerStatus;
 }
 
-/** URL pública que hay que registrar en Meta como webhook de WhatsApp. */
-export function whatsAppWebhookUrl(apiBase = API_BASE, origin = window.location.origin) {
-  return new URL(`${apiBase.replace(/\/+$/, '')}/webhooks/whatsapp`, origin).toString();
+/** URL pública que hay que registrar en Meta como webhook del canal. */
+export function channelWebhookUrl(channel: 'whatsapp' | 'instagram', apiBase = API_BASE, origin = window.location.origin) {
+  return new URL(`${apiBase.replace(/\/+$/, '')}/webhooks/${channel}`, origin).toString();
 }
 
 export interface Project {

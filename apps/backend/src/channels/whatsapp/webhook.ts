@@ -1,5 +1,3 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
-
 /** Mensaje entrante ya extraído del webhook, antes de saber a qué proyecto pertenece. */
 export interface WhatsAppIncoming {
   /** phone_number_id del número que recibió el mensaje. */
@@ -23,18 +21,6 @@ export interface WhatsAppStatus {
 export interface ParsedWebhook {
   messages: WhatsAppIncoming[];
   statuses: WhatsAppStatus[];
-}
-
-/**
- * Comprueba `X-Hub-Signature-256` (`sha256=<hex>`): HMAC-SHA256 del cuerpo tal
- * como llegó, con el App Secret. Sin secreto no hay forma de verificar y se rechaza.
- */
-export function verifySignature(rawBody: Buffer | undefined, header: string | undefined, appSecret: string | undefined) {
-  if (!rawBody || !header || !appSecret) return false;
-  const [scheme, received] = header.split('=', 2);
-  if (scheme !== 'sha256' || !received || !/^[0-9a-f]{64}$/i.test(received)) return false;
-  const expected = createHmac('sha256', appSecret).update(rawBody).digest();
-  return timingSafeEqual(expected, Buffer.from(received, 'hex'));
 }
 
 const MEDIA_LABELS: Record<string, string> = {

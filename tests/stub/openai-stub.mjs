@@ -12,8 +12,14 @@
  *
  * Graph API de WhatsApp (Cloud API), para el canal de WhatsApp:
  *   - POST /meta/:version/:phoneNumberId/messages -> acepta el envío y devuelve un wamid
+ *
+ * Messaging API de Instagram (misma ruta, cuerpo `{ recipient: { id }, message: { text } }`):
+ *   - POST /meta/:version/:accountId/messages -> acepta el envío y devuelve un message_id
+ *   - GET  /meta/:version/:igsid             -> perfil `{ name, username }` del cliente
+ *
+ * Control (ambos canales):
  *   - GET  /__meta/messages?to=   -> mensajes recibidos (por destinatario)
- *   - POST /__meta/fail           -> { to, code, status? }: los envíos a `to` fallan con ese error
+ *   - POST /__meta/fail           -> { to, code, subcode?, status? }: los envíos a `to` fallan con ese error
  *   - POST /__meta/recover        -> { to }: los envíos a `to` vuelven a funcionar
  *
  * Disparadores deterministas:
@@ -40,6 +46,7 @@ const stats = { chatCompletions: 0, embeddings: 0, models: 0, requests: [] };
 
 // Estado de la Graph API simulada; separado de `stats` para no mezclarlo con la guardia del proveedor de IA.
 const META_TOKEN = process.env.STUB_META_TOKEN || 'e2e-wa-token';
+const IG_TOKEN = process.env.STUB_IG_TOKEN || 'e2e-ig-token';
 const meta = { sent: [], failures: new Map(), counter: 0 };
 
 function log(entry) {
@@ -351,18 +358,35 @@ const server = http.createServer(async (req, res) => {
   const metaSend = req.method === 'POST' && url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)\/messages$/);
   if (metaSend) {
     const body = await readBody(req);
-    if (req.headers.authorization !== `Bearer ${META_TOKEN}`) {
+    // WhatsApp envía `to` + `text.body`; Instagram, `recipient.id` + `message.text`.
+    const instagram = !!body.recipient;
+    const token = instagram ? IG_TOKEN : META_TOKEN;
+    if (req.headers.authorization !== `Bearer ${token}`) {
       return sendJson(res, 401, { error: { message: 'Invalid OAuth access token.', type: 'OAuthException', code: 190 } });
     }
-    const failure = meta.failures.get(body.to);
+    const to = instagram ? body.recipient.id : body.to;
+    const failure = meta.failures.get(to);
     if (failure) {
-      return sendJson(res, failure.status, { error: { message: `Stub: fallo ${failure.code}`, type: 'OAuthException', code: failure.code } });
+      return sendJson(res, failure.status, {
+        error: { message: `Stub: fallo ${failure.code}`, type: 'OAuthException', code: failure.code, error_subcode: failure.subcode },
+      });
     }
     meta.counter += 1;
-    const id = `wamid.stub.${Date.now()}.${meta.counter}`;
-    meta.sent.push({ id, phoneNumberId: metaSend[1], to: body.to, text: body.text?.body, at: new Date().toISOString() });
+    const id = instagram ? `mid.stub.${Date.now()}.${meta.counter}` : `wamid.stub.${Date.now()}.${meta.counter}`;
+    const text = instagram ? body.message?.text : body.text?.body;
+    meta.sent.push({ id, channel: instagram ? 'instagram' : 'whatsapp', phoneNumberId: metaSend[1], to, text, at: new Date().toISOString() });
     if (meta.sent.length > 500) meta.sent.shift();
+    if (instagram) return sendJson(res, 200, { recipient_id: to, message_id: id });
     return sendJson(res, 200, { messaging_product: 'whatsapp', contacts: [{ input: body.to, wa_id: body.to }], messages: [{ id }] });
+  }
+
+  const igProfile = req.method === 'GET' && url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)$/);
+  if (igProfile) {
+    if (req.headers.authorization !== `Bearer ${IG_TOKEN}`) {
+      return sendJson(res, 401, { error: { message: 'Invalid OAuth access token.', code: 190 } });
+    }
+    const igsid = decodeURIComponent(igProfile[1]);
+    return sendJson(res, 200, { name: `Cliente IG ${igsid.slice(-5)}`, username: `cliente_${igsid.slice(-5)}`, id: igsid });
   }
 
   if (req.method === 'GET' && url.pathname === '/__meta/messages') {
@@ -372,7 +396,11 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'POST' && url.pathname === '/__meta/fail') {
     const body = await readBody(req);
-    meta.failures.set(body.to, { code: Number(body.code) || 131047, status: Number(body.status) || 400 });
+    meta.failures.set(body.to, {
+      code: Number(body.code) || 131047,
+      subcode: body.subcode ? Number(body.subcode) : undefined,
+      status: Number(body.status) || 400,
+    });
     return sendJson(res, 200, { status: 'failing', to: body.to });
   }
 

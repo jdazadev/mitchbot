@@ -6,11 +6,11 @@
   "status": "pass",
   "visualReview": "not-requested",
   "provenance": "current",
-  "deliveryReceiptId": "a7def463-d862-4d68-b74c-b264016d25b3",
+  "deliveryReceiptId": "aa35a012-de12-457e-b92b-e90098023502",
   "artifact": {
     "path": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/roadmap.html",
-    "sha256": "42f3d9b4690ed7202a4d6204f80b073aac7fedac4510b25305b237562f64d2d2",
-    "bytes": 764942
+    "sha256": "1295744eb0140075c8fd9f2cd35d2cb9d9ccf3397eaa24fe60ef55d0383b575a",
+    "bytes": 768319
   },
   "state": {
     "detail": "read",
@@ -47,64 +47,66 @@
           "bodyPaddingPx": 12,
           "headerPx": 52,
           "diagramChromePx": 78,
-          "svgPx": 646,
+          "svgPx": 611,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 128,
+            "heightPx": 121,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 82,
-            "spaceAboveNodesPx": 41,
+            "nodeSpanPx": 78,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 128,
-            "nodeCount": 3,
+            "heightPx": 121,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 82,
-            "spaceAboveNodesPx": 41,
+            "nodeSpanPx": 78,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 128,
-            "nodeCount": 4,
+            "heightPx": 121,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 82,
-            "spaceAboveNodesPx": 41,
+            "nodeSpanPx": 78,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -142,64 +144,66 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 723,
+          "svgPx": 684,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 144,
+            "heightPx": 136,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 92,
-            "spaceAboveNodesPx": 46,
+            "nodeSpanPx": 87,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 144,
-            "nodeCount": 3,
+            "heightPx": 136,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 92,
-            "spaceAboveNodesPx": 46,
+            "nodeSpanPx": 87,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 144,
-            "nodeCount": 4,
+            "heightPx": 136,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 92,
-            "spaceAboveNodesPx": 46,
+            "nodeSpanPx": 87,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -231,70 +235,72 @@
         "readerOverflow": null,
         "readerFit": null,
         "ok": true,
-        "readerWidth": 1821,
-        "diagramWidth": 1791,
+        "readerWidth": 1856,
+        "diagramWidth": 1826,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 860,
+          "svgPx": 829,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 171,
+            "heightPx": 165,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 110,
-            "spaceAboveNodesPx": 55,
+            "nodeSpanPx": 106,
+            "spaceAboveNodesPx": 53,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 171,
-            "nodeCount": 3,
+            "heightPx": 165,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 110,
-            "spaceAboveNodesPx": 55,
+            "nodeSpanPx": 106,
+            "spaceAboveNodesPx": 53,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 171,
-            "nodeCount": 4,
+            "heightPx": 165,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 110,
-            "spaceAboveNodesPx": 55,
+            "nodeSpanPx": 106,
+            "spaceAboveNodesPx": 53,
             "spaceBelowNodesPx": 6
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -332,64 +338,66 @@
           "bodyPaddingPx": 64,
           "headerPx": 68,
           "diagramChromePx": 94,
-          "svgPx": 898,
+          "svgPx": 849,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 178,
+            "heightPx": 169,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 114,
-            "spaceAboveNodesPx": 57,
-            "spaceBelowNodesPx": 7
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 178,
-            "nodeCount": 3,
+            "heightPx": 169,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 114,
-            "spaceAboveNodesPx": 57,
-            "spaceBelowNodesPx": 7
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 178,
-            "nodeCount": 4,
+            "heightPx": 169,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 114,
-            "spaceAboveNodesPx": 57,
-            "spaceBelowNodesPx": 7
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
+            "spaceBelowNodesPx": 6
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -480,64 +488,66 @@
           "bodyPaddingPx": 12,
           "headerPx": 52,
           "diagramChromePx": 78,
-          "svgPx": 646,
+          "svgPx": 611,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 128,
+            "heightPx": 121,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 82,
-            "spaceAboveNodesPx": 41,
+            "nodeSpanPx": 78,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 128,
-            "nodeCount": 3,
+            "heightPx": 121,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 82,
-            "spaceAboveNodesPx": 41,
+            "nodeSpanPx": 78,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 128,
-            "nodeCount": 4,
+            "heightPx": 121,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 82,
-            "spaceAboveNodesPx": 41,
+            "nodeSpanPx": 78,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -575,64 +585,66 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 723,
+          "svgPx": 684,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 144,
+            "heightPx": 136,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 92,
-            "spaceAboveNodesPx": 46,
+            "nodeSpanPx": 87,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 144,
-            "nodeCount": 3,
+            "heightPx": 136,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 92,
-            "spaceAboveNodesPx": 46,
+            "nodeSpanPx": 87,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 144,
-            "nodeCount": 4,
+            "heightPx": 136,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 92,
-            "spaceAboveNodesPx": 46,
+            "nodeSpanPx": 87,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -664,70 +676,72 @@
         "readerOverflow": null,
         "readerFit": null,
         "ok": true,
-        "readerWidth": 1821,
-        "diagramWidth": 1791,
+        "readerWidth": 1856,
+        "diagramWidth": 1826,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 860,
+          "svgPx": 829,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 171,
+            "heightPx": 165,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 110,
-            "spaceAboveNodesPx": 55,
+            "nodeSpanPx": 106,
+            "spaceAboveNodesPx": 53,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 171,
-            "nodeCount": 3,
+            "heightPx": 165,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 110,
-            "spaceAboveNodesPx": 55,
+            "nodeSpanPx": 106,
+            "spaceAboveNodesPx": 53,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 171,
-            "nodeCount": 4,
+            "heightPx": 165,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 110,
-            "spaceAboveNodesPx": 55,
+            "nodeSpanPx": 106,
+            "spaceAboveNodesPx": 53,
             "spaceBelowNodesPx": 6
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -765,64 +779,66 @@
           "bodyPaddingPx": 64,
           "headerPx": 68,
           "diagramChromePx": 94,
-          "svgPx": 898,
+          "svgPx": 849,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 178,
+            "heightPx": 169,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 114,
-            "spaceAboveNodesPx": 57,
-            "spaceBelowNodesPx": 7
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 178,
-            "nodeCount": 3,
+            "heightPx": 169,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 114,
-            "spaceAboveNodesPx": 57,
-            "spaceBelowNodesPx": 7
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 178,
-            "nodeCount": 4,
+            "heightPx": 169,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 114,
-            "spaceAboveNodesPx": 57,
-            "spaceBelowNodesPx": 7
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
+            "spaceBelowNodesPx": 6
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -865,64 +881,66 @@
           "bodyPaddingPx": 12,
           "headerPx": 52,
           "diagramChromePx": 78,
-          "svgPx": 646,
+          "svgPx": 611,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 128,
+            "heightPx": 121,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 82,
-            "spaceAboveNodesPx": 41,
+            "nodeSpanPx": 78,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 128,
-            "nodeCount": 3,
+            "heightPx": 121,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 82,
-            "spaceAboveNodesPx": 41,
+            "nodeSpanPx": 78,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 128,
-            "nodeCount": 4,
+            "heightPx": 121,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 82,
-            "spaceAboveNodesPx": 41,
+            "nodeSpanPx": 78,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -960,64 +978,66 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 723,
+          "svgPx": 684,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 144,
+            "heightPx": 136,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 92,
-            "spaceAboveNodesPx": 46,
+            "nodeSpanPx": 87,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 144,
-            "nodeCount": 3,
+            "heightPx": 136,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 92,
-            "spaceAboveNodesPx": 46,
+            "nodeSpanPx": 87,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 144,
-            "nodeCount": 4,
+            "heightPx": 136,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 92,
-            "spaceAboveNodesPx": 46,
+            "nodeSpanPx": 87,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -1049,70 +1069,72 @@
         "readerOverflow": null,
         "readerFit": null,
         "ok": true,
-        "readerWidth": 1821,
-        "diagramWidth": 1791,
+        "readerWidth": 1856,
+        "diagramWidth": 1826,
         "pageComposition": {
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 860,
+          "svgPx": 829,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 171,
+            "heightPx": 165,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 110,
-            "spaceAboveNodesPx": 55,
+            "nodeSpanPx": 106,
+            "spaceAboveNodesPx": 53,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 171,
-            "nodeCount": 3,
+            "heightPx": 165,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 110,
-            "spaceAboveNodesPx": 55,
+            "nodeSpanPx": 106,
+            "spaceAboveNodesPx": 53,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 171,
-            "nodeCount": 4,
+            "heightPx": 165,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 110,
-            "spaceAboveNodesPx": 55,
+            "nodeSpanPx": 106,
+            "spaceAboveNodesPx": 53,
             "spaceBelowNodesPx": 6
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -1150,64 +1172,66 @@
           "bodyPaddingPx": 64,
           "headerPx": 68,
           "diagramChromePx": 94,
-          "svgPx": 898,
+          "svgPx": 849,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1112,
+        "viewBoxWidth": 1176,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 178,
+            "heightPx": 169,
             "nodeCount": 6,
             "nodeIds": [
               "mvp",
-              "multiproyecto",
               "openrouter",
               "herramientas",
               "resiliencia",
+              "exportacion",
               "v1"
             ],
-            "nodeSpanPx": 114,
-            "spaceAboveNodesPx": 57,
-            "spaceBelowNodesPx": 7
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 178,
-            "nodeCount": 3,
+            "heightPx": 169,
+            "nodeCount": 4,
             "nodeIds": [
               "web",
               "social",
+              "plantillas",
               "crm"
             ],
-            "nodeSpanPx": 114,
-            "spaceAboveNodesPx": 57,
-            "spaceBelowNodesPx": 7
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 178,
-            "nodeCount": 4,
+            "heightPx": 169,
+            "nodeCount": 5,
             "nodeIds": [
               "insights",
               "aurora",
               "marca",
-              "widget"
+              "widget",
+              "sla"
             ],
-            "nodeSpanPx": 114,
-            "spaceAboveNodesPx": 57,
-            "spaceBelowNodesPx": 7
+            "nodeSpanPx": 108,
+            "spaceAboveNodesPx": 54,
+            "spaceBelowNodesPx": 6
           }
         ],
-        "minimumProjectedNodeTextPx": 7.4,
-        "minimumProjectedNonEdgeTextPx": 7.4,
+        "minimumProjectedNodeTextPx": 7.9,
+        "minimumProjectedNonEdgeTextPx": 7.9,
         "minimumProjectedEdgeTextPx": 8,
-        "minimumProjectedNodeText": "rate limit · reintentos · failover",
+        "minimumProjectedNodeText": "aislamiento · OpenRouter · memoria",
         "minimumProjectedNodeTextDetail": "context",
         "minimumProjectedNodeTextOwner": {
           "kind": "node",
-          "id": "resiliencia"
+          "id": "openrouter"
         },
         "minimumRequiredNodeTextPx": 6,
         "readabilityOk": true,
@@ -1231,7 +1255,7 @@
     "contactSheet": null
   },
   "sidecars": {
-    "directory": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-2",
+    "directory": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-3",
     "receipt": "roadmap.browser-check.json",
     "files": []
   }
