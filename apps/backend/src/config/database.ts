@@ -13,6 +13,12 @@ export const connectDatabase = async () => {
     void db.collection('messages')
       .createIndex({ conversationId: 1, createdAt: -1, _id: -1 })
       .catch((error) => console.warn('⚠️ Could not create the messages pagination index:', error));
+    void db.collection('messages')
+      .createIndex(
+        { 'external.platform': 1, 'external.messageId': 1 },
+        { unique: true, partialFilterExpression: { 'external.messageId': { $exists: true } } },
+      )
+      .catch((error) => console.warn('⚠️ Could not create the messages external id index:', error));
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
     process.exit(1);

@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { getDatabase } from '../config/database';
+import type { ChannelPlatform, DeliveryStatus } from '../channels/types';
 
 export type MessageSender = 'contact' | 'ai_agent' | 'human_agent' | 'tool';
 
@@ -35,8 +36,20 @@ export interface Message {
     attachments?: { url: string; type: string; name: string }[];
     suggestedActions?: string[]; // "Suggest tracking link", "View recent orders"
   };
+  /** Origen en un canal externo; con índice único parcial para descartar webhooks repetidos. */
+  external?: { platform: ChannelPlatform; messageId: string };
+  /** Entrega en canales externos (los mensajes Web no lo llevan). */
+  delivery?: MessageDelivery;
   readAt?: Date;
   createdAt: Date;
+}
+
+export interface MessageDelivery {
+  status: DeliveryStatus;
+  attempts: number;
+  externalId?: string;
+  error?: string;
+  updatedAt: Date;
 }
 
 export const getMessagesCollection = () => {

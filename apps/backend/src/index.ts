@@ -12,6 +12,8 @@ import { logger } from './utils/logger';
 import { projectContextService } from './services/project-context.service';
 import './queues/rag-upload.worker';
 import { createReindexWorker } from './queues/rag-reindex.worker';
+import { createInboundWorker } from './channels/inbound';
+import { createOutboundWorkers } from './channels/outbound';
 
 const app = express();
 const httpServer = createServer(app);
@@ -50,6 +52,14 @@ const httpServer = createServer(app);
           createReindexWorker({ concurrency: 1 });
         } catch (e) {
           console.warn('⚠️ Could not start RAG reindex worker:', e);
+        }
+
+        // Pasarela de canales: entrada de webhooks y entrega por canal externo
+        try {
+          createInboundWorker();
+          createOutboundWorkers();
+        } catch (e) {
+          console.warn('⚠️ Could not start channel workers:', e);
         }
 
         // Initialize Socket.io

@@ -14,7 +14,24 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.4.35
+**Versión actual del proyecto:** v0.5.0
+
+---
+
+## Pasarela de canales (v0.5.0)
+
+Base común para WhatsApp e Instagram: entrada normalizada e idempotente, salida por cola con rate limiting, reintentos y circuit breaker, y estado de entrega visible. Cambio OpenSpec `add-channel-gateway`; capability `channel-gateway`.
+
+- **Módulo `src/channels/`**: `types.ts` (`InboundMessage`, `OutboundMessage`, `ChannelAdapter`, `ChannelError transient|permanent`), `registry.ts` (adaptadores por plataforma; Web viene registrado y no es externo), `normalize.ts`, `policy.ts` (qué se entrega y `nextDelay`), `breaker.ts` (máquina de estados pura), `inbound.ts` y `outbound.ts` (colas y workers). Un canal nuevo es un adaptador: `registerAdapter({ platform, external: true, send })`.
+- **Entrada**: `receive(inbound, target?)` es el único punto de entrada; el chat público lo usa de forma síncrona y los webhooks lo harán por la cola `channel-inbound` (`enqueueInbound`, concurrencia 1 para conservar el orden). Con `target.conversationId` escribe en esa conversación aunque esté cerrada (el chat Web).
+- **Idempotencia**: `messages.external { platform, messageId }` con índice único parcial; un mensaje repetido no crea conversación, no suma no leídos ni dispara al bot.
+- **Salida**: `dispatch(message, conversation)` encola en `channel-outbound-<canal>` las respuestas del bot y del operador y las `confirmation_request`, solo en canales externos. Nunca entrega `tool_call`, `tool_result` ni el aviso de error del bot. Web sigue entregando por socket, sin `delivery`.
+- **Resiliencia**: limitador por canal (`CHANNEL_<CANAL>_RATE_MAX`/`_RATE_MS`), concurrencia 1 por canal (orden de entrega), 5 intentos con backoff exponencial (2 s → 60 s, respeta `retryAfterMs`), errores permanentes sin reintento. Circuit breaker en Redis: `CHANNEL_BREAKER_THRESHOLD` fallos transitorios seguidos lo abren durante `CHANNEL_BREAKER_COOLDOWN_MS`; mientras tanto los trabajos se retrasan sin gastar intentos.
+- **Fallo definitivo**: `delivery.status = failed` con motivo, conversación a `pending_human`, `chat:status` y `admin:notification`. En el hilo, `DeliveryStatus.vue` muestra Enviando / Enviado / No entregado + **Reintentar** (`POST /api/conversations/:id/messages/:messageId/retry`, 409 si el mensaje no está en `failed`).
+- **Aislamiento de colas**: `CHANNEL_QUEUE_PREFIX` (por defecto `bull`) separa colas y breaker cuando varios entornos comparten Redis; el E2E usa `e2e` y la integración `itest-<pid>`.
+- **Retirado**: `POST /api/conversations/client/start` y `/client/:id/messages` (sin consumidores; eran una entrada que se saltaba el gateway).
+- **Pruebas de integración sin coste**: `tests/integration/helpers/isolated-env.ts` se importa primero y apunta la IA a un puerto cerrado, así un mensaje entrante nunca llama a OpenRouter con la clave del `.env`.
+- **Verificación**: unitarios backend **38/38** y frontend **22/22**; integración **40/40 (1 omitida)**, 10 de ellas del gateway contra Redis y BullMQ reales; E2E **62/62** en dos corridas completas; paridad es/en **715/715**.
 
 ---
 
@@ -407,7 +424,7 @@ mitchbot_v2/
 | **IA / LLM** | LangChain.js v1.x (`@langchain/core`, `@langchain/openai`, `@langchain/qdrant`) |
 | **Proveedores IA** | OpenRouter (único proveedor: LLM, embeddings y OCR) |
 | **Embeddings** | OpenRouter (`openai/text-embedding-3-small` por defecto) |
-| **Mensajería** | Socket.io (tiempo real) |
+| **Mensajería** | Socket.io (tiempo real), BullMQ sobre Redis (pasarela de canales) |
 | **Auth** | JWT (jsonwebtoken), bcryptjs (12 rounds) |
 | **Infraestructura** | Docker Compose, pnpm workspaces |
 | **Pruebas** | `node:test` + tsx (backend), Vitest + happy-dom + Vue Test Utils (frontend), Playwright (E2E) |
@@ -423,7 +440,7 @@ redis:      → puerto 6379   # Caché y colas BullMQ (AOF)
 qdrant:     → puerto 6333   # Base de datos vectorial (RAG)
 ```
 
-> Nativo: los 3 servicios tienen `healthcheck`. `ollama`, `open-webui` y `nats` se eliminaron (sin uso tras el refactor a OpenRouter). Se reintroducirá un message broker cuando llegue la fase de Integración Social.
+> Nativo: los 3 servicios tienen `healthcheck`. `ollama`, `open-webui` y `nats` se eliminaron (sin uso tras el refactor a OpenRouter). La pasarela de canales (v0.5.0) usa BullMQ sobre el Redis existente como broker, sin servicios nuevos.
 
 ---
 
@@ -467,6 +484,7 @@ apps/backend/src/
 ├── models/                         # Schemas MongoDB (10 colecciones)
 ├── routes/                         # Definición de rutas Express
 ├── middleware/                     # Auth, validación Zod, errores, upload
+├── channels/                       # Pasarela de canales: adaptadores, entrada, salida, breaker
 ├── websocket/                      # Socket.io handlers
 ├── scripts/                        # Seed y utilidades
 ├── utils/                          # Logger, helpers
@@ -772,7 +790,7 @@ Usuario abre la app
 | **Auth** | `POST /register`, `POST /login`, `GET /me`, `PUT /profile`, `PUT /password` | Autenticación y perfil |
 | **Users** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Gestión de usuarios |
 | **Contacts** | `GET /`, `GET /:id`, `PUT /:id`, `PATCH /:id/archive`, `PATCH /:id/restore` | Gestión de contactos |
-| **Conversations** | `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages` (paginación opcional `?limit=&before=`), `POST /:id/messages`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, historial paginado, resolver conversación por contacto, marcar leída, guardar contacto e insights |
+| **Conversations** | `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages` (paginación opcional `?limit=&before=`), `POST /:id/messages`, `POST /:id/messages/:messageId/retry`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, historial paginado, resolver conversación por contacto, marcar leída, guardar contacto e insights |
 | **Brain** | `GET /sources`, `POST /upload`, `POST /text`, `DELETE /sources/:id`, `POST /search` | Base de conocimiento RAG |
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
@@ -832,7 +850,7 @@ Todas las conexiones WebSocket requieren autenticación JWT:
 | `chat:typing` | Bidireccional | Indicador de "escribiendo..." |
 | `chat:status` | Server → Client | Cambio de modo/estado de la conversación (lo consumen Messaging y TestChat sin recargar) |
 | `chat:new_conversation` | Server → Client | Nueva conversación iniciada |
-| `chat:message_updated` | Server → Client | Mensaje actualizado (estado de confirmación de tool) |
+| `chat:message_updated` | Server → Client | Mensaje actualizado: `status` de la confirmación de tool, o `delivery` (entrega en canal externo); nunca ambos |
 | `chat:insights` | Server → Client | Insights de la conversación recalculados (sentimiento y su distribución) |
 | `chat:read` | Server → Client | Una sesión del proyecto marcó una conversación como leída; el resto actualiza su badge |
 | `tool:confirm` | Client → Server | Confirmar / cancelar / modificar una ejecución de herramienta |
@@ -921,6 +939,14 @@ OPENROUTER_RERANKER_MODEL=<opcional-fallback-embedding>
 OPENROUTER_INSIGHTS_MODEL=<opcional-fallback-llm>
 DASHBOARD_RESPONSE_CONVERSATION_LIMIT=5000
 DASHBOARD_RESPONSE_TIMEOUT_MS=5000
+# Pasarela de canales (opcionales)
+CHANNEL_QUEUE_PREFIX=bull
+CHANNEL_WHATSAPP_RATE_MAX=20
+CHANNEL_WHATSAPP_RATE_MS=1000
+CHANNEL_INSTAGRAM_RATE_MAX=10
+CHANNEL_INSTAGRAM_RATE_MS=1000
+CHANNEL_BREAKER_THRESHOLD=5
+CHANNEL_BREAKER_COOLDOWN_MS=60000
 ```
 
 > ⚠️ `OPENROUTER_LLM_MODEL` es obligatorio (sin default): si falta, la generación falla con un mensaje que indica definirlo. `OPENROUTER_FILE_MODEL`, `OPENROUTER_RERANKER_MODEL` y `OPENROUTER_INSIGHTS_MODEL` son opcionales (el CSV se indexa crudo, el re-ranker usa el modelo de embeddings y los insights usan `OPENROUTER_LLM_MODEL`, respectivamente).
@@ -953,8 +979,8 @@ DASHBOARD_RESPONSE_TIMEOUT_MS=5000
 - [x] Identidad de marca por proyecto persistida y aplicada al iniciar sesión (v0.4.35)
 
 ### Fase Siguiente — v0.5 Integración Social 🔜
-- [ ] Normalización de mensajes cross-platform + message broker (BullMQ sobre Redis)
-- [ ] Rate limiting por plataforma, sistema de retry y failover
+- [x] Normalización de mensajes cross-platform + message broker (BullMQ sobre Redis) (v0.5.0)
+- [x] Rate limiting por plataforma, sistema de retry y failover operativo (circuit breaker) (v0.5.0)
 - [ ] WhatsApp Business API (webhooks)
 - [ ] Instagram Messaging API
 

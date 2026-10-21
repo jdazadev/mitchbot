@@ -17,6 +17,9 @@ import { emitToRoom, emitToProject, emitToProjectDashboard } from '../websocket/
 import { ToolContext } from '../tools/types';
 import { logger } from '../utils/logger';
 import { analyticsService } from './analytics.service';
+import { dispatch } from '../channels/outbound';
+
+const isDuplicateKey = (error: any) => error?.code === 11000;
 
 function trackActivitySafely(activity: Omit<Activity, '_id' | 'createdAt'>) {
   if (!activity.projectId) return;
@@ -145,8 +148,21 @@ export const chatService = {
     clientIdentifier: string; 
     initialMessage: string;
     projectId?: string;
+    external?: Message['external'];
   }) {
     const conversationsColl = getConversationsCollection();
+
+    // Webhook repetido: no se reabre ni se crea conversación por un mensaje ya registrado.
+    if (data.external) {
+      const duplicate = await getMessagesCollection().findOne({
+        'external.platform': data.external.platform,
+        'external.messageId': data.external.messageId,
+      });
+      if (duplicate) {
+        const conversation = await conversationsColl.findOne({ _id: duplicate.conversationId });
+        return { conversation, message: duplicate, isNew: false, duplicate: true };
+      }
+    }
 
     const existingQuery: any = {
       'clientInfo.identifier': data.clientIdentifier,
@@ -162,7 +178,8 @@ export const chatService = {
         existingConversation._id!.toString(),
         data.initialMessage,
         'contact',
-        data.clientName || 'Cliente'
+        data.clientName || 'Cliente',
+        { external: data.external }
       );
       return { conversation: existingConversation, message, isNew: false };
     }
@@ -204,7 +221,8 @@ export const chatService = {
       conversation._id!.toString(),
       data.initialMessage,
       'contact',
-      data.clientName || 'Cliente'
+      data.clientName || 'Cliente',
+      { external: data.external }
     );
 
     try {
@@ -220,7 +238,8 @@ export const chatService = {
     conversationId: string,
     content: string,
     sender: 'contact' | 'ai_agent' | 'human_agent',
-    senderName?: string
+    senderName?: string,
+    options?: { external?: Message['external'] }
   ) {
     const messagesColl = getMessagesCollection();
     const conversationsColl = getConversationsCollection();
@@ -239,10 +258,21 @@ export const chatService = {
       content,
       contentType: 'text',
       isBot: sender === 'ai_agent',
+      ...(options?.external ? { external: options.external } : {}),
       createdAt: new Date(),
     };
 
-    await messagesColl.insertOne(newMessage);
+    try {
+      await messagesColl.insertOne(newMessage);
+    } catch (error) {
+      // Mismo id externo en paralelo: gana el primero y este no tiene efectos.
+      if (!isDuplicateKey(error) || !options?.external) throw error;
+      const existing = await messagesColl.findOne({
+        'external.platform': options.external.platform,
+        'external.messageId': options.external.messageId,
+      });
+      return existing!;
+    }
     
     const updateSet: any = {
       lastMessage: content,
@@ -268,6 +298,14 @@ export const chatService = {
       emitToRoom(conversationId, 'chat:message', newMessage);
     } catch (e) {
       logger.warn('Socket emit failed', e);
+    }
+
+    if (sender !== 'contact') {
+      const target = await conversationsColl.findOne(
+        { _id: new ObjectId(conversationId) },
+        { projection: { platform: 1, projectId: 1 } },
+      );
+      await dispatch(newMessage, target);
     }
 
     if (sender === 'human_agent') {
@@ -534,6 +572,7 @@ export const chatService = {
         { _id: placeholderMsgId },
         { $set: { content } }
       );
+      await dispatch({ ...placeholderMsg, content }, conversation);
       
       // Update the conversation's last message
       const conversationsColl = getConversationsCollection();
@@ -622,6 +661,14 @@ export const chatService = {
       emitToRoom(data.conversationId, 'chat:message', message);
     } catch (e) {
       logger.warn('Socket emit failed for tool message', e as any);
+    }
+
+    if (data.contentType === 'confirmation_request') {
+      const target = await getConversationsCollection().findOne(
+        { _id: new ObjectId(data.conversationId) },
+        { projection: { platform: 1, projectId: 1 } },
+      );
+      await dispatch(message, target);
     }
 
     return message;
@@ -886,6 +933,14 @@ export const chatService = {
     }
 
     await messagesColl.updateOne({ _id: args.placeholderMsgId }, { $set: { content: finalText } });
+    const placeholder = await messagesColl.findOne({ _id: args.placeholderMsgId });
+    if (placeholder) {
+      const target = await getConversationsCollection().findOne(
+        { _id: new ObjectId(args.conversationId) },
+        { projection: { platform: 1, projectId: 1 } },
+      );
+      await dispatch(placeholder, target);
+    }
     await getConversationsCollection().updateOne(
       { _id: new ObjectId(args.conversationId) },
       {

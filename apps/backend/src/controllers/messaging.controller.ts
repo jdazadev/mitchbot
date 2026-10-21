@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { chatService } from '../services/chat.service';
 import { agentService } from '../services/agent.service';
 import { insightsService } from '../services/insights.service';
+import { retryDelivery } from '../channels/outbound';
 import { getConversationsCollection } from '../models/conversation.model';
 import { getMessagesCollection } from '../models/message.model';
 import { emitToRoom, emitToProject } from '../websocket/socket';
@@ -143,67 +144,16 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-/**
- * Endpoint para que el CLIENTE inicie una conversación.
- * Este es el único punto de entrada para crear conversaciones.
- * No requiere contactId — el contacto se crea al recibir la primera respuesta humana.
- */
-export const clientStartConversation = async (req: Request, res: Response, next: NextFunction) => {
+/** Reencola un mensaje que no se pudo entregar en su canal. */
+export const retryMessageDelivery = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { platform, clientName, clientPhone, clientEmail, clientIdentifier, initialMessage } = req.body;
     const projectId = (req as any).projectId as string | undefined;
+    if (!projectId || !ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId requerido' });
 
-    if (!projectId) {
-      return res.status(400).json({ error: 'ProjectId requerido' });
-    }
-    if (!ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId inválido' });
-
-    if (!platform || !clientIdentifier || !initialMessage) {
-      return res.status(400).json({ 
-        error: 'platform, clientIdentifier y initialMessage son requeridos' 
-      });
-    }
-
-    const result = await chatService.createConversationFromClient({
-      platform,
-      clientName,
-      clientPhone,
-      clientEmail,
-      clientIdentifier,
-      initialMessage,
-      projectId,
-    });
-
-    res.status(201).json(result);
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Endpoint para que el CLIENTE envíe un mensaje a una conversación existente.
- */
-export const clientSendMessage = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { content, senderName } = req.body;
-    if (!content) return res.status(400).json({ error: 'content is required' });
-
-    const projectId = (req as any).projectId as string | undefined;
-    if (!projectId) return res.status(400).json({ error: 'ProjectId requerido' });
-    if (!ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId inválido' });
-    const convo = await getConversationsCollection().findOne({
-      _id: new ObjectId(req.params.id),
-      projectId: new ObjectId(projectId),
-    });
-    if (!convo) return res.status(404).json({ error: 'Conversation not found' });
-
-    const message = await chatService.sendMessage(
-      req.params.id,
-      content,
-      'contact',
-      senderName
-    );
-    res.status(201).json(message);
+    const delivery = await retryDelivery(req.params.id, req.params.messageId, projectId);
+    if (delivery === null) return res.status(404).json({ error: 'Mensaje no encontrado' });
+    if (delivery === false) return res.status(409).json({ error: 'Solo se pueden reintentar mensajes no entregados' });
+    res.json({ messageId: req.params.messageId, delivery });
   } catch (error) {
     next(error);
   }

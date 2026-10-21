@@ -32,6 +32,16 @@ const envSchema = z.object({
   // Frontend
   FRONTEND_URL: z.string().optional().default('http://localhost:5173'),
 
+  // Pasarela de canales: prefijo de colas (aísla pruebas y entornos que comparten Redis),
+  // límite de envíos por intervalo y circuit breaker
+  CHANNEL_QUEUE_PREFIX: z.string().min(1).default('bull'),
+  CHANNEL_WHATSAPP_RATE_MAX: z.coerce.number().int().positive().default(20),
+  CHANNEL_WHATSAPP_RATE_MS: z.coerce.number().int().positive().default(1000),
+  CHANNEL_INSTAGRAM_RATE_MAX: z.coerce.number().int().positive().default(10),
+  CHANNEL_INSTAGRAM_RATE_MS: z.coerce.number().int().positive().default(1000),
+  CHANNEL_BREAKER_THRESHOLD: z.coerce.number().int().positive().default(5),
+  CHANNEL_BREAKER_COOLDOWN_MS: z.coerce.number().int().positive().default(60000),
+
   // Social Gateway (Meta)
   WHATSAPP_TOKEN: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),

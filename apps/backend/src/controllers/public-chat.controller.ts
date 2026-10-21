@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { projectService } from '../services/project.service';
 import { agentService } from '../services/agent.service';
-import { chatService } from '../services/chat.service';
+import { receive } from '../channels/inbound';
+import { InvalidInboundError, normalizeInbound } from '../channels/normalize';
 import { getConversationsCollection } from '../models/conversation.model';
 import { ObjectId } from 'mongodb';
 
@@ -37,18 +38,18 @@ export const publicStartConversation = async (req: Request, res: Response, next:
       });
     }
 
-    const result = await chatService.createConversationFromClient({
-      platform,
-      clientName,
-      clientPhone,
-      clientEmail,
-      clientIdentifier,
-      initialMessage,
+    const inbound = normalizeInbound({
       projectId: project._id.toString(),
+      platform,
+      clientIdentifier,
+      sender: { name: clientName, phone: clientPhone, email: clientEmail },
+      text: initialMessage,
     });
+    const result = await receive(inbound);
 
     res.status(201).json(result);
   } catch (error) {
+    if (error instanceof InvalidInboundError) return res.status(400).json({ error: error.message });
     next(error);
   }
 };
@@ -71,9 +72,17 @@ export const publicSendMessage = async (req: Request, res: Response, next: NextF
     });
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });
 
-    const message = await chatService.sendMessage(id, content, 'contact', senderName);
+    const inbound = normalizeInbound({
+      projectId: project._id.toString(),
+      platform: convo.platform,
+      clientIdentifier: convo.clientInfo.identifier,
+      sender: { name: senderName },
+      text: content,
+    });
+    const { message } = await receive(inbound, { conversationId: id });
     res.status(201).json(message);
   } catch (error) {
+    if (error instanceof InvalidInboundError) return res.status(400).json({ error: error.message });
     next(error);
   }
 };

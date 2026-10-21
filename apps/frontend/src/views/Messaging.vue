@@ -8,7 +8,7 @@ import {
   type ChatMessage,
   type ConversationInsights,
 } from "../services/messaging.service";
-import { socketService } from "../services/socket.service";
+import { socketService, type MessageUpdate } from "../services/socket.service";
 import { projectService } from "../services/project.service";
 import {
   useConversations,
@@ -19,6 +19,7 @@ import AIcon from "../components/ui/AIcon.vue";
 import AAvatar from "../components/ui/AAvatar.vue";
 import APill from "../components/ui/APill.vue";
 import ABubble from "../components/ui/ABubble.vue";
+import DeliveryStatus from "../components/messaging/DeliveryStatus.vue";
 import AButton from "../components/ui/AButton.vue";
 import AModal from "../components/ui/AModal.vue";
 import ADropdown from "../components/ui/ADropdown.vue";
@@ -823,9 +824,31 @@ function confirmModifyTool() {
   }
 }
 
-function onMessageUpdated(data: { messageId: string; status: string; params?: any; content?: string }) {
+/** Reintentos de entrega en curso o fallidos, por mensaje. */
+const deliveryRetries = ref<Record<string, "pending" | "error">>({});
+
+async function retryDelivery(msg: ChatMessage) {
+  const conversationId = selectedChat.value?._id;
+  if (!conversationId || deliveryRetries.value[msg._id] === "pending") return;
+  deliveryRetries.value = { ...deliveryRetries.value, [msg._id]: "pending" };
+  try {
+    const { delivery } = await messagingService.retryMessage(conversationId, msg._id);
+    msg.delivery = delivery;
+    const { [msg._id]: _done, ...rest } = deliveryRetries.value;
+    deliveryRetries.value = rest;
+  } catch {
+    deliveryRetries.value = { ...deliveryRetries.value, [msg._id]: "error" };
+  }
+}
+
+function onMessageUpdated(data: MessageUpdate) {
   const existing = messages.value.find((m) => m._id === data.messageId);
   if (!existing) return;
+  if (data.delivery) {
+    existing.delivery = data.delivery;
+    return;
+  }
+  if (!data.status) return;
   if (existing.toolData) {
     existing.toolData.status = data.status as any;
     if (data.params) existing.toolData.params = data.params;
@@ -1320,7 +1343,7 @@ onUnmounted(() => {
                 <span class="h-px flex-1 bg-line" />
               </div>
               <template v-for="(msg, i) in group.messages" :key="msg._id || i">
-                <div v-if="isToolMessage(msg)" class="flex w-full justify-end">
+                <div v-if="isToolMessage(msg)" class="flex w-full flex-col items-end gap-1">
                   <div
                     class="flex max-w-[80%] flex-wrap items-center gap-2 rounded-field px-4 py-2.5 text-xs font-semibold"
                     :class="toolTone(msg.toolData?.status) === 'butter'
@@ -1382,6 +1405,13 @@ onUnmounted(() => {
                       </button>
                     </span>
                   </div>
+                  <DeliveryStatus
+                    v-if="msg.delivery"
+                    :delivery="msg.delivery"
+                    :retrying="deliveryRetries[msg._id] === 'pending'"
+                    :retry-error="deliveryRetries[msg._id] === 'error'"
+                    @retry="retryDelivery(msg)"
+                  />
                 </div>
 
                 <template v-else>
@@ -1396,6 +1426,14 @@ onUnmounted(() => {
                     </span>
                     <span v-else v-html="renderMarkdown(msg.content)" />
                   </ABubble>
+                  <DeliveryStatus
+                    v-if="msg.delivery"
+                    class="-mt-1 self-end"
+                    :delivery="msg.delivery"
+                    :retrying="deliveryRetries[msg._id] === 'pending'"
+                    :retry-error="deliveryRetries[msg._id] === 'error'"
+                    @retry="retryDelivery(msg)"
+                  />
                 </template>
               </template>
             </div>

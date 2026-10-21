@@ -473,6 +473,14 @@
         "pendingHuman": "Pending human"
       }
     },
+    "delivery": {
+      "queued": "Sending…",
+      "sent": "Sent",
+      "failed": "Not delivered",
+      "retry": "Retry",
+      "retrying": "Retrying…",
+      "retryError": "couldn't retry"
+    },
     "urgency": {
       "title": "Urgency",
       "level": {

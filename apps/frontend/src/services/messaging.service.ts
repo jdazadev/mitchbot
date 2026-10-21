@@ -11,6 +11,15 @@ export interface MessageToolData {
   confirmedBy?: string;
 }
 
+/** Entrega en canales externos (WhatsApp, Instagram); los mensajes Web no la llevan. */
+export interface MessageDelivery {
+  status: 'queued' | 'sent' | 'failed';
+  attempts: number;
+  externalId?: string;
+  error?: string;
+  updatedAt: string;
+}
+
 export interface ChatMessage {
   _id: string;
   sender: 'contact' | 'ai_agent' | 'human_agent' | 'tool';
@@ -20,6 +29,7 @@ export interface ChatMessage {
   isBot: boolean;
   confidence?: string;
   toolData?: MessageToolData;
+  delivery?: MessageDelivery;
   createdAt: string;
   conversationId?: string;
   // Computed in frontend
@@ -170,6 +180,17 @@ export const messagingService = {
      });
      if (!res.ok) throw new Error('Failed to send message');
      return res.json();
+  },
+
+  /** Reencola la entrega de un mensaje que no llegó al cliente. */
+  async retryMessage(conversationId: string, messageId: string): Promise<{ messageId: string; delivery: MessageDelivery }> {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}/messages/${messageId}/retry`, {
+      method: 'POST',
+      headers: authService.getHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to retry message');
+    return data;
   },
 
   // === Funciones del CLIENTE (chatbot/widget/test) ===

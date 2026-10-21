@@ -102,6 +102,8 @@ export default defineConfig({
         OPENROUTER_EMBEDDING_MODEL: E2E.stub.embedModel,
         DASHBOARD_RESPONSE_CONVERSATION_LIMIT: '1',
         DASHBOARD_RESPONSE_TIMEOUT_MS: '5000',
+        // Colas de canales propias: no se cruzan con un backend de desarrollo en el mismo Redis.
+        CHANNEL_QUEUE_PREFIX: 'e2e',
         FRONTEND_URL: E2E.frontendUrl,
       },
     },

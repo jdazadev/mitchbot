@@ -5,6 +5,34 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.5.0 — 2026-10-20
+
+> **Pasarela de canales**: la base de WhatsApp e Instagram. Entrada normalizada e idempotente, salida por cola con rate limiting, reintentos y circuit breaker, y fallos de entrega visibles con reintento
+
+### ✨ Añadido
+- **Módulo `src/channels/`** (OpenSpec `add-channel-gateway`): mensaje entrante normalizado (`InboundMessage`), contrato de adaptador (`ChannelAdapter` con `ChannelError` transitorio o permanente) y registro por plataforma. Web viene registrado; WhatsApp e Instagram solo tendrán que aportar su adaptador.
+- **Entrada única** `receive()`: el chat público pasa por ella sin cambiar su API, y la cola `channel-inbound` (BullMQ, concurrencia 1) la usará para los webhooks.
+- **Idempotencia**: `messages.external { platform, messageId }` con índice único parcial. Un webhook repetido no duplica el mensaje, no suma no leídos ni hace responder dos veces al bot.
+- **Salida por canal**: cola `channel-outbound-<canal>` para las respuestas del bot y del operador y las confirmaciones en canales externos, con `delivery { status: queued | sent | failed, attempts, externalId, error }` propagado por `chat:message_updated`. No se entregan los mensajes internos de herramientas ni el aviso de error del bot.
+- **Resiliencia**: limitador por canal configurable, 5 intentos con backoff exponencial (respeta el `Retry-After` del canal), errores permanentes sin reintento y circuit breaker por canal que retrasa los envíos sin gastar intentos y avisa al proyecto.
+- **Fallo de entrega visible**: el mensaje queda como "No entregado" con su motivo y botón **Reintentar** (`DeliveryStatus.vue`), la conversación pasa a `pending_human` y llega una notificación. Endpoint `POST /api/conversations/:id/messages/:messageId/retry` (409 si el mensaje no está en `failed`).
+- Variables opcionales: `CHANNEL_QUEUE_PREFIX`, `CHANNEL_WHATSAPP_RATE_MAX/_MS`, `CHANNEL_INSTAGRAM_RATE_MAX/_MS`, `CHANNEL_BREAKER_THRESHOLD`, `CHANNEL_BREAKER_COOLDOWN_MS` (documentadas en `.env.example`).
+- Claves i18n `messaging.delivery.*` (es/en).
+
+### 🔧 Cambiado
+- `chat:message_updated` lleva `status` (confirmación de herramienta) **o** `delivery` (entrega); Conversaciones y el chat público solo tocan el estado de la herramienta cuando viene `status`.
+- El E2E usa sus propias colas (`CHANNEL_QUEUE_PREFIX=e2e`) para no cruzarse con un backend de desarrollo en el mismo Redis.
+
+### 🗑️ Eliminado
+- `POST /api/conversations/client/start` y `POST /api/conversations/client/:id/messages`: sin consumidores (el chat Web usa `/api/public/test-chat`) y eran una segunda entrada que se saltaba la idempotencia.
+
+### ✅ Pruebas
+- Unitarios del backend: normalización, política de entrega y backoff, circuit breaker y registro de adaptadores (**38** en total). Unitarios del frontend: `DeliveryStatus` con Vue Test Utils (**22** en total).
+- Integración `channel-gateway.test.ts` (10) contra MongoDB, Redis y BullMQ reales con un adaptador falso: webhook repetido, mensajes sin id externo, cola de entrada, entrega, Web sin cola, herramientas internas sin entrega, fallo transitorio recuperado, error permanente, reintento manual y apertura y cierre del circuit breaker. `helpers/isolated-env.ts` impide que estas pruebas llamen a OpenRouter.
+- Integración **40/40 (1 omitida)**; E2E **62/62** en dos corridas completas (regresión del chat Web por la nueva entrada); paridad es/en **715/715**; backend `tsc --noEmit` y frontend `vue-tsc` + `build` en verde.
+
+---
+
 ## v0.4.35 — 2026-10-20
 
 > **Identidad de marca por proyecto**: guardado parcial sin pérdidas, marca aplicada al iniciar sesión y logo que se puede quitar de verdad

@@ -7,7 +7,7 @@ import {
   type ChatConversation,
   type ChatMessage,
 } from "../services/messaging.service";
-import { socketService } from "../services/socket.service";
+import { socketService, type MessageUpdate } from "../services/socket.service";
 import es from "../locales/es.json";
 import en from "../locales/en.json";
 import AIcon from "../components/ui/AIcon.vue";
@@ -258,7 +258,9 @@ function senderLabel(sender: ChatMessage["sender"]) {
   return t("publicChat.sender.human");
 }
 
-function onMessageUpdated(data: { messageId: string; status: string; params?: any; content?: string }) {
+function onMessageUpdated(data: MessageUpdate) {
+  // Las actualizaciones de entrega son del operador; el cliente solo sigue las de herramientas.
+  if (!data.status) return;
   const existing = messages.value.find((m) => m._id === data.messageId);
   if (!existing) return;
   if (existing.toolData) {

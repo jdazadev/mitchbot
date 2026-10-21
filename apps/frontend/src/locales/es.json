@@ -473,6 +473,14 @@
         "pendingHuman": "Pendiente de humano"
       }
     },
+    "delivery": {
+      "queued": "Enviando…",
+      "sent": "Enviado",
+      "failed": "No entregado",
+      "retry": "Reintentar",
+      "retrying": "Reintentando…",
+      "retryError": "no se pudo reintentar"
+    },
     "urgency": {
       "title": "Urgencia",
       "level": {

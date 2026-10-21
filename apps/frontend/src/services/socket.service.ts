@@ -1,5 +1,17 @@
 import { io, Socket } from 'socket.io-client';
-import type { ChatMessage } from './messaging.service';
+import type { ChatMessage, MessageDelivery } from './messaging.service';
+
+/**
+ * `chat:message_updated`: `status` es el estado de la herramienta en una
+ * confirmación; `delivery`, la entrega en un canal externo. Llegan por separado.
+ */
+export interface MessageUpdate {
+  messageId: string;
+  status?: string;
+  params?: any;
+  content?: string;
+  delivery?: MessageDelivery;
+}
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 // Adjust if API_URL includes /api and socket is on root
@@ -115,7 +127,7 @@ export const socketService = {
     }
   },
 
-  onMessageUpdated(callback: (data: { messageId: string; status: string; params?: any; content?: string }) => void) {
+  onMessageUpdated(callback: (data: MessageUpdate) => void) {
     if (!this.socket) this.connect();
     this.socket?.on('chat:message_updated', callback);
   },
