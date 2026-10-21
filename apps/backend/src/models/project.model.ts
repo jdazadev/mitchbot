@@ -31,6 +31,15 @@ export interface Project {
       /** Cuenta de WhatsApp Business del número: de ella salen las plantillas aprobadas. */
       wabaId?: string | null;
     };
+    // Widget embebible del canal Web
+    widget?: {
+      enabled?: boolean;
+      /** Orígenes que pueden embeber el widget (`frame-ancestors`). */
+      allowedOrigins?: string[];
+      position?: 'right' | 'left';
+      title?: string | null;
+      greeting?: string | null;
+    };
     // ID de la cuenta profesional de Instagram que atiende el proyecto
     instagram?: {
       accountId?: string | null;

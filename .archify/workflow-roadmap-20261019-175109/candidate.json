@@ -40,13 +40,13 @@
   "phases": [
     {
       "id": "entregado",
-      "label": "Entregado · v0.1 – v0.9",
+      "label": "Entregado · v0.1 – v0.10",
       "fromCol": 0,
       "toCol": 3
     },
     {
       "id": "siguiente",
-      "label": "Siguiente · v0.10 – v0.12",
+      "label": "Siguiente · v0.11 – v0.12",
       "fromCol": 4,
       "toCol": 4,
       "variant": "emphasis"
@@ -113,10 +113,10 @@
       "lane": "experiencia",
       "col": 3,
       "type": "backend",
-      "label": "Exportación",
-      "sublabel": "CSV · JSON · auditoría",
-      "width": 160,
-      "tag": "v0.8"
+      "label": "Exportación + widget",
+      "sublabel": "CSV · JSON · chat embebible",
+      "width": 170,
+      "tag": "v0.8 – v0.10"
     },
     {
       "id": "v1",
@@ -175,15 +175,6 @@
       "sublabel": "diseño · urgencia · marca",
       "tag": "v0.4",
       "width": 150
-    },
-    {
-      "id": "widget",
-      "lane": "experiencia",
-      "col": 4,
-      "type": "messagebus",
-      "label": "Widget embebible",
-      "sublabel": "chat en webs de clientes",
-      "width": 160
     },
     {
       "id": "sla",
@@ -250,13 +241,6 @@
       "to": "exportacion"
     },
     {
-      "id": "export-widget",
-      "from": "exportacion",
-      "to": "widget",
-      "label": "siguiente",
-      "variant": "emphasis"
-    },
-    {
       "id": "gateway-sla",
       "from": "resiliencia",
       "to": "sla",
@@ -283,17 +267,17 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "Dónde estamos · v0.9.0",
+      "title": "Dónde estamos · v0.10.0",
       "items": [
-        "Web, WhatsApp e Instagram en una bandeja, con entrega, lectura y plantillas para la ventana de 24 h",
-        "Exportación de conversaciones a CSV y JSON con permisos y auditoría"
+        "Web, widget embebible, WhatsApp e Instagram en una bandeja, con plantillas para la ventana de 24 h",
+        "Exportación de conversaciones y chat público con acceso por token"
       ]
     },
     {
       "dot": "violet",
       "title": "Qué falta para la v1.0",
       "items": [
-        "Widget embebible, métricas de SLA y notificaciones push",
+        "Métricas de SLA y notificaciones push",
         "Integración con un CRM externo"
       ]
     }

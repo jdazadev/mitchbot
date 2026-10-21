@@ -30,7 +30,7 @@ import { authService } from "../services/auth.service";
 import AEmptyState from "../components/ui/AEmptyState.vue";
 import { renderMarkdown } from "../lib/markdown";
 import { channelMeta, channelIcon, channelTone } from "../lib/channels";
-import { latestDelivery } from "../lib/delivery";
+import { latestDelivery, mergeMessages } from "../lib/delivery";
 import { downloadBlob } from "../lib/download";
 
 const { t, locale } = useI18n();
@@ -277,7 +277,8 @@ async function fetchMessages(chat: ChatConversation) {
   try {
     const res = await messagingService.getMessages(chat._id);
     if (requestId !== messagesRequestId || selectedChat.value?._id !== chat._id) return;
-    messages.value = res.messages.map((m) => processMessage(m, chat));
+    // Lo que llegó por socket mientras se cargaba el historial no se pierde.
+    messages.value = mergeMessages(res.messages.map((m) => processMessage(m, chat)), messages.value);
     hasOlderMessages.value = res.hasMore;
     olderMessagesLoadError.value = false;
     scrollToBottom();

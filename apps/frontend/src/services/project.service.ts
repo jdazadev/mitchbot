@@ -1,6 +1,6 @@
 import { authService } from './auth.service';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 /** La sesión almacenada ya no es válida en el servidor (token inválido o cuenta desactivada). */
 export class SessionInvalidError extends Error {
@@ -46,6 +46,13 @@ export interface ProjectConfig {
   };
   instagram?: {
     accountId?: string | null;
+  };
+  widget?: {
+    enabled?: boolean;
+    allowedOrigins?: string[];
+    position?: 'right' | 'left';
+    title?: string | null;
+    greeting?: string | null;
   };
 }
 

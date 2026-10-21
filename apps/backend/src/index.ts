@@ -16,6 +16,7 @@ import { createInboundWorker } from './channels/inbound';
 import { createOutboundWorkers } from './channels/outbound';
 import { registerWhatsApp } from './channels/whatsapp';
 import { registerInstagram } from './channels/instagram';
+import { serveLoader, WIDGET_ASSETS_DIR } from './controllers/widget.controller';
 
 const app = express();
 const httpServer = createServer(app);
@@ -78,6 +79,10 @@ const httpServer = createServer(app);
           },
         }));
         
+        // Widget embebible: cargador y recursos estáticos de su página
+        app.get('/widget.js', serveLoader);
+        app.use('/widget', express.static(WIDGET_ASSETS_DIR, { maxAge: '5m', index: false }));
+
         // Routes
         app.use('/api', apiRoutes);
         

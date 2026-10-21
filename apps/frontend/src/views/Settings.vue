@@ -8,8 +8,10 @@ import {
   type AgentPersonality,
   type ProviderConfig,
 } from '../services/settings.service';
-import { projectService, channelWebhookUrl, type ChannelsStatus, type Project } from '../services/project.service';
+import { projectService, channelWebhookUrl, API_BASE, type ChannelsStatus, type Project } from '../services/project.service';
 import ChannelConnection from '../components/settings/ChannelConnection.vue';
+import WidgetSettings from '../components/settings/WidgetSettings.vue';
+import { invalidOrigins, originLines, type WidgetForm } from '../lib/widget';
 import { isValidAccountId, type MetaChannel } from '../lib/channels';
 import { useBrand, applyBrand } from '../composables/useBrand';
 import AIcon from '../components/ui/AIcon.vue';
@@ -175,6 +177,7 @@ const channelsSnapshot = () =>
     enabled: channels.value.map((c) => c.enabled),
     accounts: { whatsapp: channelAccounts.value.whatsapp.trim(), instagram: channelAccounts.value.instagram.trim() },
     wabaId: whatsAppWaba.value.trim(),
+    widget: widgetForm.value,
   });
 const isChannelsDirty = computed(() => channelsSnapshot() !== savedChannelsJson.value);
 const isOptionsDirty = computed(() => JSON.stringify(optionsForm.value) !== savedOptionsJson.value);
@@ -239,6 +242,21 @@ const channels = ref([
 /** Cuentas de Meta del proyecto (Phone Number ID, ID de la cuenta de Instagram); vacío = desconectada. */
 const channelAccounts = ref<Record<MetaChannel, string>>({ whatsapp: '', instagram: '' });
 const channelsStatus = ref<ChannelsStatus | null>(null);
+/** Widget embebible del canal Web (los dominios se editan uno por línea). */
+const widgetForm = ref<WidgetForm>({ enabled: false, allowedOrigins: '', position: 'right', title: '', greeting: '' });
+const savedWidgetEnabled = ref(false);
+
+function loadWidget(widget: Project['config']['widget']) {
+  widgetForm.value = {
+    enabled: !!widget?.enabled,
+    allowedOrigins: (widget?.allowedOrigins || []).join('\n'),
+    position: widget?.position === 'left' ? 'left' : 'right',
+    title: widget?.title || '',
+    greeting: widget?.greeting || '',
+  };
+  savedWidgetEnabled.value = !!widget?.enabled;
+}
+
 /** Cuenta de WhatsApp Business: de ella salen las plantillas aprobadas. */
 const whatsAppWaba = ref('');
 const wabaInvalid = computed(() => !!whatsAppWaba.value.trim() && !isValidAccountId(whatsAppWaba.value));
@@ -295,6 +313,7 @@ onMounted(async () => {
         instagram: projectData.config?.instagram?.accountId || '',
       };
       whatsAppWaba.value = projectData.config?.whatsapp?.wabaId || '';
+      loadWidget(projectData.config?.widget);
       if (projectData.config?.options) {
         optionsForm.value.autoCreateContact = projectData.config.options.autoCreateContact ?? true;
       }
@@ -482,6 +501,8 @@ async function handleSaveChannels() {
   );
   if (invalid) return showErrorMsg(t(`settings.channels.${invalid}.accountInvalid`));
   if (wabaInvalid.value) return showErrorMsg(t('settings.channels.whatsapp.wabaInvalid'));
+  const badOrigins = invalidOrigins(widgetForm.value.allowedOrigins);
+  if (badOrigins.length) return showErrorMsg(t('settings.widget.originsInvalid', { origins: badOrigins.join(', ') }));
   saving.value = true;
   try {
     const accountOf = (channel: MetaChannel) => channelAccounts.value[channel].trim() || null;
@@ -495,9 +516,17 @@ async function handleSaveChannels() {
         },
         whatsapp: { phoneNumberId: accountOf('whatsapp'), wabaId: whatsAppWaba.value.trim() || null },
         instagram: { accountId: accountOf('instagram') },
+        widget: {
+          enabled: widgetForm.value.enabled,
+          allowedOrigins: originLines(widgetForm.value.allowedOrigins),
+          position: widgetForm.value.position,
+          title: widgetForm.value.title.trim() || null,
+          greeting: widgetForm.value.greeting.trim() || null,
+        },
       },
     });
     project.value = updated;
+    loadWidget(updated.config?.widget);
     showSuccessMsg(t('settings.toasts.channelsUpdated'));
     snapshotChannels();
   } catch (err: any) {
@@ -1090,6 +1119,15 @@ async function handleSaveOptions() {
                   </div>
                 </template>
               </ChannelConnection>
+              <WidgetSettings
+                v-else-if="channel.key === 'web' && project?.slug"
+                v-model="widgetForm"
+                :slug="project.slug"
+                :api-base="API_BASE"
+                :saved-enabled="savedWidgetEnabled"
+                @copied="showSuccessMsg(t('settings.toasts.linkCopied'))"
+                @copy-failed="showErrorMsg(t('settings.errors.copyLink'))"
+              />
             </div>
           </div>
         </div>

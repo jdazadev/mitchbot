@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { projectService } from '../services/project.service';
 import { userService } from '../services/user.service';
 import { z } from 'zod';
+import { InvalidOriginError, MAX_ALLOWED_ORIGINS, normalizeOrigins } from '../widget/config';
 import { TemplateError, templateService } from '../services/template.service';
 import { whatsAppServerStatus } from '../channels/whatsapp';
 import { instagramServerStatus } from '../channels/instagram';
@@ -136,6 +137,13 @@ const updateProjectSchema = z.object({
     instagram: z.object({
       accountId: accountId('El ID de la cuenta de Instagram solo contiene dígitos'),
     }).optional(),
+    widget: z.object({
+      enabled: z.boolean().optional(),
+      allowedOrigins: z.array(z.string().max(255)).max(MAX_ALLOWED_ORIGINS, `Como máximo ${MAX_ALLOWED_ORIGINS} dominios`).optional(),
+      position: z.enum(['right', 'left']).optional(),
+      title: z.string().trim().max(60, 'El título admite 60 caracteres').nullable().optional(),
+      greeting: z.string().trim().max(300, 'El saludo admite 300 caracteres').nullable().optional(),
+    }).optional(),
   }).optional(),
 });
 
@@ -151,6 +159,14 @@ export const updateProject = async (req: Request, res: Response, next: NextFunct
     if (!projectId) return res.status(404).json({ error: 'No hay proyecto configurado' });
 
     const data = updateProjectSchema.parse(req.body);
+    if (data.config?.widget?.allowedOrigins) {
+      try {
+        data.config.widget.allowedOrigins = normalizeOrigins(data.config.widget.allowedOrigins);
+      } catch (error) {
+        if (error instanceof InvalidOriginError) return res.status(400).json({ error: error.message });
+        throw error;
+      }
+    }
 
     let updateData = { ...data } as any;
     if (data.slug) {

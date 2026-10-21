@@ -288,7 +288,7 @@ export const messagingService = {
     clientEmail?: string;
     clientIdentifier: string;
     initialMessage: string;
-  }): Promise<{ conversation: ChatConversation; message: ChatMessage; isNew: boolean }> {
+  }): Promise<{ conversation: ChatConversation; message: ChatMessage; isNew: boolean; clientToken?: string }> {
     const res = await fetch(`${API_URL}/public/test-chat/${slug}/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -299,11 +299,11 @@ export const messagingService = {
   },
 
   /** El cliente envía un mensaje a una conversación existente */
-  async clientSendMessage(slug: string, conversationId: string, content: string, senderName?: string): Promise<ChatMessage> {
+  async clientSendMessage(slug: string, conversationId: string, content: string, clientToken?: string, senderName?: string): Promise<ChatMessage> {
     const res = await fetch(`${API_URL}/public/test-chat/${slug}/${conversationId}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, senderName })
+      body: JSON.stringify({ content, senderName, clientToken })
     });
     if (!res.ok) throw new Error('Failed to send message');
     return res.json();

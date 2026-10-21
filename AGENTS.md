@@ -14,7 +14,34 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.9.0
+**Versión actual del proyecto:** v0.10.0
+
+---
+
+## Widget embebible y acceso al chat público (v0.10.0)
+
+Chat de Mitchbot instalable en la web del negocio y endurecimiento del chat público. OpenSpec `add-chat-widget`; capability `chat-widget`.
+
+- **Acceso por token** (`src/widget/access.ts`): `clientToken(conversationId)` es un HMAC-SHA256 con `JWT_SECRET`; `verifyClientToken` compara en tiempo constante.
+  - El inicio público (`POST /public/test-chat/:slug/start`) lo devuelve. El envío (`clientToken` en el cuerpo o `X-Client-Token`), `join:room` (`{ roomId, clientToken }`) y el historial del widget lo exigen.
+  - El panel sigue uniéndose con el id solo, porque está autenticado.
+- **Socket público aislado** (`websocket/socket.ts`): los clientes públicos **no** entran en `project:<id>` ni en la sala del dashboard; solo en las salas de sus conversaciones, que deben ser del proyecto del slug. `tool:confirm` exige `socket.rooms.has(conversationId)`. **No emitas a la sala del proyecto nada que deba ver un cliente**: usa la sala de la conversación.
+- **Widget** (`src/widget/`):
+  - `config.ts`: `normalizeOrigin(s)` (`http(s)://host[:puerto]` o `https://*.dominio`), `isWidgetAvailable`, `frameAncestors` y `widgetSnippet`.
+  - `frame.ts`: `renderFrame` (HTML con escapado y la configuración en `<script type="application/json">` con `<` escapado) y `contrastFor`.
+  - `strings.ts`: textos es/en.
+  - `public/loader.js`: cargador sin dependencias, con `data-mitchbot`, el botón `data-mitchbot-launcher` y el `iframe` `data-mitchbot-frame`. Cierra con `postMessage({ type: 'mitchbot:close' })`.
+  - `public/frame.js` y `public/frame.css`: el chat en vanilla JS, con Socket.io servido por el propio backend (`/socket.io/socket.io.min.js`) y `localStorage` `mitchbot:widget:<slug>` para `{ conversationId, clientToken, clientIdentifier }`.
+  - Controlador: `controllers/widget.controller.ts`. Rutas: `/widget.js`, `/widget/*` (estáticos) y `/api/public/widget/:slug/{config,frame,conversations/:id/messages}`.
+  - **CSP de la página**: `frame-ancestors 'self' <FRONTEND_URL> <allowedOrigins>`, `script-src 'self'` y `style-src 'self' 'unsafe-inline'`.
+- **Build**: `pnpm build` del backend copia `src/widget/public` a `dist/widget/public`, porque el controlador lo busca junto a `controllers/`.
+- **Interfaz**: `components/settings/WidgetSettings.vue` (bajo la fila Web de Canales) y `lib/widget.ts` (`originLines`, `invalidOrigins`, `widgetSnippet`, `widgetFrameUrl`). `project.service` exporta `API_BASE`.
+- **Hilo**: `mergeMessages` (`lib/delivery.ts`) fusiona el historial con lo que llega por socket durante la carga.
+- **E2E**:
+  - Las webs anfitrionas son servidores reales en `127.0.0.1` con puerto aleatorio. Una web servida con `page.route` en un dominio público no sirve: Chrome (Private/Local Network Access) le impide cargar `localhost`.
+  - El dominio no permitido se detecta por el aviso de consola de `frame-ancestors`.
+  - `ASwitch` es un `checkbox` (rol `checkbox`, no `switch`).
+- **Verificación**: unitarios backend **94/94** y frontend **56/56**; integración **75/75 (1 omitida)**; E2E **93/93** en tres corridas completas; paridad es/en **798/798**.
 
 ---
 
@@ -187,7 +214,7 @@ Base común para WhatsApp e Instagram: entrada normalizada e idempotente, salida
 
 - **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y **un solo HTML final**: en la subcarpeta `review-N` o, si no la hay, en la raíz de la carpeta. Los borradores superados se eliminaron en v0.4.32; al regenerar, borra la revisión anterior.
 - **Contenido**: arquitectura del sistema; workflows de auth/onboarding y de control de herramientas; secuencias de mensaje→bot y de confirmación del cliente; dataflows de ingesta RAG y de analítica/insights; lifecycles de conversación, fuente de conocimiento y ejecución de herramienta.
-- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.9.0 (`review-5`).
+- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.10.0 (`review-6`).
 - **Regenerar**: `node ~/.claude/skills/archify/bin/archify.mjs finalize <tipo> candidate.json <salida.html> --quality showcase --out-dir <carpeta>/review-N`. Un candidato modificado necesita un `--out-dir` nuevo. En el sandbox de Claude Code, antepón `NO_PROXY=localhost,127.0.0.1,::1`.
 - **Límites**: los diagramas del sistema se redactaron cuando aún no había remoto, así que no fijan fuentes por commit. Ahora existe `origin` (`git@github.com:jdazadev/mitchbot.git`) y los nuevos diagramas pueden usar `meta.repository` + `--repo-root`. Si cambia el flujo, actualiza el `candidate.json` correspondiente.
 
@@ -933,7 +960,8 @@ Usuario abre la app
 | **Tool Executions** | `GET /`, `GET /pending`, `POST /:id/approve`, `POST /:id/reject` | Historial, solicitudes pendientes y resolución por rol |
 | **Dashboard** | `GET /stats`, `GET /outcomes`, `GET /automation`, `GET /volume`, `GET /channels`, `GET /activities` | Analytics autenticada y acotada al proyecto activo (`X-Project-Id`/`activeProjectId`) |
 | **Webhooks** | `GET /whatsapp`, `POST /whatsapp`, `GET /instagram`, `POST /instagram` | Verificación y webhooks de WhatsApp Cloud API e Instagram Messaging API (públicos, autenticados por firma) |
-| **Public Chat** | `GET /public/test-chat/:slug/config`, `POST /public/test-chat/:slug/start`, `POST /public/test-chat/:slug/:id/messages` | Chat público (clientes web); `config` expone el idioma del agente (sin auth) |
+| **Public Chat** | `GET /public/test-chat/:slug/config`, `POST /public/test-chat/:slug/start` (devuelve `clientToken`), `POST /public/test-chat/:slug/:id/messages` (exige `clientToken`) | Chat público (clientes web); `config` expone el idioma del agente (sin auth) |
+| **Widget** | `GET /widget.js`, `GET /public/widget/:slug/config`, `GET /public/widget/:slug/frame`, `GET /public/widget/:slug/conversations/:id/messages` | Widget embebible: cargador, configuración pública, página con `frame-ancestors` e historial con token |
 
 > Todos los endpoints están bajo el prefijo `/api/<módulo>`.
 
@@ -950,7 +978,7 @@ Usuario abre la app
 | `agents` | projectId, name, modelId, personality (role, traits, emojiUsage, language, responseLength, ragBehavior, fallbackMessage), config | 1 agente activo por proyecto |
 | `ai_models` | name, value, provider, category, isActive | Catálogo de modelos (los disponibles se listan dinámicamente desde OpenRouter) |
 | `provider_configs` | type (llm/embedding/file/image/audio/ocr), provider, selectedModel, isActive | Sin credenciales: la API key proviene del entorno. `selectedModel` ya no se usa para resolver llm/embedding/file/ocr |
-| `projects` | name, agentId, config (channels, messages, options, tools, brand, whatsapp.phoneNumberId, instagram.accountId) | Configuración de herramientas aislada por proyecto |
+| `projects` | name, agentId, config (channels, messages, options, tools, brand, whatsapp.{phoneNumberId,wabaId}, instagram.accountId, widget) | Configuración de herramientas aislada por proyecto |
 | `knowledge_sources` | name, type, size, status, vectorCount, filePath, extractionMethod, ocrProvider, extractionTimeMs | Status: Queued, Processing, Indexed, Failed |
 | `appointments` | date, time, service, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
 | `orders` | items, total, currency, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
@@ -967,7 +995,7 @@ Usuario abre la app
 
 Todas las conexiones WebSocket requieren autenticación JWT:
 - **Dashboard**: Token JWT enviado en `socket.handshake.auth.token` y proyecto en `socket.handshake.auth.projectId` (validando pertenencia)
-- **Chat Público (`test-chat`)**: Slug del proyecto enviado en `socket.handshake.query.slug`
+- **Chat Público (`test-chat` y widget)**: Slug del proyecto enviado en `socket.handshake.query.slug`; solo entra en las salas de sus conversaciones, con `join:room { roomId, clientToken }`
 - **Aislamiento por proyecto**: cada socket autenticado entra en la room `project:<id>`; los del dashboard también entran en `project:<id>:dashboard` (excluye clientes públicos) para sincronizar el sidebar con mensajes de conversaciones no abiertas; `join:room` valida que la conversación pertenezca a su proyecto
 - **Rate Limiting**: 30 mensajes/min y 60 joins/min por usuario (Redis)
 - **CORS**: Restringido a `FRONTEND_URL` en producción
@@ -1132,9 +1160,9 @@ INSTAGRAM_API_VERSION=v21.0
 ### Entregado tras la integración social ✅
 - [x] Exportación de conversaciones a CSV y JSON con permisos y auditoría (v0.8.0)
 - [x] Plantillas de WhatsApp para escribir fuera de la ventana de 24 h (v0.9.0)
+- [x] Chat widget embebible con dominios autorizados y acceso por token al chat público (v0.10.0)
 
-### Siguiente — v0.10 – v0.12 🔜
-- [ ] Chat widget embebible para sitios web de clientes
+### Siguiente — v0.11 – v0.12 🔜
 - [ ] Métricas de SLA
 - [ ] Notificaciones push
 

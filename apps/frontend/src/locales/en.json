@@ -744,6 +744,30 @@
         "webhookHint": "Register it in Meta with the INSTAGRAM_VERIFY_TOKEN verify token and subscribe to the messages field. Meta requires a public HTTPS URL."
       }
     },
+    "widget": {
+      "title": "Widget for your website",
+      "subtitle": "A chat button you install on your business website with one line of code.",
+      "enable": "Enable the widget",
+      "originsLabel": "Allowed domains",
+      "originsPlaceholder": "https://mystore.com\nhttps://*.mystore.com",
+      "originsHint": "One per line, with https:// and no path. Only these websites can show the widget; with none it appears nowhere.",
+      "originsInvalid": "Check these domains: {origins}. Use the https://domain.com format, with no path.",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Defaults to the project name",
+      "position": "Position",
+      "positions": {
+        "right": "Right",
+        "left": "Left"
+      },
+      "greetingLabel": "Greeting",
+      "greetingPlaceholder": "Defaults to the agent's welcome message",
+      "snippetLabel": "Code for your website",
+      "copySnippet": "Copy code",
+      "snippetHint": "Paste it before </body> on every page where you want the chat.",
+      "preview": "Preview",
+      "hidePreview": "Hide preview",
+      "previewHint": "Save the channels with the widget enabled to see it."
+    },
     "options": {
       "title": "Options",
       "autoCreateContact": "Automatically create contact",

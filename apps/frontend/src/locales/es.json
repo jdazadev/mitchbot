@@ -744,6 +744,30 @@
         "webhookHint": "Regístrala en Meta con el token de verificación de INSTAGRAM_VERIFY_TOKEN y suscríbete al campo messages. Meta necesita que sea pública y HTTPS."
       }
     },
+    "widget": {
+      "title": "Widget para tu web",
+      "subtitle": "Un botón de chat que se instala en la web de tu negocio con una línea de código.",
+      "enable": "Activar el widget",
+      "originsLabel": "Dominios permitidos",
+      "originsPlaceholder": "https://mitienda.com\nhttps://*.mitienda.com",
+      "originsHint": "Uno por línea, con https:// y sin ruta. Solo estas webs podrán mostrar el widget; sin dominios no aparece en ninguna.",
+      "originsInvalid": "Revisa estos dominios: {origins}. Usa el formato https://dominio.com, sin ruta.",
+      "titleLabel": "Título",
+      "titlePlaceholder": "Por defecto, el nombre del proyecto",
+      "position": "Posición",
+      "positions": {
+        "right": "Derecha",
+        "left": "Izquierda"
+      },
+      "greetingLabel": "Saludo",
+      "greetingPlaceholder": "Por defecto, el mensaje de bienvenida del agente",
+      "snippetLabel": "Código para tu web",
+      "copySnippet": "Copiar código",
+      "snippetHint": "Pégalo antes de </body> en cada página donde quieras el chat.",
+      "preview": "Vista previa",
+      "hidePreview": "Ocultar vista previa",
+      "previewHint": "Guarda los canales con el widget activado para verlo."
+    },
     "options": {
       "title": "Opciones",
       "autoCreateContact": "Crear contacto automáticamente",

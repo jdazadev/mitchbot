@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.9.0** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.10.0** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -44,6 +44,7 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
 | **Herramientas** | Catálogo por proyecto: Agenda, Conocimiento, Inventario y Pagos. Tres niveles de control (ninguno, confirmación del cliente, aprobación de operador). Rol `approver` y auditoría completa en `tool_executions`. |
 | **Clientes** | Contactos creados al responder al cliente o guardados desde una conversación. Búsqueda, filtros, orden, paginación y archivado (nunca se borran). |
 | **Panel** | Resultados (conversaciones, leads, citas, conversión), salud del bot (tasa y mediana de primera respuesta, cobertura, backlog), automatización y volumen por remitente, con rangos de 7/30/90 días. |
+| **Widget web** | Botón de chat para la web del negocio con una línea de código: marca del proyecto, idioma del agente, historial al volver y confirmaciones de herramientas. Solo se muestra en los dominios autorizados (`frame-ancestors`). |
 | **Plataforma** | Varios proyectos por usuario, roles (`admin`, `support`, `assistant`, `approver`), interfaz bilingüe es/en, tema claro/oscuro y chat público de prueba por proyecto. |
 
 ---
@@ -51,7 +52,7 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
 ## Arquitectura
 
 ```
- Cliente (Web · WhatsApp · Instagram)            Operador (Dashboard Vue 3)
+ Cliente (Web · widget · WhatsApp · Instagram)   Operador (Dashboard Vue 3)
                 │                                          │
                 └──────────── Socket.io / REST ────────────┘
                                    │
@@ -141,6 +142,14 @@ La lista completa está en [`apps/backend/.env.example`](apps/backend/.env.examp
 
 WhatsApp solo deja escribir libremente durante las 24 horas siguientes al último mensaje del cliente. Pasado ese plazo, el hilo lo indica y ofrece **Enviar plantilla**: Mitchbot lista las plantillas aprobadas de tu cuenta de WhatsApp Business. Para eso, escribe su **WABA ID** en Configuración → Canales, o ponlo para todo el servidor en `WHATSAPP_WABA_ID`. Las plantillas se crean y se aprueban en el Administrador de WhatsApp de Meta.
 
+### Instalar el widget en tu web
+
+1. En **Configuración → Canales**, activa **Widget para tu web** y escribe los dominios donde se mostrará, uno por línea (`https://mitienda.com`, o `https://*.mitienda.com` para todos sus subdominios). Guarda.
+2. Copia el **código para tu web** y pégalo antes de `</body>` en cada página donde quieras el chat.
+3. Con **Vista previa** ves el chat con la marca del proyecto sin salir del panel.
+
+El widget solo aparece en los dominios de la lista: sin dominios no se muestra en ninguna web externa.
+
 ### Conectar Instagram
 
 1. Tu cuenta de Instagram tiene que ser **profesional** y estar vinculada a una app de Meta con el producto de mensajería de Instagram.
@@ -175,10 +184,10 @@ Integración y E2E requieren los servicios de Docker activos. Más detalles en [
 
 ## Estado y hoja de ruta
 
-Mitchbot está en **pre-1.0 (v0.9.0)**. Ya atiende Web, WhatsApp e Instagram en una sola bandeja, envía plantillas de WhatsApp y exporta sus conversaciones; la **v1.0** llegará cuando sume el widget embebible, las métricas de SLA, las notificaciones push y un CRM.
+Mitchbot está en **pre-1.0 (v0.10.0)**. Ya atiende la web (con widget embebible), WhatsApp e Instagram en una sola bandeja, envía plantillas de WhatsApp y exporta sus conversaciones; la **v1.0** llegará cuando sume las métricas de SLA, las notificaciones push y un CRM.
 
 <p align="center">
-  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.9 con pasarela de canales, WhatsApp, Instagram, exportación y plantillas; siguiente v0.10 a v0.12 con métricas de SLA, notificaciones push y widget embebible; y hacia v1.0 con CRM" width="100%">
+  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.10 con pasarela de canales, WhatsApp, Instagram, exportación, plantillas y widget embebible; siguiente v0.11 y v0.12 con métricas de SLA y notificaciones push; y hacia v1.0 con CRM" width="100%">
 </p>
 
 <sub>Diagrama interactivo en <a href=".archify/workflow-roadmap-20261019-175109/roadmap.html"><code>.archify/workflow-roadmap-…/roadmap.html</code></a>. Su fuente editable es <code>candidate.json</code>, en la misma carpeta.</sub>
@@ -196,9 +205,9 @@ Mitchbot está en **pre-1.0 (v0.9.0)**. Ya atiende Web, WhatsApp e Instagram en 
 | **v0.7 · Instagram** | oct 2026 | Mensajes directos con el nombre del perfil, lectura acumulativa y configuración común de los canales de Meta |
 | **v0.8 · Exportación** | oct 2026 | Conversaciones a CSV y JSON, individual o por periodo y canal, con CSV seguro para hojas de cálculo, permisos y auditoría |
 | **v0.9 · Plantillas** | oct 2026 | Plantillas aprobadas de WhatsApp con variables y vista previa, y la ventana de 24 h visible en el hilo |
+| **v0.10 · Widget** | oct 2026 | Chat embebible en la web del negocio con dominios autorizados, y acceso por token a las conversaciones públicas |
 
-### 🔜 Siguiente · v0.10 – v0.12
-- Widget embebible para webs de clientes
+### 🔜 Siguiente · v0.11 – v0.12
 - Métricas de SLA
 - Notificaciones push para operadores
 

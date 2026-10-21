@@ -53,6 +53,11 @@ export function publicContext(playwright: Playwright): Promise<APIRequestContext
 
 // =================== Helpers de negocio ===================
 
+/** Tokens de las conversaciones públicas iniciadas en este worker (los exige el envío). */
+const clientTokens = new Map<string, string>();
+
+export const clientTokenOf = (conversationId: string) => clientTokens.get(conversationId);
+
 export async function startPublicConversation(
   api: APIRequestContext,
   body: {
@@ -76,7 +81,9 @@ export async function startPublicConversation(
     },
   });
   if (!res.ok()) throw new Error(`startPublicConversation falló (${res.status()}): ${await res.text()}`);
-  return res.json();
+  const result = await res.json();
+  if (result.conversation?._id && result.clientToken) clientTokens.set(result.conversation._id, result.clientToken);
+  return result;
 }
 
 export async function sendPublicMessage(
@@ -86,7 +93,7 @@ export async function sendPublicMessage(
   content: string
 ) {
   const res = await api.post(`public/test-chat/${slug}/${conversationId}/messages`, {
-    data: { content },
+    data: { content, clientToken: clientTokenOf(conversationId) },
   });
   if (!res.ok()) throw new Error(`sendPublicMessage falló (${res.status()}): ${await res.text()}`);
   return res.json();

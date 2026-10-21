@@ -5,6 +5,7 @@ import { receive } from '../channels/inbound';
 import { InvalidInboundError, normalizeInbound } from '../channels/normalize';
 import { getConversationsCollection } from '../models/conversation.model';
 import { ObjectId } from 'mongodb';
+import { clientToken, verifyClientToken } from '../widget/access';
 
 export const publicGetConfig = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -46,8 +47,10 @@ export const publicStartConversation = async (req: Request, res: Response, next:
       text: initialMessage,
     });
     const result = await receive(inbound);
+    const conversationId = ('conversation' in result ? result.conversation?._id : undefined)?.toString();
 
-    res.status(201).json(result);
+    // El token es la prueba de que esta conversación es de quien la inició.
+    res.status(201).json({ ...result, clientToken: conversationId ? clientToken(conversationId) : undefined });
   } catch (error) {
     if (error instanceof InvalidInboundError) return res.status(400).json({ error: error.message });
     next(error);
@@ -71,6 +74,9 @@ export const publicSendMessage = async (req: Request, res: Response, next: NextF
       projectId: project._id,
     });
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });
+    if (!verifyClientToken(id, req.body.clientToken ?? req.get('x-client-token'))) {
+      return res.status(403).json({ error: 'Token de la conversación inválido' });
+    }
 
     const inbound = normalizeInbound({
       projectId: project._id.toString(),

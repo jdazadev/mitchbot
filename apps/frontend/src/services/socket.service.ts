@@ -100,9 +100,10 @@ export const socketService = {
     this.connect({ projectId });
   },
 
-  joinRoom(roomId: string) {
+  /** El panel se une con el id; el cliente público además envía el token de su conversación. */
+  joinRoom(roomId: string, clientToken?: string) {
     if (!this.socket) this.connect();
-    this.socket?.emit('join:room', roomId);
+    this.socket?.emit('join:room', clientToken ? { roomId, clientToken } : roomId);
   },
 
   onMessage(callback: (message: ChatMessage) => void) {

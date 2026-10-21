@@ -28,6 +28,8 @@ const { t, locale: publicLocale } = useI18n({
 });
 
 const activeConversation = ref<ChatConversation | null>(null);
+/** Token de acceso a la conversación que devuelve el inicio; lo exigen el envío y la sala. */
+const clientToken = ref<string | undefined>();
 const messages = ref<ChatMessage[]>([]);
 const newMessage = ref("");
 const isLoading = ref(false);
@@ -92,11 +94,12 @@ async function startConversation() {
     });
 
     activeConversation.value = result.conversation;
+    clientToken.value = result.clientToken;
     messages.value = [result.message];
     newMessage.value = "";
 
-    // Join room para recibir respuestas
-    socketService.joinRoom(result.conversation._id);
+    // Join room para recibir respuestas (el token prueba que la conversación es nuestra)
+    socketService.joinRoom(result.conversation._id, result.clientToken);
   } catch (e: any) {
     // El borrador se conserva para poder reintentar sin reescribirlo.
     sendError.value = t("publicChat.errors.start", { message: e?.message || "" });
@@ -120,6 +123,7 @@ async function sendMessage() {
       projectSlug.value,
       activeConversation.value._id,
       content,
+      clientToken.value,
       clientName.value
     );
     newMessage.value = "";

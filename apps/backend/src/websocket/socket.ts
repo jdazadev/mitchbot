@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import { ObjectId } from 'mongodb';
+import { verifyClientToken } from '../widget/access';
 import { logger } from '../utils/logger';
 import { socketAuthMiddleware } from '../middleware/socket-auth.middleware';
 import { chatService } from '../services/chat.service';
@@ -61,18 +62,18 @@ export const initSocket = (httpServer: HttpServer) => {
   io.on('connection', (socket: Socket) => {
     logger.info(`[WS] Socket connected: ${socket.id}, isPublic: ${socket.data.isPublic || false}`);
 
-    // Unir el socket a la room de su proyecto para eventos scoped por proyecto
-    if (socket.data.projectId) {
+    // Room del proyecto y del dashboard solo para el equipo: los clientes públicos
+    // (chat público, widget) no deben recibir eventos de otras conversaciones.
+    if (socket.data.projectId && !socket.data.isPublic) {
       socket.join(projectRoom(socket.data.projectId));
-      // Room exclusiva del dashboard (sin clientes públicos) para sincronizar
-      // el sidebar con mensajes de conversaciones no abiertas.
-      if (!socket.data.isPublic) {
-        socket.join(dashboardProjectRoom(socket.data.projectId));
-      }
+      // Room exclusiva del dashboard para sincronizar el sidebar con mensajes de conversaciones no abiertas.
+      socket.join(dashboardProjectRoom(socket.data.projectId));
     }
 
-    // Evento: Unirse a una room (conversación)
-    socket.on('join:room', async (roomId: string) => {
+    // Evento: Unirse a una room (conversación). El cliente público envía `{ roomId, clientToken }`.
+    socket.on('join:room', async (payload: string | { roomId?: string; clientToken?: string }) => {
+      const roomId = typeof payload === 'string' ? payload : payload?.roomId;
+      const token = typeof payload === 'string' ? undefined : payload?.clientToken;
       try {
         // 1. Rate limiting
         // 60 joins/min: un operador que recorre la bandeja abre muchas conversaciones seguidas.
@@ -96,6 +97,16 @@ export const initSocket = (httpServer: HttpServer) => {
         if (!conversation) {
           socket.emit('error', { message: 'Conversación no encontrada', code: 'ROOM_NOT_FOUND' });
           return;
+        }
+
+        // 4a. Cliente público: solo su conversación (token) y de su proyecto (slug).
+        if (socket.data.isPublic) {
+          const sameProject = conversation.projectId?.toString() === socket.data.projectId;
+          if (!sameProject || !verifyClientToken(roomId, token)) {
+            logger.warn(`[WS] Socket público ${socket.id} sin acceso a la conversación ${roomId}`);
+            socket.emit('error', { message: 'No tienes acceso a esta conversación', code: 'ACCESS_DENIED' });
+            return;
+          }
         }
 
         // 4. Para usuarios autenticados: verificar que la conversación pertenece a su proyecto
@@ -169,11 +180,21 @@ export const initSocket = (httpServer: HttpServer) => {
           return;
         }
 
-        if (!data?.executionId) {
+        if (!data?.executionId || !data?.conversationId) {
           socket.emit('error', {
             message: 'Datos de confirmación inválidos',
             code: 'INVALID_DATA',
             executionId: data?.executionId,
+          });
+          return;
+        }
+
+        // Solo quien está en la conversación (con acceso comprobado en join:room) puede decidir.
+        if (!socket.rooms.has(data.conversationId)) {
+          socket.emit('error', {
+            message: 'No tienes acceso a esta conversación',
+            code: 'ACCESS_DENIED',
+            executionId: data.executionId,
           });
           return;
         }

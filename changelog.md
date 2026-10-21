@@ -5,6 +5,69 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.10.0 — 2026-10-21
+
+> **Widget embebible**: el chat de Mitchbot se instala en la web del negocio con una línea de código y solo se muestra en los dominios autorizados. De paso, el chat público queda protegido: cada conversación tiene su token y los visitantes ya no reciben eventos de otros clientes.
+
+### 🔒 Seguridad
+- **Los visitantes ya no reciben datos de otros clientes**: hasta ahora, un socket público (el chat público) entraba en la sala del proyecto y recibía `chat:new_conversation` con nombre, teléfono y correo de otros clientes, además de `admin:notification` y `chat:status`. Los clientes públicos ya solo entran en las salas de sus conversaciones.
+- **Token de acceso a la conversación** (`clientToken`, un HMAC-SHA256 del id con `JWT_SECRET`): el inicio de la conversación lo devuelve.
+  - **Dónde se exige**: para escribir (`clientToken` en el cuerpo o en la cabecera `X-Client-Token`, 403 sin él), para unirse a la sala (`join:room` con `{ roomId, clientToken }`, `ACCESS_DENIED` sin él) y para leer el historial del widget.
+  - **Qué se cierra**: antes bastaba conocer el id de una conversación, y los ids de MongoDB se pueden deducir a partir de uno conocido.
+- **Sala del mismo proyecto**: un socket público solo puede unirse a conversaciones del proyecto de su slug.
+- **Confirmaciones solo desde la conversación**: `tool:confirm` exige estar en la sala de esa conversación, también para los operadores.
+
+### ✨ Añadido
+- **Widget** (OpenSpec `add-chat-widget`):
+  - **Cargador**: `GET /widget.js`, sin dependencias. Pinta un botón flotante con el color de marca y abre el chat en un `iframe`. Expone `window.MitchbotWidget.open()`/`close()`.
+  - **Configuración pública**: `GET /api/public/widget/:slug/config`, con `{ enabled: false }` si el widget está desactivado.
+  - **Página del chat**: `GET /api/public/widget/:slug/frame`.
+    - **CSP**: `frame-ancestors` con `'self'`, el panel y los dominios del proyecto; además `script-src 'self'`.
+    - **Disponibilidad**: 404 si el widget está desactivado o el canal Web deshabilitado.
+  - **Historial**: `GET /api/public/widget/:slug/conversations/:id/messages`, con el token y sin los detalles internos de las herramientas.
+  - **Experiencia del chat** (HTML y JS vanilla servidos por el backend):
+    - saludo inicial;
+    - respuestas en tiempo real con indicador de escritura;
+    - botones Confirmar/Cancelar en las solicitudes de las herramientas;
+    - conversación recordada en el navegador;
+    - textos es/en según el idioma del agente;
+    - región en vivo para lectores de pantalla y Escape para cerrar.
+- **`config.widget { enabled, allowedOrigins, position, title, greeting }`**: los orígenes se validan y normalizan (`http(s)://host[:puerto]` sin ruta, o `https://*.dominio`), con un máximo de 20; un origen inválido responde 400.
+- **Configuración → Canales → Web** (`WidgetSettings.vue`): activación, dominios (uno por línea, con aviso de los inválidos), título, posición, saludo, el código para copiar y una vista previa embebida.
+- El build del backend copia `src/widget/public` en `dist`.
+- Claves i18n `settings.widget.*` (es/en). Icono `Eye`.
+
+### 🐛 Corregido
+- **Mensajes perdidos al abrir una conversación**: si llegaba un mensaje por socket mientras se cargaba el historial, la respuesta HTTP lo pisaba y desaparecía del hilo hasta recargar. Ahora el historial y los mensajes en vivo se fusionan (`mergeMessages`).
+
+### 🔧 Cambiado
+- `TestChat.vue` guarda el `clientToken` y lo envía al escribir y al unirse a la sala; `socketService.joinRoom(roomId, clientToken?)`.
+- Los helpers E2E guardan el token de cada conversación pública iniciada.
+- **Hoja de ruta**: el widget pasa a "Entregado · v0.1 – v0.10", y "Siguiente · v0.11 – v0.12" queda con SLA y push.
+
+### ✅ Pruebas
+- **Unitarios**:
+  - Backend (**94**): token, normalización de orígenes, `frame-ancestors`, disponibilidad, fragmento, contraste y escapado de la página.
+  - Frontend (**56**): `lib/widget`, `WidgetSettings` y `mergeMessages`.
+- **Integración** (**75/75**, 1 omitida). `public-chat-access.test.ts`, con un servidor Socket.io real, cubre:
+  - token exigido en `join:room`;
+  - tokens de otra conversación o de otro proyecto;
+  - sin eventos del proyecto para los clientes públicos;
+  - `tool:confirm` desde fuera de la sala;
+  - envío sin token (403);
+  - historial con token y sin detalles internos.
+- **E2E** (**93/93** en tres corridas completas). `widget.spec.ts` (8), con webs anfitrionas reales en otros orígenes, cubre:
+  - conversación que llega a la bandeja y Escape;
+  - recuperación al recargar;
+  - confirmación de una herramienta;
+  - dominio no permitido bloqueado por `frame-ancestors`;
+  - widget desactivado;
+  - validación y normalización de dominios;
+  - activación, código y vista previa desde Configuración.
+- Paridad es/en **798/798**; backend `tsc --noEmit` y `build`, frontend `vue-tsc` y `build` en verde.
+
+---
+
 ## v0.9.0 — 2026-10-21
 
 > **Plantillas de WhatsApp**: pasadas las 24 horas desde el último mensaje del cliente, el operador retoma la conversación con una plantilla aprobada, con sus variables y vista previa
