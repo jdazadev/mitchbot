@@ -15,6 +15,18 @@ export const allowedPushHosts = () => parseAllowedHosts(env.PUSH_ALLOWED_HOSTS);
 export type PushResult = 'sent' | 'gone' | 'failed' | 'blocked';
 
 /**
+ * Cabeceras de `web-push` aptas para `fetch`: todas como texto y sin
+ * `Content-Length` (la calcula `fetch`; undici rechaza la petición si se le pasa).
+ */
+export function fetchHeaders(headers: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(headers)
+      .filter(([name, value]) => name.toLowerCase() !== 'content-length' && value !== undefined && value !== null)
+      .map(([name, value]) => [name, String(value)]),
+  );
+}
+
+/**
  * Envía un push cifrado (aes128gcm) y firmado (VAPID) a una suscripción.
  * `web-push` prepara la petición y la enviamos nosotros: así se comprueba el
  * endpoint justo antes de enviar y el transporte tiene tiempo límite.
@@ -36,7 +48,7 @@ export async function sendPush(subscription: Pick<PushSubscription, '_id' | 'end
   try {
     const response = await fetch(details.endpoint, {
       method: details.method,
-      headers: details.headers as Record<string, string>,
+      headers: fetchHeaders(details.headers),
       body: details.body as unknown as BodyInit,
       redirect: 'manual',
       signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
@@ -55,7 +67,8 @@ export async function sendPush(subscription: Pick<PushSubscription, '_id' | 'end
     }
     return 'sent';
   } catch (error: any) {
-    logger.warn(`[Push] No se pudo enviar a ${new URL(subscription.endpoint).host}: ${error?.message || error}`);
+    const cause = error?.cause?.code || error?.cause?.message;
+    logger.warn(`[Push] No se pudo enviar a ${new URL(subscription.endpoint).host}: ${error?.message || error}${cause ? ` (${cause})` : ''}`);
     return 'failed';
   }
 }

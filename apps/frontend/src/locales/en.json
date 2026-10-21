@@ -407,7 +407,9 @@
       "searchPlaceholder": "Search chats...",
       "loading": "Loading conversations...",
       "empty": "No conversations yet. Customers will start them.",
-      "noMatches": "No conversations match the filter."
+      "noMatches": "No conversations match the filter.",
+      "loadMore": "Load more conversations",
+      "loadingMore": "Loading…"
     },
     "filters": {
       "all": "All"

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { canReceive, isAllowedEndpoint, parseAllowedHosts, pushPayload, validKeys } from '../../src/services/push-policy';
+import { fetchHeaders } from '../../src/services/push.service';
 
 test('solo se envía a proveedores de push conocidos por HTTPS', () => {
   for (const ok of [
@@ -54,4 +55,10 @@ test('el contenido enlaza a la conversación o a las aprobaciones y agrupa por t
   assert.equal(approval.tag, 'approval');
   assert.equal(pushPayload({ kind: 'delivery', message: 'x'.repeat(300), level: 'error' }).body.length, 238);
   assert.equal(pushPayload({ kind: 'delivery', message: 'x', level: 'error' }).urgent, true);
+});
+
+test('las cabeceras del push van como texto y sin Content-Length', () => {
+  assert.deepEqual(fetchHeaders({ TTL: 3600, 'Content-Length': 120, 'Content-Encoding': 'aes128gcm', Urgency: 'high', Topic: undefined }), {
+    TTL: '3600', 'Content-Encoding': 'aes128gcm', Urgency: 'high',
+  });
 });

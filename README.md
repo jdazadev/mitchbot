@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.12.0** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.12.1** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -38,7 +38,7 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
 
 | Módulo | Capacidades |
 |:--|:--|
-| **Conversaciones** | Bandeja en tiempo real con filtros por canal y búsqueda. Modos `auto_pilot` / `human_takeover`. No leídos sincronizados entre sesiones. Historial paginado. Modo enfoque. Sentimiento y urgencia analizados por IA en cada mensaje del cliente. Exportación a CSV y JSON (una conversación o un periodo), solo para `admin` y `support` y registrada en la actividad. Plantillas de WhatsApp aprobadas para retomar la conversación pasada la ventana de 24 h. Marca de las esperas fuera de plazo y aviso al equipo cuando vencen. |
+| **Conversaciones** | Bandeja en tiempo real, paginada, con filtros por canal y búsqueda en toda la bandeja. Modos `auto_pilot` / `human_takeover`. No leídos sincronizados entre sesiones. Historial paginado. Modo enfoque. Sentimiento y urgencia analizados por IA en cada mensaje del cliente. Exportación a CSV y JSON (una conversación o un periodo), solo para `admin` y `support` y registrada en la actividad. Plantillas de WhatsApp aprobadas para retomar la conversación pasada la ventana de 24 h. Marca de las esperas fuera de plazo y aviso al equipo cuando vencen. |
 | **Agente IA** | Personalidad configurable (rol, tono, longitud, idioma es/en). Memoria de los últimos 20 turnos. Saludo y despedida naturales. Respuesta completa sin fragmentos. Errores visibles en el chat. |
 | **Memoria (RAG)** | Ingesta de PDF, TXT, CSV, imágenes y texto manual. OCR con modelos de visión, chunking semántico por secciones, embeddings en Qdrant, búsqueda re-rankeada y reindexado en segundo plano (BullMQ). |
 | **Herramientas** | Catálogo por proyecto: Agenda, Conocimiento, Inventario y Pagos. Tres niveles de control (ninguno, confirmación del cliente, aprobación de operador). Rol `approver` y auditoría completa en `tool_executions`. |

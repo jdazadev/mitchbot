@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, computed, nextTick, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import {
@@ -40,6 +40,10 @@ const route = useRoute();
 const {
   conversations: chats,
   isLoading: isLoadingChats,
+  isLoadingMore,
+  hasMore,
+  loadMore,
+  searchQuery,
   activeChannel,
   loadConversations,
   markConversationRead,
@@ -105,7 +109,14 @@ async function exportCurrentConversation(format: "csv" | "json") {
 const liveAnnouncement = ref("");
 let messagesRequestId = 0;
 
-const searchQuery = ref("");
+// La búsqueda y el canal se resuelven también en el servidor (alcanzan lo que no está cargado).
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
+watch([searchQuery, activeChannel], () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    loadConversations(true).catch(() => (inboxLoadError.value = true));
+  }, 300);
+});
 
 // === Filtros de canal derivados de la configuración del proyecto ===
 const enabledChannels = ref<ChannelFilter[]>(["All"]);
@@ -1110,7 +1121,7 @@ onUnmounted(() => {
             </button>
           </div>
           <AEmptyState
-            v-else-if="chats.length === 0"
+            v-else-if="chats.length === 0 && !searchQuery.trim() && activeChannel === 'All'"
             icon="ChatCircleDots"
             :title="t('messaging.inbox.empty')"
           />
@@ -1181,6 +1192,16 @@ onUnmounted(() => {
                 {{ chat.unreadCount }}
               </span>
             </span>
+          </button>
+          <button
+            v-if="hasMore && filteredChats.length"
+            type="button"
+            data-testid="inbox-load-more"
+            class="mx-auto my-3 rounded-full bg-canvas px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-60"
+            :disabled="isLoadingMore"
+            @click="loadMore"
+          >
+            {{ isLoadingMore ? t("messaging.inbox.loadingMore") : t("messaging.inbox.loadMore") }}
           </button>
         </div>
       </template>
@@ -1276,7 +1297,7 @@ onUnmounted(() => {
             </button>
           </div>
           <div
-            v-else-if="chats.length === 0"
+            v-else-if="chats.length === 0 && !searchQuery.trim() && activeChannel === 'All'"
             class="grid flex-1 place-items-center py-6 text-ink-3"
             :title="t('messaging.inbox.empty')"
           >
@@ -1325,6 +1346,17 @@ onUnmounted(() => {
                 <AIcon name="UserPlus" :size="9" weight="fill" />
               </span>
             </span>
+          </button>
+          <button
+            v-if="hasMore && filteredChats.length"
+            type="button"
+            class="mx-auto my-2 grid h-9 w-9 place-items-center rounded-full bg-canvas text-ink-2 hover:bg-sunken disabled:opacity-60"
+            :disabled="isLoadingMore"
+            :aria-label="t('messaging.inbox.loadMore')"
+            :title="t('messaging.inbox.loadMore')"
+            @click="loadMore"
+          >
+            <AIcon name="CaretDown" :size="16" />
           </button>
         </div>
       </template>

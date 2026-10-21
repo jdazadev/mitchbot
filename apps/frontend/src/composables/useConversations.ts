@@ -9,6 +9,16 @@ export type ChannelFilter = 'All' | 'WhatsApp' | 'Instagram' | 'Web';
 const conversations = ref<ChatConversation[]>([]);
 const isLoading = ref(false);
 const activeChannel = ref<ChannelFilter>('All');
+/** Búsqueda de la bandeja; junto al canal se resuelve en el servidor para alcanzar lo no cargado. */
+const searchQuery = ref('');
+/** Paginación por cursor: la bandeja carga de 30 en 30. */
+export const INBOX_PAGE_SIZE = 30;
+const hasMore = ref(false);
+const nextCursor = ref<string | null>(null);
+const isLoadingMore = ref(false);
+/** No leídos de todo el proyecto: la lista cargada es solo una parte. */
+const unreadTotal = ref(0);
+let loadSeq = 0;
 /** Conversación actualmente abierta por el agente (para el re-marcado estilo WhatsApp). */
 const openConversationId = ref<string | null>(null);
 
@@ -51,7 +61,29 @@ function moveToTop(chat: ChatConversation) {
 /** Pone el contador local de una conversación a cero (sin persistir). */
 function setConversationRead(id: string) {
   const chat = conversations.value.find((c) => c._id === id);
-  if (chat) chat.unreadCount = 0;
+  if (!chat) return false;
+  unreadTotal.value = Math.max(0, unreadTotal.value - (chat.unreadCount || 0));
+  chat.unreadCount = 0;
+  return true;
+}
+
+function refreshUnreadTotal() {
+  messagingService.getUnreadTotal().then((total) => (unreadTotal.value = total)).catch(() => {});
+}
+
+const filtersActive = () => activeChannel.value !== 'All' || !!searchQuery.value.trim();
+
+/** Una conversación con actividad que aún no está en la lista (más antigua que lo cargado). */
+async function insertUnknown(id: string) {
+  if (filtersActive()) return;
+  try {
+    const fetched = await messagingService.getConversation(id);
+    if (fetched && !conversations.value.some((c) => c._id === fetched._id)) {
+      conversations.value.unshift(decorateConversation(fetched));
+    }
+  } catch {
+    // Se verá al recargar la bandeja.
+  }
 }
 
 /** Persiste la lectura en el servidor en segundo plano (no bloquea ni rompe la UI). */
@@ -64,30 +96,39 @@ function persistConversationRead(id: string) {
 function handleSocketMessage(msg: ChatMessage) {
   const convId = msg.conversationId;
   if (!convId) return;
-  const chat = conversations.value.find((c) => c._id === convId);
-  if (!chat) return;
   // Ignora placeholders vacíos del streaming.
   if (!msg.content || !msg.content.trim()) return;
+  const isOpen = convId === openConversationId.value;
+  const chat = conversations.value.find((c) => c._id === convId);
+
+  if (msg.sender === 'contact') {
+    if (isOpen) {
+      // Mensaje entrante en la conversación abierta: se re-marca como leída (estilo WhatsApp).
+      persistConversationRead(convId);
+    } else {
+      unreadTotal.value += 1;
+    }
+  }
+  if (!chat) {
+    void insertUnknown(convId);
+    return;
+  }
 
   chat.lastMessage = msg.content;
   chat.message = msg.content;
   chat.lastMessageAt = msg.createdAt;
   chat.time = formatConversationTime(msg.createdAt);
   if (msg.sender === 'contact') {
-    if (convId === openConversationId.value) {
-      // Mensaje entrante en la conversación abierta: se re-marca como leída (estilo WhatsApp).
-      setConversationRead(convId);
-      persistConversationRead(convId);
-    } else {
-      chat.unreadCount = (chat.unreadCount || 0) + 1;
-    }
+    if (isOpen) chat.unreadCount = 0;
+    else chat.unreadCount = (chat.unreadCount || 0) + 1;
   }
   moveToTop(chat);
 }
 
 function handleConversationRead(data: { conversationId: string }) {
   if (!data?.conversationId) return;
-  setConversationRead(data.conversationId);
+  // Leída en otra sesión: si no está cargada no sabemos cuánto restar, se pregunta al servidor.
+  if (!setConversationRead(data.conversationId)) refreshUnreadTotal();
 }
 
 function handleSocketInsights(data: { conversationId: string; insights: ChatConversation['aiInsights'] }) {
@@ -134,19 +175,48 @@ function bindConversationSocket() {
 }
 
 export function useConversations() {
-  const unreadTotal = computed(() =>
-    conversations.value.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
-  );
-
+  /** Primera página con los filtros actuales; las respuestas viejas se descartan. */
   async function loadConversations(force = false): Promise<void> {
     if (hasLoaded && !force) return;
+    const seq = ++loadSeq;
     isLoading.value = true;
     try {
-      const res = await messagingService.getConversations();
-      conversations.value = res.map(decorateConversation);
+      const page = await messagingService.getConversationPage({
+        limit: INBOX_PAGE_SIZE,
+        q: searchQuery.value,
+        platform: activeChannel.value,
+      });
+      if (seq !== loadSeq) return;
+      conversations.value = page.conversations.map(decorateConversation);
+      hasMore.value = page.hasMore;
+      nextCursor.value = page.nextCursor;
+      unreadTotal.value = page.unreadTotal;
       hasLoaded = true;
     } finally {
-      isLoading.value = false;
+      if (seq === loadSeq) isLoading.value = false;
+    }
+  }
+
+  /** Siguiente página: se añade al final sin repetir las que ya llegaron por socket. */
+  async function loadMore(): Promise<void> {
+    if (!hasMore.value || !nextCursor.value || isLoadingMore.value) return;
+    const seq = loadSeq;
+    isLoadingMore.value = true;
+    try {
+      const page = await messagingService.getConversationPage({
+        limit: INBOX_PAGE_SIZE,
+        before: nextCursor.value,
+        q: searchQuery.value,
+        platform: activeChannel.value,
+      });
+      if (seq !== loadSeq) return;
+      const known = new Set(conversations.value.map((c) => c._id));
+      conversations.value.push(...page.conversations.filter((c) => !known.has(c._id)).map(decorateConversation));
+      hasMore.value = page.hasMore;
+      nextCursor.value = page.nextCursor;
+      unreadTotal.value = page.unreadTotal;
+    } finally {
+      isLoadingMore.value = false;
     }
   }
 
@@ -163,9 +233,25 @@ export function useConversations() {
     activeChannel.value = channel;
   }
 
+  /** Para el menú: el total de no leídos sin cargar la bandeja, y en vivo. */
+  function watchUnreadTotal(): void {
+    bindConversationSocket();
+    if (!hasLoaded) refreshUnreadTotal();
+  }
+
+  function setSearchQuery(value: string): void {
+    searchQuery.value = value;
+  }
+
   return {
     conversations,
     isLoading,
+    isLoadingMore,
+    hasMore,
+    searchQuery,
+    setSearchQuery,
+    loadMore,
+    watchUnreadTotal,
     activeChannel,
     openConversationId,
     unreadTotal,

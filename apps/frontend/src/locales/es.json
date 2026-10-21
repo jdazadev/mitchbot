@@ -407,7 +407,9 @@
       "searchPlaceholder": "Buscar conversaciones...",
       "loading": "Cargando conversaciones...",
       "empty": "No hay conversaciones aún. Los clientes las iniciarán.",
-      "noMatches": "No hay conversaciones que coincidan con el filtro."
+      "noMatches": "No hay conversaciones que coincidan con el filtro.",
+      "loadMore": "Cargar más conversaciones",
+      "loadingMore": "Cargando…"
     },
     "filters": {
       "all": "Todos"

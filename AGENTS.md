@@ -14,7 +14,21 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.12.0
+**Versión actual del proyecto:** v0.12.1
+
+---
+
+## Bandeja paginada y dependencias (v0.12.1)
+
+- **Bandeja por cursor**:
+  - **API**: `GET /api/conversations?limit=1..100&before=<ms>_<id>&q=&platform=` devuelve `{ conversations, hasMore, nextCursor, unreadTotal }`. Las funciones puras están en `services/inbox-query.ts`: `parseInboxQuery`, `inboxMatch` (búsqueda literal con `escapeRegex`), `encodeCursor` y `decodeCursor`.
+  - **Compatibilidad**: sin `limit` se mantiene el listado clásico de 50 que usan los E2E. `GET /api/conversations/unread` devuelve los no leídos del proyecto.
+- **`useConversations`**:
+  - Carga de `INBOX_PAGE_SIZE` (30), `loadMore`, y `searchQuery` y `activeChannel` resueltos en el servidor (la vista recarga con 300 ms de retardo).
+  - `unreadTotal` es un `ref` que viene del servidor y se ajusta en vivo. Un mensaje de una conversación no cargada la trae con `insertUnknown` si no hay filtros, y una lectura desconocida pide el total de nuevo.
+  - El menú llama a `watchUnreadTotal()` al montarse (`data-testid="nav-unread"`).
+- **Push**: `fetchHeaders` normaliza las cabeceras de `web-push` para `fetch`, a texto y sin `Content-Length`. Con `@qdrant/js-client-rest` 1.19 (que usa undici), las cabeceras numéricas rompían el envío.
+- **Verificación**: unitarios backend **111/111** y frontend **78/78**; integración **87/87 (1 omitida)**; E2E **104/104** en tres corridas completas.
 
 ---
 
@@ -752,7 +766,7 @@ apps/frontend/src/
 - **Saludo y despedida naturales**: no se anteponen textos enlatados; el saludo/despedida los decide el LLM a partir del historial. Sin historial de por medio el bot saluda al inicio; en una reanudación tras pausa larga re-saluda. "Gracias" y variantes ya **no** cierran la conversación. Al detectar una despedida real, el bot responde con naturalidad y, tras generarla, la conversación se marca como `closed` (se emite `chat:status`) — sin mensaje enlatado ni corte previo.
 - **Respuesta como mensaje completo**: el bot **no emite fragmentos parciales** (`isDone: false`); mientras el modelo genera se mantiene un placeholder vacío que da el indicador de escritura y, al finalizar, la respuesta completa llega en un único mensaje final (`isDone: true`) tanto en respuestas directas como tras ejecutar herramientas. El frontend (`Messaging.vue`, `TestChat.vue`, `useConversations`) aplica únicamente el mensaje final.
 - **Renderizado Markdown**: Los mensajes del bot soportan negritas e itálicas.
-- **Filtros y búsqueda**: los chips de canal se generan desde `project.config.channels` (solo los habilitados + "Todos"); el filtrado por plataforma y la búsqueda por nombre/último mensaje son en cliente. Los mensajes se agrupan por día con encabezados reales.
+- **Filtros y búsqueda**: los chips de canal se generan desde `project.config.channels` (solo los habilitados + "Todos"); el filtrado por plataforma y la búsqueda (nombre, identificador, teléfono y último mensaje) se resuelven en el servidor sobre toda la bandeja, que se carga por páginas de 30 (v0.12.1). Los mensajes se agrupan por día con encabezados reales.
 - **Toma de control manual bidireccional**: "Take Over" pasa a `human_takeover` y "Auto-Pilot" devuelve a `auto_pilot` vía `PUT /api/conversations/:id/mode`; el badge se actualiza en vivo con `chat:status` y el bot no responde mientras dure el takeover.
 - **Guardar como contacto**: acción explícita `POST /api/conversations/:id/contact` respaldada por `ensureContactCreated(id, { force: true })`; es idempotente y funciona aunque `autoCreateContact` esté deshabilitado.
 - **No leídos reales**: el badge del sidebar suma los `unreadCount` del proyecto activo mediante el composable `useConversations` (estado de módulo compartido). Solo los mensajes entrantes del cliente (`contact`) incrementan el contador; los del bot y del agente humano **no** suman. Al abrir una conversación se persiste la lectura vía `PUT /api/conversations/:id/read` (`unreadCount = 0`) y se emite `chat:read` a la room del proyecto para sincronizar el resto de sesiones; un mensaje entrante en la conversación abierta se re-marca como leída de inmediato (estilo WhatsApp), sin que el badge suba. La actualización en vivo del sidebar llega por `chat:message` (también entregado a la room exclusiva del dashboard `project:<id>:dashboard`) y `chat:new_conversation`. Una conversación nueva creada por el cliente nace con 1 no leído.
@@ -1002,7 +1016,7 @@ Usuario abre la app
 | **Auth** | `POST /register`, `POST /login`, `GET /me`, `PUT /profile`, `PUT /password` | Autenticación y perfil |
 | **Users** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Gestión de usuarios |
 | **Contacts** | `GET /`, `GET /:id`, `PUT /:id`, `PATCH /:id/archive`, `PATCH /:id/restore` | Gestión de contactos |
-| **Conversations** | `GET /export` y `GET /:id/export` (CSV/JSON, solo admin y support), `POST /:id/template` (plantilla de WhatsApp), `GET /` (filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages` (paginación opcional `?limit=&before=`), `POST /:id/messages`, `POST /:id/messages/:messageId/retry`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, historial paginado, resolver conversación por contacto, marcar leída, guardar contacto e insights |
+| **Conversations** | `GET /export` y `GET /:id/export` (CSV/JSON, solo admin y support), `POST /:id/template` (plantilla de WhatsApp), `GET /unread`, `GET /` (paginado con `?limit=&before=&q=&platform=`; filtro opcional `?contactId=`), `GET /:id`, `GET /:id/messages` (paginación opcional `?limit=&before=`), `POST /:id/messages`, `POST /:id/messages/:messageId/retry`, `PUT /:id/mode`, `PUT /:id/status`, `PUT /:id/read`, `POST /:id/contact`, `GET /:id/insights`, `POST /:id/insights` | Mensajería, historial paginado, resolver conversación por contacto, marcar leída, guardar contacto e insights |
 | **Brain** | `GET /sources`, `POST /upload`, `POST /text`, `DELETE /sources/:id`, `POST /search` | Base de conocimiento RAG |
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |

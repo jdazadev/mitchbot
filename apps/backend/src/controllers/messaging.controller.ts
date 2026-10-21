@@ -21,6 +21,7 @@ import { projectService } from '../services/project.service';
 import { logger } from '../utils/logger';
 import { TemplateError, templateService } from '../services/template.service';
 import { z } from 'zod';
+import { encodeCursor, inboxMatch, InvalidInboxQueryError, parseInboxQuery } from '../services/inbox-query';
 
 /**
  * Lista las conversaciones con lookup al contacto (si existe).
@@ -41,10 +42,8 @@ export const listConversations = async (req: Request, res: Response, next: NextF
       match.contactId = new ObjectId(contactId);
     }
 
-    const conversations = await getConversationsCollection().aggregate([
-      { $match: match },
-      { $sort: { lastMessageAt: -1 } },
-      { $limit: 50 },
+    // Datos del contacto (si existe) por encima de los provisionales de la conversación.
+    const contactStages: any[] = [
       {
         $lookup: {
           from: 'contacts',
@@ -75,6 +74,45 @@ export const listConversations = async (req: Request, res: Response, next: NextF
           platform: { $ifNull: ['$platform', '$contact.platform'] }
         }
       }
+    ];
+
+    // Bandeja paginada: `limit` (y opcionalmente `before`, `q`, `platform`).
+    if (req.query.limit !== undefined) {
+      let query;
+      try {
+        query = parseInboxQuery(req.query as Record<string, unknown>);
+      } catch (error) {
+        if (error instanceof InvalidInboxQueryError) return res.status(400).json({ error: error.message });
+        throw error;
+      }
+      const collection = getConversationsCollection();
+      const [page, unread] = await Promise.all([
+        collection.aggregate([
+          { $match: { ...match, ...inboxMatch(query) } },
+          { $sort: { lastMessageAt: -1, _id: -1 } },
+          { $limit: query.limit + 1 },
+          ...contactStages,
+        ]).toArray(),
+        collection.aggregate<{ total: number }>([
+          { $match: { projectId: match.projectId } },
+          { $group: { _id: null, total: { $sum: { $ifNull: ['$unreadCount', 0] } } } },
+        ]).toArray(),
+      ]);
+      const hasMore = page.length > query.limit;
+      const conversations = hasMore ? page.slice(0, query.limit) : page;
+      return res.json({
+        conversations,
+        hasMore,
+        nextCursor: hasMore ? encodeCursor(conversations[conversations.length - 1] as any) : null,
+        unreadTotal: unread[0]?.total || 0,
+      });
+    }
+
+    const conversations = await getConversationsCollection().aggregate([
+      { $match: match },
+      { $sort: { lastMessageAt: -1 } },
+      { $limit: 50 },
+      ...contactStages,
     ]).toArray();
 
     res.json(conversations);
@@ -462,6 +500,21 @@ export const sendConversationTemplate = async (req: Request, res: Response, next
     res.status(201).json(message);
   } catch (error) {
     if (error instanceof TemplateError) return res.status(error.status).json({ error: error.message });
+    next(error);
+  }
+};
+
+/** GET /api/conversations/unread — no leídos del proyecto (contador del menú) */
+export const getUnreadTotal = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId || !ObjectId.isValid(projectId)) return res.status(400).json({ error: 'ProjectId requerido' });
+    const [row] = await getConversationsCollection().aggregate<{ total: number }>([
+      { $match: { projectId: new ObjectId(projectId) } },
+      { $group: { _id: null, total: { $sum: { $ifNull: ['$unreadCount', 0] } } } },
+    ]).toArray();
+    res.json({ unreadTotal: row?.total || 0 });
+  } catch (error) {
     next(error);
   }
 };

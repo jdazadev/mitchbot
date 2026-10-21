@@ -15,6 +15,7 @@ import {
   exportConversations,
   exportConversation,
   sendConversationTemplate,
+  getUnreadTotal,
 } from '../controllers/messaging.controller';
 
 const router = Router();
@@ -22,6 +23,7 @@ const router = Router();
 // === Rutas del DASHBOARD (admin/agente) ===
 router.get('/', authenticate, listConversations);                    // Listar conversaciones
 // Exportación (datos personales): solo admin y support. Antes de `/:id` para que `export` no se lea como id.
+router.get('/unread', authenticate, getUnreadTotal);                  // No leídos del proyecto
 router.get('/export', authenticate, authorize('admin', 'support'), exportConversations);
 router.get('/:id/export', authenticate, authorize('admin', 'support'), exportConversation);
 router.get('/:id', authenticate, getConversation);                   // Detalle de conversación

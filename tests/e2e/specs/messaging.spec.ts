@@ -41,9 +41,9 @@ function inboxRow(page: Page, clientName: string) {
 }
 
 /** Suma persistida de no leídos de todas las conversaciones del proyecto. */
+/** No leídos de todo el proyecto (el listado clásico solo trae las 50 más recientes). */
 async function apiUnreadTotal(api: any): Promise<number> {
-  const conversations = await listConversations(api);
-  return conversations.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0);
+  return (await (await api.get('conversations/unread')).json()).unreadTotal;
 }
 
 /** Espera a que el socket del dashboard complete la conexión (frame `40` de Socket.io). */

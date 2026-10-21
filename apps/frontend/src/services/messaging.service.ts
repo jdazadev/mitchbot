@@ -73,6 +73,13 @@ export interface ChatMessagePage {
 
 export const MESSAGE_PAGE_SIZE = 50;
 
+export interface ConversationPage {
+  conversations: ChatConversation[];
+  hasMore: boolean;
+  nextCursor: string | null;
+  unreadTotal: number;
+}
+
 export interface ChatConversation {
   _id: string;
   contactId?: string;
@@ -131,6 +138,25 @@ export const messagingService = {
     });
     if (!res.ok) throw new Error('Failed to fetch conversations');
     return res.json();
+  },
+
+  /** Página de la bandeja (más recientes primero) con búsqueda y canal resueltos en el servidor. */
+  async getConversationPage(params: { limit: number; before?: string | null; q?: string; platform?: string }): Promise<ConversationPage> {
+    const url = new URL(`${API_URL}/conversations`);
+    url.searchParams.set('limit', String(params.limit));
+    if (params.before) url.searchParams.set('before', params.before);
+    if (params.q?.trim()) url.searchParams.set('q', params.q.trim());
+    if (params.platform && params.platform !== 'All') url.searchParams.set('platform', params.platform);
+    const res = await fetch(url.toString(), { headers: authService.getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch conversations');
+    return res.json();
+  },
+
+  /** No leídos de todo el proyecto (no solo de lo cargado). */
+  async getUnreadTotal(): Promise<number> {
+    const res = await fetch(`${API_URL}/conversations/unread`, { headers: authService.getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch unread total');
+    return (await res.json()).unreadTotal;
   },
 
   async getConversation(conversationId: string): Promise<ChatConversation | null> {

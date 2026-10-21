@@ -17,7 +17,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const route = useRoute();
-const { unreadTotal } = useConversations();
+const { unreadTotal, watchUnreadTotal } = useConversations();
 const { brand } = useBrand();
 
 const OPERATION = [
@@ -63,6 +63,7 @@ function onDrawerKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
+  watchUnreadTotal();
   if (props.variant === 'mobile') {
     document.addEventListener('keydown', onDrawerKeydown);
     nextTick(() => railRef.value?.querySelector<HTMLElement>('a[href]')?.focus());
@@ -141,6 +142,7 @@ function isActive(href: string) {
         <span class="relative truncate">{{ t('nav.' + item.key) }}</span>
         <span
           v-if="item.key === 'conversations' && unreadTotal > 0"
+          data-testid="nav-unread"
           class="relative ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-ink-solid px-1.5 text-[11px] font-bold text-ink-contrast [font-variant-numeric:tabular-nums]"
         >
           {{ unreadTotal }}

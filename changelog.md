@@ -5,6 +5,44 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.12.1 — 2026-10-21
+
+> **Bandeja sin techo y dependencias al día**: la bandeja ya no se queda en las 50 conversaciones más recientes, la búsqueda alcanza toda la bandeja y el contador del menú cuenta todo el proyecto
+
+### 🐛 Corregido
+- **La bandeja mostraba solo las 50 conversaciones más recientes**: el listado tenía un tope fijo, así que las más antiguas no aparecían ni en la búsqueda.
+  - **Paginación**: `GET /api/conversations?limit=` devuelve `{ conversations, hasMore, nextCursor, unreadTotal }`, paginado por cursor (`before` = fecha del último mensaje + id, con desempate).
+  - **Búsqueda y canal en el servidor**: `q` busca de forma literal en el nombre, el identificador, el teléfono y el último mensaje; `platform` filtra por canal. Sin `limit` la respuesta clásica no cambia.
+  - **Índice** nuevo: `{ projectId, lastMessageAt, _id }`.
+  - **Bandeja en pantalla**: carga de 30 en 30 con **Cargar más conversaciones**. La búsqueda y el canal recargan desde el servidor con 300 ms de retardo, y una búsqueda sin resultados ya no se confunde con la bandeja vacía.
+  - **Conversaciones sin cargar**: un mensaje en vivo de una conversación todavía no cargada la trae y la pone arriba.
+- **El contador del menú solo sumaba lo cargado**, y no se actualizaba hasta abrir Conversaciones.
+  - **Arreglo**: ahora sale del servidor (`unreadTotal` en cada página, o `GET /api/conversations/unread`) y se ajusta en vivo con los mensajes y las lecturas. El menú lo pide al montarse (`watchUnreadTotal`).
+  - **Lecturas en otra sesión**: si la conversación leída no está cargada, se vuelve a pedir el total.
+- **Push**: tras la actualización del cliente de Qdrant, `fetch` (undici) rechazaba los envíos con `UND_ERR_INVALID_ARG` por la cabecera `Content-Length` numérica de `web-push`. `fetchHeaders` pasa las cabeceras a texto y deja que `fetch` calcule la longitud. El log incluye ahora la causa del fallo.
+
+### 🔧 Cambiado
+- `@qdrant/js-client-rest` 1.16 → **1.19**, la versión del servidor. Ya no aparece el aviso de incompatibilidad.
+- El test E2E del contador usa `GET /conversations/unread` en lugar de sumar el listado clásico, que tiene tope.
+
+### ✅ Pruebas
+- **Unitarios**:
+  - Backend (**111**): cursor, validación de `limit` y del canal, búsqueda literal, filtros con desempate y cabeceras del push.
+  - Frontend (**78**): `useConversations` (páginas con filtros, no leídos desde el servidor, conversaciones no cargadas, lecturas).
+- **Integración** (**87/87**, 1 omitida). `inbox-pagination.test.ts` cubre:
+  - tres páginas sin repetir ni saltarse conversaciones;
+  - búsqueda y canal;
+  - la respuesta clásica sin `limit`;
+  - el total del proyecto aislado.
+- **E2E** (**104/104** en tres corridas completas). `inbox-pagination.spec.ts` cubre:
+  - 35 conversaciones;
+  - el menú con el total antes de abrir la bandeja;
+  - 30 filas y búsqueda de una no cargada;
+  - Cargar más;
+  - el contador que baja al abrir.
+
+---
+
 ## v0.12.0 — 2026-10-21
 
 > **Notificaciones push**: los avisos del equipo llegan al navegador o al móvil del operador aunque Mitchbot no esté abierto. Cada uno elige qué recibir y en qué dispositivos.

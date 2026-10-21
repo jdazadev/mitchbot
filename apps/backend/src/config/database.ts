@@ -34,6 +34,9 @@ export const connectDatabase = async () => {
         { unique: true, partialFilterExpression: { 'config.instagram.accountId': { $type: 'string' } } },
       )
       .catch((error) => console.warn('⚠️ Could not create the projects Instagram account index:', error));
+    void db.collection('conversations')
+      .createIndex({ projectId: 1, lastMessageAt: -1, _id: -1 })
+      .catch((error) => console.warn('⚠️ Could not create the conversations inbox index:', error));
     void db.collection('push_subscriptions')
       .createIndex({ endpoint: 1 }, { unique: true })
       .catch((error) => console.warn('⚠️ Could not create the push subscriptions index:', error));
