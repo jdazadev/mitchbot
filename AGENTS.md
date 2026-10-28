@@ -14,7 +14,51 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.12.1
+**Versión actual del proyecto:** v0.13.0
+
+---
+
+## Registro integrado de WhatsApp (v0.13.0)
+
+Cada negocio conecta su número desde Configuración con el Embedded Signup de Meta, sin copiar identificadores ni tokens. OpenSpec `add-whatsapp-embedded-signup`; capability `whatsapp-embedded-signup`.
+
+- **Activación**: `isSignupEnabled()` (`services/whatsapp-signup.service.ts`) exige `META_APP_ID`, `WHATSAPP_SIGNUP_CONFIG_ID`, `WHATSAPP_APP_SECRET` y `CREDENTIALS_KEY` (32 bytes en base64). Con él activo, `WHATSAPP_TOKEN` es opcional y `registerWhatsApp` registra el adaptador igualmente.
+- **Flujo de Meta** (`channels/whatsapp/signup.ts`, puro con `fetch` inyectable):
+  - `signupPayloadSchema`: `{ code, phoneNumberId, wabaId, businessId?, mode: cloud|coexistence }`, estricto.
+  - `createSignupClient`: `exchangeCode` (`GET /oauth/access_token` con `client_id`/`client_secret`), `subscribeApp`/`unsubscribeApp` (`/{waba}/subscribed_apps`), `registerNumber` (`/{phone}/register` con PIN) y `phoneInfo`.
+  - Los errores se clasifican con `classifyWhatsAppError`. `generatePin` da el PIN de seis cifras.
+- **Servicio**:
+  - **`complete`**:
+    - Rechaza un número de otro proyecto (409) antes de llamar a Meta.
+    - En coexistencia no registra el número.
+    - Guarda la credencial y escribe `config.whatsapp.{phoneNumberId,wabaId}` + `config.channels.whatsapp = true`, así `projectForAccount` enruta sin cambios.
+  - **`disconnect`**: quita la suscripción; si Meta falla, solo lo registra en el log.
+  - **`tokenFor(account)`**: caché de 60 s. Si la credencial existe y es `active`, devuelve su token; si está `invalid`, devuelve `null`; sin credencial, el `WHATSAPP_TOKEN` del entorno.
+  - **Otros**: `tokenForProject` (para las plantillas) y `markInvalid` (aviso `notifyProject` con `kind: 'channel'`).
+  - **En las pruebas**: `setSignupClientForTests`.
+- **Datos**: `channel_credentials` (`projectId`, `channel`, `account`, `wabaId`, `token` y `pin` sellados con `utils/secret-box.ts` en el formato `v1.<iv>.<tag>.<datos>`, `mode`, `status`, `displayPhone`, `verifiedName`), con índices únicos `{projectId, channel}` y `{channel, account}`.
+  - **No guardes credenciales en `project.config`**: `GET/PUT /api/project` devuelven el proyecto entero.
+  - **Si cambias `CREDENTIALS_KEY`**, los tokens guardados dejan de abrirse y los proyectos deben reconectarse.
+- **Adaptador**: `createWhatsAppAdapter({ token, onAuthError })`.
+  - **`token`**: es un texto fijo o una función por número; un fallo al resolverla es transitorio.
+  - **Rechazo del token**: 401 o código 190 (`isAuthError`) llaman a `onAuthError(account)`.
+- **API** (solo `admin`): `GET /api/project/whatsapp/signup/config`, `POST /api/project/whatsapp/signup` y `DELETE /api/project/whatsapp/signup` (204).
+  - `GET /channels/status` añade `whatsapp.signup` y `whatsapp.connection`.
+  - `PUT /api/project` responde 409 si se intenta cambiar a mano el número o la WABA de una conexión.
+- **Interfaz**:
+  - **`lib/embedded-signup.ts`**: `loadFacebookSdk`, que no carga nada si ya hay `window.FB`; `parseSignupEvent`, que solo acepta `https://*.facebook.com`; y `startSignup`, que espera el código y el número, con 10 s de margen tras el login.
+  - **`components/settings/WhatsAppSignup.vue`**: `data-testid` `wa-signup`, `wa-signup-connect`, `wa-connection` (con `data-status`), `wa-connection-phone`, `wa-connection-mode`, `wa-connection-invalid`, `wa-signup-reconnect`, `wa-disconnect`, `wa-disconnect-confirm` y `wa-signup-error`.
+  - **Settings**: pliega la configuración manual en `<details data-testid="wa-manual">` y espera a `signupLoaded`.
+- **E2E**:
+  - `E2E.whatsapp.{appId, signupConfigId, credentialsKey}` en el backend y `STUB_META_APP_ID`/`STUB_META_APP_SECRET` en el stub.
+  - El stub emite `tok-<code>` (el código `caducado` falla) y expone `/__meta/signup` y `/__meta/revoke`. `sentTo` devuelve el `token` de cada envío.
+  - `whatsapp-signup.spec.ts` simula `window.FB` con `addInitScript`; el evento se despacha con `new MessageEvent('message', { origin: 'https://www.facebook.com' })`.
+  - Los specs que usan la configuración manual llaman a `openManualWhatsApp(page)`.
+- **Pendiente del dueño del despliegue**:
+  - Registrar la app como Tech Provider, con la verificación de la empresa y los permisos `whatsapp_business_management` y `whatsapp_business_messaging`.
+  - Crear la configuración de Facebook Login for Business (Embedded Signup v4; la v2 y la v3 se retiraron el 15 de octubre de 2026).
+  - Autorizar el dominio del panel en el SDK.
+- **Verificación**: unitarios backend **121/121** y frontend **87/87**; integración **97/97 (1 omitida)**; E2E **111/111** en dos corridas completas seguidas; paridad es/en **876/876**.
 
 ---
 
@@ -282,7 +326,7 @@ Base común para WhatsApp e Instagram: entrada normalizada e idempotente, salida
 
 - **Ubicación**: `.archify/<tipo>-<tema>-<fecha>/` con `candidate.json` (fuente editable) y **un solo HTML final**: en la subcarpeta `review-N` o, si no la hay, en la raíz de la carpeta. Los borradores superados se eliminaron en v0.4.32; al regenerar, borra la revisión anterior.
 - **Contenido**: arquitectura del sistema; workflows de auth/onboarding y de control de herramientas; secuencias de mensaje→bot y de confirmación del cliente; dataflows de ingesta RAG y de analítica/insights; lifecycles de conversación, fuente de conocimiento y ejecución de herramienta.
-- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.12.0 (`review-8`).
+- **Hoja de ruta (v0.4.31)**: `.archify/workflow-roadmap-20261019-175109/roadmap.html` (HTML final en la raíz de su carpeta). El README incrusta su exportación **SVG · Auto** en `docs/roadmap.svg`, con la leyenda traducida a mano a "Leyenda". **Al cerrar una etapa o cambiar el plan**, actualiza el `candidate.json` (el tipo de nodo marca el estado: `backend` = entregado, `messagebus` = siguiente, `cloud` = futuro, `security` = hito), vuelve a ejecutar `finalize`, exporta el SVG con `node .archify/export-svg.mjs .archify/workflow-roadmap-20261019-175109/roadmap.html docs/roadmap.svg --leyenda` (pulsa Export → SVG · Auto en Chromium y traduce la leyenda) y actualiza la sección "Estado y hoja de ruta" del README. El esquema de workflow admite como máximo 6 columnas (`col` 0–5). Última actualización: v0.13.0 (`review-9`).
 - **Regenerar**: `node ~/.claude/skills/archify/bin/archify.mjs finalize <tipo> candidate.json <salida.html> --quality showcase --out-dir <carpeta>/review-N`. Un candidato modificado necesita un `--out-dir` nuevo. En el sandbox de Claude Code, antepón `NO_PROXY=localhost,127.0.0.1,::1`.
 - **Límites**: los diagramas del sistema se redactaron cuando aún no había remoto, así que no fijan fuentes por commit. Ahora existe `origin` (`git@github.com:jdazadev/mitchbot.git`) y los nuevos diagramas pueden usar `meta.repository` + `--repo-root`. Si cambia el flujo, actualiza el `candidate.json` correspondiente.
 
@@ -1021,7 +1065,7 @@ Usuario abre la app
 | **Agents** | `GET /`, `POST /`, `PUT /:id`, `DELETE /:id` | Agentes IA |
 | **AI Models** | `GET /remote/openrouter`, `GET /providers/active/:type`, `GET /agent/models` | Listado de modelos (OpenRouter) y proveedor activo |
 | **Config** | `GET /`, `PUT /` | Configuración global |
-| **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /`, `GET /channels/status`, `GET /whatsapp/templates` | Gestión de proyectos (multi-proyecto por usuario); `PUT` responde 409 si el número de WhatsApp o la cuenta de Instagram ya son de otro proyecto |
+| **Project** | `GET /`, `GET /check`, `GET /list`, `PUT /active`, `POST /`, `PUT /`, `GET /channels/status`, `GET /whatsapp/templates`, `GET /whatsapp/signup/config`, `POST /whatsapp/signup`, `DELETE /whatsapp/signup` (registro integrado, solo admin) | Gestión de proyectos (multi-proyecto por usuario); `PUT` responde 409 si el número de WhatsApp o la cuenta de Instagram ya son de otro proyecto |
 | **Appointments** | `GET /`, `GET /:id`, `PATCH /:id/status` | Citas agendadas por el agente |
 | **Orders** | `GET /`, `GET /:id`, `PATCH /:id/status` | Pedidos creados por el agente |
 | **Tools** | `GET /`, `PUT /config` | Catálogo de operaciones y configuración por proyecto |
@@ -1052,6 +1096,7 @@ Usuario abre la app
 | `appointments` | date, time, service, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
 | `orders` | items, total, currency, contactId, conversationId, status | Estados: pending, confirmed, completed, cancelled |
 | `tool_executions` | projectId, conversationId, toolId, operation, binding, params, result, status, decisionBy, decisionAt | Historial y aprobación, aislados por proyecto |
+| `channel_credentials` | projectId, channel, account, wabaId, token (cifrado), pin (cifrado), mode, status, displayPhone, verifiedName | Conexiones del registro integrado de WhatsApp; nunca salen al panel |
 | `push_subscriptions` | userId, endpoint (único), keys, userAgent, lastSuccessAt | Dispositivos suscritos a Web Push |
 | `payments` | projectId, conversationId, contactId, amount, currency, method, status | Intenciones de cobro; nunca mueve dinero |
 | `config` | key, value | Key-value store dinámico |
@@ -1185,6 +1230,10 @@ WHATSAPP_APP_SECRET=<app-secret-de-meta>
 WHATSAPP_WABA_ID=<waba-por-defecto-para-plantillas>
 WHATSAPP_API_URL=https://graph.facebook.com
 WHATSAPP_API_VERSION=v21.0
+# Registro integrado de Meta (opcionales; activan "Conectar WhatsApp" con WHATSAPP_APP_SECRET)
+META_APP_ID=<id-de-la-app-de-meta>
+WHATSAPP_SIGNUP_CONFIG_ID=<config-de-facebook-login-for-business>
+CREDENTIALS_KEY=<openssl rand -base64 32>
 # Instagram Messaging API (opcionales; el ID de la cuenta se guarda por proyecto)
 INSTAGRAM_TOKEN=<token-de-la-cuenta>
 INSTAGRAM_VERIFY_TOKEN=<token-de-verificación-del-webhook>
@@ -1239,7 +1288,8 @@ PUSH_ALLOWED_HOSTS=<solo-pruebas>
 - [x] Chat widget embebible con dominios autorizados y acceso por token al chat público (v0.10.0)
 - [x] Métricas de SLA con avisos de esperas vencidas (v0.11.0)
 - [x] Notificaciones push (Web Push) con preferencias por tipo (v0.12.0)
+- [x] Registro integrado de WhatsApp (Embedded Signup) con coexistencia y tokens cifrados por proyecto (v0.13.0)
 
 ### Hacia la v1.0 💡
 - [ ] Integración con CRM externos (pendiente de elegir proveedor)
-- [ ] Validación de WhatsApp, Instagram y push con cuentas reales
+- [ ] Validación de WhatsApp (incluido el registro integrado como Tech Provider), Instagram y push con cuentas reales

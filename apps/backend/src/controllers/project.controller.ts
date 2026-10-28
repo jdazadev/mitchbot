@@ -2,11 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import { projectService } from '../services/project.service';
 import { userService } from '../services/user.service';
 import { z } from 'zod';
+import env from '../config/env';
 import { InvalidOriginError, MAX_ALLOWED_ORIGINS, normalizeOrigins } from '../widget/config';
 import { TemplateError, templateService } from '../services/template.service';
 import { whatsAppServerStatus } from '../channels/whatsapp';
 import { instagramServerStatus } from '../channels/instagram';
 import { isAccountTaken, type MetaChannel } from '../channels/meta/routing';
+import { signupPayloadSchema } from '../channels/whatsapp/signup';
+import { isSignupEnabled, SignupError, whatsAppSignupService } from '../services/whatsapp-signup.service';
 
 /** Verifica si el usuario autenticado tiene proyectos */
 export const checkProject = async (req: Request, res: Response, next: NextFunction) => {
@@ -189,6 +192,18 @@ export const updateProject = async (req: Request, res: Response, next: NextFunct
       }
     }
 
+    // Un número conectado con el registro integrado solo cambia desconectándolo.
+    const whatsapp = data.config?.whatsapp;
+    if (whatsapp && (whatsapp.phoneNumberId !== undefined || whatsapp.wabaId !== undefined)) {
+      const connection = await whatsAppSignupService.connection(projectId);
+      if (connection && (
+        (whatsapp.phoneNumberId !== undefined && whatsapp.phoneNumberId !== connection.account)
+        || (whatsapp.wabaId !== undefined && whatsapp.wabaId !== connection.wabaId)
+      )) {
+        return res.status(409).json({ error: 'El número está conectado con Meta: desconéctalo antes de cambiarlo a mano' });
+      }
+    }
+
     const updated = await projectService.update(projectId, updateData as any);
     res.json(updated);
   } catch (error: any) {
@@ -226,9 +241,53 @@ export const setActiveProject = async (req: Request, res: Response, next: NextFu
   }
 };
 
-/** Qué canales externos tiene conectados el servidor; nunca devuelve credenciales. */
-export const getChannelsStatus = (_req: Request, res: Response) => {
-  res.json({ whatsapp: whatsAppServerStatus(), instagram: instagramServerStatus() });
+/** Qué canales externos tiene conectados el servidor y el proyecto; nunca devuelve credenciales. */
+export const getChannelsStatus = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    const connection = projectId ? await whatsAppSignupService.connection(projectId) : null;
+    res.json({ whatsapp: { ...whatsAppServerStatus(), connection }, instagram: instagramServerStatus() });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** GET /api/project/whatsapp/signup/config — lo que necesita el SDK de Facebook en el panel */
+export const getWhatsAppSignupConfig = (_req: Request, res: Response) => {
+  const enabled = isSignupEnabled();
+  res.json({
+    enabled,
+    appId: enabled ? env.META_APP_ID : null,
+    configId: enabled ? env.WHATSAPP_SIGNUP_CONFIG_ID : null,
+    apiVersion: env.WHATSAPP_API_VERSION,
+  });
+};
+
+/** POST /api/project/whatsapp/signup — completa el alta tras la ventana de Meta */
+export const completeWhatsAppSignup = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(404).json({ error: 'No hay proyecto configurado' });
+    const payload = signupPayloadSchema.parse(req.body);
+    const connection = await whatsAppSignupService.complete(projectId, payload, (req as any).userId);
+    res.json({ connection });
+  } catch (error) {
+    if (error instanceof SignupError) return res.status(error.status).json({ error: error.message });
+    next(error);
+  }
+};
+
+/** DELETE /api/project/whatsapp/signup — desconecta el número del proyecto */
+export const disconnectWhatsAppSignup = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = (req as any).projectId as string | undefined;
+    if (!projectId) return res.status(404).json({ error: 'No hay proyecto configurado' });
+    await whatsAppSignupService.disconnect(projectId);
+    res.status(204).end();
+  } catch (error) {
+    if (error instanceof SignupError) return res.status(error.status).json({ error: error.message });
+    next(error);
+  }
 };
 
 /** GET /api/project/whatsapp/templates — plantillas aprobadas de la WABA del proyecto */

@@ -23,7 +23,7 @@ export function postSignedWebhook(
 }
 
 /** Mensajes que la Graph API simulada recibió para un destinatario. */
-export async function sentTo(api: APIRequestContext, to: string): Promise<{ id: string; text: string; phoneNumberId: string; channel: string }[]> {
+export async function sentTo(api: APIRequestContext, to: string): Promise<{ id: string; text: string; phoneNumberId: string; channel: string; token: string }[]> {
   const res = await api.get(`${E2E.stubUrl}/__meta/messages?to=${to}`);
   return res.json();
 }
@@ -46,4 +46,15 @@ export async function openConversation(page: Page, clientName: string) {
 export async function conversationOf(api: APIRequestContext, headers: Record<string, string>, identifier: string) {
   const conversations = await (await api.get('conversations', { headers })).json();
   return conversations.find((c: any) => c.clientInfo?.identifier === identifier);
+}
+
+/**
+ * Con el registro integrado activo, la configuración manual de WhatsApp está plegada:
+ * espera a que Canales sepa si lo hay y la despliega.
+ */
+export async function openManualWhatsApp(page: Page) {
+  await expect(page.getByTestId('wa-signup')).toBeVisible();
+  const manual = page.getByTestId('wa-manual');
+  if (!(await manual.evaluate((element) => (element as HTMLDetailsElement).open))) await manual.locator('summary').click();
+  await expect(page.getByTestId('whatsapp-connection')).toBeVisible();
 }

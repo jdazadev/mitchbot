@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures';
 import type { APIRequestContext } from '@playwright/test';
 import { E2E } from '../helpers/config';
 import { createProjectOwner, signIn, type ProjectOwner } from '../helpers/owner';
-import { digits, failSendsTo, openConversation, postSignedWebhook, recoverSendsTo, sentTo } from '../helpers/meta';
+import { digits, failSendsTo, openConversation, openManualWhatsApp, postSignedWebhook, recoverSendsTo, sentTo } from '../helpers/meta';
 
 /** Propietario con WhatsApp habilitado y un número propio. */
 async function ownerWithNumber(api: APIRequestContext) {
@@ -167,6 +167,7 @@ test.describe('Canal de WhatsApp', () => {
     const { context, page } = await signIn(browser, owner);
 
     await page.goto('/settings?tab=channels');
+    await openManualWhatsApp(page);
     const connection = page.getByTestId('whatsapp-connection');
     await expect(connection.getByTestId('whatsapp-server-status')).toContainText('El servidor tiene WhatsApp conectado');
     await expect(connection.getByLabel('URL del webhook')).toHaveValue(`${E2E.backendUrl}/api/webhooks/whatsapp`);
@@ -180,6 +181,7 @@ test.describe('Canal de WhatsApp', () => {
     await expect(page.getByText('Cambios sin guardar')).toHaveCount(0);
 
     await page.reload();
+    await openManualWhatsApp(page);
     await expect(page.getByTestId('whatsapp-connection').getByLabel('Phone Number ID')).toHaveValue(phoneNumberId);
     const saved = await (await api.get('project', { headers: owner.headers })).json();
     expect(saved.config.whatsapp.phoneNumberId).toBe(phoneNumberId);

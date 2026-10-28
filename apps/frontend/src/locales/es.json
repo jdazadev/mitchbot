@@ -802,7 +802,32 @@
         "wabaLabel": "ID de la cuenta de WhatsApp Business (WABA)",
         "wabaPlaceholder": "Ej. 102290129340398",
         "wabaHint": "Opcional. Lo necesitan las plantillas; lo encuentras en Meta → WhatsApp → Configuración de la API. Si lo dejas vacío se usa WHATSAPP_WABA_ID del servidor.",
-        "wabaInvalid": "El ID de la cuenta de WhatsApp Business solo contiene dígitos."
+        "wabaInvalid": "El ID de la cuenta de WhatsApp Business solo contiene dígitos.",
+        "manualSetup": "Configuración manual (avanzado)",
+        "signup": {
+          "intro": "Inicia sesión con Facebook, elige tu empresa y verifica tu número con un código. Tarda unos minutos y no tienes que copiar nada. Si ya usas WhatsApp Business en el móvil, podrás seguir usándolo.",
+          "connect": "Conectar WhatsApp",
+          "connecting": "Conectando…",
+          "reconnect": "Reconectar",
+          "disconnect": "Desconectar",
+          "disconnectTitle": "¿Desconectar WhatsApp?",
+          "disconnectBody": "Mitchbot dejará de recibir y responder los mensajes de este número. Las conversaciones guardadas se conservan y puedes volver a conectarlo cuando quieras.",
+          "noName": "Nombre pendiente de verificación",
+          "invalid": "Meta rechazó la conexión (caducó o se quitó el permiso). Los mensajes no se entregan hasta que la reconectes.",
+          "coexistenceHint": "Este número sigue funcionando en la app WhatsApp Business del móvil; lo que respondas allí también llega al cliente.",
+          "mode": {
+            "cloud": "Cloud API",
+            "coexistence": "Coexistencia"
+          },
+          "errors": {
+            "blocked": "El navegador bloqueó la ventana de Meta. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.",
+            "no_number": "La conexión terminó sin un número de teléfono. Vuelve a intentarlo y añade un número en la ventana de Meta.",
+            "meta": "Meta no pudo completar la conexión. Inténtalo de nuevo en unos minutos.",
+            "timeout": "Meta no confirmó el número a tiempo. Inténtalo de nuevo.",
+            "sdk": "No se pudo cargar Facebook. Revisa tu conexión o si un bloqueador lo impide.",
+            "disconnect": "No se pudo desconectar WhatsApp. Inténtalo de nuevo."
+          }
+        }
       },
       "instagram": {
         "serverReady": "El servidor tiene Instagram conectado.",
@@ -866,6 +891,8 @@
     "toasts": {
       "slugUpdated": "Slug actualizado correctamente",
       "linkCopied": "Enlace copiado",
+      "whatsAppConnected": "Número de WhatsApp conectado",
+      "whatsAppDisconnected": "WhatsApp desconectado",
       "agentUpdated": "Agente actualizado correctamente",
       "channelsUpdated": "Canales actualizados",
       "optionsUpdated": "Opciones actualizadas"

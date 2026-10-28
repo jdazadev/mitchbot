@@ -25,7 +25,8 @@ export interface Project {
       autoCreateContact: boolean;
     };
     tools?: ToolProjectConfig;
-    // Número de WhatsApp Business que atiende el proyecto; las credenciales vienen del entorno
+    // Número de WhatsApp Business que atiende el proyecto. Su token es el del entorno o, si se conectó
+    // con el registro integrado, el de `channel_credentials` (nunca en `config`).
     whatsapp?: {
       phoneNumberId?: string | null;
       /** Cuenta de WhatsApp Business del número: de ella salen las plantillas aprobadas. */

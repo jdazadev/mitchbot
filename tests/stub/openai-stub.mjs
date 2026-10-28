@@ -17,6 +17,12 @@
  *   - POST /meta/:version/:accountId/messages -> acepta el envío y devuelve un message_id
  *   - GET  /meta/:version/:igsid             -> perfil `{ name, username }` del cliente
  *
+ * Registro integrado de WhatsApp (Embedded Signup):
+ *   - GET  /meta/:version/oauth/access_token -> canjea `code` por `tok-<code>` (`caducado` falla)
+ *   - POST|DELETE /meta/:version/:waba/subscribed_apps, POST /meta/:version/:phone/register
+ *   - GET  /meta/:version/:phone?fields=display_phone_number,... -> número visible y nombre
+ *   - GET  /__meta/signup (llamadas) y POST /__meta/revoke { token } (revoca un token)
+ *
  *
  * Plantillas de WhatsApp:
  *   - GET /meta/:version/:wabaId/message_templates -> catálogo fijo en dos páginas (`paging.next`)
@@ -60,6 +66,11 @@ const stats = { chatCompletions: 0, embeddings: 0, models: 0, requests: [] };
 const META_TOKEN = process.env.STUB_META_TOKEN || 'e2e-wa-token';
 const IG_TOKEN = process.env.STUB_IG_TOKEN || 'e2e-ig-token';
 const meta = { sent: [], failures: new Map(), counter: 0 };
+// Registro integrado (Embedded Signup): tokens de negocio emitidos y llamadas recibidas.
+const META_APP_ID = process.env.STUB_META_APP_ID || '100200300';
+const META_APP_SECRET = process.env.STUB_META_APP_SECRET || 'e2e-wa-secret';
+const signup = { tokens: new Set(), calls: [] };
+const isWhatsAppToken = (header) => header === `Bearer ${META_TOKEN}` || [...signup.tokens].some((token) => header === `Bearer ${token}`);
 
 // Pushes recibidos por dispositivo y dispositivos caducados (responden 410).
 const push = { received: new Map(), gone: new Set() };
@@ -422,13 +433,63 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, { status: 'gone', id: body.id });
   }
 
+  // Registro integrado: canje del código, suscripción de la app, registro y datos del número.
+  if (req.method === 'GET' && /^\/meta\/v\d+\.\d+\/oauth\/access_token$/.test(url.pathname)) {
+    const code = url.searchParams.get('code') || '';
+    signup.calls.push({ step: 'exchange', code });
+    if (url.searchParams.get('client_id') !== META_APP_ID || url.searchParams.get('client_secret') !== META_APP_SECRET) {
+      return sendJson(res, 400, { error: { message: 'Error validating client secret.', type: 'OAuthException', code: 1 } });
+    }
+    if (!code || code === 'caducado') {
+      return sendJson(res, 400, { error: { message: 'This authorization code has expired.', type: 'OAuthException', code: 100 } });
+    }
+    const token = `tok-${code}`;
+    signup.tokens.add(token);
+    return sendJson(res, 200, { access_token: token, token_type: 'bearer' });
+  }
+
+  const subscribed = url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)\/subscribed_apps$/);
+  if (subscribed && (req.method === 'POST' || req.method === 'DELETE')) {
+    if (!isWhatsAppToken(req.headers.authorization)) return sendJson(res, 401, { error: { message: 'Invalid OAuth access token.', code: 190 } });
+    signup.calls.push({ step: req.method === 'POST' ? 'subscribe' : 'unsubscribe', wabaId: subscribed[1], token: req.headers.authorization.slice(7) });
+    return sendJson(res, 200, { success: true });
+  }
+
+  const register = req.method === 'POST' && url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)\/register$/);
+  if (register) {
+    const body = await readBody(req);
+    if (!isWhatsAppToken(req.headers.authorization)) return sendJson(res, 401, { error: { message: 'Invalid OAuth access token.', code: 190 } });
+    if (body.messaging_product !== 'whatsapp' || !/^\d{6}$/.test(String(body.pin))) {
+      return sendJson(res, 400, { error: { message: 'Invalid parameter', code: 100 } });
+    }
+    signup.calls.push({ step: 'register', phoneNumberId: register[1], token: req.headers.authorization.slice(7) });
+    return sendJson(res, 200, { success: true });
+  }
+
+  const phoneInfo = req.method === 'GET' && url.searchParams.get('fields')?.includes('display_phone_number')
+    && url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)$/);
+  if (phoneInfo) {
+    if (!isWhatsAppToken(req.headers.authorization)) return sendJson(res, 401, { error: { message: 'Invalid OAuth access token.', code: 190 } });
+    const digits = phoneInfo[1].slice(-4);
+    return sendJson(res, 200, { id: phoneInfo[1], display_phone_number: `+57 300 000 ${digits}`, verified_name: `Negocio ${digits}` });
+  }
+
+  if (req.method === 'GET' && url.pathname === '/__meta/signup') return sendJson(res, 200, signup.calls);
+
+  // Simula que el cliente quitó el permiso a la app: el token deja de valer.
+  if (req.method === 'POST' && url.pathname === '/__meta/revoke') {
+    const body = await readBody(req);
+    signup.tokens.delete(String(body.token));
+    return sendJson(res, 200, { status: 'revoked', token: body.token });
+  }
+
   const metaSend = req.method === 'POST' && url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)\/messages$/);
   if (metaSend) {
     const body = await readBody(req);
     // WhatsApp envía `to` + `text.body`; Instagram, `recipient.id` + `message.text`.
     const instagram = !!body.recipient;
-    const token = instagram ? IG_TOKEN : META_TOKEN;
-    if (req.headers.authorization !== `Bearer ${token}`) {
+    const authorized = instagram ? req.headers.authorization === `Bearer ${IG_TOKEN}` : isWhatsAppToken(req.headers.authorization);
+    if (!authorized) {
       return sendJson(res, 401, { error: { message: 'Invalid OAuth access token.', type: 'OAuthException', code: 190 } });
     }
     const to = instagram ? body.recipient.id : body.to;
@@ -455,7 +516,7 @@ const server = http.createServer(async (req, res) => {
       : body.type === 'template'
         ? [`plantilla:${body.template.name}`, ...((body.template.components || []).flatMap((c) => c.parameters.map((p) => p.text)))].join('|')
         : body.text?.body;
-    meta.sent.push({ id, channel: instagram ? 'instagram' : 'whatsapp', phoneNumberId: metaSend[1], to, text, at: new Date().toISOString() });
+    meta.sent.push({ id, channel: instagram ? 'instagram' : 'whatsapp', phoneNumberId: metaSend[1], to, text, token: req.headers.authorization.slice(7), at: new Date().toISOString() });
     if (meta.sent.length > 500) meta.sent.shift();
     if (instagram) return sendJson(res, 200, { recipient_id: to, message_id: id });
     return sendJson(res, 200, { messaging_product: 'whatsapp', contacts: [{ input: body.to, wa_id: body.to }], messages: [{ id }] });
@@ -463,7 +524,7 @@ const server = http.createServer(async (req, res) => {
 
   const templateList = req.method === 'GET' && url.pathname.match(/^\/meta\/v\d+\.\d+\/([^/]+)\/message_templates$/);
   if (templateList) {
-    if (req.headers.authorization !== `Bearer ${META_TOKEN}`) {
+    if (!isWhatsAppToken(req.headers.authorization)) {
       return sendJson(res, 401, { error: { message: 'Invalid OAuth access token.', code: 190 } });
     }
     // Dos páginas, como la Graph API cuando hay más plantillas que `limit`.

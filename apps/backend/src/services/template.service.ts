@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb';
 import env from '../config/env';
 import { getConversationsCollection } from '../models/conversation.model';
 import { projectService } from './project.service';
+import { whatsAppSignupService } from './whatsapp-signup.service';
 import { chatService } from './chat.service';
 import { isExternal } from '../channels/registry';
 import { ChannelError } from '../channels/types';
@@ -33,10 +34,12 @@ export function setTemplateClientForTests(options: TemplateClientOptions | undef
   cache.clear();
 }
 
-function clientOptions(): TemplateClientOptions {
+/** Cliente con el token de la conexión del proyecto o, si no tiene, el del entorno. */
+async function clientOptions(projectId: string): Promise<TemplateClientOptions> {
   if (clientOverride) return clientOverride;
-  if (!env.WHATSAPP_TOKEN) throw new TemplateError(503, 'El servidor no tiene WhatsApp conectado (falta WHATSAPP_TOKEN)');
-  return { token: env.WHATSAPP_TOKEN, apiUrl: env.WHATSAPP_API_URL, apiVersion: env.WHATSAPP_API_VERSION };
+  const token = await whatsAppSignupService.tokenForProject(projectId);
+  if (!token) throw new TemplateError(503, 'El proyecto no tiene WhatsApp conectado: conéctalo en Configuración → Canales');
+  return { token, apiUrl: env.WHATSAPP_API_URL, apiVersion: env.WHATSAPP_API_VERSION };
 }
 
 async function wabaFor(projectId: string) {
@@ -55,7 +58,7 @@ export const templateService = {
     const cached = cache.get(wabaId);
     if (!refresh && cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.templates;
     try {
-      const templates = await fetchApprovedTemplates(clientOptions(), wabaId);
+      const templates = await fetchApprovedTemplates(await clientOptions(projectId), wabaId);
       cache.set(wabaId, { at: Date.now(), templates });
       return templates;
     } catch (error) {

@@ -25,8 +25,18 @@ export function classifyWhatsAppError(status: number, body: any, retryAfter?: st
   return new ChannelError(describeWhatsAppError(code || undefined, detail || `HTTP ${status}`), 'permanent');
 }
 
+/** El token es fijo (el del entorno) o se resuelve por número (registro integrado). */
+export type TokenSource = string | ((account: string) => Promise<string | null | undefined> | string | null | undefined);
+
+/** Meta rechazó el token: caducado, revocado o sin permisos sobre el número. */
+export function isAuthError(status: number, body: any) {
+  return status === 401 || Number(body?.error?.code) === 190;
+}
+
 export interface WhatsAppAdapterOptions {
-  token: string;
+  token: TokenSource;
+  /** Se llama cuando Meta rechaza el token de un número. */
+  onAuthError?: (account: string) => void;
   apiUrl: string;
   apiVersion: string;
   fetch?: typeof fetch;
@@ -44,12 +54,21 @@ export function createWhatsAppAdapter(options: WhatsAppAdapterOptions): ChannelA
       if (!message.account) {
         throw new ChannelError('La conversación no tiene un número de WhatsApp asociado', 'permanent');
       }
+      let token: string | null | undefined;
+      try {
+        token = typeof options.token === 'string' ? options.token : await options.token(message.account);
+      } catch (error: any) {
+        throw new ChannelError(`No se pudo leer la conexión de WhatsApp: ${error?.message || error}`, 'transient');
+      }
+      if (!token) {
+        throw new ChannelError('El número de WhatsApp no tiene una conexión activa: vuelve a conectarlo en Configuración → Canales', 'permanent');
+      }
 
       let response: Response;
       try {
         response = await request(`${baseUrl}/${options.apiVersion}/${encodeURIComponent(message.account)}/messages`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${options.token}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             messaging_product: 'whatsapp',
             recipient_type: 'individual',
@@ -72,6 +91,7 @@ export function createWhatsAppAdapter(options: WhatsAppAdapterOptions): ChannelA
       }
 
       const body = await response.json().catch(() => ({}));
+      if (!response.ok && isAuthError(response.status, body)) options.onAuthError?.(message.account);
       if (!response.ok) throw classifyWhatsAppError(response.status, body, response.headers.get('retry-after'));
       return { externalId: body?.messages?.[0]?.id };
     },

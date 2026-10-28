@@ -8,8 +8,17 @@ import {
   type AgentPersonality,
   type ProviderConfig,
 } from '../services/settings.service';
-import { projectService, channelWebhookUrl, API_BASE, type ChannelsStatus, type Project } from '../services/project.service';
+import {
+  projectService,
+  channelWebhookUrl,
+  API_BASE,
+  type ChannelsStatus,
+  type Project,
+  type WhatsAppConnection,
+  type WhatsAppSignupConfig,
+} from '../services/project.service';
 import ChannelConnection from '../components/settings/ChannelConnection.vue';
+import WhatsAppSignup from '../components/settings/WhatsAppSignup.vue';
 import WidgetSettings from '../components/settings/WidgetSettings.vue';
 import { invalidOrigins, originLines, type WidgetForm } from '../lib/widget';
 import { isValidAccountId, type MetaChannel } from '../lib/channels';
@@ -267,6 +276,36 @@ const webhookUrls: Record<MetaChannel, string> = {
 };
 const isMetaChannel = (key: string): key is MetaChannel => key === 'whatsapp' || key === 'instagram';
 
+/** Registro integrado de Meta: solo lo reciben los administradores y si el servidor lo ofrece. */
+const signupConfig = ref<WhatsAppSignupConfig>({ enabled: false, appId: null, configId: null, apiVersion: 'v21.0' });
+/** Hasta saber si hay registro integrado, WhatsApp no muestra ni el botón ni el formulario manual. */
+const signupLoaded = ref(false);
+const whatsAppConnection = computed(() => channelsStatus.value?.whatsapp.connection ?? null);
+const manualCollapsed = (key: string) => key === 'whatsapp' && signupConfig.value.enabled;
+
+/**
+ * El servidor ya guardó el número y activó el canal: se refleja en el formulario sin
+ * marcarlo como cambio pendiente (salvo que ya hubiera otros).
+ */
+function applyWhatsAppAccount(connection: WhatsAppConnection | null) {
+  const clean = !isChannelsDirty.value;
+  channelAccounts.value.whatsapp = connection?.account ?? '';
+  whatsAppWaba.value = connection?.wabaId ?? '';
+  if (connection) channels.value[0].enabled = true;
+  if (channelsStatus.value) channelsStatus.value = { ...channelsStatus.value, whatsapp: { ...channelsStatus.value.whatsapp, connection } };
+  if (clean) snapshotChannels();
+}
+
+function onWhatsAppConnected(connection: WhatsAppConnection) {
+  applyWhatsAppAccount(connection);
+  showSuccessMsg(t('settings.toasts.whatsAppConnected'));
+}
+
+function onWhatsAppDisconnected() {
+  applyWhatsAppAccount(null);
+  showSuccessMsg(t('settings.toasts.whatsAppDisconnected'));
+}
+
 
 // ===================== OPTIONS =====================
 const optionsForm = ref({ autoCreateContact: true });
@@ -298,6 +337,10 @@ onMounted(async () => {
       settingsService.getActiveProvider('ocr').catch(() => null),
     ]);
     projectService.getChannelsStatus().then((status) => (channelsStatus.value = status)).catch(() => {});
+    projectService.getWhatsAppSignupConfig()
+      .then((config) => (signupConfig.value = config))
+      .catch(() => {})
+      .finally(() => (signupLoaded.value = true));
 
     resolvedModels.value = { llm: llmProvider, embedding: embeddingProvider, ocr: ocrProvider };
 
@@ -1104,37 +1147,55 @@ async function handleSaveOptions() {
                 <ASwitch v-model="channel.enabled" :aria-label="channel.name" />
               </div>
 
-              <!-- Canales de Meta: cuenta del proyecto y webhook que hay que registrar en Meta -->
-              <ChannelConnection
-                v-if="isMetaChannel(channel.key)"
-                v-model="channelAccounts[channel.key]"
-                :channel="channel.key"
-                :status="channelsStatus?.[channel.key]"
-                :webhook-url="webhookUrls[channel.key]"
-                @copied="showSuccessMsg(t('settings.toasts.linkCopied'))"
-                @copy-failed="showErrorMsg(t('settings.errors.copyLink'))"
+              <!-- WhatsApp con el registro integrado de Meta: un botón, sin copiar identificadores -->
+              <WhatsAppSignup
+                v-if="channel.key === 'whatsapp' && signupConfig.enabled"
+                :config="signupConfig"
+                :connection="whatsAppConnection"
+                @connected="onWhatsAppConnected"
+                @disconnected="onWhatsAppDisconnected"
+              />
+              <!-- Canales de Meta: cuenta del proyecto y webhook que hay que registrar en Meta.
+                   Con el registro integrado, la configuración manual queda plegada. -->
+              <component
+                :is="manualCollapsed(channel.key) ? 'details' : 'div'"
+                v-if="isMetaChannel(channel.key) && !(channel.key === 'whatsapp' && (whatsAppConnection || !signupLoaded))"
+                :class="manualCollapsed(channel.key) ? 'mt-4' : ''"
+                :data-testid="manualCollapsed(channel.key) ? 'wa-manual' : undefined"
               >
-                <template v-if="channel.key === 'whatsapp'" #extra>
-                  <div class="flex flex-col gap-1.5">
-                    <label for="whatsapp-waba" class="text-xs font-semibold text-ink-2">{{ t('settings.channels.whatsapp.wabaLabel') }}</label>
-                    <input
-                      id="whatsapp-waba"
-                      v-model="whatsAppWaba"
-                      class="field"
-                      inputmode="numeric"
-                      autocomplete="off"
-                      :placeholder="t('settings.channels.whatsapp.wabaPlaceholder')"
-                      :aria-invalid="wabaInvalid"
-                      aria-describedby="whatsapp-waba-hint"
-                    />
-                    <p id="whatsapp-waba-hint" class="text-xs" :class="wabaInvalid ? 'text-[color:var(--danger)]' : 'text-ink-3'">
-                      {{ wabaInvalid ? t('settings.channels.whatsapp.wabaInvalid') : t('settings.channels.whatsapp.wabaHint') }}
-                    </p>
-                  </div>
-                </template>
-              </ChannelConnection>
+                <summary v-if="manualCollapsed(channel.key)" class="cursor-pointer text-xs font-semibold text-ink-2">
+                  {{ t('settings.channels.whatsapp.manualSetup') }}
+                </summary>
+                <ChannelConnection
+                  v-model="channelAccounts[channel.key]"
+                  :channel="channel.key"
+                  :status="channelsStatus?.[channel.key]"
+                  :webhook-url="webhookUrls[channel.key]"
+                  @copied="showSuccessMsg(t('settings.toasts.linkCopied'))"
+                  @copy-failed="showErrorMsg(t('settings.errors.copyLink'))"
+                >
+                  <template v-if="channel.key === 'whatsapp'" #extra>
+                    <div class="flex flex-col gap-1.5">
+                      <label for="whatsapp-waba" class="text-xs font-semibold text-ink-2">{{ t('settings.channels.whatsapp.wabaLabel') }}</label>
+                      <input
+                        id="whatsapp-waba"
+                        v-model="whatsAppWaba"
+                        class="field"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        :placeholder="t('settings.channels.whatsapp.wabaPlaceholder')"
+                        :aria-invalid="wabaInvalid"
+                        aria-describedby="whatsapp-waba-hint"
+                      />
+                      <p id="whatsapp-waba-hint" class="text-xs" :class="wabaInvalid ? 'text-[color:var(--danger)]' : 'text-ink-3'">
+                        {{ wabaInvalid ? t('settings.channels.whatsapp.wabaInvalid') : t('settings.channels.whatsapp.wabaHint') }}
+                      </p>
+                    </div>
+                  </template>
+                </ChannelConnection>
+              </component>
               <WidgetSettings
-                v-else-if="channel.key === 'web' && project?.slug"
+                v-if="channel.key === 'web' && project?.slug"
                 v-model="widgetForm"
                 :slug="project.slug"
                 :api-base="API_BASE"

@@ -37,7 +37,7 @@
   "phases": [
     {
       "id": "entregado",
-      "label": "Entregado · v0.1 – v0.12",
+      "label": "Entregado · v0.1 – v0.13",
       "fromCol": 0,
       "toCol": 4
     },
@@ -170,10 +170,10 @@
       "lane": "canales",
       "col": 4,
       "type": "backend",
-      "label": "Notificaciones push",
-      "sublabel": "Web Push al equipo",
-      "width": 160,
-      "tag": "v0.12"
+      "label": "Push + alta WhatsApp",
+      "sublabel": "Web Push · registro integrado",
+      "width": 170,
+      "tag": "v0.12 – v0.13"
     }
   ],
   "edges": [
@@ -243,9 +243,9 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "Dónde estamos · v0.12.0",
+      "title": "Dónde estamos · v0.13.0",
       "items": [
-        "Web, widget, WhatsApp e Instagram con plantillas, exportación, SLA y notificaciones push",
+        "Web, widget, WhatsApp (conectado con un botón) e Instagram con plantillas, exportación, SLA y notificaciones push",
         "Pasarela de canales con reintentos y tests unitarios, de integración y E2E"
       ]
     },
@@ -254,7 +254,7 @@
       "title": "Qué falta para la v1.0",
       "items": [
         "Integración con un CRM externo (elegir proveedor)",
-        "Validar WhatsApp, Instagram y push con cuentas reales"
+        "Validar WhatsApp (como Tech Provider), Instagram y push con cuentas reales"
       ]
     }
   ]

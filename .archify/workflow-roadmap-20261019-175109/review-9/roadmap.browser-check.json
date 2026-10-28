@@ -6,11 +6,11 @@
   "status": "pass",
   "visualReview": "not-requested",
   "provenance": "current",
-  "deliveryReceiptId": "3b05c117-1b24-4ac1-ad11-4cd74248a319",
+  "deliveryReceiptId": "734ad3e3-7425-4f1c-8501-6216b6bfaa6a",
   "artifact": {
     "path": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/roadmap.html",
-    "sha256": "5adbc65fce4712e9bea8f45d49b7799c1495700a07d1ae0fbeb7786c666d3d1b",
-    "bytes": 762796
+    "sha256": "1ff51bd4fecc5cf0d46a9aa20601c7245c37776ad98d20aededa2e2e0cf75e69",
+    "bytes": 762921
   },
   "state": {
     "detail": "read",
@@ -47,15 +47,15 @@
           "bodyPaddingPx": 12,
           "headerPx": 52,
           "diagramChromePx": 78,
-          "svgPx": 625,
+          "svgPx": 620,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 124,
+            "heightPx": 123,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -64,13 +64,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 80,
-            "spaceAboveNodesPx": 40,
+            "nodeSpanPx": 79,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 124,
+            "heightPx": 123,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -78,21 +78,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 80,
-            "spaceAboveNodesPx": 40,
+            "nodeSpanPx": 79,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 124,
+            "heightPx": 123,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 80,
-            "spaceAboveNodesPx": 40,
+            "nodeSpanPx": 79,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -141,15 +141,15 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 699,
+          "svgPx": 693,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 139,
+            "heightPx": 138,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -158,13 +158,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 89,
-            "spaceAboveNodesPx": 45,
+            "nodeSpanPx": 88,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 139,
+            "heightPx": 138,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -172,21 +172,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 89,
-            "spaceAboveNodesPx": 45,
+            "nodeSpanPx": 88,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 139,
+            "heightPx": 138,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 89,
-            "spaceAboveNodesPx": 45,
+            "nodeSpanPx": 88,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -235,15 +235,15 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 848,
+          "svgPx": 841,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 168,
+            "heightPx": 167,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -252,13 +252,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 108,
+            "nodeSpanPx": 107,
             "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 168,
+            "heightPx": 167,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -266,20 +266,20 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 108,
+            "nodeSpanPx": 107,
             "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 168,
+            "heightPx": 167,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 108,
+            "nodeSpanPx": 107,
             "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           }
@@ -329,15 +329,15 @@
           "bodyPaddingPx": 64,
           "headerPx": 68,
           "diagramChromePx": 94,
-          "svgPx": 868,
+          "svgPx": 861,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 172,
+            "heightPx": 171,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -346,13 +346,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 111,
+            "nodeSpanPx": 110,
             "spaceAboveNodesPx": 55,
-            "spaceBelowNodesPx": 7
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 172,
+            "heightPx": 171,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -360,22 +360,22 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 111,
+            "nodeSpanPx": 110,
             "spaceAboveNodesPx": 55,
-            "spaceBelowNodesPx": 7
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 172,
+            "heightPx": 171,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 111,
+            "nodeSpanPx": 110,
             "spaceAboveNodesPx": 55,
-            "spaceBelowNodesPx": 7
+            "spaceBelowNodesPx": 6
           }
         ],
         "minimumProjectedNodeTextPx": 7.9,
@@ -476,15 +476,15 @@
           "bodyPaddingPx": 12,
           "headerPx": 52,
           "diagramChromePx": 78,
-          "svgPx": 625,
+          "svgPx": 620,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 124,
+            "heightPx": 123,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -493,13 +493,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 80,
-            "spaceAboveNodesPx": 40,
+            "nodeSpanPx": 79,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 124,
+            "heightPx": 123,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -507,21 +507,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 80,
-            "spaceAboveNodesPx": 40,
+            "nodeSpanPx": 79,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 124,
+            "heightPx": 123,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 80,
-            "spaceAboveNodesPx": 40,
+            "nodeSpanPx": 79,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -570,15 +570,15 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 699,
+          "svgPx": 693,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 139,
+            "heightPx": 138,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -587,13 +587,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 89,
-            "spaceAboveNodesPx": 45,
+            "nodeSpanPx": 88,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 139,
+            "heightPx": 138,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -601,21 +601,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 89,
-            "spaceAboveNodesPx": 45,
+            "nodeSpanPx": 88,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 139,
+            "heightPx": 138,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 89,
-            "spaceAboveNodesPx": 45,
+            "nodeSpanPx": 88,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -664,15 +664,15 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 848,
+          "svgPx": 841,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 168,
+            "heightPx": 167,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -681,13 +681,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 108,
+            "nodeSpanPx": 107,
             "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 168,
+            "heightPx": 167,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -695,20 +695,20 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 108,
+            "nodeSpanPx": 107,
             "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 168,
+            "heightPx": 167,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 108,
+            "nodeSpanPx": 107,
             "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           }
@@ -758,15 +758,15 @@
           "bodyPaddingPx": 64,
           "headerPx": 68,
           "diagramChromePx": 94,
-          "svgPx": 868,
+          "svgPx": 861,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 172,
+            "heightPx": 171,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -775,13 +775,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 111,
+            "nodeSpanPx": 110,
             "spaceAboveNodesPx": 55,
-            "spaceBelowNodesPx": 7
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 172,
+            "heightPx": 171,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -789,22 +789,22 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 111,
+            "nodeSpanPx": 110,
             "spaceAboveNodesPx": 55,
-            "spaceBelowNodesPx": 7
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 172,
+            "heightPx": 171,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 111,
+            "nodeSpanPx": 110,
             "spaceAboveNodesPx": 55,
-            "spaceBelowNodesPx": 7
+            "spaceBelowNodesPx": 6
           }
         ],
         "minimumProjectedNodeTextPx": 7.9,
@@ -857,15 +857,15 @@
           "bodyPaddingPx": 12,
           "headerPx": 52,
           "diagramChromePx": 78,
-          "svgPx": 625,
+          "svgPx": 620,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 124,
+            "heightPx": 123,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -874,13 +874,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 80,
-            "spaceAboveNodesPx": 40,
+            "nodeSpanPx": 79,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 124,
+            "heightPx": 123,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -888,21 +888,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 80,
-            "spaceAboveNodesPx": 40,
+            "nodeSpanPx": 79,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 124,
+            "heightPx": 123,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 80,
-            "spaceAboveNodesPx": 40,
+            "nodeSpanPx": 79,
+            "spaceAboveNodesPx": 39,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -951,15 +951,15 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 699,
+          "svgPx": 693,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 139,
+            "heightPx": 138,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -968,13 +968,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 89,
-            "spaceAboveNodesPx": 45,
+            "nodeSpanPx": 88,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-1",
-            "heightPx": 139,
+            "heightPx": 138,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -982,21 +982,21 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 89,
-            "spaceAboveNodesPx": 45,
+            "nodeSpanPx": 88,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           },
           {
             "frameId": "lane-2",
-            "heightPx": 139,
+            "heightPx": 138,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 89,
-            "spaceAboveNodesPx": 45,
+            "nodeSpanPx": 88,
+            "spaceAboveNodesPx": 44,
             "spaceBelowNodesPx": 5
           }
         ],
@@ -1045,15 +1045,15 @@
           "bodyPaddingPx": 64,
           "headerPx": 60,
           "diagramChromePx": 84,
-          "svgPx": 848,
+          "svgPx": 841,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 168,
+            "heightPx": 167,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -1062,13 +1062,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 108,
+            "nodeSpanPx": 107,
             "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 168,
+            "heightPx": 167,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -1076,20 +1076,20 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 108,
+            "nodeSpanPx": 107,
             "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 168,
+            "heightPx": 167,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 108,
+            "nodeSpanPx": 107,
             "spaceAboveNodesPx": 54,
             "spaceBelowNodesPx": 6
           }
@@ -1139,15 +1139,15 @@
           "bodyPaddingPx": 64,
           "headerPx": 68,
           "diagramChromePx": 94,
-          "svgPx": 868,
+          "svgPx": 861,
           "cardsPx": 0,
           "viewBoxHeight": 534
         },
-        "viewBoxWidth": 1150,
+        "viewBoxWidth": 1160,
         "workflowLanes": [
           {
             "frameId": "lane-0",
-            "heightPx": 172,
+            "heightPx": 171,
             "nodeCount": 5,
             "nodeIds": [
               "mvp",
@@ -1156,13 +1156,13 @@
               "resiliencia",
               "v1"
             ],
-            "nodeSpanPx": 111,
+            "nodeSpanPx": 110,
             "spaceAboveNodesPx": 55,
-            "spaceBelowNodesPx": 7
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-1",
-            "heightPx": 172,
+            "heightPx": 171,
             "nodeCount": 4,
             "nodeIds": [
               "web",
@@ -1170,22 +1170,22 @@
               "push",
               "crm"
             ],
-            "nodeSpanPx": 111,
+            "nodeSpanPx": 110,
             "spaceAboveNodesPx": 55,
-            "spaceBelowNodesPx": 7
+            "spaceBelowNodesPx": 6
           },
           {
             "frameId": "lane-2",
-            "heightPx": 172,
+            "heightPx": 171,
             "nodeCount": 3,
             "nodeIds": [
               "insights",
               "aurora",
               "exportacion"
             ],
-            "nodeSpanPx": 111,
+            "nodeSpanPx": 110,
             "spaceAboveNodesPx": 55,
-            "spaceBelowNodesPx": 7
+            "spaceBelowNodesPx": 6
           }
         ],
         "minimumProjectedNodeTextPx": 7.9,
@@ -1219,7 +1219,7 @@
     "contactSheet": null
   },
   "sidecars": {
-    "directory": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-8",
+    "directory": "/Users/jdaza/projects/mitchbot_v2/.archify/workflow-roadmap-20261019-175109/review-9",
     "receipt": "roadmap.browser-check.json",
     "files": []
   }

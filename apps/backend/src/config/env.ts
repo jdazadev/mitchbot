@@ -58,6 +58,15 @@ const envSchema = z.object({
   WHATSAPP_WABA_ID: z.string().regex(/^\d{5,25}$/).optional().or(z.literal('').transform(() => undefined)),
   WHATSAPP_API_URL: z.string().url().default('https://graph.facebook.com'),
   WHATSAPP_API_VERSION: z.string().regex(/^v\d+\.\d+$/).default('v21.0'),
+  // Registro integrado de Meta (Embedded Signup): cada proyecto conecta su número y guarda su token.
+  // Se activa con el ID de la app, la configuración de Facebook Login for Business, WHATSAPP_APP_SECRET
+  // y CREDENTIALS_KEY (32 bytes en base64), con la que se cifran los tokens guardados.
+  META_APP_ID: z.string().regex(/^\d{5,25}$/).optional().or(z.literal('').transform(() => undefined)),
+  WHATSAPP_SIGNUP_CONFIG_ID: z.string().regex(/^\d{5,25}$/).optional().or(z.literal('').transform(() => undefined)),
+  CREDENTIALS_KEY: z.string()
+    .refine(value => Buffer.from(value, 'base64').length === 32, 'CREDENTIALS_KEY debe ser de 32 bytes en base64')
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
   // Instagram Messaging API: mismo esquema que WhatsApp. graph.instagram.com (Instagram Login)
   // o graph.facebook.com (Facebook Login).
   INSTAGRAM_TOKEN: z.string().optional(),

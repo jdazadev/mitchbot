@@ -4,7 +4,7 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.12.1** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.13.0** · Historial completo en [`changelog.md`](changelog.md)
 
 ---
 
@@ -45,6 +45,7 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
 | **Clientes** | Contactos creados al responder al cliente o guardados desde una conversación. Búsqueda, filtros, orden, paginación y archivado (nunca se borran). |
 | **Panel** | Resultados (conversaciones, leads, citas, conversión), salud del bot (tasa y mediana de primera respuesta, cobertura, backlog), SLA (respuesta y resolución en plazo, esperas vencidas), automatización y volumen por remitente, con rangos de 7/30/90 días. |
 | **Widget web** | Botón de chat para la web del negocio con una línea de código: marca del proyecto, idioma del agente, historial al volver y confirmaciones de herramientas. Solo se muestra en los dominios autorizados (`frame-ancestors`). |
+| **Canales** | WhatsApp con un botón (registro integrado de Meta, coexistencia con la app WhatsApp Business y tokens cifrados por proyecto) o configuración manual; Instagram y la web en la misma bandeja. |
 | **Notificaciones** | Avisos del equipo en la campana y por push del navegador (Web Push) cuando el panel no está abierto: mensajes del agente, aprobaciones, entregas fallidas, canal pausado y esperas vencidas, configurables por usuario. |
 | **Plataforma** | Varios proyectos por usuario, roles (`admin`, `support`, `assistant`, `approver`), interfaz bilingüe es/en, tema claro/oscuro y chat público de prueba por proyecto. |
 
@@ -136,9 +137,18 @@ La lista completa está en [`apps/backend/.env.example`](apps/backend/.env.examp
 
 ### Conectar WhatsApp
 
+**Con el registro integrado de Meta (recomendado).** Cada negocio conecta su número desde **Configuración → Canales → Conectar WhatsApp**: inicia sesión con Facebook en la ventana de Meta, elige o crea su empresa y verifica su número con un código. No copia identificadores ni tokens. Si el número ya está en la app WhatsApp Business, Meta lo conecta en **coexistencia** y el negocio sigue usando la app en el móvil. Para ofrecerlo, el dueño del despliegue prepara una sola vez:
+
+1. Una app de Meta con el producto WhatsApp, registrada como **Tech Provider**, con la empresa verificada y los permisos `whatsapp_business_management` y `whatsapp_business_messaging` aprobados.
+2. Una configuración de **Facebook Login for Business** para el registro integrado; su ID es el `config_id`. Añade el dominio HTTPS del panel a los dominios permitidos del SDK de JavaScript.
+3. En `apps/backend/.env`: `META_APP_ID`, `WHATSAPP_SIGNUP_CONFIG_ID`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN` y `CREDENTIALS_KEY` (genera la clave con `openssl rand -base64 32`; cifra los tokens de cada proyecto, así que guárdala bien: si la pierdes, los proyectos tendrán que reconectarse).
+4. El webhook de la app (`/api/webhooks/whatsapp`, suscrito al campo `messages`) es uno para todo el despliegue: Mitchbot enruta cada mensaje al proyecto dueño del número.
+
+**Manual.** Para un número de tu propia app, sin registro integrado:
+
 1. En tu app de Meta (producto WhatsApp), copia el **token** de acceso y el **App Secret**, y elige un token de verificación cualquiera.
 2. Ponlos en `apps/backend/.env` como `WHATSAPP_TOKEN`, `WHATSAPP_APP_SECRET` y `WHATSAPP_VERIFY_TOKEN`, y reinicia el backend.
-3. En **Configuración → Canales**, escribe el **Phone Number ID** del número y guarda. La misma pantalla muestra la URL del webhook.
+3. En **Configuración → Canales**, escribe el **Phone Number ID** del número y guarda (con el registro integrado activo, está en **Configuración manual**). La misma pantalla muestra la URL del webhook.
 4. En Meta, registra esa URL con tu token de verificación y suscríbete al campo `messages`. Meta exige que la URL sea pública y use HTTPS. En local, publícala con un túnel como `cloudflared tunnel --url http://localhost:3000` o `ngrok http 3000`.
 
 WhatsApp solo deja escribir libremente durante las 24 horas siguientes al último mensaje del cliente. Pasado ese plazo, el hilo lo indica y ofrece **Enviar plantilla**: Mitchbot lista las plantillas aprobadas de tu cuenta de WhatsApp Business. Para eso, escribe su **WABA ID** en Configuración → Canales, o ponlo para todo el servidor en `WHATSAPP_WABA_ID`. Las plantillas se crean y se aprueban en el Administrador de WhatsApp de Meta.
@@ -193,10 +203,10 @@ Integración y E2E requieren los servicios de Docker activos. Más detalles en [
 
 ## Estado y hoja de ruta
 
-Mitchbot está en **pre-1.0 (v0.12.0)**. Ya atiende la web (con widget embebible), WhatsApp e Instagram en una sola bandeja, envía plantillas de WhatsApp, exporta sus conversaciones, mide sus objetivos de servicio y avisa al equipo por push; la **v1.0** llegará con la integración con un CRM y la validación de los canales con cuentas reales.
+Mitchbot está en **pre-1.0 (v0.13.0)**. Ya atiende la web (con widget embebible), WhatsApp (conectado con un botón) e Instagram en una sola bandeja, envía plantillas de WhatsApp, exporta sus conversaciones, mide sus objetivos de servicio y avisa al equipo por push; la **v1.0** llegará con la integración con un CRM y la validación de los canales con cuentas reales.
 
 <p align="center">
-  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.12 con pasarela de canales, WhatsApp, Instagram, exportación, plantillas, widget embebible, SLA y notificaciones push; y hacia v1.0 con la integración con un CRM" width="100%">
+  <img src="docs/roadmap.svg" alt="Hoja de ruta de Mitchbot: entregado de v0.1 a v0.13 con pasarela de canales, WhatsApp, Instagram, exportación, plantillas, widget embebible, SLA, notificaciones push y registro integrado de WhatsApp; y hacia v1.0 con la integración con un CRM" width="100%">
 </p>
 
 <sub>Diagrama interactivo en <a href=".archify/workflow-roadmap-20261019-175109/roadmap.html"><code>.archify/workflow-roadmap-…/roadmap.html</code></a>. Su fuente editable es <code>candidate.json</code>, en la misma carpeta.</sub>
@@ -217,10 +227,11 @@ Mitchbot está en **pre-1.0 (v0.12.0)**. Ya atiende la web (con widget embebible
 | **v0.10 · Widget** | oct 2026 | Chat embebible en la web del negocio con dominios autorizados, y acceso por token a las conversaciones públicas |
 | **v0.11 · SLA** | oct 2026 | Objetivos de respuesta y resolución por proyecto, cumplimiento en el Resumen, esperas vencidas en la bandeja y avisos al equipo |
 | **v0.12 · Push** | oct 2026 | Notificaciones Web Push para el equipo, con suscripción por dispositivo y preferencias por tipo |
+| **v0.13 · WhatsApp en un clic** | oct 2026 | Registro integrado de Meta: cada negocio conecta su número desde Mitchbot, con coexistencia y tokens cifrados por proyecto |
 
 ### 🎯 Hacia la v1.0
 - Integración con un CRM externo
-- Validación de WhatsApp, Instagram y push con cuentas reales
+- Validación de WhatsApp (incluido el registro integrado), Instagram y push con cuentas reales
 
 ---
 

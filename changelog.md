@@ -5,6 +5,64 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.13.0 — 2026-10-28
+
+> **WhatsApp en un clic**: cada negocio conecta su número desde Configuración con el registro integrado de Meta (Embedded Signup), sin copiar identificadores ni tokens
+
+### ✨ Añadido
+- **Conectar WhatsApp** en Configuración → Canales, solo para administradores.
+  - **El flujo**: abre la ventana de Meta (SDK de Facebook, `FB.login` con `config_id` y `response_type: code`). El cliente inicia sesión, elige o crea su empresa y verifica su número.
+  - **Lo que recibe Mitchbot**: el código de `FB.login` y los identificadores del evento `WA_EMBEDDED_SIGNUP`, que solo se aceptan si llegan de `https://*.facebook.com`.
+  - **Coexistencia**: un número que ya está en la app WhatsApp Business se conecta en ese modo (`FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING`) y el negocio sigue usando la app.
+  - **Al cerrar la ventana** sin terminar no cambia nada.
+- **Alta en el servidor** (`POST /api/project/whatsapp/signup`):
+  - **Pasos**: canjea el código por el token del negocio (`/oauth/access_token`), suscribe la app a la WABA (`/{waba}/subscribed_apps`), registra el número con un PIN de seis cifras (salvo en coexistencia) y lee el número visible y el nombre verificado.
+  - **Resultado**: deja el número como cuenta de WhatsApp del proyecto y activa el canal, así el enrutado del webhook no cambia.
+  - **Errores**: 409 si el número es de otro proyecto y 502 si Meta rechaza un paso.
+- **Credenciales por proyecto**:
+  - **Dónde viven**: la colección `channel_credentials`, fuera de `project.config`, para que nunca salgan en las respuestas del proyecto.
+  - **Cifrado**: el token y el PIN van con AES-256-GCM (`utils/secret-box.ts`) y la clave `CREDENTIALS_KEY`.
+  - **Envíos**: el adaptador de WhatsApp y las plantillas usan el token del número que atiende la conversación; el `WHATSAPP_TOKEN` del entorno queda para los números sin conexión propia.
+- **Conexión revocada**: si Meta rechaza el token (401 o código 190), la conexión pasa a inválida, el equipo recibe un aviso (`kind: channel`) y Configuración ofrece **Reconectar**.
+- **Desconectar** (`DELETE /api/project/whatsapp/signup`): quita la suscripción de la app (si Meta falla, se registra y la baja sigue), borra la credencial y deja el proyecto sin número.
+- **Endpoints y estado**:
+  - `GET /api/project/whatsapp/signup/config` da al panel el `appId` y el `configId`.
+  - `GET /api/project/channels/status` añade `whatsapp.signup` y la conexión del proyecto (`mode`, `status`, `displayPhone`, `verifiedName`), sin el token.
+- **Entorno**: `META_APP_ID`, `WHATSAPP_SIGNUP_CONFIG_ID` y `CREDENTIALS_KEY`. El registro integrado se activa cuando están, junto con `WHATSAPP_APP_SECRET`. Con él activo, `WHATSAPP_TOKEN` deja de ser obligatorio.
+
+### 🔧 Cambiado
+- **La configuración manual de WhatsApp** (Phone Number ID, WABA y webhook) queda plegada en **Configuración manual (avanzado)** cuando el registro integrado está disponible, y se oculta con un número conectado. Un número conectado no se puede cambiar a mano (409): hay que desconectarlo.
+- **Canales espera la configuración**: no muestra el bloque de WhatsApp hasta saber si hay registro integrado, para que el formulario manual no aparezca y se pliegue.
+- **El adaptador de WhatsApp** resuelve el token por número (`token: (account) => …`). Un fallo al leerlo se reintenta; un número sin conexión activa falla como permanente con un motivo claro.
+
+### ✅ Pruebas
+- **Unitarios**:
+  - Backend (**121**): cifrado (ida y vuelta, datos alterados, otra clave), flujo de Meta con `fetch` falso, validación de lo que llega de la ventana, token por número y rechazo del token.
+  - Frontend (**87**): `parseSignupEvent` (origen, Cloud API, coexistencia, cancelación, errores), `startSignup` (código y número, cierre, error y plazo) y `WhatsAppSignup.vue`.
+- **Integración** (**97/97**, 1 omitida). `whatsapp-signup.test.ts` cubre:
+  - el alta con el token cifrado en Mongo;
+  - el token oculto en el proyecto y en el estado;
+  - el webhook enrutado y la respuesta enviada con el token del proyecto;
+  - el número de otro proyecto (409) y el código rechazado (502);
+  - el cambio manual bloqueado y los permisos;
+  - el token revocado, la coexistencia y la baja.
+- **E2E** (**111/111** en dos corridas completas seguidas). `whatsapp-signup.spec.ts` simula `window.FB`; el canje, la suscripción y el registro van contra la Graph API del stub. Cubre:
+  - conectar y responder con el token del proyecto;
+  - la coexistencia;
+  - cerrar la ventana;
+  - el número de otro proyecto;
+  - desconectar;
+  - el token revocado con **Reconectar**;
+  - el acceso solo para administradores.
+- **Stub**:
+  - Rutas nuevas: `GET /meta/:v/oauth/access_token`, `POST|DELETE /meta/:v/:waba/subscribed_apps`, `POST /meta/:v/:phone/register` y `GET /meta/:v/:phone?fields=display_phone_number,…`.
+  - Rutas de control: `GET /__meta/signup` y `POST /__meta/revoke`.
+  - El envío acepta los tokens emitidos y registra el token usado.
+- Los E2E que tocan la configuración manual la despliegan con `openManualWhatsApp`.
+- **Nota**: en la primera corrida completa falló una vez `widget.spec.ts` (la respuesta del bot tardó más de 20 s con la suite en paralelo). Pasó en tres repeticiones aisladas y en las dos corridas completas siguientes.
+
+---
+
 ## v0.12.1 — 2026-10-21
 
 > **Bandeja sin techo y dependencias al día**: la bandeja ya no se queda en las 50 conversaciones más recientes, la búsqueda alcanza toda la bandeja y el contador del menú cuenta todo el proyecto

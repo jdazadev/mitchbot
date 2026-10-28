@@ -67,10 +67,29 @@ export interface ChannelServerStatus {
   missing: string[];
 }
 
-/** Qué canales externos tiene conectados el servidor (credenciales del entorno). */
+/** Número de WhatsApp conectado con el registro integrado de Meta (sin el token). */
+export interface WhatsAppConnection {
+  account: string;
+  wabaId: string;
+  mode: 'cloud' | 'coexistence';
+  status: 'active' | 'invalid';
+  displayPhone?: string | null;
+  verifiedName?: string | null;
+  connectedAt: string;
+}
+
+/** Qué canales externos tiene conectados el servidor y, en WhatsApp, el proyecto. */
 export interface ChannelsStatus {
-  whatsapp: ChannelServerStatus;
+  whatsapp: ChannelServerStatus & { signup?: boolean; connection?: WhatsAppConnection | null };
   instagram: ChannelServerStatus;
+}
+
+/** Lo que necesita el SDK de Facebook; `enabled: false` si el servidor no lo ofrece o el rol no puede usarlo. */
+export interface WhatsAppSignupConfig {
+  enabled: boolean;
+  appId: string | null;
+  configId: string | null;
+  apiVersion: string;
 }
 
 /** URL pública que hay que registrar en Meta como webhook del canal. */
@@ -165,6 +184,35 @@ class ProjectService {
     const res = await fetch(`${API_BASE}/project/channels/status`, { headers: authService.getHeaders() });
     if (!res.ok) return null;
     return res.json();
+  }
+
+  /** Configuración del registro integrado; solo los administradores la reciben. */
+  async getWhatsAppSignupConfig(): Promise<WhatsAppSignupConfig> {
+    const disabled: WhatsAppSignupConfig = { enabled: false, appId: null, configId: null, apiVersion: 'v21.0' };
+    const res = await fetch(`${API_BASE}/project/whatsapp/signup/config`, { headers: authService.getHeaders() });
+    if (!res.ok) return disabled;
+    return res.json();
+  }
+
+  /** Completa el alta con el código y los identificadores de la ventana de Meta. */
+  async completeWhatsAppSignup(payload: { code: string; phoneNumberId: string; wabaId: string; businessId?: string; mode: 'cloud' | 'coexistence' }): Promise<WhatsAppConnection> {
+    const res = await fetch(`${API_BASE}/project/whatsapp/signup`, {
+      method: 'POST',
+      headers: authService.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(result.error || 'No se pudo conectar WhatsApp');
+    return result.connection;
+  }
+
+  /** Desconecta el número de WhatsApp del proyecto. */
+  async disconnectWhatsApp(): Promise<void> {
+    const res = await fetch(`${API_BASE}/project/whatsapp/signup`, { method: 'DELETE', headers: authService.getHeaders() });
+    if (!res.ok) {
+      const result = await res.json().catch(() => ({}));
+      throw new Error(result.error || 'No se pudo desconectar WhatsApp');
+    }
   }
 
   /** Actualizar proyecto */

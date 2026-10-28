@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures';
 import type { APIRequestContext } from '@playwright/test';
 import { E2E } from '../helpers/config';
 import { createProjectOwner, signIn } from '../helpers/owner';
-import { conversationOf, digits, failSendsTo, openConversation, postSignedWebhook, sentTo } from '../helpers/meta';
+import { conversationOf, digits, failSendsTo, openConversation, openManualWhatsApp, postSignedWebhook, sentTo } from '../helpers/meta';
 
 /** Propietario con WhatsApp, número y WABA propios. */
 async function ownerWithWaba(api: APIRequestContext, wabaId: string | null = digits('30')) {
@@ -150,6 +150,7 @@ test.describe('Plantillas de WhatsApp', () => {
     const wabaId = digits('40');
     const { context, page } = await signIn(browser, owner);
     await page.goto('/settings?tab=channels');
+    await openManualWhatsApp(page);
     const connection = page.getByTestId('whatsapp-connection');
     const waba = connection.getByLabel('ID de la cuenta de WhatsApp Business (WABA)');
     await waba.fill('abc');
@@ -158,6 +159,7 @@ test.describe('Plantillas de WhatsApp', () => {
     await page.getByRole('button', { name: 'Guardar Canales' }).click();
     await expect(page.getByText('Cambios sin guardar')).toHaveCount(0);
     await page.reload();
+    await openManualWhatsApp(page);
     await expect(page.getByTestId('whatsapp-connection').getByLabel('ID de la cuenta de WhatsApp Business (WABA)')).toHaveValue(wabaId);
     expect((await (await api.get('project', { headers: owner.headers })).json()).config.whatsapp.wabaId).toBe(wabaId);
     await context.close();

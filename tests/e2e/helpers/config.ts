@@ -44,6 +44,10 @@ export const E2E = {
     token: 'e2e-wa-token',
     appSecret: 'e2e-wa-secret',
     verifyToken: 'e2e-wa-verify',
+    /** Registro integrado (Embedded Signup): app y configuración de Meta simuladas, y clave fija de prueba. */
+    appId: '100200300',
+    signupConfigId: '400500600',
+    credentialsKey: Buffer.alloc(32, 9).toString('base64'),
   },
 
   /** Credenciales de Instagram del backend e2e; la Graph API también es el stub (`/meta`). */

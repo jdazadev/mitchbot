@@ -802,7 +802,32 @@
         "wabaLabel": "WhatsApp Business account ID (WABA)",
         "wabaPlaceholder": "E.g. 102290129340398",
         "wabaHint": "Optional. Templates need it; find it in Meta → WhatsApp → API Setup. If empty, the server's WHATSAPP_WABA_ID is used.",
-        "wabaInvalid": "The WhatsApp Business account ID only contains digits."
+        "wabaInvalid": "The WhatsApp Business account ID only contains digits.",
+        "manualSetup": "Manual setup (advanced)",
+        "signup": {
+          "intro": "Log in with Facebook, choose your business and verify your number with a code. It takes a few minutes and there is nothing to copy. If you already use WhatsApp Business on your phone, you can keep using it.",
+          "connect": "Connect WhatsApp",
+          "connecting": "Connecting…",
+          "reconnect": "Reconnect",
+          "disconnect": "Disconnect",
+          "disconnectTitle": "Disconnect WhatsApp?",
+          "disconnectBody": "Mitchbot will stop receiving and answering messages for this number. Saved conversations are kept and you can connect it again at any time.",
+          "noName": "Name pending verification",
+          "invalid": "Meta rejected the connection (it expired or the permission was removed). Messages are not delivered until you reconnect it.",
+          "coexistenceHint": "This number keeps working in the WhatsApp Business app on the phone; what you reply there also reaches the customer.",
+          "mode": {
+            "cloud": "Cloud API",
+            "coexistence": "Coexistence"
+          },
+          "errors": {
+            "blocked": "The browser blocked the Meta window. Allow pop-ups for this site and try again.",
+            "no_number": "The connection finished without a phone number. Try again and add a number in the Meta window.",
+            "meta": "Meta could not complete the connection. Try again in a few minutes.",
+            "timeout": "Meta did not confirm the number in time. Try again.",
+            "sdk": "Facebook could not be loaded. Check your connection or whether a blocker is preventing it.",
+            "disconnect": "WhatsApp could not be disconnected. Try again."
+          }
+        }
       },
       "instagram": {
         "serverReady": "The server has Instagram connected.",
@@ -866,6 +891,8 @@
     "toasts": {
       "slugUpdated": "Slug updated successfully",
       "linkCopied": "Link copied",
+      "whatsAppConnected": "WhatsApp number connected",
+      "whatsAppDisconnected": "WhatsApp disconnected",
       "agentUpdated": "Agent updated successfully",
       "channelsUpdated": "Channels updated",
       "optionsUpdated": "Options updated"
