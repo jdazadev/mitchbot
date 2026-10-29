@@ -1,6 +1,6 @@
 {
   "name": "@mitchbot/backend",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "license": "FSL-1.1-ALv2",
   "main": "dist/index.js",
   "scripts": {
@@ -11,6 +11,7 @@
     "seed": "tsx src/scripts/seed.ts",
     "migrate:openrouter": "tsx src/scripts/migrate-openrouter.ts",
     "seed:e2e": "tsx src/scripts/seed-e2e.ts",
+    "seed:demo": "tsx src/scripts/seed-demo.ts",
     "test": "pnpm test:unit && pnpm test:integration",
     "test:unit": "tsx --test tests/unit/*.test.ts",
     "test:integration": "tsx --test tests/integration/*.test.ts"

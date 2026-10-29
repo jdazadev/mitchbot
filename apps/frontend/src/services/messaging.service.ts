@@ -327,6 +327,15 @@ export const messagingService = {
   },
 
   /** El cliente envía un mensaje a una conversación existente */
+  /** Historial visible de la conversación del cliente; el token prueba que es suya. */
+  async clientGetHistory(slug: string, conversationId: string, clientToken: string): Promise<ChatMessage[]> {
+    const res = await fetch(`${API_URL}/public/widget/${encodeURIComponent(slug)}/conversations/${conversationId}/messages`, {
+      headers: { 'X-Client-Token': clientToken },
+    });
+    if (!res.ok) throw new Error('Failed to load conversation history');
+    return res.json();
+  },
+
   async clientSendMessage(slug: string, conversationId: string, content: string, clientToken?: string, senderName?: string): Promise<ChatMessage> {
     const res = await fetch(`${API_URL}/public/test-chat/${slug}/${conversationId}/messages`, {
       method: 'POST',

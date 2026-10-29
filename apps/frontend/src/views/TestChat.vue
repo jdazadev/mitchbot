@@ -17,6 +17,7 @@ import APill from "../components/ui/APill.vue";
 import AButton from "../components/ui/AButton.vue";
 import AModal from "../components/ui/AModal.vue";
 import { renderMarkdown } from "../lib/markdown";
+import { mergeMessages } from "../lib/delivery";
 
 // El chat público es independiente del idioma del dashboard: usa un
 // composer aislado cuyo locale se fija según el idioma del agente del proyecto.
@@ -54,6 +55,7 @@ onMounted(() => {
   socketService.onMessageChunk(onMessageChunk);
   socketService.onMessageUpdated(onMessageUpdated);
   socketService.onConversationStatus(onConversationStatus);
+  socketService.on('joined:room', onJoinedRoom);
 
   // El idioma del chat público sigue al del agente del proyecto.
   if (isSlugReady.value) {
@@ -71,6 +73,7 @@ onUnmounted(() => {
   socketService.offMessageChunk(onMessageChunk);
   socketService.offMessageUpdated(onMessageUpdated);
   socketService.offConversationStatus(onConversationStatus);
+  socketService.off('joined:room', onJoinedRoom);
   socketService.leavePublic();
 });
 
@@ -173,6 +176,28 @@ function onNewMessage(msg: ChatMessage) {
   }
 }
 
+/**
+ * Lo que el bot respondió antes de entrar en la sala no llegó por socket (con un
+ * modelo rápido, la respuesta sale antes del `join:room`): se pide el historial y
+ * se fusiona con lo que ya se ve.
+ */
+async function refreshHistory() {
+  const conversation = activeConversation.value;
+  if (!conversation || !clientToken.value) return;
+  try {
+    const history = await messagingService.clientGetHistory(projectSlug.value, conversation._id, clientToken.value);
+    if (activeConversation.value?._id !== conversation._id) return;
+    messages.value = mergeMessages(history, messages.value);
+    scrollToBottom();
+  } catch {
+    // Sin historial: los mensajes seguirán llegando por socket.
+  }
+}
+
+function onJoinedRoom(data: { roomId?: string }) {
+  if (data?.roomId && data.roomId === activeConversation.value?._id) void refreshHistory();
+}
+
 function onMessageChunk(data: { messageId: string, conversationId: string, content: string, isDone: boolean }) {
   // El bot no emite fragmentos parciales: solo se aplica el mensaje final.
   if (!data.isDone) return;
@@ -181,6 +206,8 @@ function onMessageChunk(data: { messageId: string, conversationId: string, conte
     data.conversationId === activeConversation.value._id
   ) {
     const existingMsg = messages.value.find((m) => m._id === data.messageId);
+    // El mensaje "escribiendo" se emitió antes de entrar en la sala: se trae del historial.
+    if (!existingMsg) void refreshHistory();
     if (existingMsg) {
       existingMsg.content = data.content;
       scrollToBottom();

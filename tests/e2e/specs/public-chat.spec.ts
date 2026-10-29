@@ -34,6 +34,47 @@ test.describe('Chat público', () => {
       .toBeTruthy();
   });
 
+  test('la respuesta que llega antes de entrar en la sala no se pierde', async ({ page }) => {
+    // Retrasa el `join:room` del navegador: el bot responde antes de que el socket esté en la sala.
+    await page.routeWebSocket(/socket\.io/, (ws) => {
+      const server = ws.connectToServer();
+      ws.onMessage((message) => {
+        if (String(message).includes('join:room')) setTimeout(() => server.send(message), 2_000);
+        else server.send(message);
+      });
+      server.onMessage((message) => ws.send(message));
+    });
+
+    await page.goto(`/test-chat/${E2E.project.slug}`);
+    await page.getByPlaceholder('Nombre del cliente').fill(uniqueName('Cliente Rapido'));
+    await page.getByPlaceholder('+1234567890').fill(uniquePhone());
+    await page.getByPlaceholder(/Escribe tu primer mensaje/).fill(`Hola ${uniqueId()}`);
+    await page.getByRole('button', { name: /Iniciar Chat/ }).click();
+
+    await expect(page.getByText(E2E.stub.reply)).toBeVisible({ timeout: 20_000 });
+  });
+
+  test('si se pierde el aviso de escritura del bot, la respuesta final igual se muestra', async ({ page }) => {
+    // Descarta el mensaje vacío del bot ("escribiendo"): el cliente solo recibe el texto final.
+    await page.routeWebSocket(/socket\.io/, (ws) => {
+      const server = ws.connectToServer();
+      ws.onMessage((message) => server.send(message));
+      server.onMessage((message) => {
+        const frame = String(message);
+        if (frame.startsWith('42["chat:message",') && frame.includes('"content":""')) return;
+        ws.send(message);
+      });
+    });
+
+    await page.goto(`/test-chat/${E2E.project.slug}`);
+    await page.getByPlaceholder('Nombre del cliente').fill(uniqueName('Cliente Sin Aviso'));
+    await page.getByPlaceholder('+1234567890').fill(uniquePhone());
+    await page.getByPlaceholder(/Escribe tu primer mensaje/).fill(`Hola ${uniqueId()}`);
+    await page.getByRole('button', { name: /Iniciar Chat/ }).click();
+
+    await expect(page.getByText(E2E.stub.reply)).toBeVisible({ timeout: 20_000 });
+  });
+
   test('el cliente ve la confirmación pero no la tarjeta interna de la herramienta', async ({ page }) => {
     const id = uniqueId();
 

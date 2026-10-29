@@ -14,7 +14,15 @@
 - **Cada desarrollo se prueba con tests unitarios y E2E**: añade unitarios para la lógica nueva (`apps/backend/tests/unit/` con `node:test`, `apps/frontend/tests/unit/` con Vitest) y cubre el flujo de usuario con Playwright. Antes de cerrar, `pnpm test:unit`, `pnpm test:integration` y `pnpm test:e2e` en verde.
 - Sigue la convención de commits y changelog de [Keep a Changelog](https://keepachangelog.com/).
 
-**Versión actual del proyecto:** v0.13.0
+**Versión actual del proyecto:** v0.13.1
+
+---
+
+## Capturas y demo (v0.13.1)
+
+- **Capturas**: `docs/screenshots/` (17 PNG), mostradas en la sección **Capturas** del README. Se regeneran con `scripts/screenshots/run.sh`, que siembra, levanta la demo en 4030/3120/5195, captura con `capture.mjs` y apaga solo sus procesos. Si cambia una vista, vuelve a ejecutarlo.
+- **Demo**: `seed:demo` siembra **Panadería Aurora** en `mitchbot_demo` (`demo@mitchbot.io` / `demo12345`) y **borra esa base**; se niega si el nombre no contiene `demo`. El widget autoriza `http://127.0.0.1:5199`, la web de ejemplo de la captura.
+- **Chat público**: `TestChat.vue` recupera el historial tras `joined:room` y cuando llega el texto final de un mensaje desconocido (`refreshHistory`). Usa el historial del widget, que solo exige el token de la conversación. Los E2E de la carrera usan `page.routeWebSocket`.
 
 ---
 

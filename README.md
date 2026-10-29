@@ -4,7 +4,11 @@
 
 Mitchbot es un SaaS de chatbot multicanal. Reúne en un solo panel las conversaciones que llegan por WhatsApp, Instagram y la web. Las responde un agente de IA que consulta tu propia base de conocimiento (RAG) y ejecuta operaciones reales del negocio, como agendar citas, consultar inventario o registrar intenciones de pago. Un operador humano puede tomar el control en cualquier momento.
 
-> Versión actual: **v0.13.0** · Historial completo en [`changelog.md`](changelog.md)
+> Versión actual: **v0.13.1** · Historial completo en [`changelog.md`](changelog.md)
+
+<p align="center">
+  <img src="docs/screenshots/03-conversaciones.png" alt="Bandeja de Conversaciones de Mitchbot: lista de conversaciones por canal, hilo con el agente de IA y ficha del cliente con sentimiento y urgencia" width="100%">
+</p>
 
 ---
 
@@ -48,6 +52,23 @@ Más detalle en [`PRODUCT.md`](PRODUCT.md) y en el sistema de diseño **Aurora**
 | **Canales** | WhatsApp con un botón (registro integrado de Meta, coexistencia con la app WhatsApp Business y tokens cifrados por proyecto) o configuración manual; Instagram y la web en la misma bandeja. |
 | **Notificaciones** | Avisos del equipo en la campana y por push del navegador (Web Push) cuando el panel no está abierto: mensajes del agente, aprobaciones, entregas fallidas, canal pausado y esperas vencidas, configurables por usuario. |
 | **Plataforma** | Varios proyectos por usuario, roles (`admin`, `support`, `assistant`, `approver`), interfaz bilingüe es/en, tema claro/oscuro y chat público de prueba por proyecto. |
+
+---
+
+## Capturas
+
+Datos de demostración de una panadería ficticia (`pnpm --filter @mitchbot/backend seed:demo`). Para regenerarlas, sigue [`scripts/screenshots/README.md`](scripts/screenshots/README.md).
+
+| | |
+|:--:|:--:|
+| <img src="docs/screenshots/02-panel.png" alt="Panel con resultados, salud del bot, SLA y volumen" width="100%"><br>**Panel**: resultados, salud del bot, SLA y volumen | <img src="docs/screenshots/04-conversacion-con-humano.png" alt="Conversación de Instagram atendida por una persona, con urgencia alta" width="100%"><br>**Control humano**: incidencia con urgencia alta y espera abierta |
+| <img src="docs/screenshots/05-clientes.png" alt="Listado de clientes con búsqueda, filtros y paginación" width="100%"><br>**Clientes**: búsqueda, filtros y archivado | <img src="docs/screenshots/06-memoria.png" alt="Base de conocimiento con fuentes indexadas y cobertura" width="100%"><br>**Memoria (RAG)**: fuentes, cobertura y progreso |
+| <img src="docs/screenshots/07-herramientas.png" alt="Catálogo de herramientas del agente por módulo" width="100%"><br>**Herramientas**: catálogo por módulo y control | <img src="docs/screenshots/08-aprobaciones.png" alt="Solicitudes pendientes de aprobación de un operador" width="100%"><br>**Aprobaciones**: cobros y cancelaciones pendientes |
+| <img src="docs/screenshots/09-usuarios.png" alt="Gestión de usuarios con roles" width="100%"><br>**Usuarios**: roles `admin`, `support`, `assistant` y `approver` | <img src="docs/screenshots/10-configuracion-agente.png" alt="Configuración del agente de IA por secciones" width="100%"><br>**Agente IA**: identidad, voz, conocimiento y mensajes |
+| <img src="docs/screenshots/11-configuracion-canales.png" alt="Canales con el botón Conectar WhatsApp y la configuración de Instagram" width="100%"><br>**Canales**: WhatsApp en un clic, Instagram y widget | <img src="docs/screenshots/12-configuracion-sla.png" alt="Objetivos de servicio de respuesta y resolución" width="100%"><br>**SLA**: objetivos de respuesta y resolución |
+| <img src="docs/screenshots/17-widget.png" alt="Widget de chat instalado en la web de la panadería" width="100%"><br>**Widget**: el chat en la web del negocio | <img src="docs/screenshots/16-chat-publico.png" alt="Simulador de cliente del chat público" width="100%"><br>**Chat público**: simulador de cliente por proyecto |
+| <img src="docs/screenshots/14-tema-oscuro.png" alt="Conversaciones en tema oscuro" width="100%"><br>**Tema oscuro** | <img src="docs/screenshots/13-perfil.png" alt="Perfil del usuario con notificaciones push" width="100%"><br>**Mi Perfil**: datos y notificaciones push |
+| <img src="docs/screenshots/01-login.png" alt="Pantalla de inicio de sesión" width="100%"><br>**Inicio de sesión** | <img src="docs/screenshots/15-movil.png" alt="Conversación en el móvil" width="40%"><br>**Móvil**: bandeja o hilo a pantalla completa |
 
 ---
 

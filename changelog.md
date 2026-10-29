@@ -5,6 +5,30 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/) con versionado
 
 ---
 
+## v0.13.1 — 2026-10-29
+
+> **Capturas en el README y el chat público sin respuestas perdidas**
+
+### 🐛 Corregido
+- **El chat público podía quedarse con la burbuja del bot vacía.** Con un modelo rápido, el bot respondía antes de que el navegador entrara en la sala de la conversación y el mensaje no llegaba por socket. Pasaba en dos casos:
+  - **Respuesta completa antes del `join:room`**: al confirmar la sala (`joined:room`), `TestChat.vue` pide el historial (`GET /api/public/widget/:slug/conversations/:id/messages` con `X-Client-Token`) y lo fusiona con `mergeMessages`, como ya hacían Conversaciones y el widget.
+  - **Solo se perdió el aviso de escritura**: si llega el texto final de un mensaje que la pantalla no conoce, también pide el historial.
+
+### ✨ Añadido
+- **Capturas de toda la aplicación** en [`docs/screenshots/`](docs/screenshots): 17 imágenes, incluidos el tema oscuro, el móvil, el chat público y el widget en una web de ejemplo. El README las muestra en la nueva sección **Capturas**, con la bandeja como imagen principal.
+- **Demo reproducible**:
+  - `seed:demo` (`apps/backend/src/scripts/seed-demo.ts`) siembra **Panadería Aurora** en `mitchbot_demo`, con conversaciones por los tres canales, contactos, citas, aprobaciones, fuentes de conocimiento, historial de 30 días y equipo. Borra esa base; se niega si el nombre no contiene `demo`.
+  - `scripts/screenshots/run.sh` levanta el stub, el backend y el frontend en puertos propios (4030, 3120 y 5195), siembra, captura con `capture.mjs` y apaga solo lo que arrancó.
+
+### ✅ Pruebas
+- **E2E**: dos casos nuevos en `public-chat.spec.ts`. Usan `page.routeWebSocket` para forzar la carrera de forma determinista:
+  - retrasan el `join:room` 2 s;
+  - descartan el mensaje vacío del bot.
+- Los dos casos fallaban sin el arreglo y pasan con él.
+- **Totales**: unitarios backend **121** y frontend **87**; E2E **113/113** en una corrida completa.
+
+---
+
 ## v0.13.0 — 2026-10-28
 
 > **WhatsApp en un clic**: cada negocio conecta su número desde Configuración con el registro integrado de Meta (Embedded Signup), sin copiar identificadores ni tokens
